@@ -108,7 +108,58 @@ class modxMCP {
                 if (in_array($action, $elementBridgeActions, true) && !isset($toolData['type']) && $elementType !== '') {
                     $toolData['type'] = $elementType;
                 }
-                return $tool->execute($this->modularRuntime->context(), $toolData);
+                $runtimePreconditions = null;
+                if (
+                    isset($toolData['_runtime_preconditions'])
+                    && is_array($toolData['_runtime_preconditions'])
+                ) {
+                    $runtimePreconditions = $toolData['_runtime_preconditions'];
+                    unset($toolData['_runtime_preconditions']);
+                }
+                if (
+                    is_array($runtimePreconditions)
+                    && in_array(
+                        $action,
+                        array('create_element', 'update_element'),
+                        true
+                    )
+                ) {
+                    $toolData['_runtime_preconditions'] = $runtimePreconditions;
+                }
+                if ($tool->isMutation()) {
+                    $runtimeContext = $this->modularRuntime->context();
+                    return \ModxMcp\Tools\StateSupport::withMutationLock(
+                        $runtimeContext,
+                        function () use (
+                            $tool,
+                            $runtimeContext,
+                            $toolData,
+                            $runtimePreconditions
+                        ) {
+                            if (is_array($runtimePreconditions)) {
+                                \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                    $runtimeContext,
+                                    $runtimePreconditions
+                                );
+                            }
+                            $result = $tool->execute(
+                                $runtimeContext,
+                                $toolData
+                            );
+                            $revision = \ModxMcp\Tools\StateSupport::incrementRevision(
+                                $runtimeContext
+                            );
+                            if (is_array($result)) {
+                                $result['_site_revision'] = $revision;
+                            }
+                            return $result;
+                        }
+                    );
+                }
+                return $tool->execute(
+                    $this->modularRuntime->context(),
+                    $toolData
+                );
             }
         }
 
@@ -517,6 +568,7 @@ class modxMCP {
             'ops' => array(
                 'list_actions'     => array('m' => 'listSupportedActions', 'call' => 'bare'),
                 'get_capabilities' => array('m' => 'getCapabilities', 'call' => 'bare'),
+                'get_site_state'   => array('m' => 'getSiteState', 'call' => 'bare'),
                 'help'             => 'getHelp',
                 'run_processor'    => 'runProcessorPassthrough',
                 'clear_cache'      => 'clearCacheAction',
@@ -3390,6 +3442,21 @@ class modxMCP {
         return array('topic' => $topic, 'content' => (string) @file_get_contents($file));
     }
 
+    public function getSiteState() {
+        return array(
+            'site_revision' => max(
+                0,
+                (int)$this->modx->getOption(
+                    'modxmcp.site_revision',
+                    null,
+                    0
+                )
+            ),
+            'atomic_preconditions' => ($this->modularRuntime !== null),
+            'precondition_version' => 1,
+        );
+    }
+
     public function getCapabilities() {
         $groups = $this->listSupportedActions();
         $toggle = $this->toggleableGroupKeys();
@@ -3404,6 +3471,11 @@ class modxMCP {
             'toggleable_groups' => $toggle,
             'disabled_groups'   => array_keys($disabled),
             'disabled_actions'  => $disabledActions,
+            'features'          => array(
+                'atomic_preconditions' => ($this->modularRuntime !== null),
+                'site_revision' => ($this->modularRuntime !== null),
+                'precondition_version' => 1,
+            ),
             'fingerprint'       => $this->capabilitiesFingerprint(),
         );
     }

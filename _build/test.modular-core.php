@@ -337,5 +337,5 @@ foreach (array('bulk_resources', 'replace_across') as $name) {
         throw new Exception('Bad final mutation registration: ' . $name);
     }
 }
-if (count($runtime->registry()->all()) !== 182) { throw new Exception('Unexpected tool count'); }
+if (count($runtime->registry()->all()) !== 183) { throw new Exception('Unexpected tool count'); }
 echo "MODULAR_CORE_OK\n";

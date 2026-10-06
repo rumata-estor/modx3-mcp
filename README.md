@@ -8,7 +8,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**Source version 1.1.0 · MODX Revolution 2.8.x / 3.x · 182/182 modular actions · MIT**
+**Current development tree · stable base 1.1.0 · MODX Revolution 2.8.x / 3.x · 183/183 modular actions · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -183,13 +183,13 @@ Version 1.1.0 is the first shared-source line for both supported MODX generation
 
 The two MODX generations use the same MCP client, the same public action contract and the same modular runtime. Platform-specific bootstrap, class names and processor routing are isolated behind platform adapters and release overlays.
 
-Current validation status:
+Current development-source status:
 
-- all **182/182** server actions are registered in the modular runtime;
-- MODX 3.2.4-pl has passed the complete live regression suite;
-- MODX 3 processor compatibility is checked against 3.2.2-pl, 3.2.4-pl and the current 3.x branch;
-- MODX 2.8.9-pl has passed the dedicated live release-smoke and core live regression suite;
-- both platform artifacts have completed dedicated live validation, and **v1.1.0 is published as the current stable GitHub release**.
+- all **183/183** server actions are registered in the modular runtime, including the new read-only `get_site_state` action used by Runtime CAS;
+- the current 183-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
+- the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
+- MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
+- **v1.1.0 remains the current stable GitHub release**. The new 183rd action and Runtime-CAS path are development changes. A dedicated MODX 3 CAS smoke test passed on 2026-10-06; full parity/release validation is still pending.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 
@@ -279,8 +279,8 @@ Before a release, the project checks:
 
 - PHP syntax and Node.js client syntax;
 - version consistency across the shared source and both platform build configs;
-- the complete client/server contract: **182 actions**;
-- modular migration coverage: **74/74 reads + 108/108 mutations**;
+- the complete client/server contract: **183 actions**;
+- modular migration coverage: **75/75 reads + 108/108 mutations**;
 - MODX 2 platform staging and PHP compatibility;
 - MODX 3 processor compatibility across 3.2.2-pl, 3.2.4-pl and current 3.x;
 - installation portability, secure defaults and platform-specific transport requirements;

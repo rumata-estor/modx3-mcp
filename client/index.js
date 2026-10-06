@@ -66,6 +66,7 @@ const PROJECT_LOCK_READ_ONLY_TOOLS = new Set([
   "modx_find_usages",
   "modx_get_component_files",
   "modx_get_element",
+  "modx_get_site_state",
   "modx_get_media_source",
   "modx_get_resource_tvs",
   "modx_get_system_setting",
@@ -717,6 +718,15 @@ const toolDefinitions = [
     },
   },
   {
+    name: "modx_get_site_state",
+    description:
+      "Read the connector-authoritative site revision and atomic-precondition capability used by Site Agent Runtime.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
     name: "modx_get_element",
     description:
       "Read a MODX element (returns its fields + full code). For a large chunk/snippet/template/plugin you only need to edit, prefer modx_view_element (numbered, windowable) so you don't pull the whole body into context.",
@@ -768,6 +778,12 @@ const toolDefinitions = [
         caption: { type: "string" },
         field_type: { type: "string" },
         templates: { type: "array", items: { type: "number" } },
+        _runtime_preconditions: {
+          type: "object",
+          description:
+            "Internal Site Agent Runtime CAS preconditions. Not intended for manual model-authored calls.",
+          additionalProperties: true,
+        },
         media_source: { type: "number" },
         input_properties: { type: "object" },
         category: { type: "number" },
@@ -811,6 +827,12 @@ const toolDefinitions = [
         caption: { type: "string" },
         field_type: { type: "string" },
         templates: { type: "array", items: { type: "number" } },
+        _runtime_preconditions: {
+          type: "object",
+          description:
+            "Internal Site Agent Runtime CAS preconditions. Not intended for manual model-authored calls.",
+          additionalProperties: true,
+        },
         media_source: { type: "number" },
         input_properties: { type: "object" },
         category: { type: "number" },

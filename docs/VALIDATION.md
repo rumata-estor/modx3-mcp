@@ -2,7 +2,7 @@
 
 # Connector validation status
 
-Date: 2026-10-02
+Stable-release live validation: 2026-10-02. Current development-source static validation and dedicated MODX 3 Runtime-CAS smoke: 2026-10-06.
 
 ## Shared architecture
 
@@ -15,7 +15,7 @@ One source tree contains a shared modular core plus platform adapters:
 - modular `Tools/`
 - shared endpoint `endpoint/api.common.php`
 
-The modular registry now owns the complete public action contract: 74 read-only actions and 108 mutation actions, 182/182 total. The legacy dispatcher remains only as a compatibility/reference layer; normal requests are handled by the modular runtime.
+The modular registry now owns the complete public action contract: 75 read-only actions and 108 mutation actions, 183/183 total. The legacy dispatcher remains only as a compatibility/reference layer; normal requests are handled by the modular runtime.
 
 ## 1.1.0 release readiness
 
@@ -23,15 +23,16 @@ Version 1.1.0 is the first shared-source MODX 2 / MODX 3 stable release. MODX 2.
 
 ## Current modular read-only coverage
 
-The registry currently contains all 74 read-only tools.
+The current development registry contains all 75 read-only tools. The 75th action is `get_site_state`, added after v1.1.0 for Runtime stale-state/CAS coordination.
 
-<!-- READONLY_MIGRATION_COVERAGE: 74/74 -->
+<!-- READONLY_MIGRATION_COVERAGE: 75/75 -->
 
-The read-only migration is complete: all 74 read-only server actions are registered in the modular runtime. The coverage marker above is checked by `_build/test.migration-coverage.py` so the documented count cannot silently drift from the code.
+The current development-source read-only migration is complete: all 75 read-only server actions are registered in the modular runtime. The coverage marker above is checked by `_build/test.migration-coverage.py` so the documented current-source count cannot silently drift from the code.
 
 Migrated actions:
 
 - `get_capabilities`
+- `get_site_state`
 - `system_info`
 - `project_overview`
 - `list_resources`
@@ -116,10 +117,10 @@ The first mutation block is the direct MODX-processor layer: Access/ACL, Context
 Namespace and Lexicon writes. These actions now execute through
 `ProcessorMutationTool` + `MutationProcessorCatalog` instead of the legacy
 dispatcher. The mutation migration is now complete: all 108 mutation actions
-are registered in the modular Runtime, so all 182 server actions have a modular
+are registered in the modular Runtime, so all 183 server actions have a modular
 implementation.
 
-On 2026-10-02 the current modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. Each action was executed once through the modular registry and once through the same connector instance with `modularRuntime` disabled; all migrated results matched exactly, including expected error contracts.
+On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. That live matrix covered the 182-action release contract, including all 74 read-only actions available at that time. The development-only `get_site_state` action and Runtime-CAS path were added later and are not included in that historical live-validation claim.
 
 Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_root_filesystem_read=0`; parity therefore verifies the same security denial on both paths rather than weakening the setting for a test. Capability groups that are disabled in persistent settings are enabled only in the parity process memory, so the live audit does not leave the sandbox with broader permissions.
 
@@ -127,7 +128,7 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 
 - Architecture: PASS.
 - Build architecture: PASS.
-- Client/server contract: PASS, 182 actions.
+- Current development client/server contract: PASS, 183 actions (static).
 - Endpoint architecture: PASS.
 - MODX2 PHP compatibility: PASS.
 - Platform mapping: PASS.
@@ -135,8 +136,8 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 - MODX3 processor compatibility: PASS, 113 processor files on the live MODX3 sandbox.
 - Release portability: PASS.
 - Release staging: PASS.
-- Migration coverage consistency: PASS, read 74/74; mutations 108/108.
-- Live modular-vs-legacy parity: PASS for all 74 migrated actions.
+- Current development migration coverage consistency: PASS, read 75/75; mutations 108/108 (static).
+- Stable v1.1.0 live modular-vs-legacy read parity: PASS for all 74 read-only actions in that release. The new `get_site_state` action is not yet included in the full live parity matrix.
 - Live mutation processor parity: PASS, 46 transactional checks across 40 modular mutation actions; all writes rolled back.
 - Live system/TV/ops mutation parity: PASS, 8/8 actions.
 - Live Property-set mutation parity: PASS, 5/5 actions with transactional rollback.
@@ -145,7 +146,8 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 - Live VersionX mutation parity: PASS for the safe confirm=true + missing-version contract; no live content was reverted.
 - Live miniShop2 mutation parity: PASS, 12/12 actions; positive create paths were transactionally rolled back and real orders/products were not modified.
 - Live final mutation parity: PASS, bulk_resources and replace_across both match legacy for dry-run and real writes on temporary test objects.
-- Full live regression: PASS, all 14 live parity suites completed with exit code 0 on the final Runtime.
+- Development Runtime-CAS smoke on MODX 3: PASS for `get_site_state`, stale update rejection (`target_changed`), stale create rejection (`target_now_exists`), unchanged revision on rejected writes, and successful CAS mutation with unchanged target fingerprint. This is a focused smoke test, not the full parity/release matrix.
+- Stable v1.1.0 full live regression: PASS, all 14 live parity suites completed with exit code 0 on the release Runtime.
 - Two globally destructive actions were not invoked live: empty_recycle_bin (the sandbox had a pre-existing deleted resource) and regenerate_token (to preserve the active API token); both remain covered by modular registration, static contract checks, and legacy-equivalent implementation review.
 - Live Package-management mutation parity: PASS, 5/5 actions; package install/uninstall tested only on non-destructive paths.
 - Live MIGX mutation parity: PASS, 3/3 actions with transactional rollback.
@@ -167,7 +169,7 @@ Status: LIVE-VALIDATED.
 Live-tested on a clean MODX 2.8.9-pl sandbox.
 
 - transport release-smoke: PASS for build, fresh install, endpoint CRUD, same-package reinstall with settings preserved, clean uninstall, and final installation;
-- modular read parity: PASS for all 74 read-only actions; absent element fixtures are skipped by the read-only matrix and covered separately by element lifecycle tests;
+- stable v1.1.0 modular read parity: PASS for all 74 read-only actions in that release; absent element fixtures are skipped by the read-only matrix and covered separately by element lifecycle tests;
 - processor mutation parity: PASS, 46 checks across 40 processor mutations;
 - element lifecycle parity: PASS for all 7 supported element types;
 - property sets: 5/5; resource/ops: 6/6 safe-live actions; system/TV/ops: 8/8; media: 9/9; package management: 5/5;

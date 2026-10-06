@@ -6,6 +6,7 @@ use ModxMcp\Registry\ToolRegistry;
 use ModxMcp\Registry\MutationProcessorCatalog;
 use ModxMcp\Extras\IntegrationRegistry;
 use ModxMcp\Tools\CapabilitiesTool;
+use ModxMcp\Tools\SiteStateTool;
 use ModxMcp\Tools\SystemInfoTool;
 use ModxMcp\Tools\ProjectOverviewTool;
 use ModxMcp\Tools\ResourceListTool;
@@ -160,6 +161,7 @@ class Runtime
         $this->context = new Context($modx, PlatformFactory::detect($modx), $legacy, $extras);
         $this->registry = new ToolRegistry();
         $this->registry->register(new CapabilitiesTool());
+        $this->registry->register(new SiteStateTool());
         $this->registry->register(new SystemInfoTool());
         $this->registry->register(new ProjectOverviewTool());
         $this->registry->register(new ResourceListTool());

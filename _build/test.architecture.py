@@ -30,7 +30,8 @@ for needle in (
     'private $modularRuntime = null;',
     'registry()->get($action)',
     '->supports($this->modularRuntime->context())',
-    '->execute($this->modularRuntime->context()',
+    'StateSupport::withMutationLock',
+    '$tool->execute(',
     'catch (\\Throwable $e)',
 ):
     if needle not in legacy:
@@ -56,7 +57,7 @@ for rel in element_bridge_files:
     text = (root / rel).read_text(encoding='utf-8')
     bridge_start = text.find('$elementBridgeActions = array(')
     bridge_end = text.find(
-        'return $tool->execute($this->modularRuntime->context(), $toolData);',
+        '$runtimePreconditions = null;',
         bridge_start,
     )
     bridge = text[bridge_start:bridge_end] if bridge_start >= 0 and bridge_end >= 0 else ''
@@ -192,6 +193,7 @@ expected_tools = [
     'RoleListTool.php',
     'RunProcessorTool.php',
     'SearchCodeTool.php',
+    'SiteStateTool.php',
     'SystemInfoTool.php',
     'SystemSettingCreateTool.php',
     'SystemSettingDeleteTool.php',
@@ -230,6 +232,14 @@ expected_tools = [
 ]
 if tools != expected_tools:
     errors.append(f'Unexpected migrated tool set: {tools}')
+
+if not (src / 'Tools' / 'StateSupport.php').is_file():
+    errors.append('StateSupport.php is required by Runtime CAS')
+else:
+    state_support = (src / 'Tools' / 'StateSupport.php').read_text(encoding='utf-8')
+    for needle in ('flock(', 'assertPreconditions', 'incrementRevision', 'modxmcp.site_revision'):
+        if needle not in state_support:
+            errors.append(f'StateSupport CAS invariant missing: {needle}')
 
 if not (src / 'Tools' / 'FilesystemSupport.php').is_file():
     errors.append('FilesystemSupport.php is required by modular filesystem tools')
@@ -387,6 +397,7 @@ expected_registrations = {
     'RoleGetTool.php': 'new RoleGetTool()',
     'RoleListTool.php': 'new RoleListTool()',
     'SearchCodeTool.php': 'new SearchCodeTool()',
+    'SiteStateTool.php': 'new SiteStateTool()',
     'SystemInfoTool.php': 'new SystemInfoTool()',
     'SystemSettingGetTool.php': 'new SystemSettingGetTool()',
     'SystemSettingCreateTool.php': 'new SystemSettingCreateTool()',

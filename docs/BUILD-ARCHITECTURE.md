@@ -37,9 +37,9 @@ Build each transport package on a MODX installation of the matching major versio
 
 ## Version 1.1.0 status
 
-Version 1.1.0 is the first shared-source release line for MODX 2 and MODX 3.
+Version 1.1.0 is the first shared-source release line for MODX 2 and MODX 3. Its published/live-validated contract contains **182/182** actions. The current development tree adds the read-only `get_site_state` action and therefore contains **183/183** actions.
 
-- modular action coverage: **182/182**;
+- v1.1.0 modular action coverage: **182/182**;
 - MODX 3.2.4-pl: full live regression completed;
 - MODX 3 processor compatibility: checked against 3.2.2-pl, 3.2.4-pl and current 3.x;
 - MODX 2.8.9-pl: dedicated transport release-smoke and core live regression completed;
