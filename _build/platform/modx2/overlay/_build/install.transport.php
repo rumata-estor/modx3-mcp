@@ -86,9 +86,15 @@ if(!$package){
 $ok=$package->install(); echo 'install(): '.($ok?'OK':'FAILED').PHP_EOL; if(!$ok) exit(1);
 if($modx->getCacheManager()) $modx->getCacheManager()->refresh();
 $token=$modx->getObject('modSystemSetting',array('key'=>'modxmcp.api_token'));
+$runtimeRevisionSetting=$modx->getObject('modSystemSetting',array('key'=>'modxmcp.site_revision'));
+$countSettingsAll=(int)$modx->getCount('modSystemSetting',array('key:LIKE'=>'modxmcp.%'));
+$countSettings=$countSettingsAll-($runtimeRevisionSetting?1:0);
+$runtimeRevision=$runtimeRevisionSetting?(string)$runtimeRevisionSetting->get('value'):'';
+$runtimeRevisionValid=!$runtimeRevisionSetting||preg_match('/^[0-9]+$/',$runtimeRevision);
 $checks=array(
     (bool)$modx->getObject('modNamespace',array('name'=>'modxmcp')),
-    (int)$modx->getCount('modSystemSetting',array('key:LIKE'=>'modxmcp.%'))===16,
+    $countSettings===16,
+    (bool)$runtimeRevisionValid,
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp')),
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp_graph')),
     $token && strlen(trim((string)$token->get('value')))===64,

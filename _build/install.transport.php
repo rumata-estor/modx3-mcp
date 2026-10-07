@@ -198,8 +198,12 @@ if ($modx->getCacheManager()) {
 }
 
 $ns = $modx->getObject(modNamespace::class, array('name' => 'modxmcp'));
-$countSettings = (int)$modx->getCount(modSystemSetting::class, array('key:LIKE' => 'modxmcp.%'));
+$runtimeRevisionSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.site_revision'));
+$countSettingsAll = (int)$modx->getCount(modSystemSetting::class, array('key:LIKE' => 'modxmcp.%'));
+$countSettings = $countSettingsAll - ($runtimeRevisionSetting ? 1 : 0);
 $expectedSettings = 16;
+$runtimeRevision = $runtimeRevisionSetting ? (string)$runtimeRevisionSetting->get('value') : '';
+$runtimeRevisionValid = !$runtimeRevisionSetting || preg_match('/^[0-9]+$/', $runtimeRevision);
 $tokenSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.api_token'));
 $token = $tokenSetting ? trim((string)$tokenSetting->get('value')) : '';
 $enabledSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.enabled'));
@@ -210,7 +214,8 @@ $modelFile = MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 
 echo 'signature: ' . $signature . PHP_EOL;
 echo 'namespace modxmcp: ' . ($ns ? 'yes' : 'NO') . PHP_EOL;
-echo 'modxmcp.* settings: ' . $countSettings . '/' . $expectedSettings . PHP_EOL;
+echo 'modxmcp.* config settings: ' . $countSettings . '/' . $expectedSettings . PHP_EOL;
+echo 'modxmcp.site_revision: ' . ($runtimeRevisionSetting ? ($runtimeRevisionValid ? $runtimeRevision : 'INVALID') : 'not-created') . PHP_EOL;
 echo 'menu modxmcp: ' . ($rootMenu ? 'yes' : 'NO') . PHP_EOL;
 echo 'menu modxmcp_graph: ' . ($graphMenu ? 'yes' : 'NO') . PHP_EOL;
 echo 'enabled: ' . ($enabledSetting ? var_export($enabledSetting->get('value'), true) : 'missing') . PHP_EOL;
@@ -229,7 +234,7 @@ if (is_file($modelFile)) {
 }
 echo 'deployed model version: ' . ($deployedVersion !== '' ? $deployedVersion : 'UNKNOWN') . PHP_EOL;
 
-if (!$ns || $countSettings !== $expectedSettings || !$rootMenu || !$graphMenu ||
+if (!$ns || $countSettings !== $expectedSettings || !$runtimeRevisionValid || !$rootMenu || !$graphMenu ||
     !$enabledSetting || $token === '' || !is_file($apiFile) || !is_file($modelFile) ||
     $deployedVersion !== PKG_VERSION) {
     fwrite(STDERR, "Transport verification FAILED.\n");

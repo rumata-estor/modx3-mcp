@@ -285,6 +285,8 @@ else:
         "$rootMenu": "transport verifier: root menu install check missing",
         "$graphMenu": "transport verifier: graph menu install check missing",
         "$deployedVersion !== PKG_VERSION": "transport verifier: deployed code version check missing",
+        "modxmcp.site_revision": "transport verifier must separate CAS runtime state from config settings",
+        "$runtimeRevisionSetting": "transport verifier runtime-state lookup missing",
         "exit(7)": "transport verifier: leftover artifacts must fail the uninstall test",
     }
 for needle, message in transport_requirements.items():
