@@ -87,11 +87,14 @@ function legacy_instance($modx) {
 
 $cases = array(
     array('get_capabilities', '', array()),
+    array('get_site_state', '', array()),
     array('list_actions', '', array()),
     array('system_info', '', array()),
     array('project_overview', '', array('sections' => array('summary', 'contexts', 'resources'))),
     array('list_resources', '', array('limit' => 5)),
     array('check_integrations', '', array()),
+    array('clientconfig_list_settings', '', array('query' => '__modxmcp_parity_nonexistent__')),
+    array('clientconfig_get_setting', '', array('key' => '__modxmcp_parity_nonexistent__')),
     array('list_system_settings', '', array('namespace' => 'modxmcp')),
     array('get_system_setting', '', array('key' => 'modxmcp.enabled')),
     array('list_tv_input_types', '', array()),
@@ -128,9 +131,13 @@ $cases = array(
     array('list_roles', '', array('limit' => 5)),
     array('get_role', '', array('id' => 999999)),
     array('list_access_policies', '', array('limit' => 5)),
+    array('get_access_policy', '', array('id' => 999999)),
     array('list_access_policy_templates', '', array('limit' => 5)),
+    array('get_access_policy_template', '', array('id' => 999999)),
     array('list_access_permissions', '', array('template' => 1, 'limit' => 5)),
     array('list_resource_groups', '', array('limit' => 5)),
+    array('get_resource_group', '', array('id' => 999999)),
+    array('list_resource_group_resources', '', array('resourceGroup' => 999999)),
     array('list_context_access', '', array('usergroup' => 1, 'limit' => 5)),
     array('list_resourcegroup_access', '', array('usergroup' => 1, 'limit' => 5)),
     array('help', '', array('topic' => 'index')),
@@ -163,6 +170,10 @@ $cases = array(
     array('ms2_get_product_options', '', array('product_id' => 1)),
 );
 
+if (count($cases) !== 78) {
+    throw new Exception('Live read parity matrix must cover 78 direct actions plus 3 generic element actions; found ' . count($cases) . ' direct actions.');
+}
+
 $failures = array();
 foreach ($cases as $case) {
     list($action, $type, $data) = $case;
@@ -170,7 +181,40 @@ foreach ($cases as $case) {
     $legacy = legacy_instance($modx);
     $a = parity_call($modular, $action, $type, $data);
     $b = parity_call($legacy, $action, $type, $data);
-    if ($a !== $b) {
+
+    $compareA = $a;
+    $compareB = $b;
+    $featureContractOk = true;
+
+    if ($action === 'get_capabilities' && $a['ok'] && $b['ok']) {
+        $af = isset($a['value']['features']) ? $a['value']['features'] : array();
+        $bf = isset($b['value']['features']) ? $b['value']['features'] : array();
+        $featureContractOk =
+            !empty($af['atomic_preconditions'])
+            && !empty($af['site_revision'])
+            && (int)(isset($af['precondition_version']) ? $af['precondition_version'] : 0) === 1
+            && empty($bf['atomic_preconditions'])
+            && empty($bf['site_revision'])
+            && (int)(isset($bf['precondition_version']) ? $bf['precondition_version'] : 0) === 1;
+        unset(
+            $compareA['value']['features']['atomic_preconditions'],
+            $compareA['value']['features']['site_revision'],
+            $compareB['value']['features']['atomic_preconditions'],
+            $compareB['value']['features']['site_revision']
+        );
+    } elseif ($action === 'get_site_state' && $a['ok'] && $b['ok']) {
+        $featureContractOk =
+            !empty($a['value']['atomic_preconditions'])
+            && empty($b['value']['atomic_preconditions'])
+            && (int)(isset($a['value']['precondition_version']) ? $a['value']['precondition_version'] : 0) === 1
+            && (int)(isset($b['value']['precondition_version']) ? $b['value']['precondition_version'] : 0) === 1;
+        unset(
+            $compareA['value']['atomic_preconditions'],
+            $compareB['value']['atomic_preconditions']
+        );
+    }
+
+    if (!$featureContractOk || $compareA !== $compareB) {
         $failures[] = $action;
         echo "DIFF {$action} " . json_encode(
             array('modular' => $a, 'legacy' => $b),
@@ -223,4 +267,4 @@ if ($failures) {
     exit(1);
 }
 
-echo "MODULAR_PARITY_OK 74 actions; 7/7 element types; 4/4 viewable element types\n";
+echo "MODULAR_PARITY_OK 81 actions; 7/7 element types; 4/4 viewable element types\n";
