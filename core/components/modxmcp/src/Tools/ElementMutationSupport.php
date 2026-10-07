@@ -85,35 +85,66 @@ class ElementMutationSupport
 
     public static function handlePluginEvents($context, $pluginId, array $data)
     {
-        if (empty($data['events'])) { return; }
-        $events = is_string($data['events'])
-            ? array_map('trim', explode(',', $data['events']))
-            : $data['events'];
-        if (!is_array($events)) { return; }
+        if (!array_key_exists('events', $data)) { return; }
+
+        if (is_string($data['events'])) {
+            $raw = trim($data['events']);
+            $events = $raw === '' ? array() : array_map('trim', explode(',', $raw));
+        } else {
+            $events = $data['events'];
+        }
+        if (!is_array($events)) {
+            throw new \ModxMCPClientException('plugin events must be an array or comma-separated string.');
+        }
+
+        $normalized = array();
+        foreach ($events as $eventName) {
+            $eventName = trim((string)$eventName);
+            if ($eventName === '') { continue; }
+            if (!in_array($eventName, $normalized, true)) {
+                $normalized[] = $eventName;
+            }
+        }
 
         $modx = $context->modx();
         $pluginEventClass = $context->platform()->className('plugin_event');
         $eventClass = $context->platform()->className('event');
         $pluginId = (int)$pluginId;
+
+        // Validate the complete requested set before changing any relation.
+        $missing = array();
+        foreach ($normalized as $eventName) {
+            if (!$modx->getObject($eventClass, array('name' => $eventName))) {
+                $missing[] = $eventName;
+            }
+        }
+        if (!empty($missing)) {
+            throw new \ModxMCPClientException(
+                'Unknown MODX event(s): ' . implode(', ', $missing)
+            );
+        }
+
+        // Explicit [] means clear all subscriptions. Absence of the field was
+        // handled above and leaves the current subscriptions unchanged.
         $modx->removeCollection($pluginEventClass, array('pluginid' => $pluginId));
 
-        foreach ($events as $eventName) {
-            $eventName = trim((string)$eventName);
-            if ($eventName === '') { continue; }
-            if ($modx->getObject($eventClass, array('name' => $eventName))) {
-                $link = $modx->newObject($pluginEventClass);
-                $link->fromArray(
-                    array(
-                        'pluginid' => $pluginId,
-                        'event' => $eventName,
-                        'priority' => 0,
-                        'propertyset' => 0,
-                    ),
-                    '',
-                    true,
-                    true
+        foreach ($normalized as $eventName) {
+            $link = $modx->newObject($pluginEventClass);
+            $link->fromArray(
+                array(
+                    'pluginid' => $pluginId,
+                    'event' => $eventName,
+                    'priority' => 0,
+                    'propertyset' => 0,
+                ),
+                '',
+                true,
+                true
+            );
+            if (!$link->save()) {
+                throw new \ModxMCPClientException(
+                    'Failed to attach plugin event: ' . $eventName
                 );
-                $link->save();
             }
         }
     }

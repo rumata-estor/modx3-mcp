@@ -585,7 +585,7 @@ class modxMCP {
             'lexicon' => array(
                 'list_lexicon_entries' => array('proc' => 'workspace/lexicon/getlist', 'list' => true, 'via' => 'workspace'),
                 'list_lexicon_topics'  => array('proc' => 'workspace/lexicon/topic/getlist', 'list' => true, 'via' => 'workspace'),
-                'set_lexicon_entry'    => array('proc' => 'workspace/lexicon/create', 'via' => 'workspace'),
+                'set_lexicon_entry'    => 'setLexiconEntry',
                 'revert_lexicon_entry' => array('proc' => 'workspace/lexicon/revert', 'via' => 'workspace'),
             ),
             'ops' => array(
@@ -761,20 +761,41 @@ class modxMCP {
     // --- Обработчики связей ---
 
     private function handlePluginEvents($pluginId, $data) {
-        if (empty($data['events'])) return;
-        $events = is_string($data['events']) ? array_map('trim', explode(',', $data['events'])) : $data['events'];
-        if (!is_array($events)) return;
-        
-        $pluginId = (int)$pluginId;
-        $this->modx->removeCollection(\MODX\Revolution\modPluginEvent::class, ['pluginid' => $pluginId]);
-        
+        if (!array_key_exists('events', $data)) return;
+        if (is_string($data['events'])) {
+            $raw = trim($data['events']);
+            $events = $raw === '' ? array() : array_map('trim', explode(',', $raw));
+        } else {
+            $events = $data['events'];
+        }
+        if (!is_array($events)) {
+            throw new ModxMCPClientException('plugin events must be an array or comma-separated string.');
+        }
+        $normalized = array();
         foreach ($events as $eventName) {
-            $eventName = trim($eventName);
-            if (empty($eventName)) continue;
-            if ($this->modx->getObject(\MODX\Revolution\modEvent::class,['name' => $eventName])) {
-                $pe = $this->modx->newObject(\MODX\Revolution\modPluginEvent::class);
-                $pe->fromArray(['pluginid' => $pluginId, 'event' => $eventName, 'priority' => 0, 'propertyset' => 0], '', true, true);
-                $pe->save();
+            $eventName = trim((string)$eventName);
+            if ($eventName === '') continue;
+            if (!in_array($eventName, $normalized, true)) $normalized[] = $eventName;
+        }
+        $missing = array();
+        foreach ($normalized as $eventName) {
+            if (!$this->modx->getObject(\MODX\Revolution\modEvent::class, array('name' => $eventName))) {
+                $missing[] = $eventName;
+            }
+        }
+        if (!empty($missing)) {
+            throw new ModxMCPClientException('Unknown MODX event(s): ' . implode(', ', $missing));
+        }
+        $pluginId = (int)$pluginId;
+        $this->modx->removeCollection(\MODX\Revolution\modPluginEvent::class, array('pluginid' => $pluginId));
+        foreach ($normalized as $eventName) {
+            $pe = $this->modx->newObject(\MODX\Revolution\modPluginEvent::class);
+            $pe->fromArray(array(
+                'pluginid' => $pluginId, 'event' => $eventName,
+                'priority' => 0, 'propertyset' => 0
+            ), '', true, true);
+            if (!$pe->save()) {
+                throw new ModxMCPClientException('Failed to attach plugin event: ' . $eventName);
             }
         }
     }
@@ -3444,6 +3465,38 @@ class modxMCP {
     // --- Namespaces + Lexicon (toggleable groups) ---
     private function workspaceActionMap() {
         return $this->procMapFor('workspace');
+    }
+
+    private function setLexiconEntry($data) {
+        $props = is_array($data) ? $data : array();
+        foreach (array('name', 'namespace', 'topic') as $required) {
+            if (!isset($props[$required]) || trim((string)$props[$required]) === '') {
+                throw new ModxMCPClientException('set_lexicon_entry: ' . $required . ' is required.');
+            }
+        }
+        $entry = array(
+            'name' => (string)$props['name'],
+            'value' => isset($props['value']) ? (string)$props['value'] : '',
+            'namespace' => (string)$props['namespace'],
+            'topic' => (string)$props['topic'],
+            'language' => !empty($props['language']) ? (string)$props['language'] : 'en',
+        );
+        $this->modx->lexicon->load('core:default', 'core:workspaces', 'core:lexicon');
+        $response = $this->runCoreProcessor(
+            'workspace/lexicon/updatefromgrid',
+            array('data' => json_encode($entry))
+        );
+        if (!$response || $response->isError()) {
+            throw new ModxMCPClientException(
+                $response ? $this->formatProcessorErrors($response) : 'Lexicon update processor returned no response.'
+            );
+        }
+        $this->logAudit(
+            'set_lexicon_entry',
+            'workspace',
+            array_intersect_key($entry, array_flip(array('name', 'namespace', 'topic', 'language')))
+        );
+        return $this->normalizeProcessorResponse($response);
     }
 
     private function runWorkspaceAction($action, $data) {

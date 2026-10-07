@@ -74,6 +74,7 @@ class Modx3Platform extends AbstractPlatform
             'remove_locks' => 'RemoveLocks',
             'removeresource' => 'RemoveResource',
             'updateresourcesin' => 'UpdateResourcesIn',
+            'updatefromgrid' => 'UpdateFromGrid',
         );
 
         $parts = explode('/', $path);

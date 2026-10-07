@@ -308,6 +308,8 @@ for needle, message in {
     "MCP_ENDPOINT_READ_ONLY_SMOKE_OK": "endpoint read-only smoke marker missing",
     "finally": "endpoint smoke must guarantee CRUD cleanup",
     "actionCount !== 192": "endpoint smoke must detect client/server action skew",
+    "modxmcp.site_revision": "endpoint smoke must separate CAS runtime state from config settings",
+    "$runtimeSettings": "endpoint smoke runtime-setting separation missing",
 }.items():
     if needle not in endpoint_smoke:
         fail(message)

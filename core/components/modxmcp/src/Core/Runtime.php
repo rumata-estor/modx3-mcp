@@ -63,6 +63,7 @@ use ModxMcp\Tools\TvValueClearTool;
 use ModxMcp\Tools\NamespaceListTool;
 use ModxMcp\Tools\LexiconEntryListTool;
 use ModxMcp\Tools\LexiconTopicListTool;
+use ModxMcp\Tools\LexiconEntrySetTool;
 use ModxMcp\Tools\PropertySetListTool;
 use ModxMcp\Tools\PropertySetCreateTool;
 use ModxMcp\Tools\PropertySetUpdateTool;
@@ -227,6 +228,7 @@ class Runtime
         $this->registry->register(new NamespaceListTool());
         $this->registry->register(new LexiconEntryListTool());
         $this->registry->register(new LexiconTopicListTool());
+        $this->registry->register(new LexiconEntrySetTool());
         $this->registry->register(new PropertySetListTool());
         $this->registry->register(new PropertySetCreateTool());
         $this->registry->register(new PropertySetUpdateTool());

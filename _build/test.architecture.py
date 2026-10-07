@@ -21,6 +21,8 @@ if 'MODX\\\\Revolution' in modx2:
     errors.append('Modx2Platform contains MODX 3 namespaced classes')
 if 'MODX\\\\Revolution' not in modx3:
     errors.append('Modx3Platform is missing namespaced MODX 3 class mappings')
+if "'updatefromgrid' => 'UpdateFromGrid'" not in modx3:
+    errors.append('Modx3Platform must preserve UpdateFromGrid processor casing')
 if "return 'modx2'" not in modx2 or "return 'modx3'" not in modx3:
     errors.append('Platform keys are missing')
 
@@ -124,6 +126,7 @@ expected_tools = [
     'HelpTool.php',
     'InstalledComponentsTool.php',
     'LexiconEntryListTool.php',
+    'LexiconEntrySetTool.php',
     'LexiconTopicListTool.php',
     'ListActionsTool.php',
     'MediaFileCreateTool.php',
@@ -241,6 +244,15 @@ expected_tools = [
 ]
 if tools != expected_tools:
     errors.append(f'Unexpected migrated tool set: {tools}')
+
+plugin_mutation = (src / 'Tools' / 'ElementMutationSupport.php').read_text(encoding='utf-8')
+for needle in (
+    "array_key_exists('events', $data)",
+    "Unknown MODX event(s):",
+    "removeCollection($pluginEventClass",
+):
+    if needle not in plugin_mutation:
+        errors.append(f'Plugin-event mutation invariant missing: {needle}')
 
 if not (src / 'Tools' / 'StateSupport.php').is_file():
     errors.append('StateSupport.php is required by Runtime CAS')

@@ -46,7 +46,6 @@ class MutationProcessorCatalog
             'create_namespace' => array('group' => 'namespaces', 'processor' => 'workspace/namespace/create', 'route' => 'workspace'),
             'update_namespace' => array('group' => 'namespaces', 'processor' => 'workspace/namespace/update', 'route' => 'workspace'),
             'delete_namespace' => array('group' => 'namespaces', 'processor' => 'workspace/namespace/remove', 'route' => 'workspace'),
-            'set_lexicon_entry' => array('group' => 'lexicon', 'processor' => 'workspace/lexicon/create', 'route' => 'workspace'),
             'revert_lexicon_entry' => array('group' => 'lexicon', 'processor' => 'workspace/lexicon/revert', 'route' => 'workspace'),
         );
     }
