@@ -8,7 +8,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**1.2.0 release candidate · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
+**MODX MCP 1.2.0 · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -183,13 +183,13 @@ Version 1.2.0 continues the shared-source line for both supported MODX generatio
 
 The two MODX generations use the same MCP client, the same public action contract and the same modular runtime. Platform-specific bootstrap, class names and processor routing are isolated behind platform adapters and release overlays.
 
-Version 1.2.0 release-candidate status:
+Version 1.2.0 status:
 
 - all **192/192** server actions are implemented by the modular runtime; compared with v1.1.0, version 1.2.0 adds 10 actions: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
 - the 192-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
 - the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
 - MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
-- **v1.2.0 is being prepared as the next stable release**. Dedicated Runtime-CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl; the final full CI/release-smoke gates must pass before publication.
+- **v1.2.0 is the current stable release**. Static release checks, Runtime-CAS smoke, platform transport release-smoke and the current 81-action read parity passed on MODX 3.2.4-pl and MODX 2.8.9-pl; the complete 14-suite live regression passed on MODX 3, while MODX 2 passed the core/runtime matrix with positive MIGX lifecycle skipped because MIGX is not installed on that sandbox.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 
@@ -215,7 +215,7 @@ Install only the package that matches the MODX major version. Both packages inst
 
 Existing `modxmcp.*` settings and the API token are preserved during reinstall or upgrade.
 
-Version **1.2.0** is the release candidate currently being validated; **1.1.0** remains the published stable release until the final gates complete.
+Version **1.2.0** is the current published stable GitHub release.
 
 ## Command-line installation
 
@@ -298,11 +298,11 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Release candidate: **1.2.0**. Current published stable version until release completion: **1.1.0**.
+Current stable version: **1.2.0**.
 
-Latest published stable release: **[1.1.0](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.1.0)**.
+Latest published stable release: **[1.2.0](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.0)**.
 
-The 1.1.0 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
+The 1.2.0 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
 
 ---
 

@@ -26,7 +26,7 @@ Minor release extending the shared MODX 2 / MODX 3 contract from 182 to **192 se
 - Kept one shared source tree, Node.js client and public action contract for MODX Revolution 2.8.x and 3.x.
 - Dedicated Runtime-CAS smoke tests passed on MODX 2.8.9-pl and MODX 3.2.4-pl before release preparation.
 - Release metadata, staging checks and both platform build configurations are aligned on version 1.2.0.
-- Full 1.2.0 CI, platform release-smoke and final artifact verification are release gates and are recorded in the validation documents.
+- The 1.2.0 static release matrix, MODX 3 processor compatibility checks, transport release-smoke on MODX 2.8.9-pl and MODX 3.2.4-pl, 81-action live read parity and the complete MODX 3 14-suite regression passed before publication. The MODX 2 positive MIGX lifecycle is skipped because MIGX is absent on that sandbox; the positive 3/3 MIGX cycle passes on MODX 3.
 
 ## 1.1.0 (2026-10-02)
 

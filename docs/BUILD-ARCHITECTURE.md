@@ -35,13 +35,13 @@ python3 _build/prepare-release.py --platform modx2 --output /tmp/modxmcp-modx2
 
 Build each transport package on a MODX installation of the matching major version.
 
-## Version 1.1.0 status
+## Version 1.2.0 status
 
-Version 1.1.0 is the first shared-source release line for MODX 2 and MODX 3. Its published/live-validated contract contains **182/182** actions. The current development tree adds 10 actions beyond v1.1.0 and therefore contains **192/192** server actions: 81 read-only and 111 mutations.
+Version 1.2.0 is the current shared-source stable line for MODX 2 and MODX 3. Its contract contains **192/192** server actions: 81 read-only and 111 mutations. Compared with v1.1.0 it adds 10 actions plus Runtime CAS/stale-state protection.
 
-- v1.1.0 modular action coverage: **182/182**;
-- MODX 3.2.4-pl: full live regression completed;
-- MODX 3 processor compatibility: checked against 3.2.2-pl, 3.2.4-pl and current 3.x;
-- MODX 2.8.9-pl: dedicated transport release-smoke and core live regression completed;
-- both v1.1.0 platform live-validation gates are complete; the final artifacts/checksums were verified and **v1.1.0 is published**;
-- the development `get_site_state`/Runtime-CAS path has additionally passed a focused live smoke on MODX 3.2.4-pl and MODX 2.8.9-pl; the current development-only action set is not part of v1.1.0.
+- v1.2.0 modular action coverage: **192/192**;
+- MODX 3.2.4-pl: complete 14-suite live regression and transport release-smoke passed;
+- MODX 3 processor compatibility: passed against 3.2.2-pl, 3.2.4-pl and current 3.x (113 referenced processor files);
+- MODX 2.8.9-pl: transport release-smoke, 81-action read parity and the core/runtime mutation matrix passed; positive MIGX lifecycle is skipped because MIGX is not installed on that sandbox;
+- Runtime CAS/stale-state smoke passed on both supported MODX generations;
+- the positive MIGX mutation lifecycle passed 3/3 on MODX 3.
