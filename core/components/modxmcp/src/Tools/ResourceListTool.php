@@ -26,6 +26,9 @@ class ResourceListTool implements ToolInterface
         $and = array();
         if (isset($data['parent']) && $data['parent'] !== '') { $and['parent'] = (int) $data['parent']; }
         if (!empty($data['context'])) { $and['context_key'] = (string) $data['context']; }
+        if (array_key_exists('deleted', $data) && $data['deleted'] !== '') {
+            $and['deleted'] = !empty($data['deleted']) ? 1 : 0;
+        }
         if (!empty($and)) { $c->where($and); }
         if (!empty($data['query'])) {
             $q = trim((string) $data['query']);
@@ -51,6 +54,7 @@ class ResourceListTool implements ToolInterface
                 'parent' => (int) $r->get('parent'),
                 'template' => (int) $r->get('template'),
                 'published' => (bool) $r->get('published'),
+                'deleted' => (bool) $r->get('deleted'),
                 'isfolder' => (bool) $r->get('isfolder'),
                 'class_key' => $r->get('class_key'),
                 'context_key' => $r->get('context_key'),

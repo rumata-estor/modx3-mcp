@@ -1595,13 +1595,14 @@ const toolDefinitions = [
   {
     name: "modx_list_resources",
     description:
-      "List resources (the content tree), optionally filtered by parent, context, or a pagetitle/alias/uri query. Returns id, pagetitle, alias, uri, parent, template, published, isfolder, class_key, context_key.",
+      "List resources (the content tree), optionally filtered by parent, context, deleted state, or a pagetitle/alias/uri query. Returns id, pagetitle, alias, uri, parent, template, published, deleted, isfolder, class_key, context_key.",
     inputSchema: {
       type: "object",
       properties: {
         parent: { type: "number", description: "Parent resource id (e.g. 0 for top level)." },
         context: { type: "string", description: "Context key (e.g. 'web')." },
         query: { type: "string", description: "Filter by pagetitle/alias/uri substring." },
+        deleted: { type: "boolean", description: "When set, filter resources by deleted state." },
         limit: { type: "number", description: "Max results (default 100, max 500)." },
         start: { type: "number", description: "Offset for pagination." },
       },

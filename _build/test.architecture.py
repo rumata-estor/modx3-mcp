@@ -245,6 +245,25 @@ expected_tools = [
 if tools != expected_tools:
     errors.append(f'Unexpected migrated tool set: {tools}')
 
+resource_list = (src / 'Tools' / 'ResourceListTool.php').read_text(encoding='utf-8')
+for needle in (
+    "array_key_exists('deleted', $data)",
+    "'deleted' => (bool) $r->get('deleted')",
+):
+    if needle not in resource_list:
+        errors.append(f'ResourceListTool recycle invariant missing: {needle}')
+for rel in (
+    'core/components/modxmcp/model/modxmcp.class.php',
+    'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+):
+    text = (root / rel).read_text(encoding='utf-8')
+    for needle in (
+        "array_key_exists('deleted', $data)",
+        "'deleted' => (bool) $r->get('deleted')",
+    ):
+        if needle not in text:
+            errors.append(f'{rel}: recycle/list_resources invariant missing: {needle}')
+
 plugin_mutation = (src / 'Tools' / 'ElementMutationSupport.php').read_text(encoding='utf-8')
 for needle in (
     "array_key_exists('events', $data)",
