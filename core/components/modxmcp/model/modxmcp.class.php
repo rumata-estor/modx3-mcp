@@ -3651,7 +3651,7 @@ class modxMCP {
             $c->where(array('key:LIKE' => $q, 'OR:label:LIKE' => $q));
         }
         $c->sortby('sortorder', 'ASC');
-        $c->sortby('key', 'ASC');
+        $c->sortby('cgSetting.key', 'ASC');
         $rows = array();
         foreach ($this->modx->getCollection('cgSetting', $c) as $setting) {
             $rows[] = $this->normalizeClientConfigSetting($setting);

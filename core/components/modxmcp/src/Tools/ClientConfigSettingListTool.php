@@ -20,7 +20,7 @@ class ClientConfigSettingListTool implements ToolInterface
             ));
         }
         $query->sortby('sortorder', 'ASC');
-        $query->sortby('key', 'ASC');
+        $query->sortby('cgSetting.key', 'ASC');
         $rows = array();
         foreach ($context->modx()->getCollection('cgSetting', $query) as $setting) {
             $rows[] = ClientConfigSupport::normalize($context, $setting);
