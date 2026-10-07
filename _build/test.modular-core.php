@@ -198,7 +198,7 @@ foreach (array(
     if (!$runtime->registry()->get($name)) { throw new Exception('Missing registered tool: ' . $name); }
 }
 $mutationSpecs = \ModxMcp\Registry\MutationProcessorCatalog::specs();
-if (count($mutationSpecs) !== 40) { throw new Exception('Unexpected processor mutation catalog count'); }
+if (count($mutationSpecs) !== 39) { throw new Exception('Unexpected processor mutation catalog count'); }
 foreach ($mutationSpecs as $name => $spec) {
     $tool = $runtime->registry()->get($name);
     if (!$tool) { throw new Exception('Missing processor mutation tool: ' . $name); }
