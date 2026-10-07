@@ -197,9 +197,21 @@ foreach ($cases as $case) {
     $modular = mutation_tx($modx, new modxMCP($modx), $action, $data);
     $legacy = mutation_tx($modx, mutation_legacy($modx), $action, $data);
 
+    $revisionContractOk = true;
+    if ($action === 'set_lexicon_entry' && $modular['ok'] && $legacy['ok']) {
+        $revision = isset($modular['value']['_site_revision'])
+            ? $modular['value']['_site_revision']
+            : null;
+        $revisionContractOk =
+            $revision !== null
+            && ctype_digit((string)$revision)
+            && !isset($legacy['value']['_site_revision']);
+        unset($modular['value']['_site_revision']);
+    }
+
     $a = mutation_normalize($modular);
     $b = mutation_normalize($legacy);
-    if ($a !== $b) {
+    if (!$revisionContractOk || $a !== $b) {
         $failures[] = array(
             'action' => $action,
             'modular' => $a,
@@ -216,4 +228,4 @@ if (!empty($failures)) {
     exit(1);
 }
 
-echo "MUTATION_PARITY_OK " . count($cases) . " checks across 40 processor mutations\n";
+echo "MUTATION_PARITY_OK " . count($cases) . " checks across 39 processor mutations + set_lexicon_entry\n";
