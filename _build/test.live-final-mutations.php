@@ -96,6 +96,7 @@ function final_normalize($value)
     if (!is_array($value)) { return $value; }
     $out = array();
     foreach ($value as $key => $item) {
+        if ((string)$key === '_site_revision') { continue; }
         if ((string)$key === 'id' && (is_int($item) || ctype_digit((string)$item))) {
             $out[$key] = '__ID__';
             continue;

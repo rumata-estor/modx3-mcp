@@ -73,7 +73,7 @@ class FakeModx {
     }
 }
 class FakeLegacy {
-    const VERSION = '1.1.0-test';
+    const VERSION = '1.2.0-test';
     public function getCapabilities() { return array('ok' => true, 'source' => 'legacy'); }
     public function getSupportedActions() { return array('ops' => array('list_actions')); }
 }
@@ -92,7 +92,7 @@ $info = $runtime->registry()->get('system_info');
 if (!$info || $info->isMutation() || !$info->supports($runtime->context())) { throw new Exception('SystemInfo tool registration failed'); }
 $result = $info->execute($runtime->context(), array());
 if ($result['modx_version'] !== '3.2.4-pl') { throw new Exception('Bad MODX version'); }
-if ($result['modxmcp_version'] !== '1.1.0-test') { throw new Exception('Bad connector version'); }
+if ($result['modxmcp_version'] !== '1.2.0-test') { throw new Exception('Bad connector version'); }
 if ($result['dbtype'] !== 'mysql') { throw new Exception('Bad DB type'); }
 
 $listContexts = $runtime->registry()->get('list_contexts')->execute($runtime->context(), array());
@@ -198,7 +198,7 @@ foreach (array(
     if (!$runtime->registry()->get($name)) { throw new Exception('Missing registered tool: ' . $name); }
 }
 $mutationSpecs = \ModxMcp\Registry\MutationProcessorCatalog::specs();
-if (count($mutationSpecs) !== 40) { throw new Exception('Unexpected processor mutation catalog count'); }
+if (count($mutationSpecs) !== 39) { throw new Exception('Unexpected processor mutation catalog count'); }
 foreach ($mutationSpecs as $name => $spec) {
     $tool = $runtime->registry()->get($name);
     if (!$tool) { throw new Exception('Missing processor mutation tool: ' . $name); }
@@ -337,5 +337,5 @@ foreach (array('bulk_resources', 'replace_across') as $name) {
         throw new Exception('Bad final mutation registration: ' . $name);
     }
 }
-if (count($runtime->registry()->all()) !== 182) { throw new Exception('Unexpected tool count'); }
+if (count($runtime->registry()->all()) !== 192) { throw new Exception('Unexpected tool count'); }
 echo "MODULAR_CORE_OK\n";

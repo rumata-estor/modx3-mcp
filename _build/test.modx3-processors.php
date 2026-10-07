@@ -48,6 +48,7 @@ $nameMap = array(
     'remove_locks'      => 'RemoveLocks',
     'removeresource'    => 'RemoveResource',
     'updateresourcesin' => 'UpdateResourcesIn',
+    'updatefromgrid'    => 'UpdateFromGrid',
 );
 
 $toRelativeFile = static function ($processor) use ($nameMap) {

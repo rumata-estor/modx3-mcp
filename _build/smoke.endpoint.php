@@ -94,6 +94,22 @@ foreach ($modx->getCollection(modSystemSetting::class, array('namespace' => 'mod
 }
 ksort($settings, SORT_STRING);
 
+// Runtime CAS stores its monotonic revision in the same namespace, but it is
+// operational state rather than administrator configuration. It must not make
+// release settings snapshots/hashes unstable.
+$runtimeSettings = array();
+foreach (array('modxmcp.site_revision') as $runtimeKey) {
+    if (array_key_exists($runtimeKey, $settings)) {
+        $runtimeSettings[$runtimeKey] = $settings[$runtimeKey];
+        unset($settings[$runtimeKey]);
+    }
+}
+if (isset($runtimeSettings['modxmcp.site_revision'])
+    && !preg_match('/^[0-9]+$/', (string)$runtimeSettings['modxmcp.site_revision'])) {
+    fwrite(STDERR, "Invalid modxmcp.site_revision runtime state.\n");
+    exit(3);
+}
+
 if ($settingsExport !== '') {
     if (count($settings) > 16) {
         fwrite(STDERR, "Refusing settings snapshot with unexpected extra modxmcp settings: found " . count($settings) . ".\n");
@@ -323,8 +339,8 @@ if (is_array($actions)) {
         }
     }
 }
-if ($actionCount !== 182) {
-    throw new RuntimeException("list_actions: expected 182 actions, got {$actionCount}.");
+if ($actionCount !== 192) {
+    throw new RuntimeException("list_actions: expected 192 actions, got {$actionCount}.");
 }
 echo "ACTIONS_OK count={$actionCount}\n";
 

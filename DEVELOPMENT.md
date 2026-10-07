@@ -9,7 +9,7 @@ It is written so that an experienced developer can quickly understand the projec
 For a normal installation, the published release and MCP client configuration are usually enough. Development, server-side changes, security settings, production upgrades, and unusual failures require more technical experience. If, after reading the relevant section, you still cannot clearly explain what will change and how you will verify it, do not experiment on a live site. Use a test environment or involve someone with the right experience.
 
 
-MODX MCP 1.1.0 is designed for **MODX Revolution 2.8.x and 3.x** from one shared source tree. The two MODX generations differ in PHP class names, namespaces, core bootstrap, manager internals and processor routing, so platform-specific behavior must go through the platform adapters and release overlays rather than be copied between versions mechanically.
+MODX MCP 1.2.0 is designed for **MODX Revolution 2.8.x and 3.x** from one shared source tree. The two MODX generations differ in PHP class names, namespaces, core bootstrap, manager internals and processor routing, so platform-specific behavior must go through the platform adapters and release overlays rather than be copied between versions mechanically.
 
 > **The main rule of the project: do not give AI the widest possible access. Give it the correct, limited, and verifiable access to MODX objects.**
 
@@ -55,7 +55,7 @@ The basic setup is:
 5. Start with read-only operations.
 6. Enable write or dangerous operations only when they are actually needed.
 
-For production use, pin the latest published stable release. The current stable tag is `v1.1.0`; pin `v1.1.0` rather than `main`.
+For production use, pin the latest published stable release. The current stable tag is `v1.2.0`; pin `v1.2.0` rather than `main`.
 
 Example MCP client configuration:
 
@@ -66,7 +66,7 @@ Example MCP client configuration:
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.1.0"
+        "github:rumata-estor/modx3-mcp#v1.2.0"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -191,7 +191,7 @@ For example, the tool `modx_example_action` normally maps to the server action `
 
 An automated test checks that the Node.js tools and PHP server actions do not drift apart.
 
-Version 1.1.0 keeps a 182-action public server contract, and all 182 actions are registered in the modular Runtime.
+Version 1.2.0 exposes a 192-action public server contract: 81 read-only actions and 111 mutations, all registered in the modular Runtime.
 
 ### Project version
 
@@ -217,7 +217,7 @@ If you add a setting, add it to both installation methods.
 
 ## 5. Platform architecture: MODX 2 and MODX 3
 
-Version 1.1.0 uses one shared modular Runtime for MODX Revolution 2.8.x and 3.x.
+Version 1.2.0 uses one shared modular Runtime for MODX Revolution 2.8.x and 3.x.
 
 The shared Tool classes must not depend directly on one MODX major version. Platform differences are isolated behind `PlatformInterface` and the release/bootstrap boundary:
 
@@ -505,11 +505,11 @@ One source version produces two transport packages.
 
 Prepare a staging tree for the target platform, then run its builder on a MODX installation of the same major version.
 
-Expected 1.1.0 artifacts:
+Expected 1.2.0 artifacts:
 
 ```text
-MODX 2.8.x: modxmcp-1.1.0-pl.transport.zip
-MODX 3.x:   modx3mcp-1.1.0-pl.transport.zip
+MODX 2.8.x: modxmcp-1.2.0-pl.transport.zip
+MODX 3.x:   modx3mcp-1.2.0-pl.transport.zip
 ```
 
 Example for MODX 3:
@@ -594,8 +594,8 @@ GitHub Actions checks:
 - PHP and Node.js syntax;
 - architecture and platform staging;
 - MODX 2 PHP/static compatibility;
-- the complete 182-action client/server contract;
-- modular migration coverage (74/74 reads + 108/108 mutations);
+- the complete 192-action client/server contract;
+- modular migration coverage (81/81 reads + 111/111 mutations);
 - release portability and secure defaults;
 - version consistency across shared and platform-specific release metadata;
 - changelog coverage for the current version;
@@ -619,7 +619,7 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php bash _build/release.smoke.sh
 
 MODX 2 uses the same process with `--platform modx2` and the MODX 2 release overlay/smoke runner.
 
-A release is ready only when the required static checks pass and each platform artifact has completed its dedicated live smoke. For 1.1.0, MODX 2.8.9-pl and MODX 3.2.4-pl completed live validation, the final artifacts/checksums were verified, and `v1.1.0` was published.
+A release is ready only when the required static checks pass and each platform artifact has completed its dedicated live smoke. For 1.2.0, MODX 2.8.9-pl and MODX 3.2.4-pl completed transport release-smoke and the current 81-action read parity; MODX 3 additionally completed the full 14-suite live regression. The MODX 2 positive MIGX lifecycle is skipped when MIGX is absent, while the same 3/3 lifecycle is verified on MODX 3.
 
 ## 16. Updating the version
 
@@ -648,7 +648,7 @@ The Node.js side compares its own version with the site API version and warns if
 On production, use a fixed release:
 
 ```text
-github:rumata-estor/modx3-mcp#v1.1.0
+github:rumata-estor/modx3-mcp#v1.2.0
 ```
 
 instead of a development branch.

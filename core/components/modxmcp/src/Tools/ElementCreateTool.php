@@ -12,6 +12,11 @@ class ElementCreateTool implements ToolInterface
     {
         $type = ElementSupport::type($data);
         ElementMutationSupport::loadLexicons($context);
+        $runtimePreconditions = (
+            isset($data['_runtime_preconditions'])
+            && is_array($data['_runtime_preconditions'])
+        ) ? $data['_runtime_preconditions'] : null;
+        unset($data['_runtime_preconditions']);
         $prepared = ElementMutationSupport::prepare($context, $type, $data, $this->name());
 
         $createData = $prepared;
@@ -26,7 +31,19 @@ class ElementCreateTool implements ToolInterface
 
         return ElementMutationSupport::transaction(
             $context,
-            function () use ($context, $type, $prepared, $createData) {
+            function () use (
+                $context,
+                $type,
+                $prepared,
+                $createData,
+                $runtimePreconditions
+            ) {
+                if (is_array($runtimePreconditions)) {
+                    StateSupport::assertPreconditions(
+                        $context,
+                        $runtimePreconditions
+                    );
+                }
                 $response = $context->platform()->runProcessor(
                     $context->modx(),
                     ElementSupport::processorBase($type) . 'create',

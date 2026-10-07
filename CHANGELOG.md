@@ -2,6 +2,32 @@
 
 # MODX MCP — Changelog
 
+## 1.2.0 (2026-10-07)
+
+Minor release extending the shared MODX 2 / MODX 3 contract from 182 to **192 server actions** and adding Runtime-safe compare-and-swap preconditions for concurrent agent work.
+
+### Runtime CAS and stale-state protection
+
+- Added `get_site_state` and a stable site revision/fingerprint contract for Runtime coordination.
+- Added atomic write preconditions and explicit `STALE_STATE` failures when a target changed after planning or a supposedly absent target appeared before creation.
+- Extended safe precondition coverage across modular mutation domains while preserving the existing MODX processor and rollback paths.
+- Resource reads now expose deleted state needed by recycle/undelete workflows.
+
+### New actions and integrations
+
+- Expanded the modular action contract to **81 read-only + 111 mutation actions = 192/192 total**.
+- Added ClientConfig setting list/get/create/update/delete support through the modular runtime.
+- Added read helpers for access policies, access-policy templates, resource groups and resource-group membership.
+- Added modular support for lexicon entry writes and additional safe mutation paths used by the Runtime orchestration layer.
+- Fixed ClientConfig listing on SQL servers where the unqualified `key` sort could be ambiguous/reserved by qualifying it as `cgSetting.key`.
+
+### Compatibility and release engineering
+
+- Kept one shared source tree, Node.js client and public action contract for MODX Revolution 2.8.x and 3.x.
+- Dedicated Runtime-CAS smoke tests passed on MODX 2.8.9-pl and MODX 3.2.4-pl before release preparation.
+- Release metadata, staging checks and both platform build configurations are aligned on version 1.2.0.
+- The 1.2.0 static release matrix, MODX 3 processor compatibility checks, transport release-smoke on MODX 2.8.9-pl and MODX 3.2.4-pl, 81-action live read parity and the complete MODX 3 14-suite regression passed before publication. The MODX 2 positive MIGX lifecycle is skipped because MIGX is absent on that sandbox; the positive 3/3 MIGX cycle passes on MODX 3.
+
 ## 1.1.0 (2026-10-02)
 
 Major architecture release preparing the project as a shared MODX 2 / MODX 3 codebase.

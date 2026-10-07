@@ -100,9 +100,9 @@ else:
             % (documented[0], documented[1], actual[0], actual[1])
         )
 
-if len(server_actions) != 182:
+if len(server_actions) != 192:
     errors.append(
-        'expected 182 server actions including internal get_capabilities, got %d'
+        'expected 192 server actions including internal get_capabilities, got %d'
         % len(server_actions)
     )
 

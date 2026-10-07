@@ -21,6 +21,8 @@ if 'MODX\\\\Revolution' in modx2:
     errors.append('Modx2Platform contains MODX 3 namespaced classes')
 if 'MODX\\\\Revolution' not in modx3:
     errors.append('Modx3Platform is missing namespaced MODX 3 class mappings')
+if "'updatefromgrid' => 'UpdateFromGrid'" not in modx3:
+    errors.append('Modx3Platform must preserve UpdateFromGrid processor casing')
 if "return 'modx2'" not in modx2 or "return 'modx3'" not in modx3:
     errors.append('Platform keys are missing')
 
@@ -30,7 +32,8 @@ for needle in (
     'private $modularRuntime = null;',
     'registry()->get($action)',
     '->supports($this->modularRuntime->context())',
-    '->execute($this->modularRuntime->context()',
+    'StateSupport::withMutationLock',
+    '$tool->execute(',
     'catch (\\Throwable $e)',
 ):
     if needle not in legacy:
@@ -56,7 +59,7 @@ for rel in element_bridge_files:
     text = (root / rel).read_text(encoding='utf-8')
     bridge_start = text.find('$elementBridgeActions = array(')
     bridge_end = text.find(
-        'return $tool->execute($this->modularRuntime->context(), $toolData);',
+        '$runtimePreconditions = null;',
         bridge_start,
     )
     bridge = text[bridge_start:bridge_end] if bridge_start >= 0 and bridge_end >= 0 else ''
@@ -85,13 +88,20 @@ for rel in ('MediaSourceFilesTool.php', 'MediaSourceFileReadTool.php'):
 tools = sorted(p.name for p in (src / 'Tools').glob('*Tool.php') if p.name != 'ToolInterface.php')
 expected_tools = [
     'AccessPermissionListTool.php',
+    'AccessPolicyGetTool.php',
     'AccessPolicyListTool.php',
+    'AccessPolicyTemplateGetTool.php',
     'AccessPolicyTemplateListTool.php',
     'AuditLogReadTool.php',
     'BulkResourcesTool.php',
     'CapabilitiesTool.php',
     'CheckIntegrationsTool.php',
     'ClearCacheTool.php',
+    'ClientConfigSettingCreateTool.php',
+    'ClientConfigSettingDeleteTool.php',
+    'ClientConfigSettingGetTool.php',
+    'ClientConfigSettingListTool.php',
+    'ClientConfigSettingUpdateTool.php',
     'ComponentFileReadTool.php',
     'ComponentFilesTool.php',
     'ContextAccessListTool.php',
@@ -116,6 +126,7 @@ expected_tools = [
     'HelpTool.php',
     'InstalledComponentsTool.php',
     'LexiconEntryListTool.php',
+    'LexiconEntrySetTool.php',
     'LexiconTopicListTool.php',
     'ListActionsTool.php',
     'MediaFileCreateTool.php',
@@ -181,7 +192,9 @@ expected_tools = [
     'ReplaceAcrossTool.php',
     'ResourceDuplicateTool.php',
     'ResourceGroupAccessListTool.php',
+    'ResourceGroupGetTool.php',
     'ResourceGroupListTool.php',
+    'ResourceGroupResourcesListTool.php',
     'ResourceListTool.php',
     'ResourceRecycleBinEmptyTool.php',
     'ResourceReorderTool.php',
@@ -192,6 +205,7 @@ expected_tools = [
     'RoleListTool.php',
     'RunProcessorTool.php',
     'SearchCodeTool.php',
+    'SiteStateTool.php',
     'SystemInfoTool.php',
     'SystemSettingCreateTool.php',
     'SystemSettingDeleteTool.php',
@@ -230,6 +244,42 @@ expected_tools = [
 ]
 if tools != expected_tools:
     errors.append(f'Unexpected migrated tool set: {tools}')
+
+resource_list = (src / 'Tools' / 'ResourceListTool.php').read_text(encoding='utf-8')
+for needle in (
+    "array_key_exists('deleted', $data)",
+    "'deleted' => (bool) $r->get('deleted')",
+):
+    if needle not in resource_list:
+        errors.append(f'ResourceListTool recycle invariant missing: {needle}')
+for rel in (
+    'core/components/modxmcp/model/modxmcp.class.php',
+    'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+):
+    text = (root / rel).read_text(encoding='utf-8')
+    for needle in (
+        "array_key_exists('deleted', $data)",
+        "'deleted' => (bool) $r->get('deleted')",
+    ):
+        if needle not in text:
+            errors.append(f'{rel}: recycle/list_resources invariant missing: {needle}')
+
+plugin_mutation = (src / 'Tools' / 'ElementMutationSupport.php').read_text(encoding='utf-8')
+for needle in (
+    "array_key_exists('events', $data)",
+    "Unknown MODX event(s):",
+    "removeCollection($pluginEventClass",
+):
+    if needle not in plugin_mutation:
+        errors.append(f'Plugin-event mutation invariant missing: {needle}')
+
+if not (src / 'Tools' / 'StateSupport.php').is_file():
+    errors.append('StateSupport.php is required by Runtime CAS')
+else:
+    state_support = (src / 'Tools' / 'StateSupport.php').read_text(encoding='utf-8')
+    for needle in ('flock(', 'assertPreconditions', 'incrementRevision', 'modxmcp.site_revision'):
+        if needle not in state_support:
+            errors.append(f'StateSupport CAS invariant missing: {needle}')
 
 if not (src / 'Tools' / 'FilesystemSupport.php').is_file():
     errors.append('FilesystemSupport.php is required by modular filesystem tools')
@@ -281,12 +331,19 @@ if 'MutationProcessorCatalog::specs()' not in runtime_text or 'new ProcessorMuta
     errors.append('Processor mutation catalog is not registered in Runtime')
 expected_registrations = {
     'AccessPermissionListTool.php': 'new AccessPermissionListTool()',
+    'AccessPolicyGetTool.php': 'new AccessPolicyGetTool()',
     'AccessPolicyListTool.php': 'new AccessPolicyListTool()',
+    'AccessPolicyTemplateGetTool.php': 'new AccessPolicyTemplateGetTool()',
     'AccessPolicyTemplateListTool.php': 'new AccessPolicyTemplateListTool()',
     'AuditLogReadTool.php': 'new AuditLogReadTool()',
     'CapabilitiesTool.php': 'new CapabilitiesTool()',
     'ClearCacheTool.php': 'new ClearCacheTool()',
     'CheckIntegrationsTool.php': 'new CheckIntegrationsTool()',
+    'ClientConfigSettingCreateTool.php': 'new ClientConfigSettingCreateTool()',
+    'ClientConfigSettingDeleteTool.php': 'new ClientConfigSettingDeleteTool()',
+    'ClientConfigSettingGetTool.php': 'new ClientConfigSettingGetTool()',
+    'ClientConfigSettingListTool.php': 'new ClientConfigSettingListTool()',
+    'ClientConfigSettingUpdateTool.php': 'new ClientConfigSettingUpdateTool()',
     'ComponentFileReadTool.php': 'new ComponentFileReadTool()',
     'ComponentFilesTool.php': 'new ComponentFilesTool()',
     'ContextAccessListTool.php': 'new ContextAccessListTool()',
@@ -375,6 +432,8 @@ expected_registrations = {
     'PropertySetUpdateTool.php': 'new PropertySetUpdateTool()',
     'ProviderListTool.php': 'new ProviderListTool()',
     'ResourceGroupAccessListTool.php': 'new ResourceGroupAccessListTool()',
+    'ResourceGroupGetTool.php': 'new ResourceGroupGetTool()',
+    'ResourceGroupResourcesListTool.php': 'new ResourceGroupResourcesListTool()',
     'ResourceGroupListTool.php': 'new ResourceGroupListTool()',
     'ProjectOverviewTool.php': 'new ProjectOverviewTool()',
     'ResourceListTool.php': 'new ResourceListTool()',
@@ -387,6 +446,7 @@ expected_registrations = {
     'RoleGetTool.php': 'new RoleGetTool()',
     'RoleListTool.php': 'new RoleListTool()',
     'SearchCodeTool.php': 'new SearchCodeTool()',
+    'SiteStateTool.php': 'new SiteStateTool()',
     'SystemInfoTool.php': 'new SystemInfoTool()',
     'SystemSettingGetTool.php': 'new SystemSettingGetTool()',
     'SystemSettingCreateTool.php': 'new SystemSettingCreateTool()',

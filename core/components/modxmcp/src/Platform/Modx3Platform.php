@@ -13,6 +13,10 @@ class Modx3Platform extends AbstractPlatform
         'category' => 'MODX\\Revolution\\modCategory',
         'user' => 'MODX\\Revolution\\modUser',
         'user_group' => 'MODX\\Revolution\\modUserGroup',
+        'access_policy' => 'MODX\\Revolution\\modAccessPolicy',
+        'access_policy_template' => 'MODX\\Revolution\\modAccessPolicyTemplate',
+        'resource_group' => 'MODX\\Revolution\\modResourceGroup',
+        'resource_group_resource' => 'MODX\\Revolution\\modResourceGroupResource',
         'context' => 'MODX\\Revolution\\modContext',
         'system_setting' => 'MODX\\Revolution\\modSystemSetting',
         'property_set' => 'MODX\\Revolution\\modPropertySet',
@@ -70,6 +74,7 @@ class Modx3Platform extends AbstractPlatform
             'remove_locks' => 'RemoveLocks',
             'removeresource' => 'RemoveResource',
             'updateresourcesin' => 'UpdateResourcesIn',
+            'updatefromgrid' => 'UpdateFromGrid',
         );
 
         $parts = explode('/', $path);

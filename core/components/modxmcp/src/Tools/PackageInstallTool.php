@@ -28,18 +28,36 @@ class PackageInstallTool implements ToolInterface
             );
         }
 
+        $targetSignature = isset($data['target_signature'])
+            ? trim((string)$data['target_signature'])
+            : '';
+
         $packageClass = $context->platform()->className('transport_package');
         $existing = $context->modx()->getObject(
             $packageClass,
             array('package_name' => $name, 'installed:!=' => null)
         );
-        if ($existing) {
+        if ($existing && $targetSignature === '') {
             return array(
                 'status' => 'already_installed',
                 'package' => $name,
                 'signature' => $existing->get('signature'),
             );
         }
+        if (
+            $existing
+            && $targetSignature !== ''
+            && strcasecmp((string)$existing->get('signature'), $targetSignature) === 0
+        ) {
+            return array(
+                'status' => 'already_installed_target',
+                'package' => $name,
+                'signature' => $existing->get('signature'),
+            );
+        }
+        $previousSignature = $existing
+            ? (string)$existing->get('signature')
+            : null;
 
         $listResponse = $context->platform()->runProcessor(
             $context->modx(),
@@ -69,13 +87,31 @@ class PackageInstallTool implements ToolInterface
         }
 
         $chosen = null;
-        foreach ($rows as $row) {
-            if (isset($row['name']) && strcasecmp($row['name'], $name) === 0) {
-                $chosen = $row;
-                break;
+        if ($targetSignature !== '') {
+            foreach ($rows as $row) {
+                if (
+                    isset($row['signature'])
+                    && strcasecmp((string)$row['signature'], $targetSignature) === 0
+                ) {
+                    $chosen = $row;
+                    break;
+                }
             }
+            if (!$chosen) {
+                throw new \ModxMCPClientException(
+                    "install_package: target signature '{$targetSignature}' "
+                    . 'was not returned by the provider search.'
+                );
+            }
+        } else {
+            foreach ($rows as $row) {
+                if (isset($row['name']) && strcasecmp($row['name'], $name) === 0) {
+                    $chosen = $row;
+                    break;
+                }
+            }
+            if (!$chosen) { $chosen = $rows[0]; }
         }
-        if (!$chosen) { $chosen = $rows[0]; }
         if (empty($chosen['location']) || empty($chosen['signature'])) {
             throw new \ModxMCPClientException(
                 'install_package: provider result is missing location/signature.'
@@ -124,12 +160,19 @@ class PackageInstallTool implements ToolInterface
             $context,
             $this->name(),
             'system',
-            array('package' => $name, 'signature' => $signature)
+            array(
+                'package' => $name,
+                'signature' => $signature,
+                'previous_signature' => $previousSignature,
+            )
         );
         return array(
-            'status' => 'installed',
+            'status' => $previousSignature !== null
+                ? 'version_changed'
+                : 'installed',
             'package' => isset($chosen['name']) ? $chosen['name'] : $name,
             'signature' => $signature,
+            'previous_signature' => $previousSignature,
             'version' => isset($chosen['version']) ? $chosen['version'] : null,
         );
     }

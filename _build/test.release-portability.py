@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 errors = []
 
-EXPECTED_VERSION = "1.1.0"
+EXPECTED_VERSION = "1.2.0"
 EXPECTED_NODE_NAME = "modx3-mcp"
 EXPECTED_MODX3_TRANSPORT_NAME = "MODX3MCP"
 EXPECTED_MODX2_TRANSPORT_NAME = "MODXMCP"
@@ -285,6 +285,8 @@ else:
         "$rootMenu": "transport verifier: root menu install check missing",
         "$graphMenu": "transport verifier: graph menu install check missing",
         "$deployedVersion !== PKG_VERSION": "transport verifier: deployed code version check missing",
+        "modxmcp.site_revision": "transport verifier must separate CAS runtime state from config settings",
+        "$runtimeRevisionSetting": "transport verifier runtime-state lookup missing",
         "exit(7)": "transport verifier: leftover artifacts must fail the uninstall test",
     }
 for needle, message in transport_requirements.items():
@@ -307,7 +309,9 @@ for needle, message in {
     "MCP_ENDPOINT_SMOKE_OK": "endpoint CRUD smoke success marker missing",
     "MCP_ENDPOINT_READ_ONLY_SMOKE_OK": "endpoint read-only smoke marker missing",
     "finally": "endpoint smoke must guarantee CRUD cleanup",
-    "actionCount !== 182": "endpoint smoke must detect client/server action skew",
+    "actionCount !== 192": "endpoint smoke must detect client/server action skew",
+    "modxmcp.site_revision": "endpoint smoke must separate CAS runtime state from config settings",
+    "$runtimeSettings": "endpoint smoke runtime-setting separation missing",
 }.items():
     if needle not in endpoint_smoke:
         fail(message)

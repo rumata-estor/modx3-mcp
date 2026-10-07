@@ -93,7 +93,7 @@ function element_clean($value)
     $drop = array(
         'id' => true, 'template_id' => true, 'createdon' => true, 'editedon' => true, 'deletedon' => true,
         'publishedon' => true, 'publishedby' => true, 'editedby' => true,
-        'createdby' => true, 'deletedby' => true, 'uri' => true,
+        'createdby' => true, 'deletedby' => true, 'uri' => true, '_site_revision' => true,
     );
     $out = array();
     foreach ($value as $key => $item) {
