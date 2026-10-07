@@ -8,7 +8,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**Current development tree · stable base 1.1.0 · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
+**1.2.0 release candidate · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -175,7 +175,7 @@ The program is started directly, without a shell. If the audit hook is not confi
 
 ## Compatibility
 
-Version 1.1.0 is the first shared-source line for both supported MODX generations:
+Version 1.2.0 continues the shared-source line for both supported MODX generations:
 
 - **MODX Revolution 2.8.x** — platform artifact `modx2`;
 - **MODX Revolution 3.x** — platform artifact `modx3`;
@@ -183,13 +183,13 @@ Version 1.1.0 is the first shared-source line for both supported MODX generation
 
 The two MODX generations use the same MCP client, the same public action contract and the same modular runtime. Platform-specific bootstrap, class names and processor routing are isolated behind platform adapters and release overlays.
 
-Current development-source status:
+Version 1.2.0 release-candidate status:
 
-- all **192/192** server actions are implemented by the modular runtime; compared with v1.1.0, the development tree adds 10 actions: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
-- the current 192-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
+- all **192/192** server actions are implemented by the modular runtime; compared with v1.1.0, version 1.2.0 adds 10 actions: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
+- the 192-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
 - the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
 - MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
-- **v1.1.0 remains the current stable GitHub release**. The 10 additional development actions and Runtime-CAS path are not part of v1.1.0. Dedicated CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl on 2026-10-06; a new full 192-action parity/release cycle is still pending.
+- **v1.2.0 is being prepared as the next stable release**. Dedicated Runtime-CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl; the final full CI/release-smoke gates must pass before publication.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 
@@ -206,16 +206,16 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 ## Install with the MODX transport package
 
-Version 1.1.0 produces two platform-specific transport packages from the same source tree:
+Version 1.2.0 produces two platform-specific transport packages from the same source tree:
 
-- MODX 2.8.x: `modxmcp-1.1.0-pl.transport.zip`;
-- MODX 3.x: `modx3mcp-1.1.0-pl.transport.zip`.
+- MODX 2.8.x: `modxmcp-1.2.0-pl.transport.zip`;
+- MODX 3.x: `modx3mcp-1.2.0-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
 Existing `modxmcp.*` settings and the API token are preserved during reinstall or upgrade.
 
-Version **1.1.0** is the current published stable GitHub release.
+Version **1.2.0** is the release candidate currently being validated; **1.1.0** remains the published stable release until the final gates complete.
 
 ## Command-line installation
 
@@ -243,7 +243,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-For version 1.1.0, pin the published release tag:
+After version 1.2.0 is published, pin the release tag:
 
 ```json
 {
@@ -252,7 +252,7 @@ For version 1.1.0, pin the published release tag:
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.1.0"
+        "github:rumata-estor/modx3-mcp#v1.2.0"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -298,7 +298,7 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Current stable version: **1.1.0**.
+Release candidate: **1.2.0**. Current published stable version until release completion: **1.1.0**.
 
 Latest published stable release: **[1.1.0](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.1.0)**.
 
