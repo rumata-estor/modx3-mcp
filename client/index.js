@@ -624,6 +624,78 @@ async function autoBackupForMutation(name, args) {
     }
   }
 
+  if (["modx_create_system_setting","modx_update_system_setting","modx_delete_system_setting"].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_SYSTEM_SETTING !== "1") {
+      throw new Error("Safety: direct system-setting mutation is disabled. Use the safe system-setting workflow.");
+    }
+  }
+
+  if (name === "modx_update_element" && String(args.type) === "plugin" && Object.prototype.hasOwnProperty.call(args, "events")) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_PLUGIN_EVENTS !== "1") {
+      throw new Error("Safety: direct plugin event mutation is disabled. Use the safe plugin-events workflow.");
+    }
+  }
+
+  if (["modx_create_media_source","modx_update_media_source","modx_delete_media_source"].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_MEDIA_SOURCE !== "1") {
+      throw new Error("Safety: direct Media Source mutation is disabled. Use the safe Media Source workflow.");
+    }
+  }
+
+  if ([
+    "modx_create_context","modx_update_context","modx_delete_context",
+    "modx_create_context_setting","modx_update_context_setting","modx_delete_context_setting"
+  ].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_CONTEXTS !== "1") {
+      throw new Error("Safety: direct context/context-setting mutation is disabled. Use the safe context workflow.");
+    }
+  }
+
+  if (["modx_clientconfig_create_setting","modx_clientconfig_update_setting","modx_clientconfig_delete_setting"].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_CLIENTCONFIG !== "1") {
+      throw new Error("Safety: direct ClientConfig mutation is disabled. Use the safe ClientConfig workflow.");
+    }
+  }
+
+  if ([
+    "modx_create_property_set","modx_update_property_set","modx_delete_property_set",
+    "modx_assign_property_set","modx_unassign_property_set"
+  ].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_PROPERTY_SET !== "1") {
+      throw new Error("Safety: direct Property Set mutation is disabled. Use the safe Property Set workflow.");
+    }
+  }
+
+  if (["modx_migx_create_config","modx_migx_update_config","modx_migx_delete_config"].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_MIGX !== "1") {
+      throw new Error("Safety: direct MIGX config mutation is disabled. Use the safe MIGX workflow.");
+    }
+  }
+
+  if (["modx_create_namespace","modx_update_namespace","modx_delete_namespace","modx_set_lexicon_entry","modx_revert_lexicon_entry"].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_NAMESPACE_LEXICON !== "1") {
+      throw new Error("Safety: direct namespace/lexicon mutation is disabled. Use the safe namespace/lexicon workflow.");
+    }
+  }
+
+  if ([
+    "modx_create_user","modx_update_user","modx_delete_user",
+    "modx_create_user_group","modx_update_user_group","modx_delete_user_group",
+    "modx_add_user_to_group","modx_update_group_member","modx_remove_user_from_group",
+    "modx_create_role","modx_update_role","modx_delete_role",
+    "modx_create_access_policy","modx_update_access_policy","modx_delete_access_policy",
+    "modx_create_access_policy_template","modx_update_access_policy_template","modx_delete_access_policy_template",
+    "modx_create_resource_group","modx_update_resource_group","modx_delete_resource_group",
+    "modx_assign_resource_to_group","modx_remove_resource_from_group",
+    "modx_grant_context_access","modx_update_context_access","modx_revoke_context_access",
+    "modx_grant_resourcegroup_access","modx_update_resourcegroup_access","modx_revoke_resourcegroup_access",
+    "modx_flush_permissions"
+  ].includes(name)) {
+    if (process.env.MODX_MCP_ALLOW_SAFE_ACCESS !== "1") {
+      throw new Error("Safety: direct ACL mutation is disabled. Use the safe access workflow.");
+    }
+  }
+
   if (["modx_create_provider","modx_update_provider","modx_delete_provider"].includes(name)) {
     if (process.env.MODX_MCP_ALLOW_PROVIDER_CHANGE !== "1") {
       throw new Error("Safety: transport provider mutation is disabled. Use the dedicated provider workflow.");
@@ -1890,6 +1962,13 @@ const toolDefinitions = [
     inputSchema: { type: "object", properties: { id: { type: "number" } }, required: ["id"] },
   },
 
+  // ===================== ClientConfig =====================
+  { name: "modx_clientconfig_list_settings", description: "List ClientConfig settings including context-specific values.", inputSchema: { type: "object", properties: { query: { type: "string" } } } },
+  { name: "modx_clientconfig_get_setting", description: "Get a ClientConfig setting by id or key.", inputSchema: { type: "object", properties: { id: { type: "number" }, key: { type: "string" } } } },
+  { name: "modx_clientconfig_create_setting", description: "Create a ClientConfig setting.", inputSchema: { type: "object", properties: { key: { type: "string" }, label: { type: "string" }, xtype: { type: "string" }, description: { type: "string" }, is_required: { type: "boolean" }, sortorder: { type: "number" }, value: { type: "string" }, default: { type: "string" }, group: { type: "number" }, options: { type: "string" }, process_options: { type: "boolean" }, source: { type: "number" }, context_values: { type: "object" } }, required: ["key"] } },
+  { name: "modx_clientconfig_update_setting", description: "Update a ClientConfig setting by id or key.", inputSchema: { type: "object", properties: { id: { type: "number" }, key: { type: "string" }, label: { type: "string" }, xtype: { type: "string" }, description: { type: "string" }, is_required: { type: "boolean" }, sortorder: { type: "number" }, value: { type: "string" }, default: { type: "string" }, group: { type: "number" }, options: { type: "string" }, process_options: { type: "boolean" }, source: { type: "number" }, context_values: { type: "object" } } } },
+  { name: "modx_clientconfig_delete_setting", description: "Delete a ClientConfig setting by id or key.", inputSchema: { type: "object", properties: { id: { type: "number" }, key: { type: "string" } } } },
+
   // ===================== Element property sets =====================
   {
     name: "modx_list_property_sets",
@@ -2050,7 +2129,7 @@ const toolDefinitions = [
   {
     name: "modx_install_package",
     description: "Install a transport package from a provider (default modx.com) by name, e.g. {package:'MIGX'}. Returns 'already_installed' if present.",
-    inputSchema: { type: "object", properties: { package: { type: "string" }, provider: { type: "number", description: "Provider id (defaults to modx.com)." } }, required: ["package"] },
+    inputSchema: { type: "object", properties: { package: { type: "string" }, provider: { type: "number", description: "Provider id (defaults to modx.com)." }, target_signature: { type: "string", description: "Optional exact provider signature for controlled update/downgrade." } }, required: ["package"] },
   },
   {
     name: "modx_uninstall_package",
@@ -2210,6 +2289,7 @@ const toolDefinitions = [
     description: "List access policies (id, name, description, template).",
     inputSchema: { type: "object", properties: { query: { type: "string" }, limit: { type: "number" }, start: { type: "number" } } },
   },
+  { name: "modx_get_access_policy", description: "Get an access policy by id.", inputSchema: { type: "object", properties: { id: { type: "number" } }, required: ["id"] } },
   {
     name: "modx_create_access_policy",
     description: "Create an access policy.",
@@ -2230,6 +2310,7 @@ const toolDefinitions = [
     description: "List access policy templates.",
     inputSchema: { type: "object", properties: { query: { type: "string" }, limit: { type: "number" }, start: { type: "number" } } },
   },
+  { name: "modx_get_access_policy_template", description: "Get an access policy template by id.", inputSchema: { type: "object", properties: { id: { type: "number" } }, required: ["id"] } },
   {
     name: "modx_create_access_policy_template",
     description: "Create an access policy template.",
@@ -2259,6 +2340,8 @@ const toolDefinitions = [
     description: "List resource groups (id, name).",
     inputSchema: { type: "object", properties: { query: { type: "string" }, limit: { type: "number" }, start: { type: "number" } } },
   },
+  { name: "modx_get_resource_group", description: "Get a resource group by id.", inputSchema: { type: "object", properties: { id: { type: "number" } }, required: ["id"] } },
+  { name: "modx_list_resource_group_resources", description: "List resources assigned to a resource group.", inputSchema: { type: "object", properties: { resourceGroup: { type: "number" } }, required: ["resourceGroup"] } },
   {
     name: "modx_create_resource_group",
     description: "Create a resource group.",

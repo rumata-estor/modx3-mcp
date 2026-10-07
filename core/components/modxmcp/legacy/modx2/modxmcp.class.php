@@ -99,13 +99,23 @@ class modxMCP {
                 }
                 if ($tool->isMutation()) {
                     $runtimeContext = $this->modularRuntime->context();
+                    $dryRunActions = array(
+                        'delete_element',
+                        'bulk_resources',
+                        'replace_across',
+                    );
+                    $isDryRun = (
+                        !empty($toolData['dry_run'])
+                        && in_array($action, $dryRunActions, true)
+                    );
                     return \ModxMcp\Tools\StateSupport::withMutationLock(
                         $runtimeContext,
                         function () use (
                             $tool,
                             $runtimeContext,
                             $toolData,
-                            $runtimePreconditions
+                            $runtimePreconditions,
+                            $isDryRun
                         ) {
                             if (is_array($runtimePreconditions)) {
                                 \ModxMcp\Tools\StateSupport::assertPreconditions(
@@ -117,9 +127,11 @@ class modxMCP {
                                 $runtimeContext,
                                 $toolData
                             );
-                            $revision = \ModxMcp\Tools\StateSupport::incrementRevision(
-                                $runtimeContext
-                            );
+                            $revision = $isDryRun
+                                ? \ModxMcp\Tools\StateSupport::revision($runtimeContext)
+                                : \ModxMcp\Tools\StateSupport::incrementRevision(
+                                    $runtimeContext
+                                );
                             if (is_array($result)) {
                                 $result['_site_revision'] = $revision;
                             }
@@ -470,15 +482,19 @@ class modxMCP {
                 'update_role' => array('proc' => 'security/role/update', 'via' => 'acl'),
                 'delete_role' => array('proc' => 'security/role/remove', 'via' => 'acl'),
                 'list_access_policies'  => array('proc' => 'security/access/policy/getlist', 'list' => true, 'via' => 'acl'),
+                'get_access_policy'    => 'getAccessPolicy',
                 'create_access_policy'  => array('proc' => 'security/access/policy/create', 'via' => 'acl'),
                 'update_access_policy'  => array('proc' => 'security/access/policy/update', 'via' => 'acl'),
                 'delete_access_policy'  => array('proc' => 'security/access/policy/remove', 'via' => 'acl'),
                 'list_access_policy_templates'  => array('proc' => 'security/access/policy/template/getlist', 'list' => true, 'via' => 'acl'),
+                'get_access_policy_template'   => 'getAccessPolicyTemplate',
                 'create_access_policy_template' => array('proc' => 'security/access/policy/template/create', 'via' => 'acl'),
                 'update_access_policy_template' => array('proc' => 'security/access/policy/template/update', 'via' => 'acl'),
                 'delete_access_policy_template' => array('proc' => 'security/access/policy/template/remove', 'via' => 'acl'),
                 'list_access_permissions' => array('proc' => 'security/access/permission/getlist', 'list' => true, 'via' => 'acl'),
                 'list_resource_groups'      => array('proc' => 'security/resourcegroup/getlist', 'list' => true, 'via' => 'acl'),
+                'get_resource_group'       => 'getResourceGroup',
+                'list_resource_group_resources' => 'listResourceGroupResources',
                 'create_resource_group'     => array('proc' => 'security/resourcegroup/create', 'via' => 'acl'),
                 'update_resource_group'     => array('proc' => 'security/resourcegroup/update', 'via' => 'acl'),
                 'delete_resource_group'     => array('proc' => 'security/resourcegroup/remove', 'via' => 'acl'),
@@ -493,6 +509,13 @@ class modxMCP {
                 'update_resourcegroup_access' => array('proc' => 'security/access/usergroup/resourcegroup/update', 'via' => 'acl'),
                 'revoke_resourcegroup_access' => array('proc' => 'security/access/usergroup/resourcegroup/remove', 'via' => 'acl'),
                 'flush_permissions' => array('m' => 'flushPermissions', 'call' => 'bare'),
+            ),
+            'clientconfig' => array(
+                'clientconfig_list_settings'   => 'listClientConfigSettings',
+                'clientconfig_get_setting'     => 'getClientConfigSetting',
+                'clientconfig_create_setting'  => array('m' => 'saveClientConfigSetting', 'call' => 'create'),
+                'clientconfig_update_setting'  => array('m' => 'saveClientConfigSetting', 'call' => 'update'),
+                'clientconfig_delete_setting'  => 'deleteClientConfigSetting',
             ),
             'property_sets' => array(
                 'list_property_sets'   => 'listPropertySets',
@@ -2934,6 +2957,40 @@ class modxMCP {
         return $group->toArray();
     }
 
+    private function getAccessPolicy($data) {
+        $id = isset($data['id']) ? (int) $data['id'] : 0;
+        if ($id <= 0) { throw new ModxMCPClientException('get_access_policy: id is required.'); }
+        $object = $this->modx->getObject('modAccessPolicy', $id);
+        if (!$object) { throw new ModxMCPClientException('Access policy not found: ' . $id . '.'); }
+        return $object->toArray();
+    }
+
+    private function getAccessPolicyTemplate($data) {
+        $id = isset($data['id']) ? (int) $data['id'] : 0;
+        if ($id <= 0) { throw new ModxMCPClientException('get_access_policy_template: id is required.'); }
+        $object = $this->modx->getObject('modAccessPolicyTemplate', $id);
+        if (!$object) { throw new ModxMCPClientException('Access policy template not found: ' . $id . '.'); }
+        return $object->toArray();
+    }
+
+    private function getResourceGroup($data) {
+        $id = isset($data['id']) ? (int) $data['id'] : 0;
+        if ($id <= 0) { throw new ModxMCPClientException('get_resource_group: id is required.'); }
+        $object = $this->modx->getObject('modResourceGroup', $id);
+        if (!$object) { throw new ModxMCPClientException('Resource group not found: ' . $id . '.'); }
+        return $object->toArray();
+    }
+
+    private function listResourceGroupResources($data) {
+        $group = isset($data['resourceGroup']) ? (int) $data['resourceGroup'] : (isset($data['resource_group']) ? (int) $data['resource_group'] : 0);
+        if ($group <= 0) { throw new ModxMCPClientException('list_resource_group_resources: resourceGroup is required.'); }
+        $rows = array();
+        foreach ($this->modx->getCollection('modResourceGroupResource', array('document_group' => $group)) as $link) {
+            $rows[] = array('resourceGroup' => $group, 'resource' => (int) $link->get('document'));
+        }
+        return array('total' => count($rows), 'results' => $rows);
+    }
+
     private function aclActionMap() {
         return $this->procMapFor('acl');
     }
@@ -3176,16 +3233,32 @@ class modxMCP {
         if ($name === '') { throw new ModxMCPClientException('install_package: "package" (name) is required.'); }
         $providerId = isset($data['provider']) ? (int) $data['provider'] : $this->defaultProviderId();
         if (!$providerId) { throw new ModxMCPClientException('install_package: no transport provider is configured.'); }
+        $targetSignature = isset($data['target_signature']) ? trim((string) $data['target_signature']) : '';
         $existing = $this->modx->getObject('transport.modTransportPackage', array('package_name' => $name, 'installed:!=' => null));
-        if ($existing) { return array('status' => 'already_installed', 'package' => $name, 'signature' => $existing->get('signature')); }
+        if ($existing && $targetSignature === '') {
+            return array('status' => 'already_installed', 'package' => $name, 'signature' => $existing->get('signature'));
+        }
+        if ($existing && $targetSignature !== '' && strcasecmp((string) $existing->get('signature'), $targetSignature) === 0) {
+            return array('status' => 'already_installed_target', 'package' => $name, 'signature' => $existing->get('signature'));
+        }
+        $previousSignature = $existing ? (string) $existing->get('signature') : null;
         $listResp = $this->modx->runProcessor('workspace/packages/rest/getlist', array('provider' => $providerId, 'query' => $name, 'limit' => 20));
         if (!$listResp || $listResp->isError()) { throw new ModxMCPClientException('install_package: provider search failed: ' . ($listResp ? $this->formatProcessorErrors($listResp) : 'no response')); }
         $listData = json_decode($listResp->getResponse(), true);
         $rows = isset($listData['results']) ? $listData['results'] : array();
         if (empty($rows)) { throw new ModxMCPClientException("install_package: no package named '{$name}' found on the provider."); }
         $chosen = null;
-        foreach ($rows as $row) { if (isset($row['name']) && strcasecmp($row['name'], $name) === 0) { $chosen = $row; break; } }
-        if (!$chosen) { $chosen = $rows[0]; }
+        if ($targetSignature !== '') {
+            foreach ($rows as $row) {
+                if (isset($row['signature']) && strcasecmp((string) $row['signature'], $targetSignature) === 0) { $chosen = $row; break; }
+            }
+            if (!$chosen) {
+                throw new ModxMCPClientException("install_package: target signature '{$targetSignature}' was not returned by the provider search.");
+            }
+        } else {
+            foreach ($rows as $row) { if (isset($row['name']) && strcasecmp($row['name'], $name) === 0) { $chosen = $row; break; } }
+            if (!$chosen) { $chosen = $rows[0]; }
+        }
         if (empty($chosen['location']) || empty($chosen['signature'])) { throw new ModxMCPClientException('install_package: provider result is missing location/signature.'); }
         $dlResp = $this->modx->runProcessor('workspace/packages/rest/download', array('info' => $chosen['location'] . '::' . $chosen['signature'], 'provider' => $providerId));
         if (!$dlResp || $dlResp->isError()) { throw new ModxMCPClientException('install_package: download failed: ' . ($dlResp ? $this->formatProcessorErrors($dlResp) : 'no response')); }
@@ -3195,7 +3268,13 @@ class modxMCP {
         if (!$instResp || $instResp->isError()) { throw new ModxMCPClientException('install_package: install failed: ' . ($instResp ? $this->formatProcessorErrors($instResp) : 'no response')); }
         if ($this->modx->getCacheManager()) { $this->modx->getCacheManager()->refresh(); }
         $this->logAudit('install_package', 'system', array('package' => $name, 'signature' => $signature));
-        return array('status' => 'installed', 'package' => isset($chosen['name']) ? $chosen['name'] : $name, 'signature' => $signature, 'version' => isset($chosen['version']) ? $chosen['version'] : null);
+        return array(
+            'status' => ($previousSignature !== null ? 'version_changed' : 'installed'),
+            'package' => isset($chosen['name']) ? $chosen['name'] : $name,
+            'signature' => $signature,
+            'previous_signature' => $previousSignature,
+            'version' => isset($chosen['version']) ? $chosen['version'] : null
+        );
     }
 
     private function uninstallPackage($data) {
@@ -3273,7 +3352,7 @@ class modxMCP {
     }
 
     private function toggleableGroupKeys() {
-        return array('versionx', 'virtualpage', 'minishop2', 'migx', 'access', 'property_sets', 'contexts', 'package_management', 'namespaces', 'lexicon');
+        return array('versionx', 'virtualpage', 'minishop2', 'migx', 'clientconfig', 'access', 'property_sets', 'contexts', 'package_management', 'namespaces', 'lexicon');
     }
 
     private function disabledGroups() {
@@ -3371,6 +3450,108 @@ class modxMCP {
         return (string) $this->modx->getOption('modxmcp.disabled_groups', null, '');
     }
 
+    private function ensureClientConfigModel() {
+        $core = $this->modx->getOption('clientconfig.core_path', null, $this->modx->getOption('core_path') . 'components/clientconfig/');
+        $model = rtrim($core, '/\\') . '/model/';
+        if (!is_dir($model . 'clientconfig')) {
+            throw new ModxMCPClientException('ClientConfig is not installed or its model path is unavailable.');
+        }
+        $this->modx->addPackage('clientconfig', $model);
+        return $core;
+    }
+
+    private function normalizeClientConfigSetting($setting) {
+        $out = $setting->toArray();
+        $out['context_values'] = array();
+        $values = $setting->getMany('ContextValues');
+        if (is_array($values)) {
+            foreach ($values as $value) {
+                $out['context_values'][(string) $value->get('context')] = $value->get('value');
+            }
+        }
+        return $out;
+    }
+
+    private function listClientConfigSettings($data) {
+        $this->ensureClientConfigModel();
+        $c = $this->modx->newQuery('cgSetting');
+        if (!empty($data['query'])) {
+            $q = '%' . $data['query'] . '%';
+            $c->where(array('key:LIKE' => $q, 'OR:label:LIKE' => $q));
+        }
+        $c->sortby('sortorder', 'ASC');
+        $c->sortby('key', 'ASC');
+        $rows = array();
+        foreach ($this->modx->getCollection('cgSetting', $c) as $setting) {
+            $rows[] = $this->normalizeClientConfigSetting($setting);
+        }
+        return array('total' => count($rows), 'results' => $rows);
+    }
+
+    private function getClientConfigSetting($data) {
+        $this->ensureClientConfigModel();
+        $criteria = array();
+        if (!empty($data['id'])) { $criteria['id'] = (int) $data['id']; }
+        elseif (!empty($data['key'])) { $criteria['key'] = (string) $data['key']; }
+        else { throw new ModxMCPClientException('clientconfig_get_setting: id or key is required.'); }
+        $setting = $this->modx->getObject('cgSetting', $criteria);
+        if (!$setting) { throw new ModxMCPClientException('ClientConfig setting not found.'); }
+        return $this->normalizeClientConfigSetting($setting);
+    }
+
+    private function saveClientConfigSetting($data, $isCreate) {
+        $this->ensureClientConfigModel();
+        if ($isCreate) {
+            if (empty($data['key'])) { throw new ModxMCPClientException('clientconfig_create_setting: key is required.'); }
+            if ($this->modx->getObject('cgSetting', array('key' => (string) $data['key']))) {
+                throw new ModxMCPClientException('ClientConfig setting already exists: ' . $data['key']);
+            }
+            $setting = $this->modx->newObject('cgSetting');
+        } else {
+            $criteria = !empty($data['id']) ? array('id' => (int) $data['id']) : array('key' => (string) (isset($data['key']) ? $data['key'] : ''));
+            $setting = $this->modx->getObject('cgSetting', $criteria);
+            if (!$setting) { throw new ModxMCPClientException('ClientConfig setting not found.'); }
+        }
+        foreach (array('key','label','xtype','description','is_required','sortorder','value','default','group','options','process_options','source') as $field) {
+            if (array_key_exists($field, $data)) { $setting->set($field, $data[$field]); }
+        }
+        if (!$setting->save()) { throw new ModxMCPClientException('Failed to save ClientConfig setting.'); }
+        if (isset($data['context_values'])) {
+            if (!is_array($data['context_values'])) { throw new ModxMCPClientException('context_values must be an object/map.'); }
+            foreach ($data['context_values'] as $context => $value) {
+                $criteria = array('setting' => (int) $setting->get('id'), 'context' => (string) $context);
+                $row = $this->modx->getObject('cgContextValue', $criteria);
+                if ($value === null) {
+                    if ($row && !$row->remove()) { throw new ModxMCPClientException('Failed to remove ClientConfig context value.'); }
+                    continue;
+                }
+                if (!$row) {
+                    $row = $this->modx->newObject('cgContextValue');
+                    $row->set('setting', (int) $setting->get('id'));
+                    $row->set('context', (string) $context);
+                }
+                $row->set('value', (string) $value);
+                if (!$row->save()) { throw new ModxMCPClientException('Failed to save ClientConfig context value.'); }
+            }
+        }
+        if ($this->modx->getCacheManager()) { $this->modx->getCacheManager()->refresh(); }
+        $this->logAudit($isCreate ? 'clientconfig_create_setting' : 'clientconfig_update_setting', 'clientconfig', array('id' => (int) $setting->get('id'), 'key' => $setting->get('key')));
+        return $this->normalizeClientConfigSetting($setting);
+    }
+
+    private function deleteClientConfigSetting($data) {
+        $this->ensureClientConfigModel();
+        $criteria = !empty($data['id']) ? array('id' => (int) $data['id']) : array('key' => (string) (isset($data['key']) ? $data['key'] : ''));
+        $setting = $this->modx->getObject('cgSetting', $criteria);
+        if (!$setting) { throw new ModxMCPClientException('ClientConfig setting not found.'); }
+        $id = (int) $setting->get('id');
+        $key = $setting->get('key');
+        if (!$setting->remove()) { throw new ModxMCPClientException('Failed to delete ClientConfig setting.'); }
+        if ($this->modx->getCacheManager()) { $this->modx->getCacheManager()->refresh(); }
+        $this->logAudit('clientconfig_delete_setting', 'clientconfig', array('id' => $id, 'key' => $key));
+        return array('deleted' => true, 'id' => $id, 'key' => $key);
+    }
+
     // --- Property sets (modPropertySet + modElementPropertySet), direct xPDO ---
 
     private function propertySetElementClass($data) {
@@ -3402,9 +3583,19 @@ class modxMCP {
 
     private function getPropertySet($data) {
         if (empty($data['id'])) { throw new ModxMCPClientException('get_property_set: id is required.'); }
-        $ps = $this->modx->getObject('modPropertySet', (int) $data['id']);
-        if (!$ps) { throw new ModxMCPClientException('get_property_set: property set ' . (int) $data['id'] . ' not found.'); }
-        return $ps->toArray();
+        $id = (int) $data['id'];
+        $ps = $this->modx->getObject('modPropertySet', $id);
+        if (!$ps) { throw new ModxMCPClientException('get_property_set: property set ' . $id . ' not found.'); }
+        $out = $ps->toArray();
+        $out['assignments'] = array();
+        foreach ($this->modx->getCollection('modElementPropertySet', array('property_set' => $id)) as $assignment) {
+            $out['assignments'][] = array(
+                'element' => (int) $assignment->get('element'),
+                'element_class' => $assignment->get('element_class'),
+                'property_set' => (int) $assignment->get('property_set'),
+            );
+        }
+        return $out;
     }
 
     private function savePropertySet($data, $isCreate) {

@@ -307,7 +307,7 @@ for needle, message in {
     "MCP_ENDPOINT_SMOKE_OK": "endpoint CRUD smoke success marker missing",
     "MCP_ENDPOINT_READ_ONLY_SMOKE_OK": "endpoint read-only smoke marker missing",
     "finally": "endpoint smoke must guarantee CRUD cleanup",
-    "actionCount !== 183": "endpoint smoke must detect client/server action skew",
+    "actionCount !== 192": "endpoint smoke must detect client/server action skew",
 }.items():
     if needle not in endpoint_smoke:
         fail(message)

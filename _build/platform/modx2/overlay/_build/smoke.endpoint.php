@@ -320,8 +320,8 @@ if (is_array($actions)) {
         }
     }
 }
-if ($actionCount !== 183) {
-    throw new RuntimeException("list_actions: expected 183 actions, got {$actionCount}.");
+if ($actionCount !== 192) {
+    throw new RuntimeException("list_actions: expected 192 actions, got {$actionCount}.");
 }
 echo "ACTIONS_OK count={$actionCount}\n";
 

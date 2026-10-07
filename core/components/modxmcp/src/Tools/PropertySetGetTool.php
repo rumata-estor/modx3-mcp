@@ -21,6 +21,19 @@ class PropertySetGetTool implements ToolInterface
         if (!$propertySet) {
             throw new \ModxMCPClientException('get_property_set: property set ' . $id . ' not found.');
         }
-        return $propertySet->toArray();
+        $out = $propertySet->toArray();
+        $out['assignments'] = array();
+        $linkClass = $context->platform()->className('element_property_set');
+        foreach ($context->modx()->getCollection(
+            $linkClass,
+            array('property_set' => (int)$data['id'])
+        ) as $assignment) {
+            $out['assignments'][] = array(
+                'element' => (int)$assignment->get('element'),
+                'element_class' => $assignment->get('element_class'),
+                'property_set' => (int)$assignment->get('property_set'),
+            );
+        }
+        return $out;
     }
 }

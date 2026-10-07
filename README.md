@@ -279,8 +279,8 @@ Before a release, the project checks:
 
 - PHP syntax and Node.js client syntax;
 - version consistency across the shared source and both platform build configs;
-- the complete client/server contract: **183 actions**;
-- modular migration coverage: **75/75 reads + 108/108 mutations**;
+- the complete client/server contract: **192 actions**;
+- modular migration coverage: **81/81 reads + 111/111 mutations**;
 - MODX 2 platform staging and PHP compatibility;
 - MODX 3 processor compatibility across 3.2.2-pl, 3.2.4-pl and current 3.x;
 - installation portability, secure defaults and platform-specific transport requirements;

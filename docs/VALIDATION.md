@@ -25,7 +25,7 @@ Version 1.1.0 is the first shared-source MODX 2 / MODX 3 stable release. MODX 2.
 
 The current development registry contains all 75 read-only tools. The 75th action is `get_site_state`, added after v1.1.0 for Runtime stale-state/CAS coordination.
 
-<!-- READONLY_MIGRATION_COVERAGE: 75/75 -->
+<!-- READONLY_MIGRATION_COVERAGE: 81/81 -->
 
 The current development-source read-only migration is complete: all 75 read-only server actions are registered in the modular runtime. The coverage marker above is checked by `_build/test.migration-coverage.py` so the documented current-source count cannot silently drift from the code.
 
@@ -111,13 +111,13 @@ Migrated actions:
 
 The modular runtime now owns all 108 mutation actions.
 
-<!-- MUTATION_MIGRATION_COVERAGE: 108/108 -->
+<!-- MUTATION_MIGRATION_COVERAGE: 111/111 -->
 
 The first mutation block is the direct MODX-processor layer: Access/ACL, Context,
 Namespace and Lexicon writes. These actions now execute through
 `ProcessorMutationTool` + `MutationProcessorCatalog` instead of the legacy
 dispatcher. The mutation migration is now complete: all 108 mutation actions
-are registered in the modular Runtime, so all 183 server actions have a modular
+are registered in the modular Runtime, so all 192 server actions have a modular
 implementation.
 
 On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. That full live matrix covered the 182-action release contract, including all 74 read-only actions available at that time.
@@ -130,7 +130,7 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 
 - Architecture: PASS.
 - Build architecture: PASS.
-- Current development client/server contract: PASS, 183 actions (static).
+- Current development client/server contract: PASS, 192 actions (static).
 - Endpoint architecture: PASS.
 - MODX2 PHP compatibility: PASS.
 - Platform mapping: PASS.
@@ -138,7 +138,7 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 - MODX3 processor compatibility: PASS, 113 processor files on the live MODX3 sandbox.
 - Release portability: PASS.
 - Release staging: PASS.
-- Current development migration coverage consistency: PASS, read 75/75; mutations 108/108 (static).
+- Current development migration coverage consistency: PASS, read 81/81; mutations 111/111 (static).
 - Stable v1.1.0 live modular-vs-legacy read parity: PASS for all 74 read-only actions in that release. The new `get_site_state` action is not yet included in the full live parity matrix.
 - Live mutation processor parity: PASS, 46 transactional checks across 40 modular mutation actions; all writes rolled back.
 - Live system/TV/ops mutation parity: PASS, 8/8 actions.
