@@ -243,7 +243,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-After version 1.2.0 is published, pin the release tag:
+For production use, pin the published 1.2.0 release tag:
 
 ```json
 {
