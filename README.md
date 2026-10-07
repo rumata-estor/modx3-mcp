@@ -189,7 +189,7 @@ Current development-source status:
 - the current 183-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
 - the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
 - MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
-- **v1.1.0 remains the current stable GitHub release**. The new 183rd action and Runtime-CAS path are development changes. A dedicated MODX 3 CAS smoke test passed on 2026-10-06; full parity/release validation is still pending.
+- **v1.1.0 remains the current stable GitHub release**. The new 183rd action and Runtime-CAS path are development changes. Dedicated CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl on 2026-10-06; a new full 183-action parity/release cycle is still pending.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 

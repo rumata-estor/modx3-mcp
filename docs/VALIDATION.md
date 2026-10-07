@@ -2,7 +2,7 @@
 
 # Connector validation status
 
-Stable-release live validation: 2026-10-02. Current development-source static validation and dedicated MODX 3 Runtime-CAS smoke: 2026-10-06.
+Stable-release full live validation: 2026-10-02. Current development-source static validation and dedicated Runtime-CAS live smoke on MODX 2/3: 2026-10-06.
 
 ## Shared architecture
 
@@ -120,7 +120,9 @@ dispatcher. The mutation migration is now complete: all 108 mutation actions
 are registered in the modular Runtime, so all 183 server actions have a modular
 implementation.
 
-On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. That live matrix covered the 182-action release contract, including all 74 read-only actions available at that time. The development-only `get_site_state` action and Runtime-CAS path were added later and are not included in that historical live-validation claim.
+On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. That full live matrix covered the 182-action release contract, including all 74 read-only actions available at that time.
+
+On 2026-10-06 the development-only `get_site_state` action and Runtime-CAS path received a dedicated live smoke on both MODX 3.2.4-pl and MODX 2.8.9-pl sandboxes. Each sandbox confirmed `atomic_preconditions=true`; a duplicate create with `target_absent` was rejected with `STALE_STATE`; an update using a stale target fingerprint was rejected with `STALE_STATE`; the intervening external content was preserved; and the temporary test chunk was removed. This is a focused validation of the new CAS path, not a claim that the complete 183-action parity matrix was rerun.
 
 Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_root_filesystem_read=0`; parity therefore verifies the same security denial on both paths rather than weakening the setting for a test. Capability groups that are disabled in persistent settings are enabled only in the parity process memory, so the live audit does not leave the sandbox with broader permissions.
 
@@ -146,7 +148,7 @@ Filesystem media-source reads remain disabled on the sandbox by `modxmcp.allow_r
 - Live VersionX mutation parity: PASS for the safe confirm=true + missing-version contract; no live content was reverted.
 - Live miniShop2 mutation parity: PASS, 12/12 actions; positive create paths were transactionally rolled back and real orders/products were not modified.
 - Live final mutation parity: PASS, bulk_resources and replace_across both match legacy for dry-run and real writes on temporary test objects.
-- Development Runtime-CAS smoke on MODX 3: PASS for `get_site_state`, stale update rejection (`target_changed`), stale create rejection (`target_now_exists`), unchanged revision on rejected writes, and successful CAS mutation with unchanged target fingerprint. This is a focused smoke test, not the full parity/release matrix.
+- Development Runtime-CAS smoke on MODX 3.2.4-pl and MODX 2.8.9-pl: PASS for `get_site_state`, stale update rejection (`target_changed`), stale create rejection (`target_now_exists`), unchanged revision on rejected writes, preservation of the intervening external content, revision persistence, and cleanup. This is a focused smoke test, not the full 183-action parity/release matrix.
 - Stable v1.1.0 full live regression: PASS, all 14 live parity suites completed with exit code 0 on the release Runtime.
 - Two globally destructive actions were not invoked live: empty_recycle_bin (the sandbox had a pre-existing deleted resource) and regenerate_token (to preserve the active API token); both remain covered by modular registration, static contract checks, and legacy-equivalent implementation review.
 - Live Package-management mutation parity: PASS, 5/5 actions; package install/uninstall tested only on non-destructive paths.
