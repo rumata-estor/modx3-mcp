@@ -97,6 +97,7 @@ function vp_normalize($value)
 
     $out = array();
     foreach ($value as $key => $item) {
+        if ((string)$key === '_site_revision') { continue; }
         if (in_array(
             (string)$key,
             array('id', 'handler', 'event'),

@@ -89,6 +89,7 @@ function rops_normalize($value)
     if (!is_array($value)) { return $value; }
     $out = array();
     foreach ($value as $key => $item) {
+        if ((string)$key === '_site_revision') { continue; }
         if (in_array((string)$key, array('id', 'parent', 'createdby', 'editedby'), true)
             && (is_int($item) || ctype_digit((string)$item))) {
             $out[$key] = '__ID__';
