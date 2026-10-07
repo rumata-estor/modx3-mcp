@@ -8,7 +8,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**Current development tree · stable base 1.1.0 · MODX Revolution 2.8.x / 3.x · 183/183 modular actions · MIT**
+**Current development tree · stable base 1.1.0 · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -185,11 +185,11 @@ The two MODX generations use the same MCP client, the same public action contrac
 
 Current development-source status:
 
-- all **183/183** server actions are registered in the modular runtime, including the new read-only `get_site_state` action used by Runtime CAS;
-- the current 183-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
+- all **192/192** server actions are implemented by the modular runtime; compared with v1.1.0, the development tree adds 10 actions: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
+- the current 192-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
 - the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
 - MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
-- **v1.1.0 remains the current stable GitHub release**. The new 183rd action and Runtime-CAS path are development changes. Dedicated CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl on 2026-10-06; a new full 183-action parity/release cycle is still pending.
+- **v1.1.0 remains the current stable GitHub release**. The 10 additional development actions and Runtime-CAS path are not part of v1.1.0. Dedicated CAS smoke tests passed on MODX 3.2.4-pl and MODX 2.8.9-pl on 2026-10-06; a new full 192-action parity/release cycle is still pending.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 
