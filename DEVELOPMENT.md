@@ -522,6 +522,8 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php php _build/build.transport.php
 
 Use `--platform modx2` and a MODX 2.8.x build installation for the MODX 2 artifact.
 
+For an existing MODX 2 installation that still uses the legacy `modxmcp` package identity, use a clean replacement rather than a side-by-side install: fully uninstall `modxmcp`, then install `modx2mcp-1.2.0-pl.transport.zip`. Recheck settings and the API token afterwards because the legacy uninstall removes `modxmcp.*` configuration records.
+
 Do not build one platform's package on the other MODX major version. The transport requirements intentionally reject that mismatch.
 
 ## 13. Checks after development changes

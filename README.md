@@ -213,6 +213,8 @@ Version 1.2.0 produces two platform-specific transport packages from the same so
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.0-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+
 Existing `modxmcp.*` settings and the API token are preserved during reinstall or upgrade.
 
 Version **1.2.0** is the current published stable GitHub release.

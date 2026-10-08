@@ -5,6 +5,7 @@
 ## 1.2.0 (2026-10-07)
 
 - MODX 2 distribution uses its own external package identity `MODX2MCP` / `modx2mcp-1.2.0-pl.transport.zip`; the internal `modxmcp` namespace, paths, settings and API remain shared.
+- For MODX 2 installations using the previous `modxmcp` package identity, a clean uninstall followed by installation of `modx2mcp` is required; side-by-side installation is not supported.
 Minor release extending the shared MODX 2 / MODX 3 contract from 182 to **192 server actions** and adding Runtime-safe compare-and-swap preconditions for concurrent agent work.
 
 ### Runtime CAS and stale-state protection
