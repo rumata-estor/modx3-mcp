@@ -508,7 +508,7 @@ Prepare a staging tree for the target platform, then run its builder on a MODX i
 Expected 1.2.0 artifacts:
 
 ```text
-MODX 2.8.x: modxmcp-1.2.0-pl.transport.zip
+MODX 2.8.x: modx2mcp-1.2.0-pl.transport.zip
 MODX 3.x:   modx3mcp-1.2.0-pl.transport.zip
 ```
 

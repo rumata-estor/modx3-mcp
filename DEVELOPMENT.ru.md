@@ -508,7 +508,7 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php php _build/install.headless.php
 Ожидаемые артефакты 1.2.0:
 
 ```text
-MODX 2.8.x: modxmcp-1.2.0-pl.transport.zip
+MODX 2.8.x: modx2mcp-1.2.0-pl.transport.zip
 MODX 3.x:   modx3mcp-1.2.0-pl.transport.zip
 ```
 

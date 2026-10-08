@@ -208,7 +208,7 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 Version 1.2.0 produces two platform-specific transport packages from the same source tree:
 
-- MODX 2.8.x: `modxmcp-1.2.0-pl.transport.zip`;
+- MODX 2.8.x: `modx2mcp-1.2.0-pl.transport.zip`;
 - MODX 3.x: `modx3mcp-1.2.0-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
