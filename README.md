@@ -208,12 +208,14 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 Version 1.2.0 produces two platform-specific transport packages from the same source tree:
 
-- MODX 2.8.x: `modxmcp-1.2.0-pl.transport.zip`;
+- MODX 2.8.x: `modx2mcp-1.2.0-pl.transport.zip`;
 - MODX 3.x: `modx3mcp-1.2.0-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
-Existing `modxmcp.*` settings and the API token are preserved during reinstall or upgrade.
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.0-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+
+For subsequent reinstalls or upgrades of the new `modx2mcp` package itself, existing `modxmcp.*` settings and the API token are preserved.
 
 Version **1.2.0** is the current published stable GitHub release.
 

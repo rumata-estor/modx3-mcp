@@ -91,7 +91,7 @@ if ($installedPackage && !empty($installedPackage->get('installed'))) {
 
 $modx->setLogLevel(modX::LOG_LEVEL_INFO);
 $modx->setLogTarget('ECHO');
-$modx->log(modX::LOG_LEVEL_INFO, 'Building modxMCP ' . PKG_VERSION . '-' . PKG_RELEASE . ' ...');
+$modx->log(modX::LOG_LEVEL_INFO, 'Building MODX 2 MCP ' . PKG_VERSION . '-' . PKG_RELEASE . ' ...');
 
 $modx->loadClass('transport.modPackageBuilder', '', false, true);
 
@@ -104,7 +104,7 @@ $sources = array(
 );
 
 $builder = new modPackageBuilder($modx);
-$builder->createPackage(PKG_NAMESPACE, PKG_VERSION, PKG_RELEASE);
+$builder->createPackage(PKG_NAME, PKG_VERSION, PKG_RELEASE);
 $builder->registerNamespace(
     PKG_NAMESPACE,
     false,

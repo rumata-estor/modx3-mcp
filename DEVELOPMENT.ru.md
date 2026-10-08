@@ -508,7 +508,7 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php php _build/install.headless.php
 Ожидаемые артефакты 1.2.0:
 
 ```text
-MODX 2.8.x: modxmcp-1.2.0-pl.transport.zip
+MODX 2.8.x: modx2mcp-1.2.0-pl.transport.zip
 MODX 3.x:   modx3mcp-1.2.0-pl.transport.zip
 ```
 
@@ -521,6 +521,8 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php php _build/build.transport.php
 ```
 
 Для MODX 2 используйте `--platform modx2` и отдельную MODX 2.8.x установку для сборки.
+
+Если на существующем MODX 2 ещё установлен пакет со старой identity `modxmcp`, выполняйте чистую замену, а не параллельную установку: полностью удалите `modxmcp`, затем установите `modx2mcp-1.2.0-pl.transport.zip`. После этого заново проверьте настройки и API-токен, потому что удаление старого пакета удаляет записи `modxmcp.*`.
 
 Нельзя собирать пакет одной платформы на другой основной версии MODX. Ограничения транспортного пакета специально блокируют такую ошибку.
 
