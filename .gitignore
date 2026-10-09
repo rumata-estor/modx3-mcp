@@ -17,3 +17,7 @@ todo.txt
 
 # Reference copy of a clean MODX install, for local study only — never committed
 modx-example-2-8-8/
+
+# Local Node client backups (may hold secret setting values) and lock dir — never commit
+*-backups/
+project.lock/
