@@ -323,6 +323,8 @@ async function modxApiRequest(payload) {
         "X-MCP-Token": API_TOKEN,
         "Content-Type": "application/json; charset=utf-8",
       },
+      maxRedirects: 0,
+      timeout: 30000,
     });
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
@@ -2557,7 +2559,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // servers return 405 for GET, which is ignored.
 async function checkServerSkew() {
   try {
-    const r = await axios.get(MODX_SITE_URL, { timeout: 5000 });
+    const r = await axios.get(MODX_SITE_URL, { timeout: 5000, maxRedirects: 0 });
     const serverVersion = r.data && r.data.version;
     if (serverVersion && serverVersion !== "unknown" && serverVersion !== pkgInfo.version) {
       console.error(
