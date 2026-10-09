@@ -355,7 +355,7 @@ foreach ($menus as $text => $definition) {
 }
 
 $settings = array(
-    'modxmcp.enabled' => array(1, 'combo-boolean', 'modxmcp:main'),
+    'modxmcp.enabled' => array(0, 'combo-boolean', 'modxmcp:main'),
     'modxmcp.api_token' => array('', 'textfield', 'modxmcp:main'),
     'modxmcp.service_user_id' => array(0, 'textfield', 'modxmcp:main'),
     'modxmcp.audit_log' => array(1, 'combo-boolean', 'modxmcp:main'),
@@ -422,7 +422,7 @@ if (!$enabled) {
     exit(1);
 }
 if ((string) $enabled->get('value') === '') {
-    $enabled->set('value', 1);
+    $enabled->set('value', 0);
     if (!$enabled->save()) {
         fwrite(STDERR, "Failed to initialize modxmcp.enabled.\n");
         exit(1);

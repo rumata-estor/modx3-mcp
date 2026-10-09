@@ -75,7 +75,7 @@ if ($action === $actionInstall || $action === $actionUpgrade) {
         }
         $modx->log(
             $logInfo,
-            '[modxMCP] Generated modxmcp.api_token. The component is enabled; copy the token from System Settings (modxmcp) or Components > modxMCP into your MCP client.'
+            '[modxMCP] Generated modxmcp.api_token. The component is installed disabled; enable it via the modxmcp.enabled system setting and copy the token from System Settings (modxmcp) into your MCP client.'
         );
     }
     if ($modx->getCacheManager()) {
