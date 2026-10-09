@@ -14,7 +14,7 @@ class FindUsagesTool implements ToolInterface
         if ($name === '') {
             throw new \ModxMCPClientException('find_usages: "name" is required.');
         }
-        $limit = isset($data['limit']) ? (int)$data['limit'] : 100;
+        $limit = isset($data['limit']) ? max(1, min((int)$data['limit'], 500)) : 100;
         $search = SearchSupport::search($context, array('query' => $name, 'limit' => $limit));
         $usages = $search['results'];
         $modx = $context->modx();

@@ -26,9 +26,7 @@ class MigxConfigListTool implements ToolInterface
         $total = $modx->getCount('migxConfig', $query);
         $query->sortby('name', 'ASC');
         $limit = MigxSupport::limit($data);
-        if ($limit > 0) {
-            $query->limit($limit, MigxSupport::start($data));
-        }
+        $query->limit($limit, MigxSupport::start($data));
         $rows = array();
         foreach ($modx->getCollection('migxConfig', $query) as $config) {
             $rows[] = array(

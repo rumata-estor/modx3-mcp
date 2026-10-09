@@ -14,7 +14,7 @@ class ElementListTool implements ToolInterface
         $modx = $context->modx();
         $class = $context->platform()->className($type);
         $nameField = ElementSupport::nameField($type);
-        $limit = isset($data['limit']) ? max(0, (int) $data['limit']) : 100;
+        $limit = isset($data['limit']) ? max(1, min((int) $data['limit'], 500)) : 100;
         $start = isset($data['start']) ? max(0, (int) $data['start']) : 0;
 
         $query = $modx->newQuery($class);
@@ -31,7 +31,7 @@ class ElementListTool implements ToolInterface
             }
         }
         $query->sortby($nameField, 'ASC');
-        if ($limit > 0) { $query->limit($limit, $start); }
+        $query->limit($limit, $start);
 
         $result = array();
         foreach ($modx->getCollection($class, $query) as $element) {

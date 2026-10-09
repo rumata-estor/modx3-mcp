@@ -245,8 +245,8 @@ class modxMCP {
             case 'list_elements':
                 // Filter by name directly: the core element getlist processors ignore a `query`
                 // property (they only honour `id`), so a name search has to be done here. limit
-                // defaults to 100; 0 = all. start paginates.
-                $limit = isset($data['limit']) ? max(0, (int) $data['limit']) : 100;
+                // defaults to 100 and is clamped to 1..500. start paginates.
+                $limit = isset($data['limit']) ? max(1, min((int) $data['limit'], 500)) : 100;
                 $start = isset($data['start']) ? max(0, (int) $data['start']) : 0;
                 $listClassMap = [
                     'chunk' => \MODX\Revolution\modChunk::class, 'snippet' => \MODX\Revolution\modSnippet::class, 'template' => \MODX\Revolution\modTemplate::class,
@@ -263,7 +263,7 @@ class modxMCP {
                     }
                 }
                 $lc->sortby($nameField, 'ASC');
-                if ($limit > 0) { $lc->limit($limit, $start); }
+                $lc->limit($limit, $start);
                 $list =[];
                 foreach ($this->modx->getCollection($listClass, $lc) as $el) {
                     $list[] =[
@@ -1048,7 +1048,7 @@ class modxMCP {
         if ($name === '') {
             throw new ModxMCPClientException('find_usages: "name" is required.');
         }
-        $limit = isset($data['limit']) ? (int) $data['limit'] : 100;
+        $limit = isset($data['limit']) ? max(1, min((int) $data['limit'], 500)) : 100;
 
         $search = $this->searchCode(array('query' => $name, 'limit' => $limit));
         $usages = $search['results'];
@@ -5017,9 +5017,6 @@ class modxMCP {
     private function getListLimit(array $data) {
         if (array_key_exists('limit', $data)) {
             $limit = (int)$data['limit'];
-            if ($limit === 0) {
-                return 0;
-            }
             return max(1, min($limit, 500));
         }
         return 100;
