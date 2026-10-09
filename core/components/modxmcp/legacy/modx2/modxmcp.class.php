@@ -3795,6 +3795,9 @@ class modxMCP {
         if (!$setting) {
             throw new ModxMCPClientException('System setting not found.');
         }
+        if (strpos((string) $setting->get('key'), 'modxmcp.') === 0 || (isset($data['key']) && strpos((string) $data['key'], 'modxmcp.') === 0)) {
+            throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+        }
 
         $allowedFields = ['key', 'value', 'xtype', 'namespace', 'area'];
         foreach ($allowedFields as $field) {
@@ -3819,6 +3822,9 @@ class modxMCP {
         }
 
         $key = $setting->get('key');
+        if (strpos((string) $key, 'modxmcp.') === 0) {
+            throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+        }
         if (!$setting->remove()) {
             throw new ModxMCPClientException("Failed to delete system setting: {$key}.");
         }

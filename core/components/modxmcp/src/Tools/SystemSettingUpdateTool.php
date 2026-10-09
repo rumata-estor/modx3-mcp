@@ -15,6 +15,13 @@ class SystemSettingUpdateTool implements ToolInterface
             throw new \ModxMCPClientException('System setting not found.');
         }
 
+        $key = (string) $setting->get('key');
+        if (strpos($key, 'modxmcp.') === 0 || (isset($data['key']) && strpos((string) $data['key'], 'modxmcp.') === 0)) {
+            throw new \ModxMCPClientException(
+                'Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.'
+            );
+        }
+
         foreach (array('key', 'value', 'xtype', 'namespace', 'area') as $field) {
             if (array_key_exists($field, $data)) {
                 $setting->set($field, $data[$field]);
