@@ -297,6 +297,9 @@ class modxMCP {
                 if ($currentResponse->isError()) throw new ModxMCPClientException($this->formatProcessorErrors($currentResponse));
                 
                 $currentData = $currentResponse->getObject();
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                    $data['static_file'] = $this->validateStaticFile($data['static_file']);
+                }
                 $updateData = array_merge($currentData, $data);
                 
                 unset($updateData['events'], $updateData['templates'], $updateData['input_properties'], $updateData['media_source'], $updateData['field_type']);
@@ -317,6 +320,9 @@ class modxMCP {
 
             case 'create_element':
                 $createData = $data;
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                    $createData['static_file'] = $this->validateStaticFile($data['static_file']);
+                }
                 unset($createData['events'], $createData['templates'], $createData['input_properties'], $createData['media_source'], $createData['field_type']);
                 $createData = $this->filterProcessorData($elementType, $createData);
 
@@ -3209,6 +3215,28 @@ class modxMCP {
         }
 
         return array_intersect_key($data, array_flip($allowed[$elementType]));
+    }
+
+    // Client-supplied static_file must resolve (the way MODX reads/writes static
+    // element files) inside the static elements root: core_path + elements/.
+    // Absolute paths are not accepted from API input.
+    private function validateStaticFile($value) {
+        $value = trim((string) $value);
+        if ($value === '') { return ''; }
+        if ($this->isAbsolutePath($value)) {
+            throw new ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        $normalized = $this->normalizeRelativePath($value);
+        if ($normalized === '') { return ''; }
+        $resolved = $this->resolveModxPathPlaceholders($normalized);
+        $root = $this->normalizeFilesystemPath($this->modx->getOption('core_path')) . DIRECTORY_SEPARATOR . 'elements';
+        $absolute = $this->isAbsolutePath($resolved)
+            ? $this->normalizeFilesystemPath($resolved)
+            : $this->normalizeFilesystemPath(rtrim($this->modx->getOption('base_path'), '/\\') . DIRECTORY_SEPARATOR . ltrim($resolved, '/\\'));
+        if (strpos($absolute, $root . DIRECTORY_SEPARATOR) !== 0) {
+            throw new ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        return $normalized;
     }
 
     private function runWithTransaction(callable $callback) {

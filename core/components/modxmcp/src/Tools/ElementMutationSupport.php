@@ -17,6 +17,12 @@ class ElementMutationSupport
             $data['type'] = $data['field_type'];
         }
 
+        if (in_array($action, array('create_element', 'update_element'), true)
+            && isset($data['static_file'])
+            && in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)) {
+            $data['static_file'] = self::validateStaticFile($context, $data['static_file']);
+        }
+
         if (isset($data['name'])) {
             if ($type === 'template' && !isset($data['templatename'])) {
                 $data['templatename'] = $data['name'];
@@ -59,6 +65,37 @@ class ElementMutationSupport
         );
         if (!isset($allowed[$type])) { return $data; }
         return array_intersect_key($data, array_flip($allowed[$type]));
+    }
+
+    // Client-supplied static_file must resolve (the way MODX reads/writes static
+    // element files) inside the static elements root: core_path + elements/.
+    // Absolute paths are not accepted from API input.
+    public static function validateStaticFile($context, $value)
+    {
+        $value = trim((string)$value);
+        if ($value === '') { return ''; }
+        if (FilesystemSupport::isAbsolutePath($value)) {
+            throw new \ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        $normalized = FilesystemSupport::normalizeRelativePath($value);
+        if ($normalized === '') { return ''; }
+        $modx = $context->modx();
+        $resolved = strtr($normalized, array(
+            '{base_path}' => $modx->getOption('base_path'),
+            '{core_path}' => $modx->getOption('core_path'),
+            '{assets_path}' => $modx->getOption('assets_path'),
+            '[[++base_path]]' => $modx->getOption('base_path'),
+            '[[++core_path]]' => $modx->getOption('core_path'),
+            '[[++assets_path]]' => $modx->getOption('assets_path'),
+        ));
+        $root = FilesystemSupport::normalizePath($modx->getOption('core_path')) . DIRECTORY_SEPARATOR . 'elements';
+        $absolute = FilesystemSupport::isAbsolutePath($resolved)
+            ? FilesystemSupport::normalizePath($resolved)
+            : FilesystemSupport::normalizePath(rtrim($modx->getOption('base_path'), '/\\') . '/' . ltrim($resolved, '/\\'));
+        if (strpos($absolute, $root . DIRECTORY_SEPARATOR) !== 0) {
+            throw new \ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        return $normalized;
     }
 
     public static function loadLexicons($context)
