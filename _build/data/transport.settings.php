@@ -8,7 +8,7 @@
 $settings = array();
 
 $defs = array(
-    array('modxmcp.enabled', 1, 'combo-boolean', 'modxmcp:main'),
+    array('modxmcp.enabled', 0, 'combo-boolean', 'modxmcp:main'),
     array('modxmcp.api_token', '', 'textfield', 'modxmcp:main'),
     array('modxmcp.service_user_id', 0, 'textfield', 'modxmcp:main'),
     array('modxmcp.audit_log', 1, 'combo-boolean', 'modxmcp:main'),
