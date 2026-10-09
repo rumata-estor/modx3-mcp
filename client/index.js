@@ -285,6 +285,15 @@ if (!MODX_SITE_URL) {
     "MODX_MCP_SITE_URL is required, e.g. https://your-site.com/assets/components/modxmcp/api.php",
   );
 }
+try {
+  if (new URL(MODX_SITE_URL).protocol !== "https:") {
+    throw new Error(
+      "MODX_MCP_SITE_URL must use https:// (http:// would expose the API token).",
+    );
+  }
+} catch (e) {
+  if (!(e instanceof TypeError)) throw e;
+}
 if (!API_TOKEN) {
   throw new Error(
     "MODX_MCP_TOKEN is required (the modxmcp.api_token system setting value from the target MODX site).",
