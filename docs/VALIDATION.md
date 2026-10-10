@@ -6,6 +6,11 @@
 
 Stable-release 1.2.0 validation: 2026-10-07. Static, processor-compatibility, Runtime-CAS and platform transport checks were repeated for the 192-action release contract.
 
+## Release 1.2.1 security validation
+
+Patch release 1.2.1 contains the seven security fixes merged in PR #22. Release 1.2.1: PHP lint 252 files, modular contract 192/192, architecture / staging / portability / PHP security fixture passed. MODX 2.8.9-pl: transport installation and endpoint CRUD passed, then HTTPS smoke, same-package reinstall, clean uninstall, final install and 16/16 setting restoration passed. MODX 3.2.4-pl: full transport release-smoke completed with RELEASE_SMOKE_OK, 16/16 setting restoration, and 192-action endpoint availability. The MODX 2 script was resumed after a test-harness HTTP URL failed the HTTPS enforcement check; it subsequently passed over HTTPS. Existing deployed production sites were not changed. This release did not rerun the prior full 14-suite MODX 3 mutation matrix. Previous 1.2.0 results remain historical.
+
+
 ## Shared architecture
 
 One source tree contains a shared modular core plus platform adapters:

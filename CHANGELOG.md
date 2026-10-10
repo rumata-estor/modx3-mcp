@@ -2,13 +2,13 @@
 
 # MODX MCP — Changelog
 
-## Unreleased (security hardening, 2026-10-10)
+## 1.2.1 (2026-10-10)
 
 - Harden client transport: require a valid HTTPS URL, reject embedded URL credentials, disable redirects and apply request timeouts.
 - Block create/update/delete of modxmcp.* settings from standard MCP tools; token rotation remains a separate action.
 - Restrict client-supplied static_file paths to core/elements/ and reject symlink escapes.
 - Clamp list limits (including zero), install disabled by default, mask the token in the manager, and ignore local backup folders in Git.
-- Apply the same server-side protections to MODX 2 and MODX 3. No release packages or live sites were modified by this source change.
+- Apply the same server-side protections to MODX 2 and MODX 3.
 
 ## 1.2.0 (2026-10-07)
 

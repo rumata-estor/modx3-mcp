@@ -8,8 +8,8 @@ MODX MCP lets a standard MCP-compatible AI client work with **MODX Revolution 2.
 
 ## 1. Choose the MODX package
 
-- **MODX 2.8.x:** `modx2mcp-1.2.0-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.0-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.1-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.1-pl.transport.zip`.
 
 Both variants use the same public tool contract and Node.js client. Download the appropriate package from [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) or a supported MODX package provider.
 
@@ -48,7 +48,7 @@ On the machine running your AI application, install **Node.js 18+** with npm/`np
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.0"
+        "github:rumata-estor/modx3-mcp#v1.2.1"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",

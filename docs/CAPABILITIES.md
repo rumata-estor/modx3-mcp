@@ -2,7 +2,7 @@
 
 **English** | [Русский](CAPABILITIES.ru.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.0 · 191 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.1 · 191 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP gives an AI-capable MCP client named operations for working with MODX data and elements, rather than requiring every task to be expressed as raw SQL or filesystem commands. It supports site inspection, content and code editing, TV values, packages, access administration, and selected third-party extras. The actual tool list depends on the installed build and enabled capabilities.
 
