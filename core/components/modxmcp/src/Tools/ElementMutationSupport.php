@@ -112,7 +112,7 @@ class ElementMutationSupport
         $resolvedReal = realpath($probe);
         if ($resolvedReal === false
             || ($resolvedReal !== $rootReal
-                && strpos($resolvedReal, rtrim($rootReal, '/\') . DIRECTORY_SEPARATOR) !== 0)) {
+                && strpos($resolvedReal, $rootReal . DIRECTORY_SEPARATOR) !== 0)) {
             throw new \ModxMCPClientException('static_file resolves outside the static elements directory.');
         }
         return $normalized;
