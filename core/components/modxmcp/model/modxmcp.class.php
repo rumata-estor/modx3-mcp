@@ -120,7 +120,7 @@ class modxMCP {
                     is_array($runtimePreconditions)
                     && in_array(
                         $action,
-                        array('create_element', 'update_element'),
+                        array('create_element', 'update_element', 'update_resource_tvs'),
                         true
                     )
                 ) {

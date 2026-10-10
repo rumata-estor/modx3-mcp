@@ -761,3 +761,18 @@ If built-in MODX 3 processor routing changed, run the processor compatibility te
 If installation, upgrade, uninstall, system settings, API behaviour, write operations, or security changed, source checks are not enough. Use a separate MODX 3 test installation and run the full release cycle.
 
 > **Never use a production site as a test bench for a new installer, component uninstall, or a new destructive workflow.**
+
+
+## Resource TV value CAS (unreleased)
+
+The modular MODX 2/3 dispatchers pass internal _runtime_preconditions to
+update_resource_tvs as well as element create/update. The mutation lock and
+StateSupport guard check the site revision first. ResourceTvUpdateTool checks
+expected_tvs under that lock, validates TV assignment to the resource template,
+and makes an all-or-nothing transactional update. siteState now advertises
+precondition_version=2. Existing v1 clients remain compatible, but Runtime
+must refuse TV CAS until a server advertising v2 is installed.
+
+This change is **not** in the published 1.2.0 transport packages; perform
+PHP lint, package build and separate MODX 2 and MODX 3 live verification before
+tagging or deploying a new transport release.
