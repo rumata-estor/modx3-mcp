@@ -285,14 +285,14 @@ if (!MODX_SITE_URL) {
     "MODX_MCP_SITE_URL is required, e.g. https://your-site.com/assets/components/modxmcp/api.php",
   );
 }
+let siteUrl;
 try {
-  if (new URL(MODX_SITE_URL).protocol !== "https:") {
-    throw new Error(
-      "MODX_MCP_SITE_URL must use https:// (http:// would expose the API token).",
-    );
-  }
-} catch (e) {
-  if (!(e instanceof TypeError)) throw e;
+  siteUrl = new URL(MODX_SITE_URL);
+} catch (_) {
+  throw new Error("MODX_MCP_SITE_URL must be a valid absolute https:// URL.");
+}
+if (siteUrl.protocol !== "https:" || !siteUrl.hostname || siteUrl.username || siteUrl.password) {
+  throw new Error("MODX_MCP_SITE_URL must be a valid https:// URL without embedded credentials.");
 }
 if (!API_TOKEN) {
   throw new Error(
@@ -771,7 +771,7 @@ const toolDefinitions = [
       properties: {
         type: { type: "string", enum: ELEMENT_TYPES },
         query: { type: "string", description: "Filter by name (for resources: pagetitle/longtitle/alias)." },
-        limit: { type: "number", description: "Max results (default 100; 0 = all)." },
+        limit: { type: "number", description: "Max results (default 100; 1–500; zero is treated as 1)." },
         start: { type: "number", description: "Offset for pagination." },
       },
       required: ["type"],

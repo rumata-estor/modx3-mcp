@@ -95,6 +95,26 @@ class ElementMutationSupport
         if (strpos($absolute, $root . DIRECTORY_SEPARATOR) !== 0) {
             throw new \ModxMCPClientException('static_file must stay inside the static elements directory.');
         }
+        // A lexical path check alone misses symbolic links into other directories.
+        // Resolve the closest existing path (or the target itself) before trusting it.
+        $rootReal = realpath($root);
+        if ($rootReal === false) {
+            throw new \ModxMCPClientException('Static elements directory is missing.');
+        }
+        $probe = $absolute;
+        while (!file_exists($probe) && !is_link($probe)) {
+            $parent = dirname($probe);
+            if ($parent === $probe) {
+                throw new \ModxMCPClientException('Cannot resolve static file path.');
+            }
+            $probe = $parent;
+        }
+        $resolvedReal = realpath($probe);
+        if ($resolvedReal === false
+            || ($resolvedReal !== $rootReal
+                && strpos($resolvedReal, rtrim($rootReal, '/\') . DIRECTORY_SEPARATOR) !== 0)) {
+            throw new \ModxMCPClientException('static_file resolves outside the static elements directory.');
+        }
         return $normalized;
     }
 

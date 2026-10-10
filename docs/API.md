@@ -66,7 +66,7 @@ List MODX elements of a type (id + name). Supports an optional name filter and p
 | --- | --- | :---: | --- |
 | `type` | string | yes | Allowed: chunk, snippet, template, resource, tv, category, plugin |
 | `query` | string | no | Filter by name (for resources: pagetitle/longtitle/alias). |
-| `limit` | number | no | Max results (default 100; 0 = all). |
+| `limit` | number | no | Max results (default 100; 1–500; zero is treated as 1). |
 | `start` | number | no | Offset for pagination. |
 
 ### `modx_make_static`
