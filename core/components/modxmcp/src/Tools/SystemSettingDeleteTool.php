@@ -28,6 +28,11 @@ class SystemSettingDeleteTool implements ToolInterface
         }
 
         $key = $setting->get('key');
+        if (strpos((string)$key, 'modxmcp.') === 0) {
+            throw new \ModxMCPClientException(
+                'Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.'
+            );
+        }
         if (!$setting->remove()) {
             throw new \ModxMCPClientException(
                 'Failed to delete system setting: ' . $key . '.'

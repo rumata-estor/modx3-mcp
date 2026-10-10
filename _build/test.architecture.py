@@ -1,5 +1,7 @@
 from pathlib import Path
 import sys
+import shutil
+import subprocess
 
 root = Path(__file__).resolve().parents[1]
 src = root / 'core' / 'components' / 'modxmcp' / 'src'
@@ -485,6 +487,22 @@ expected_registrations = {
 for filename, needle in expected_registrations.items():
     if needle not in runtime_text:
         errors.append(f'{filename} exists but is not registered in Runtime')
+
+# Use the PHP CLI in GitHub CI to test the actual static_file and reserved-key
+# boundaries. A source-only checkout without PHP can still run static checks.
+php_binary = shutil.which('php')
+if php_binary:
+    check = subprocess.run(
+        [php_binary, str(root / '_build' / 'test.security-hardening.php')],
+        capture_output=True, text=True, timeout=30,
+    )
+    if check.returncode != 0 or 'SECURITY_HARDENING_PHP_OK' not in check.stdout:
+        errors.append(
+            'PHP security regressions failed: '
+            + (check.stdout + '\n' + check.stderr).strip()
+        )
+else:
+    print('SECURITY_HARDENING_PHP_SKIPPED (PHP CLI unavailable)')
 
 if errors:
     print('ARCHITECTURE_TEST_FAIL')

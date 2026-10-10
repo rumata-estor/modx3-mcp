@@ -23,7 +23,6 @@ class VirtualPageSupport
     {
         if (array_key_exists('limit', $data)) {
             $limit = (int)$data['limit'];
-            if ($limit === 0) { return 0; }
             return max(1, min($limit, 500));
         }
         return 100;

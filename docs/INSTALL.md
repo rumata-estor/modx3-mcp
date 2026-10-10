@@ -20,7 +20,7 @@ Both variants use the same public tool contract and Node.js client. Download the
 1. Sign in to the MODX manager using an account allowed to install packages.
 2. Open Package Management, upload the transport ZIP for your MODX major version, and install it.
 3. Open the MODX MCP component or System Settings with namespace `modxmcp`.
-4. Verify that `modxmcp.enabled` is enabled and `modxmcp.api_token` has a value.
+4. Check `modxmcp.api_token` and network restrictions. Fresh installs start with `modxmcp.enabled = 0`; enable the component manually after securing access.
 5. Copy the token into your **MCP client configuration**. Treat it as a secret, never as a public example.
 
 The installer generates a cryptographically random token if the setting is empty. An ordinary upgrade preserves an existing token.

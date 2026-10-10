@@ -25,7 +25,7 @@ A token holder may potentially change snippets, plugins, templates, resources, s
 | Processor escape hatch | `modxmcp.allow_run_processor` is off by default. |
 | Capability groups | `modxmcp.disabled_groups` disables selected tool families. |
 
-**Disabled tool families are not a complete authorization boundary.** The currently exposed system-setting operations can allow an authenticated caller to affect configuration of MODX MCP itself. Use strong token secrecy and network restrictions; do not treat a disabled capability as the sole barrier against an already authenticated caller. Different external users or sites require independent server-side authorization controls.
+**Disabled tool families are not a complete authorization boundary.** Standard system-setting create/update/delete tools reject keys beginning with `modxmcp.`, including attempts to rename other settings to that prefix. Token rotation remains a separate privileged action. This is not a sandbox: an authenticated caller who can edit executable PHP (or invoke explicitly enabled processors) may still affect site security. Different operators require independent server-side authorization controls.
 
 A correctly authenticated endpoint is not the same as built-in request rate limiting. If your deployment needs rate limits, enforce them at the reverse proxy or web-server layer.
 

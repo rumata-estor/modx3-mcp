@@ -189,6 +189,7 @@ for key in sorted(transport_keys & headless_keys):
         fail(f"setting definition mismatch for {key}: transport={transport_defs.get(key)} headless={headless_defs.get(key)}")
 
 expected_defaults = {
+    "modxmcp.enabled": "0",
     "modxmcp.service_user_id": "0",
     "modxmcp.auto_static": "0",
     "modxmcp.allow_run_processor": "0",

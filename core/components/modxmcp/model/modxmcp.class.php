@@ -245,8 +245,8 @@ class modxMCP {
             case 'list_elements':
                 // Filter by name directly: the core element getlist processors ignore a `query`
                 // property (they only honour `id`), so a name search has to be done here. limit
-                // defaults to 100; 0 = all. start paginates.
-                $limit = isset($data['limit']) ? max(0, (int) $data['limit']) : 100;
+                // defaults to 100 and is clamped to 1..500. start paginates.
+                $limit = isset($data['limit']) ? max(1, min((int) $data['limit'], 500)) : 100;
                 $start = isset($data['start']) ? max(0, (int) $data['start']) : 0;
                 $listClassMap = [
                     'chunk' => \MODX\Revolution\modChunk::class, 'snippet' => \MODX\Revolution\modSnippet::class, 'template' => \MODX\Revolution\modTemplate::class,
@@ -263,7 +263,7 @@ class modxMCP {
                     }
                 }
                 $lc->sortby($nameField, 'ASC');
-                if ($limit > 0) { $lc->limit($limit, $start); }
+                $lc->limit($limit, $start);
                 $list =[];
                 foreach ($this->modx->getCollection($listClass, $lc) as $el) {
                     $list[] =[
@@ -297,6 +297,9 @@ class modxMCP {
                 if ($currentResponse->isError()) throw new ModxMCPClientException($this->formatProcessorErrors($currentResponse));
                 
                 $currentData = $currentResponse->getObject();
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                    $data['static_file'] = $this->validateStaticFile($data['static_file']);
+                }
                 $updateData = array_merge($currentData, $data);
                 
                 unset($updateData['events'], $updateData['templates'], $updateData['input_properties'], $updateData['media_source'], $updateData['field_type']);
@@ -317,6 +320,9 @@ class modxMCP {
 
             case 'create_element':
                 $createData = $data;
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                    $createData['static_file'] = $this->validateStaticFile($data['static_file']);
+                }
                 unset($createData['events'], $createData['templates'], $createData['input_properties'], $createData['media_source'], $createData['field_type']);
                 $createData = $this->filterProcessorData($elementType, $createData);
 
@@ -1048,7 +1054,7 @@ class modxMCP {
         if ($name === '') {
             throw new ModxMCPClientException('find_usages: "name" is required.');
         }
-        $limit = isset($data['limit']) ? (int) $data['limit'] : 100;
+        $limit = isset($data['limit']) ? max(1, min((int) $data['limit'], 500)) : 100;
 
         $search = $this->searchCode(array('query' => $name, 'limit' => $limit));
         $usages = $search['results'];
@@ -3211,6 +3217,48 @@ class modxMCP {
         return array_intersect_key($data, array_flip($allowed[$elementType]));
     }
 
+    // Client-supplied static_file must resolve (the way MODX reads/writes static
+    // element files) inside the static elements root: core_path + elements/.
+    // Absolute paths are not accepted from API input.
+    private function validateStaticFile($value) {
+        $value = trim((string) $value);
+        if ($value === '') { return ''; }
+        if ($this->isAbsolutePath($value)) {
+            throw new ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        $normalized = $this->normalizeRelativePath($value);
+        if ($normalized === '') { return ''; }
+        $resolved = $this->resolveModxPathPlaceholders($normalized);
+        $root = $this->normalizeFilesystemPath($this->modx->getOption('core_path')) . DIRECTORY_SEPARATOR . 'elements';
+        $absolute = $this->isAbsolutePath($resolved)
+            ? $this->normalizeFilesystemPath($resolved)
+            : $this->normalizeFilesystemPath(rtrim($this->modx->getOption('base_path'), '/\\') . DIRECTORY_SEPARATOR . ltrim($resolved, '/\\'));
+        if (strpos($absolute, $root . DIRECTORY_SEPARATOR) !== 0) {
+            throw new ModxMCPClientException('static_file must stay inside the static elements directory.');
+        }
+        // A lexical path check alone misses symbolic links into other directories.
+        // Resolve the closest existing path (or the target itself) before trusting it.
+        $rootReal = realpath($root);
+        if ($rootReal === false) {
+            throw new ModxMCPClientException('Static elements directory is missing.');
+        }
+        $probe = $absolute;
+        while (!file_exists($probe) && !is_link($probe)) {
+            $parent = dirname($probe);
+            if ($parent === $probe) {
+                throw new ModxMCPClientException('Cannot resolve static file path.');
+            }
+            $probe = $parent;
+        }
+        $resolvedReal = realpath($probe);
+        if ($resolvedReal === false
+            || ($resolvedReal !== $rootReal
+                && strpos($resolvedReal, $rootReal . DIRECTORY_SEPARATOR) !== 0)) {
+            throw new ModxMCPClientException('static_file resolves outside the static elements directory.');
+        }
+        return $normalized;
+    }
+
     private function runWithTransaction(callable $callback) {
         $this->modx->beginTransaction();
         try {
@@ -3854,6 +3902,9 @@ class modxMCP {
         if (empty($data['key'])) {
             throw new ModxMCPClientException('System setting key is required.');
         }
+        if (strpos((string)$data['key'], 'modxmcp.') === 0) {
+            throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed.');
+        }
         if ($this->modx->getObject(\MODX\Revolution\modSystemSetting::class, ['key' => $data['key']])) {
             throw new ModxMCPClientException("System setting already exists: {$data['key']}.");
         }
@@ -3881,6 +3932,9 @@ class modxMCP {
         if (!$setting) {
             throw new ModxMCPClientException('System setting not found.');
         }
+        if (strpos((string) $setting->get('key'), 'modxmcp.') === 0 || (isset($data['key']) && strpos((string) $data['key'], 'modxmcp.') === 0)) {
+            throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+        }
 
         $allowedFields = ['key', 'value', 'xtype', 'namespace', 'area'];
         foreach ($allowedFields as $field) {
@@ -3905,6 +3959,9 @@ class modxMCP {
         }
 
         $key = $setting->get('key');
+        if (strpos((string) $key, 'modxmcp.') === 0) {
+            throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+        }
         if (!$setting->remove()) {
             throw new ModxMCPClientException("Failed to delete system setting: {$key}.");
         }
@@ -5017,9 +5074,6 @@ class modxMCP {
     private function getListLimit(array $data) {
         if (array_key_exists('limit', $data)) {
             $limit = (int)$data['limit'];
-            if ($limit === 0) {
-                return 0;
-            }
             return max(1, min($limit, 500));
         }
         return 100;

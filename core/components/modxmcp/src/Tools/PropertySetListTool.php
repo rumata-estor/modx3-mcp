@@ -18,12 +18,9 @@ class PropertySetListTool implements ToolInterface
         }
         $total = (int)$modx->getCount($class, $query);
         $query->sortby('name', 'ASC');
-        $limit = array_key_exists('limit', $data) ? (int)$data['limit'] : 100;
-        if ($limit !== 0) {
-            $limit = max(1, min($limit, 500));
-            $start = !empty($data['start']) ? max(0, (int)$data['start']) : 0;
-            $query->limit($limit, $start);
-        }
+        $limit = array_key_exists('limit', $data) ? max(1, min((int)$data['limit'], 500)) : 100;
+        $start = !empty($data['start']) ? max(0, (int)$data['start']) : 0;
+        $query->limit($limit, $start);
         $rows = array();
         foreach ($modx->getCollection($class, $query) as $propertySet) {
             $rows[] = array(

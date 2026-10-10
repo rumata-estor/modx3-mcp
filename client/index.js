@@ -285,6 +285,15 @@ if (!MODX_SITE_URL) {
     "MODX_MCP_SITE_URL is required, e.g. https://your-site.com/assets/components/modxmcp/api.php",
   );
 }
+let siteUrl;
+try {
+  siteUrl = new URL(MODX_SITE_URL);
+} catch (_) {
+  throw new Error("MODX_MCP_SITE_URL must be a valid absolute https:// URL.");
+}
+if (siteUrl.protocol !== "https:" || !siteUrl.hostname || siteUrl.username || siteUrl.password) {
+  throw new Error("MODX_MCP_SITE_URL must be a valid https:// URL without embedded credentials.");
+}
 if (!API_TOKEN) {
   throw new Error(
     "MODX_MCP_TOKEN is required (the modxmcp.api_token system setting value from the target MODX site).",
@@ -323,6 +332,8 @@ async function modxApiRequest(payload) {
         "X-MCP-Token": API_TOKEN,
         "Content-Type": "application/json; charset=utf-8",
       },
+      maxRedirects: 0,
+      timeout: 30000,
     });
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
@@ -760,7 +771,7 @@ const toolDefinitions = [
       properties: {
         type: { type: "string", enum: ELEMENT_TYPES },
         query: { type: "string", description: "Filter by name (for resources: pagetitle/longtitle/alias)." },
-        limit: { type: "number", description: "Max results (default 100; 0 = all)." },
+        limit: { type: "number", description: "Max results (default 100; 1–500; zero is treated as 1)." },
         start: { type: "number", description: "Offset for pagination." },
       },
       required: ["type"],
@@ -2557,7 +2568,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // servers return 405 for GET, which is ignored.
 async function checkServerSkew() {
   try {
-    const r = await axios.get(MODX_SITE_URL, { timeout: 5000 });
+    const r = await axios.get(MODX_SITE_URL, { timeout: 5000, maxRedirects: 0 });
     const serverVersion = r.data && r.data.version;
     if (serverVersion && serverVersion !== "unknown" && serverVersion !== pkgInfo.version) {
       console.error(
