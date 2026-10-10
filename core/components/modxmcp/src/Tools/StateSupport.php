@@ -10,7 +10,7 @@ class StateSupport
         return array(
             'site_revision' => self::revision($context),
             'atomic_preconditions' => true,
-            'precondition_version' => 1,
+            'precondition_version' => 2,
         );
     }
 

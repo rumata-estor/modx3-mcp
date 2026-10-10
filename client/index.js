@@ -1157,6 +1157,11 @@ const toolDefinitions = [
       properties: {
         resource_id: { type: "number" },
         tvs: { type: "object" },
+        _runtime_preconditions: {
+          type: "object",
+          description: "Internal Site Agent CAS preconditions; never author manually.",
+          additionalProperties: true
+        },
       },
       required: ["resource_id", "tvs"],
     },
