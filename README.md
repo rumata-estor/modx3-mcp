@@ -8,7 +8,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**MODX MCP 1.2.0 · MODX Revolution 2.8.x / 3.x · 192 server actions (191 public MCP tools) · MIT**
+**MODX MCP 1.2.1 · MODX Revolution 2.8.x / 3.x · 192 server actions (191 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -172,7 +172,7 @@ The program is started directly, without a shell. If the audit hook is not confi
 
 ## Compatibility
 
-Version 1.2.0 continues the shared-source line for both supported MODX generations:
+Version 1.2.1 continues the shared-source line for both supported MODX generations:
 
 - **MODX Revolution 2.8.x** — platform artifact `modx2`;
 - **MODX Revolution 3.x** — platform artifact `modx3`;
@@ -180,13 +180,13 @@ Version 1.2.0 continues the shared-source line for both supported MODX generatio
 
 The two MODX generations use the same MCP client, the same public action contract and the same modular runtime. Platform-specific bootstrap, class names and processor routing are isolated behind platform adapters and release overlays.
 
-Version 1.2.0 status:
+Version 1.2.1 status:
 
-- all **192/192** server actions are implemented by the modular runtime; compared with v1.1.0, version 1.2.0 adds 10 actions: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
+- all **192/192** server actions are implemented by the modular runtime; v1.2.0 added 10 actions compared with v1.1.0: `get_site_state`, ClientConfig CRUD/read operations, and additional access-policy/resource-group read helpers;
 - the 192-action source contract passes the static architecture, client/server, migration, portability and release-staging checks;
 - the published **v1.1.0** release was live-validated with the previous **182-action** contract on MODX 3.2.4-pl and MODX 2.8.9-pl;
 - MODX 3 processor compatibility for the stable line was checked against 3.2.2-pl, 3.2.4-pl and the then-current 3.x branch;
-- **v1.2.0 is the current stable release**. Static release checks, Runtime-CAS smoke, platform transport release-smoke and the current 81-action read parity passed on MODX 3.2.4-pl and MODX 2.8.9-pl; the complete 14-suite live regression passed on MODX 3, while MODX 2 passed the core/runtime matrix with positive MIGX lifecycle skipped because MIGX is not installed on that sandbox.
+- **v1.2.1 is the security patch release**. Both platform transport packages passed installation, reinstallation, uninstall/reinstall and endpoint smoke on their MODX 2.8.9-pl and MODX 3.2.4-pl test sites. The full 14-suite MODX 3 regression and 81-action read parity were completed for v1.2.0; they are not claimed as newly rerun for 1.2.1.
 
 See [build architecture](docs/BUILD-ARCHITECTURE.md) and [validation status](docs/VALIDATION.md) for the exact matrix.
 
@@ -203,18 +203,18 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 ## Install with the MODX transport package
 
-Version 1.2.0 produces two platform-specific transport packages from the same source tree:
+Version 1.2.1 produces two platform-specific transport packages from the same source tree:
 
-- MODX 2.8.x: `modx2mcp-1.2.0-pl.transport.zip`;
-- MODX 3.x: `modx3mcp-1.2.0-pl.transport.zip`.
+- MODX 2.8.x: `modx2mcp-1.2.1-pl.transport.zip`;
+- MODX 3.x: `modx3mcp-1.2.1-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
-**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.0-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.1-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
 
 For subsequent reinstalls or upgrades of the new `modx2mcp` package itself, existing `modxmcp.*` settings and the API token are preserved.
 
-Version **1.2.0** is the current published stable GitHub release.
+Version **1.2.1** is the current published stable GitHub release.
 
 ## Command-line installation
 
@@ -242,7 +242,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-For production use, pin the published 1.2.0 release tag:
+For production use, pin the published 1.2.1 release tag:
 
 ```json
 {
@@ -251,7 +251,7 @@ For production use, pin the published 1.2.0 release tag:
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.0"
+        "github:rumata-estor/modx3-mcp#v1.2.1"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -297,11 +297,11 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Current stable version: **1.2.0**.
+Current stable version: **1.2.1**.
 
-Latest published stable release: **[1.2.0](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.0)**.
+Latest published stable release: **[1.2.1](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.1)**.
 
-The 1.2.0 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
+The 1.2.1 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
 
 ---
 
