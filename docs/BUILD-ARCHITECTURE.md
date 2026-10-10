@@ -2,9 +2,11 @@
 
 # Build architecture
 
+> User documentation: [installation](INSTALL.md), [capabilities](CAPABILITIES.md), [API reference](API.md), [security](SECURITY.md).
+
 One connector source tree produces two platform-specific release artifacts:
 
-- **MODX Revolution 2.8.x** — platform key `modx2`, transport package `modxmcp-<version>-pl.transport.zip`;
+- **MODX Revolution 2.8.x** — platform key `modx2`, transport package `modx2mcp-<version>-pl.transport.zip`;
 - **MODX Revolution 3.x** — platform key `modx3`, transport package `modx3mcp-<version>-pl.transport.zip`.
 
 Both artifacts use the same MCP client, the same public action contract, and the same modular runtime under `core/components/modxmcp/src/`.
