@@ -2,9 +2,11 @@
 
 # Архитектура сборки
 
+> Документация пользователя: [установка](INSTALL.ru.md), [возможности](CAPABILITIES.ru.md), [API](API.ru.md), [безопасность](SECURITY.ru.md).
+
 Из одного дерева исходников коннектора собираются два варианта релиза:
 
-- **MODX Revolution 2.8.x** — идентификатор платформы `modx2`, транспортный пакет `modxmcp-<version>-pl.transport.zip`;
+- **MODX Revolution 2.8.x** — идентификатор платформы `modx2`, транспортный пакет `modx2mcp-<version>-pl.transport.zip`;
 - **MODX Revolution 3.x** — идентификатор платформы `modx3`, транспортный пакет `modx3mcp-<version>-pl.transport.zip`.
 
 Обе сборки используют один MCP-клиент, один публичный контракт действий и одну модульную среду выполнения из `core/components/modxmcp/src/`.
