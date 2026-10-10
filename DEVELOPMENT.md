@@ -2,6 +2,8 @@
 
 # MODX MCP — development and maintenance guide
 
+> User documentation: [installation](docs/INSTALL.md), [capabilities](docs/CAPABILITIES.md), [API reference](docs/API.md), [security](docs/SECURITY.md).
+
 This document is for people who want to **run, maintain, or extend MODX MCP**.
 
 It is written so that an experienced developer can quickly understand the project architecture, extension points, constraints, and test flow. A less experienced user should still be able to understand the overall structure and see what needs attention, but this guide does not replace practical knowledge of PHP, Node.js, MODX, and server administration.
@@ -739,7 +741,7 @@ If these questions cannot be answered clearly, the change is not ready.
 
 ## 20. What is not part of MODX MCP
 
-The Telegram bot, external server scripts, and internal `AGENT.md` used in our own agent environment are not required parts of MODX MCP.
+External agent orchestration, messaging systems and private client instructions are not required parts of MODX MCP.
 
 The project should remain a standalone MCP server and MODX component.
 

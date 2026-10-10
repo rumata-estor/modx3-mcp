@@ -8,10 +8,21 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**MODX MCP 1.2.0 · MODX Revolution 2.8.x / 3.x · 192/192 server actions · MIT**
+**MODX MCP 1.2.0 · MODX Revolution 2.8.x / 3.x · 192 server actions (191 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
+
+## Documentation
+
+| Purpose | English | Русский |
+| --- | --- | --- |
+| Install and connect | [Installation and setup](docs/INSTALL.md) | [Установка](docs/INSTALL.ru.md) |
+| Explore all features | [Capabilities and tools](docs/CAPABILITIES.md) | [Возможности](docs/CAPABILITIES.ru.md) |
+| Build integrations | [API reference: 191 tools](docs/API.md) | [Справочник API](docs/API.ru.md) |
+| Deploy safely | [Security and trust model](docs/SECURITY.md) | [Безопасность](docs/SECURITY.ru.md) |
+
+Additional references: [development](DEVELOPMENT.md), [build architecture](docs/BUILD-ARCHITECTURE.md), [validation status](docs/VALIDATION.md).
 
 ## The idea
 
@@ -49,23 +60,9 @@ That is why MODX MCP focuses not only on executing commands, but also on context
 
 The goal is not to make the agent all-powerful. The goal is to give it enough context and enough limits so it is less likely to make dangerous decisions blindly.
 
-## Development environment and agent architecture
+## Compatible MCP clients
 
-MODX MCP was developed and tested as part of a real agent-based workflow used for practical website maintenance.
-
-For communication between the AI agent and the messaging layer, we used the open-source project [**cc-connect**](https://github.com/chenhg5/cc-connect), created by [**Glenn (chenhg5)**](https://github.com/chenhg5).
-
-In our own workflow, the external interface is built with a **custom Telegram bot and custom server-side scripts**. These tools are kept in a private repository because they are part of our internal infrastructure and our own know-how.
-
-> **MODX MCP is a server and a set of tools for an agent. It is not a ready-made agent and it is not tied to Telegram.**
-
-The Node.js part of MODX MCP runs as a local MCP server over `stdio`. This means it can be used with any client or agent environment that can start and connect to this type of MCP server: an IDE, a custom agent, an automation system, or a compatible chat interface.
-
-You can write your own agent instructions and define your own rules for how the agent should work with MODX MCP. The Telegram bot is only one interface used in our own workflow.
-
-Another part of our internal setup is **AGENT.md** — our own set of system instructions, restrictions, and working rules for an AI agent. It was developed from more than two years of practical work with websites using AI. Some of these rules directly influenced the architecture of MODX MCP: dependency analysis, separation of reads and writes, backups, limits around dangerous actions, and auditing.
-
-The Telegram bot, server-side scripts, and AGENT.md are **not dependencies of MODX MCP** and are not required to install or use it.
+The Node.js part of MODX MCP uses the standard `stdio` transport and works with MCP hosts that can start a local MCP server. No separate agent orchestration service is required. See [Installation and setup](docs/INSTALL.md).
 
 ## Common AI mistakes when working with a CMS
 

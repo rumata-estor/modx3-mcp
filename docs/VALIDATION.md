@@ -2,6 +2,8 @@
 
 # Connector validation status
 
+> User documentation: [installation](INSTALL.md), [capabilities](CAPABILITIES.md), [API reference](API.md), [security](SECURITY.md).
+
 Stable-release 1.2.0 validation: 2026-10-07. Static, processor-compatibility, Runtime-CAS and platform transport checks were repeated for the 192-action release contract.
 
 ## Shared architecture
