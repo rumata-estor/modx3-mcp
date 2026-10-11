@@ -32,6 +32,7 @@ use ModxMcp\Tools\ElementListTool;
 use ModxMcp\Tools\ElementGetTool;
 use ModxMcp\Tools\ElementCreateTool;
 use ModxMcp\Tools\ElementUpdateTool;
+use ModxMcp\Tools\ElementPropertyUpdateTool;
 use ModxMcp\Tools\ElementDeleteTool;
 use ModxMcp\Tools\ElementMakeStaticTool;
 use ModxMcp\Tools\ElementEditLinesTool;
@@ -197,6 +198,7 @@ class Runtime
         $this->registry->register(new ElementGetTool());
         $this->registry->register(new ElementCreateTool());
         $this->registry->register(new ElementUpdateTool());
+        $this->registry->register(new ElementPropertyUpdateTool());
         $this->registry->register(new ElementDeleteTool());
         $this->registry->register(new ElementMakeStaticTool());
         $this->registry->register(new ElementEditLinesTool());

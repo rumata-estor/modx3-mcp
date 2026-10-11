@@ -74,6 +74,7 @@ class modxMCP {
                     'get_element',
                     'create_element',
                     'update_element',
+                    'update_element_property',
                     'delete_element',
                 );
                 if (in_array($action, $elementBridgeActions, true) && !isset($toolData['type']) && $elementType !== '') {
@@ -91,7 +92,7 @@ class modxMCP {
                     is_array($runtimePreconditions)
                     && in_array(
                         $action,
-                        array('create_element', 'update_element'),
+                        array('create_element', 'update_element', 'update_element_property'),
                         true
                     )
                 ) {
@@ -350,6 +351,7 @@ class modxMCP {
                 'get_element'     => array('element' => true),
                 'create_element'  => array('element' => true),
                 'update_element'  => array('element' => true),
+                'update_element_property' => array('element' => true),
                 'delete_element'  => array('element' => true),
                 'make_static'     => 'makeStatic',
                 'view_element'        => 'viewElementLines',

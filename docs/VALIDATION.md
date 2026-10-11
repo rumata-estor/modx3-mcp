@@ -111,7 +111,7 @@ Migrated actions:
 
 The modular runtime now owns all 111 mutation actions.
 
-<!-- MUTATION_MIGRATION_COVERAGE: 111/111 -->
+<!-- MUTATION_MIGRATION_COVERAGE: 112/112 -->
 
 The first mutation block is the direct MODX-processor layer: Access/ACL, Context,
 Namespace and Lexicon writes. These actions now execute through
@@ -180,3 +180,13 @@ Live-tested on a clean MODX 2.8.9-pl sandbox.
 - positive MIGX lifecycle is skipped because MIGX is not installed on this MODX 2 sandbox; the same MIGX mutation lifecycle passes 3/3 on MODX 3. miniShop2 mutation parity passes 12/12 here, VersionX passes its safe not-found contract, and VirtualPage absence parity passes 10/10.
 
 Status: LIVE-VALIDATED FOR CORE/RUNTIME AND RELEASE-SMOKE.
+
+
+## Unreleased development addition (2026-10-11)
+
+The working tree, not stable v1.2.0, extends the contract to 193 actions
+(81 read-only + 112 mutations): update_element_property updates a single
+existing default property of a snippet/chunk/plugin/template. Requires an
+expected previous value (CAS), uses MODX processors, and keeps element code and
+unrelated property definitions unchanged. Tests and deployment must pass before
+this feature becomes an announced release.
