@@ -14,10 +14,8 @@ class ErrorLogReadTool implements ToolInterface
         if (!file_exists($path)) {
             return array('total' => 0, 'lines' => array(), 'path' => $path);
         }
-        $lines = file($path, FILE_IGNORE_NEW_LINES);
-        if ($lines === false) { $lines = array(); }
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 100;
-        $tail = array_slice($lines, -$limit);
+        $tail = FilesystemSupport::readTailLines($path, $limit);
         return array('total' => count($tail), 'lines' => $tail);
     }
 }
