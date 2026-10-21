@@ -12,7 +12,13 @@ with tempfile.TemporaryDirectory() as d:
             assert (core/rel).is_file(), (plat,rel)
         for rel in ['css/dashboard.css','css/graph.css','js/home.js','js/graph.js']:
             assert (assets/rel).is_file(), (plat,rel)
+        for lang in ('ru', 'en', 'es', 'de', 'fr', 'uk', 'kk', 'nl', 'pl'):
+            lex=(core/'lexicon'/lang/'default.inc.php').read_text()
+            assert "'modxmcp_graph_heading'" in lex, (plat, lang, 'graph headings')
+            assert "'modxmcp_cmp_cap_access'" in lex, (plat, lang, 'capability labels')
         dashboard=(core/'templates/home.tpl').read_text();graph=(core/'templates/graph.tpl').read_text()
+        assert '{$g.heading}' in graph and '{$g.canvas_help}' in graph
+        assert (assets/'js/graph.js').read_text().find('TXT.loading_graph') >= 0
         assert 'token_full' not in dashboard and 'mcp-layout' in dashboard
         assert 'g-page-header' in graph and 'g-stage' in graph
         for rel in ['controllers/index.class.php','controllers/graph.class.php']:

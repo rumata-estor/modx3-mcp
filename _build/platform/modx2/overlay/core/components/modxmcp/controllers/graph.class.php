@@ -36,6 +36,7 @@ class ModxmcpGraphManagerController extends modExtraManagerController {
         $cfg = json_encode(array(
             'connector_url' => $assetsUrl . 'connector.php',
             'manager_url'   => $this->modx->getOption('manager_url'),
+            'ui'            => $this->graphLabels(),
         ), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         $this->addHtml('<script type="text/javascript">var ModxmcpGraph = ' . $cfg . ';</script>');
         // Isolated graph dashboard stylesheet, cache-busted alongside graph.js.
@@ -52,7 +53,34 @@ class ModxmcpGraphManagerController extends modExtraManagerController {
         $this->modx->lexicon->load('modxmcp:default');
         $this->setPlaceholders(array(
             'settings_url' => '?a=index&namespace=modxmcp',
+            'g'            => $this->graphLabels(),
         ));
+    }
+
+    private function graphLabels() {
+        $keys = array(
+            'heading', 'subtitle', 'back', 'search_placeholder', 'layout_lanes', 'layout_lanes_help',
+            'layout_clusters', 'layout_clusters_help', 'layout_free', 'layout_free_help', 'reload', 'fit',
+            'reset', 'loading', 'loading_graph', 'filters_aria', 'node_types', 'filters',
+            'hide_vendor_help', 'hide_vendor', 'hide_orphans', 'issues_only', 'resource_refs', 'density',
+            'dense', 'sparse', 'broken_links', 'unused', 'canvas_help', 'template_plural',
+            'chunk_plural', 'snippet_plural', 'tv_plural', 'plugin_plural', 'resource_plural', 'missing_plural',
+            'template_singular', 'chunk_singular', 'snippet_singular', 'tv_singular', 'plugin_singular', 'resource_singular',
+            'missing_singular', 'kind_tag', 'kind_attached', 'kind_property', 'kind_php', 'kind_migx',
+            'kind_binding', 'kind_link', 'kind_template', 'kind_missing', 'empty_response', 'build_failed',
+            'error', 'nodes_unit', 'of', 'links_unit', 'broken_unit', 'orphan_unit',
+            'from', 'no_broken', 'all_used', 'unverified_note', 'candidate_note', 'steps',
+            'all', 'uses', 'used_in', 'disabled', 'static_flag', 'broken_title',
+            'snippet_cap', 'chunk_cap', 'missing_explanation', 'unreferenced_title', 'deletion_warning', 'used_externally',
+            'system_setting', 'order_status', 'edit', 'isolate', 'resources_on_template', 'events',
+            'more', 'uses_heading', 'used_in_heading', 'no_relations', 'no_results', 'reason_template',
+            'reason_tv', 'reason_other'
+        );
+        $labels = array();
+        foreach ($keys as $key) {
+            $labels[$key] = $this->modx->lexicon('modxmcp_graph_' . $key);
+        }
+        return $labels;
     }
 
     public function getTemplateFile() {

@@ -8,12 +8,14 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**MODX MCP 1.2.3 · MODX Revolution 2.8.x / 3.x · 193 server actions (192 public MCP tools) · MIT**
+**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 server actions (192 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
 
 ## MODX MCP interface
+
+**Manager UI languages:** Russian, English, Spanish, German, French, Ukrainian, Kazakh (Cyrillic), Dutch and Polish (`ru`, `en`, `es`, `de`, `fr`, `uk`, `kk`, `nl`, `pl`).
 
 Use the manager dashboard to review the API endpoint, manage token access, configure settings, and control available MCP capabilities. The separate dependency graph shows relationships between MODX elements, broken references, and potentially unused code.
 
@@ -25,7 +27,7 @@ Use the manager dashboard to review the API endpoint, manage token access, confi
 
 ![MODX MCP dependency graph with English labels](docs/images/modxmcp-graph-en.png)
 
-*Documentation illustrations rendered from the component UI and test-site graph data. The API hostname is an example and the token is fully masked. The graph screenshot uses English-localized labels for documentation; some graph strings in the current 1.2.3 manager build remain Russian. Images are not evidence of a specific MCP client being connected.*
+*Documentation illustrations rendered from the component UI and test-site graph data. The API hostname is an example and the token is fully masked. The graph screenshot uses English-localized labels for documentation; the graph uses localized strings from the selected manager language. Images are not evidence of a specific MCP client being connected.*
 
 ## Documentation
 
@@ -230,20 +232,20 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 ## Install with the MODX transport package
 
-**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.3](docs/extras/modx2mcp-1.2.3.md) · [MODX 3.x — MODX MCP 1.2.3](docs/extras/modx3mcp-1.2.3.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.3.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.3.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
+**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.3](docs/extras/modx2mcp-1.2.4.md) · [MODX 3.x — MODX MCP 1.2.3](docs/extras/modx3mcp-1.2.4.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.4.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.4.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
 
-Version 1.2.3 produces two platform-specific transport packages from the same source tree:
+Version 1.2.4 produces two platform-specific transport packages from the same source tree:
 
-- MODX 2.8.x: `modx2mcp-1.2.3-pl.transport.zip`;
-- MODX 3.x: `modx3mcp-1.2.3-pl.transport.zip`.
+- MODX 2.8.x: `modx2mcp-1.2.4-pl.transport.zip`;
+- MODX 3.x: `modx3mcp-1.2.4-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
-**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.3-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.4-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
 
 For subsequent reinstalls or upgrades of the new `modx2mcp` package itself, existing `modxmcp.*` settings and the API token are preserved.
 
-Version **1.2.3** is the current stable patch release.
+Version **1.2.4** is the current stable localization patch release.
 
 ## Command-line installation
 
@@ -271,7 +273,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-For production use, pin the stable 1.2.3 release tag:
+For production use, pin the stable 1.2.4 release tag:
 
 ```json
 {
@@ -280,7 +282,7 @@ For production use, pin the stable 1.2.3 release tag:
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.3"
+        "github:rumata-estor/modx3-mcp#v1.2.4"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -326,11 +328,11 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Current stable version: **1.2.3**.
+Current stable version: **1.2.4**.
 
-Latest published stable release: **[1.2.3](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.3)**.
+Latest published stable release: **[1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)**.
 
-The 1.2.3 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
+The 1.2.4 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
 
 ---
 

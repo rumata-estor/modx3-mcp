@@ -85,16 +85,16 @@ class ModxmcpIndexManagerController extends modExtraManagerController {
                 $caps = $mcp->getCapabilities();
                 $disabled = array_flip(isset($caps['disabled_groups']) ? $caps['disabled_groups'] : array());
                 $meta = array(
-                    'versionx'           => array('VersionX (история / откат)', 'component'),
-                    'virtualpage'        => array('VirtualPage (роуты / события)', 'component'),
-                    'minishop2'          => array('miniShop2 (товары / опции / связи / категории / заказы)', 'component'),
-                    'migx'               => array('MIGX (конфигурации)', 'component'),
-                    'access'             => array('Контроль доступа (пользователи, группы, роли, политики)', 'feature'),
-                    'contexts'           => array('Контексты', 'feature'),
-                    'property_sets'      => array('Наборы свойств элементов', 'feature'),
-                    'namespaces'         => array('Пространства имён', 'feature'),
-                    'lexicon'            => array('Управление словарями', 'feature'),
-                    'package_management' => array('Менеджер пакетов (установка / провайдеры)', 'feature'),
+                    'versionx'           => array($this->modx->lexicon('modxmcp_cmp_cap_versionx'), 'component'),
+                    'virtualpage'        => array($this->modx->lexicon('modxmcp_cmp_cap_virtualpage'), 'component'),
+                    'minishop2'          => array($this->modx->lexicon('modxmcp_cmp_cap_minishop2'), 'component'),
+                    'migx'               => array($this->modx->lexicon('modxmcp_cmp_cap_migx'), 'component'),
+                    'access'             => array($this->modx->lexicon('modxmcp_cmp_cap_access'), 'feature'),
+                    'contexts'           => array($this->modx->lexicon('modxmcp_cmp_cap_contexts'), 'feature'),
+                    'property_sets'      => array($this->modx->lexicon('modxmcp_cmp_cap_property_sets'), 'feature'),
+                    'namespaces'         => array($this->modx->lexicon('modxmcp_cmp_cap_namespaces'), 'feature'),
+                    'lexicon'            => array($this->modx->lexicon('modxmcp_cmp_cap_lexicon'), 'feature'),
+                    'package_management' => array($this->modx->lexicon('modxmcp_cmp_cap_package_management'), 'feature'),
                 );
                 foreach (isset($caps['toggleable_groups']) ? $caps['toggleable_groups'] : array() as $g) {
                     $label = isset($meta[$g]) ? $meta[$g][0] : $g;

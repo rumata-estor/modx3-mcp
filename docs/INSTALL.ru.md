@@ -8,8 +8,8 @@ MODX MCP позволяет подключить ИИ-клиент к сайту
 
 ## 1. Выберите пакет для своей версии MODX
 
-- **MODX 2.8.x**: `modx2mcp-1.2.3-pl.transport.zip`.
-- **MODX 3.x**: `modx3mcp-1.2.3-pl.transport.zip`.
+- **MODX 2.8.x**: `modx2mcp-1.2.4-pl.transport.zip`.
+- **MODX 3.x**: `modx3mcp-1.2.4-pl.transport.zip`.
 
 Транспортные пакеты соответствуют разным версиям платформы, но используют общий набор публичных команд и один Node.js MCP-клиент. Актуальные файлы ищите в [релизах GitHub](https://github.com/rumata-estor/modx3-mcp/releases); при необходимости используйте соответствующий источник пакетов MODX.
 
@@ -52,7 +52,7 @@ https://example.com/assets/components/modxmcp/api.php
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.3"
+        "github:rumata-estor/modx3-mcp#v1.2.4"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
