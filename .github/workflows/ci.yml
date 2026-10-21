@@ -38,7 +38,7 @@ jobs:
           python3 _build/test.manager-dashboard.py
           python3 _build/test.manager-graph-dashboard.py
 
-      - name: Multilingual manager localization (ru/en/es/de/fr/uk)
+      - name: Multilingual manager localization (ru/en/es/de/fr/uk/kk)
         run: |
           node --check assets/components/modxmcp/js/graph.js
           php _build/test.manager-localization.php
