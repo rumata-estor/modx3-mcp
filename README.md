@@ -1,6 +1,8 @@
-**English** | [Русский](README.ru.md)
-
 # MODX MCP
+
+[English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
+
+[Documentation in 9 languages](docs/LANGUAGES.md) / [Документация на 9 языках](docs/LANGUAGES.md)
 
 **MODX MCP** is an MCP server (**Model Context Protocol**) and component line for **MODX Revolution 2.8.x and 3.x**. It lets AI agents work through MODX objects, processors, permissions and relations instead of treating a site as only a database and a set of files.
 

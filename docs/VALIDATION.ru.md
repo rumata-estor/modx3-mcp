@@ -1,4 +1,4 @@
-[English](VALIDATION.md) | **Русский**
+[English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 # Статус проверки коннектора
 

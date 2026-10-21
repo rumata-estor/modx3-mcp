@@ -1,6 +1,6 @@
 # Установка и подключение MODX MCP
 
-[English](INSTALL.md) | **Русский** · [Возможности](CAPABILITIES.ru.md) · [Справочник API](API.ru.md) · [Безопасность](SECURITY.ru.md)
+[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md) · [Возможности](CAPABILITIES.ru.md) · [Справочник API](API.ru.md) · [Безопасность](SECURITY.ru.md)
 
 MODX MCP позволяет подключить ИИ-клиент к сайту на **MODX Revolution 2.8.x или 3.x** через стандартный протокол **MCP (Model Context Protocol)**. Для обычной работы нужны транспортный пакет на сайте, Node.js 18+ на компьютере или сервере, где запускается MCP-клиент, и поддерживающая MCP программа.
 

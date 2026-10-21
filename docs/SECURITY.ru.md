@@ -1,6 +1,6 @@
 # Безопасность MODX MCP
 
-[English](SECURITY.md) | **Русский** · [Установка](INSTALL.ru.md) · [Возможности](CAPABILITIES.ru.md) · [API](API.ru.md)
+[English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Установка](INSTALL.ru.md) · [Возможности](CAPABILITIES.ru.md) · [API](API.ru.md)
 
 Этот документ описывает **реальную модель доверия публичного MODX MCP**, настройки защиты и ограничения. Он относится к интерфейсу версии **1.2.3**, а не к внешним системам управления агентами.
 

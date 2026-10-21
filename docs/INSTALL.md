@@ -1,6 +1,6 @@
 # Installing and connecting MODX MCP
 
-**English** | [Русский](INSTALL.ru.md) · [Capabilities](CAPABILITIES.md) · [API reference](API.md) · [Security](SECURITY.md)
+[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md) · [Capabilities](CAPABILITIES.md) · [API reference](API.md) · [Security](SECURITY.md)
 
 MODX MCP lets a standard MCP-compatible AI client work with **MODX Revolution 2.8.x and 3.x**. A regular installation requires a MODX transport package, **Node.js 18+** on the machine running your MCP client, and an application capable of starting **stdio** MCP servers.
 
