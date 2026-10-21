@@ -20,7 +20,7 @@ function loadManagerLexicon($file) {
 }
 
 $lexicons = array();
-foreach (array('ru', 'en', 'es', 'de', 'fr', 'uk') as $language) {
+foreach (array('ru', 'en', 'es', 'de', 'fr', 'uk', 'kk') as $language) {
     $lexicons[$language] = loadManagerLexicon(
         $root . '/core/components/modxmcp/lexicon/' . $language . '/default.inc.php'
     );
@@ -86,5 +86,5 @@ foreach ($variants as $prefix) {
     }
 }
 
-echo 'OK: ' . count($enKeys) . ' lexicon keys in ru/en/es/de/fr/uk, ' . count($used)
+echo 'OK: ' . count($enKeys) . ' lexicon keys in ru/en/es/de/fr/uk/kk, ' . count($used)
     . ' graph labels, ' . count($capabilityKeys) . " capability labels, MODX 2/3 manager overlays.\n";
