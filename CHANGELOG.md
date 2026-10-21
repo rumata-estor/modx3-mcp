@@ -2,6 +2,12 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- Complete Russian/English localization of the MODX 2 and MODX 3 manager UI: dependency graph controls, labels, diagnostics, and capability group names now use shared lexicons instead of embedded Russian text.
+- Both platform staging trees include the `ru` and `en` lexicons; localization parity and graph JavaScript syntax are checked in CI.
+- MCP API and graph payload semantics remain unchanged; no automatic token rotation or settings migration.
+
 ## 1.2.3 (2026-10-12)
 
 - Fix relative links in the MODX package-manager installation wizard: GitHub repository documentation, Russian/English README and CHANGELOG, cross-references, anchors and images now have absolute GitHub URLs in transport metadata for MODX 2 and 3.
