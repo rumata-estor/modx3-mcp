@@ -30,7 +30,7 @@ assert "hasPermission('settings')" in settings and "isAuthenticated('mgr')" in s
 assert "array('auto_static', 'audit_log')" in settings and "'modxmcp.' . $name" in settings
 assert "'css/dashboard.css?v='" in controller and "'js/home.js?v='" in controller
 labels={m.group(1) for m in re.finditer(r'\$l\.([a-z][a-z0-9_]*)',tpl)}
-for lang in ['ru','en','es','de','fr','uk','kk']:
+for lang in ['ru','en','es','de','fr','uk','kk','nl','pl']: 
     lex=(root/f'core/components/modxmcp/lexicon/{lang}/default.inc.php').read_text()
     for key in labels:
         assert f"'modxmcp_cmp_{key}'" in lex, (lang,key)
