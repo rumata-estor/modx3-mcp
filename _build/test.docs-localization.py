@@ -55,7 +55,7 @@ hub=ROOT/'docs/LANGUAGES.md'
 validate(hub)
 text=hub.read_text()
 assert text.count('README.')>=8
-assert 'not yet fully translated' in text
+assert 'English API' in text and 'Русский API' in text and 'CHANGELOG is intentionally maintained only in English and Russian.' in text
 rows=[line for line in text.splitlines() if line.startswith('|')]
 assert len(rows)==11, ('hub table rows',len(rows))
 assert all(len(line.split('|'))==10 for line in rows), 'hub table columns'

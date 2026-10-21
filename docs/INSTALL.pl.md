@@ -1,33 +1,59 @@
 # Instalacja i podłączenie MODX MCP
 
-[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md)
+[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md) · [Możliwości](CAPABILITIES.pl.md) · [Dokumentacja API](API.pl.md) · [Bezpieczeństwo](SECURITY.pl.md)
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 / 192**
+MODX MCP umożliwia standardowemu klientowi AI zgodnemu z MCP pracę z **MODX Revolution 2.8.x i 3.x**. Typowa instalacja wymaga pakietu transportowego MODX, **Node.js 18+** na komputerze uruchamiającym klienta MCP oraz aplikacji potrafiącej uruchamiać serwery MCP korzystające ze **stdio**.
 
-Wybierz pakiet transportowy zgodny z główną wersją MODX. Klient MCP wymaga Node.js 18 lub nowszego.
+**Oddzielny serwer orkiestracji nie jest potrzebny.** Komponent MODX udostępnia w witrynie API HTTP; lokalny proces `modx-mcp` udostępnia to API klientom MCP przez `stdio`. Sam punkt końcowy PHP nie jest bezpośrednim serwerem MCP stdio.
 
-## 1. MODX 2 / MODX 3
+## 1. Wybierz pakiet MODX
 
-- [Pakiet dla MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip) — MODX 2.8.x
-- [Pakiet dla MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip) — MODX 3.x
-- [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- **MODX 2.8.x:** `modx2mcp-1.2.4-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.4-pl.transport.zip`.
 
-## 2. Szybki start
+Oba warianty korzystają z tego samego publicznego kontraktu narzędzi i klienta Node.js. Pobierz odpowiedni pakiet z [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) lub od obsługiwanego dostawcy pakietów MODX.
 
-1. Zaloguj się do panelu MODX i zainstaluj odpowiedni ZIP przez Menedżer pakietów.
-2. Otwórz „Komponenty → MODX MCP”. Sprawdź HTTPS, uprawnienia i token API; nowe instalacje są domyślnie wyłączone.
-3. Włącz `modxmcp.enabled` dopiero po zabezpieczeniu dostępu. Zapisz token w prywatnej konfiguracji klienta MCP.
+**Istniejące instalacje MODX 2:** przy migracji ze starej tożsamości pakietu `modxmcp` do `modx2mcp` zaleca się całkowite odinstalowanie starego pakietu, a następnie instalację `modx2mcp`. Całkowite odinstalowanie usuwa stare ustawienia `modxmcp.*` i token API. W razie potrzeby zachowaj odpowiednią konfigurację, a następnie zaktualizuj dane uwierzytelniające klienta. Kolejne zwykłe aktualizacje `modx2mcp` zachowują bieżący token.
 
-## 3. Node.js / MCP
+### Panel komponentu w menedżerze
 
-Skonfiguruj host MCP obsługujący stdio według przykładu. Zmień przykładową domenę i token; użyj opublikowanego znacznika v1.2.4.
+W **Komponenty → MODX MCP** skopiuj adres URL API, wyświetl/skopiuj istniejący token tylko wtedy, gdy Twoje konto menedżera ma uprawnienie **settings**, włącz lub wyłącz opcjonalne grupy funkcji i skonfiguruj **Auto-static** / **Audit log**. Zmiany ustawień i funkcji zaczynają obowiązywać dopiero po naciśnięciu odpowiednich przycisków zapisu. **Graf zależności** jest dostępny przez odnośnik do grafu; jego obszar rysowania można powiększać kółkiem myszy, a otaczający panel przewijać, aby zobaczyć filtry i szczegóły. **Regenerate token** unieważnia dane uwierzytelniające wszystkich istniejących klientów; zwykłe aktualizacje pakietu tego nie robią. Komunikat „MCP enabled” na stronie nie stanowi bieżącej weryfikacji połączenia z konkretnym klientem.
+
+## 2. Zainstaluj pakiet transportowy
+
+1. Zaloguj się do menedżera MODX na konto z uprawnieniami do instalowania pakietów.
+2. Otwórz zarządzanie pakietami, prześlij plik transportowy ZIP dla swojej głównej wersji MODX i zainstaluj go.
+3. Otwórz komponent MODX MCP lub ustawienia systemowe z przestrzenią nazw `modxmcp`.
+4. Sprawdź `modxmcp.api_token` i ograniczenia sieciowe. Nowe instalacje zaczynają z `modxmcp.enabled = 0`; włącz komponent ręcznie po zabezpieczeniu dostępu.
+5. Skopiuj token do **konfiguracji klienta MCP**. Traktuj go jako sekret, nigdy jako publiczny przykład.
+
+Jeśli ustawienie jest puste, instalator generuje kryptograficznie losowy token. Zwykła aktualizacja zachowuje istniejący token.
+
+## 3. Ustal punkt końcowy witryny
+
+Standardowy adres URL to:
+
+```text
+https://example.com/assets/components/modxmcp/api.php
+```
+
+Użyj własnej domeny; w niestandardowych wdrożeniach rzeczywista ścieżka może być inna. **HTTPS** jest zalecany i domyślnie wymagany.
+
+`GET` zwraca ograniczoną, niewymagającą uwierzytelnienia odpowiedź o stanie i wersji komponentu. Żądania administracyjne używają JSON `POST` z nagłówkiem `X-MCP-Token`.
+
+## 4. Skonfiguruj aplikację hostującą MCP
+
+Na komputerze uruchamiającym aplikację AI zainstaluj **Node.js 18+** z npm/`npx`. Dodaj serwer MCP do konfiguracji aplikacji hostującej (lokalizacja i obsługiwany format konfiguracji zależą od aplikacji):
 
 ```json
 {
   "mcpServers": {
     "modx": {
       "command": "npx",
-      "args": ["-y", "github:rumata-estor/modx3-mcp#v1.2.4"],
+      "args": [
+        "-y",
+        "github:rumata-estor/modx3-mcp#v1.2.4"
+      ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
         "MODX_MCP_TOKEN": "YOUR_SITE_PRIVATE_TOKEN"
@@ -37,20 +63,54 @@ Skonfiguruj host MCP obsługujący stdio według przykładu. Zmień przykładow�
 }
 ```
 
-## 4. Sprawdzanie połączenia
+`MODX_MCP_SITE_URL` to punkt końcowy API HTTP w PHP. `MODX_MCP_TOKEN` to token tej konkretnej witryny. W systemach produkcyjnych przypnij **opublikowany tag wydania** zamiast śledzić `main`. Upewnij się, że aplikacja hostująca obsługuje uruchamianie lokalnego serwera MCP przez `stdio`.
 
-Uruchom ponownie klienta i najpierw wykonaj operację odczytu, np. `modx_system_info` lub `modx_project_overview`. Odpowiedź GET o stanie usługi nie potwierdza poprawnego uwierzytelnienia.
+## 5. Potwierdź połączenie
 
-## Aktualizacja istniejącej instalacji
+Uruchom ponownie integrację MCP lub odśwież serwery w aplikacji hostującej. Poszukaj serwera `modx` i narzędzi z prefiksem `modx_`. Zacznij od żądania tylko do odczytu, na przykład:
 
-Standardowa aktualizacja `modx2mcp` lub `modx3mcp` zachowuje ustawienia i token API. Jeśli MODX 2 nadal ma stary pakiet `modxmcp`, jest to inna tożsamość pakietu: przed odinstalowaniem wykonaj kopię konfiguracji i tokenu.
+```text
+Show the MODX version and an overview of the site structure. Make no changes.
+```
+
+Można do tego użyć `modx_system_info` i `modx_project_overview`. Aplikacja hostująca może wyświetlać mniej niż 192 narzędzia, zależnie od kompilacji serwera, wyłączonych grup i zainstalowanych dodatków.
+
+[Pełna dokumentacja ustawień systemowych](SETTINGS.pl.md) opisuje **wszystkie 16 ustawień**, wartości domyślne, działanie i konsekwencje dla bezpieczeństwa.
+
+## 6. Ustawienia bezpieczeństwa do sprawdzenia
+
+| Ustawienie | Znaczenie |
+| --- | --- |
+| `modxmcp.enabled` | Włącza lub wyłącza API. |
+| `modxmcp.api_token` | Tajne dane uwierzytelniające API. |
+| `modxmcp.require_https` | Wymaga HTTPS; domyślnie włączone. |
+| `modxmcp.allowed_ips` | Opcjonalna lista dozwolonych adresów IP i zakresów IPv4 CIDR; pusta dopuszcza dowolne źródło. |
+| `modxmcp.trust_proxy_https` | Zaufanie do nagłówka HTTPS odwrotnego proxy należy włączać wyłącznie za prawidłowo skonfigurowanym proxy. |
+| `modxmcp.disabled_groups` | Wyłącza wybrane rodziny narzędzi; **nie stanowi granicy uprawnień ról**. |
+| `modxmcp.allow_run_processor` | Zezwala na bezpośrednie wywoływanie procesorów MODX; domyślnie wyłączone. |
+| `modxmcp.max_payload_bytes` | Limit rozmiaru żądania. |
+| `modxmcp.debug` | Szczegóły błędów; pozostaw wyłączone w środowisku produkcyjnym. |
+
+**Ważne:** żądania są wykonywane jako użytkownik usługowy MODX z uprawnieniami `sudo`. Ujawnienie ważnego tokenu może umożliwić zmiany administracyjne i modyfikację wykonywalnego kodu PHP w elementach. Przeczytaj [przewodnik bezpieczeństwa](SECURITY.pl.md).
 
 ## Rozwiązywanie problemów
 
-- `401`: `MODX_MCP_TOKEN` / `modxmcp.api_token`
-- `403`: `modxmcp.enabled`, `modxmcp.require_https`, `modxmcp.allowed_ips`
-- `404`: `/assets/components/modxmcp/api.php`
-- `413`: `modxmcp.max_payload_bytes`
-- `500`: MODX error log and `error_id`.
+| Objaw | Co sprawdzić |
+| --- | --- |
+| Serwer MCP nie może się uruchomić | Node.js 18+, `npx`, rozwiązywanie pakietów i konfigurację aplikacji hostującej. |
+| `401 Unauthorized` | `MODX_MCP_TOKEN` musi odpowiadać `modxmcp.api_token`; sprawdź, czy token został zmieniony. |
+| `403` | Ustawienie włączenia komponentu, HTTPS, konfigurację odwrotnego proxy i dozwolony adres IP. |
+| `404` | Ścieżkę punktu końcowego, instalację komponentu i routing serwera WWW. |
+| `413` | Żądanie przekroczyło `modxmcp.max_payload_bytes`. |
+| Narzędzie niedostępne | Wersje klienta/serwera, wyłączone grupy, instalację wymaganego dodatku. |
+| `500` | Dzienniki błędów MODX i `error_id`; unikaj publicznego ujawniania komunikatów debugowania. |
 
-**Pełne dokumenty techniczne:** [parametry API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [bezpieczeństwo (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [dla programistów (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Szczegółowe tabele techniczne są obecnie dostępne po angielsku.
+Nie umieszczaj tokenów API w parametrach adresu URL ani w zgłoszeniach problemów. Własne klienty HTTP muszą przesyłać `X-MCP-Token` przez TLS.
+
+## Następne kroki
+
+- [Możliwości](CAPABILITIES.pl.md) — co potrafi MODX MCP.
+- [Dokumentacja API](API.pl.md) — narzędzia i parametry wejściowe.
+- [Bezpieczeństwo](SECURITY.pl.md) — zagrożenia i konfiguracja zabezpieczeń.
+- [README projektu](../README.pl.md) — przegląd projektu.
+- [Walidacja](VALIDATION.pl.md) — uwagi dotyczące testów zgodności.

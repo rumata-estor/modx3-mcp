@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [API](API.md)
 
-This guide documents the trust boundary of public **MODX MCP 1.2.3**, its security settings, and important limitations. It does not describe any external agent management infrastructure.
+This guide documents the trust boundary of public **MODX MCP 1.2.4**, its security settings, and important limitations. It does not describe any external agent management infrastructure.
 
 ## The key rule
 

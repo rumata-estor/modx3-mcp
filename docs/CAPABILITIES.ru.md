@@ -1,6 +1,6 @@
 # Возможности MODX MCP — понятный справочник команд
 
-**Версия интерфейса:** 1.2.3 · 12 октября 2026 года.
+**Версия интерфейса:** 1.2.4 · 21 октября 2026 года.
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Установка](INSTALL.ru.md) · [API](API.ru.md)
 
