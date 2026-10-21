@@ -8,7 +8,8 @@
 - Add full Spanish (`es`) manager lexicon for MODX 2 and MODX 3, covering all 166 labels, settings, graph diagnostics, and capability group names.
 - Add complete German (`de`), French (`fr`), and Ukrainian (`uk`) manager lexicons with the same 166 keys as the Russian, English, and Spanish editions.
 - Add complete Kazakh Cyrillic (`kk`) manager lexicon with all 166 keys, covering settings, API token management, capabilities and dependency graph.
-- Both platform staging trees include all seven lexicons (`ru`, `en`, `es`, `de`, `fr`, `uk`, `kk`); seven-language localization parity and graph JavaScript syntax are checked in CI.
+- Add complete Dutch (`nl`) and Polish (`pl`) manager lexicons (166 entries each), including dependency graph controls, diagnostics, capabilities and token-management messages.
+- Both platform staging trees include all nine lexicons (`ru`, `en`, `es`, `de`, `fr`, `uk`, `kk`, `nl`, `pl`); nine-language localization parity and graph JavaScript syntax are checked in CI.
 - MCP API and graph payload semantics remain unchanged; no automatic token rotation or settings migration.
 
 ## 1.2.3 (2026-10-12)
