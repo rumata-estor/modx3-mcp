@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## 1.2.4 (2026-10-21)
+
 - Complete Russian/English localization of the MODX 2 and MODX 3 manager UI: dependency graph controls, labels, diagnostics, and capability group names now use shared lexicons instead of embedded Russian text.
 - Add full Spanish (`es`) manager lexicon for MODX 2 and MODX 3, covering all 166 labels, settings, graph diagnostics, and capability group names.
 - Add complete German (`de`), French (`fr`), and Ukrainian (`uk`) manager lexicons with the same 166 keys as the Russian, English, and Spanish editions.

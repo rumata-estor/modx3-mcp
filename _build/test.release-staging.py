@@ -7,7 +7,7 @@ import sys
 
 root = Path(__file__).resolve().parents[1]
 errors = []
-expected_version = '1.2.3'
+expected_version = '1.2.4'
 expected_packages = {
     'modx2': 'MODX2MCP',
     'modx3': 'MODX3MCP',
@@ -107,5 +107,5 @@ if errors:
 
 print(
     'RELEASE_STAGING_OK '
-    'modx2=MODX2MCP/1.2.3 modx3=MODX3MCP/1.2.3'
+    'modx2=MODX2MCP/1.2.4 modx3=MODX3MCP/1.2.4'
 )
