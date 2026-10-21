@@ -1,5 +1,7 @@
 # MODX2MCP — публикация для MODX Extras, версия 1.2.4-pl
 
+[English](modx2mcp-1.2.4.md) · [Русский](modx2mcp-1.2.4.ru.md) · [Español](modx2mcp-1.2.4.es.md) · [Deutsch](modx2mcp-1.2.4.de.md) · [Français](modx2mcp-1.2.4.fr.md) · [Українська](modx2mcp-1.2.4.uk.md) · [Қазақша](modx2mcp-1.2.4.kk.md) · [Nederlands](modx2mcp-1.2.4.nl.md) · [Polski](modx2mcp-1.2.4.pl.md)
+
 [English](modx2mcp-1.2.4.md) | **Русский**
 
 - **Название:** MODX2MCP

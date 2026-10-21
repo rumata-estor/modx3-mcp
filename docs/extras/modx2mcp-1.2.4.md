@@ -1,5 +1,7 @@
 # MODX2MCP — MODX Extras release 1.2.4-pl
 
+[English](modx2mcp-1.2.4.md) · [Русский](modx2mcp-1.2.4.ru.md) · [Español](modx2mcp-1.2.4.es.md) · [Deutsch](modx2mcp-1.2.4.de.md) · [Français](modx2mcp-1.2.4.fr.md) · [Українська](modx2mcp-1.2.4.uk.md) · [Қазақша](modx2mcp-1.2.4.kk.md) · [Nederlands](modx2mcp-1.2.4.nl.md) · [Polski](modx2mcp-1.2.4.pl.md)
+
 **English** | [Русский](modx2mcp-1.2.4.ru.md)
 
 - **Extra name:** MODX2MCP

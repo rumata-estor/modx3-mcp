@@ -2,7 +2,7 @@
 
 **Version 1.2.3 · 12 October 2026 · 192 public MCP tools**
 
-**English** | [Русский](API.ru.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [Security](SECURITY.md)
+[English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [Security](SECURITY.md)
 
 Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 192 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 193rd action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
 

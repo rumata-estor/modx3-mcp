@@ -1,6 +1,8 @@
-[English](README.md) | **Русский**
-
 # MODX MCP
+
+[English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
+
+[Documentation in 9 languages](docs/LANGUAGES.md) / [Документация на 9 языках](docs/LANGUAGES.md)
 
 **MODX MCP** — сервер протокола MCP (**Model Context Protocol, протокол контекста модели**) и линия компонентов для **MODX Revolution 2.8.x и 3.x**. ИИ-агент работает через объекты, процессоры, права и связи MODX, а не воспринимает сайт только как базу данных и набор файлов.
 

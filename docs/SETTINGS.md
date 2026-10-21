@@ -1,6 +1,6 @@
 # MODX MCP system settings
 
-**English** | [Русский](SETTINGS.ru.md) · [Installation](INSTALL.md) · [Security](SECURITY.md)
+[English](SETTINGS.md) · [Русский](SETTINGS.ru.md) · [Español](SETTINGS.es.md) · [Deutsch](SETTINGS.de.md) · [Français](SETTINGS.fr.md) · [Українська](SETTINGS.uk.md) · [Қазақша](SETTINGS.kk.md) · [Nederlands](SETTINGS.nl.md) · [Polski](SETTINGS.pl.md) · [Installation](INSTALL.md) · [Security](SECURITY.md)
 
 For **MODX MCP 1.2.3** on MODX 2.8.x and 3.x. This document covers all **16 system settings** defined by both transport packages. Defaults come from `_build/data/transport.settings.php`; behavior has been checked against the PHP implementation.
 

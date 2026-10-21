@@ -1,5 +1,7 @@
 # MODX MCP для MODX 3 — публикация в MODX Extras, версия 1.2.4-pl
 
+[English](modx3mcp-1.2.4.md) · [Русский](modx3mcp-1.2.4.ru.md) · [Español](modx3mcp-1.2.4.es.md) · [Deutsch](modx3mcp-1.2.4.de.md) · [Français](modx3mcp-1.2.4.fr.md) · [Українська](modx3mcp-1.2.4.uk.md) · [Қазақша](modx3mcp-1.2.4.kk.md) · [Nederlands](modx3mcp-1.2.4.nl.md) · [Polski](modx3mcp-1.2.4.pl.md)
+
 [English](modx3mcp-1.2.4.md) | **Русский**
 
 - **Название в каталоге:** MODX MCP

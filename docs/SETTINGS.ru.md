@@ -1,6 +1,6 @@
 # Системные настройки MODX MCP
 
-[English](SETTINGS.md) | **Русский** · [Установка](INSTALL.ru.md) · [Безопасность](SECURITY.ru.md)
+[English](SETTINGS.md) · [Русский](SETTINGS.ru.md) · [Español](SETTINGS.es.md) · [Deutsch](SETTINGS.de.md) · [Français](SETTINGS.fr.md) · [Українська](SETTINGS.uk.md) · [Қазақша](SETTINGS.kk.md) · [Nederlands](SETTINGS.nl.md) · [Polski](SETTINGS.pl.md) · [Установка](INSTALL.ru.md) · [Безопасность](SECURITY.ru.md)
 
 Справочник для **MODX MCP 1.2.3** (MODX 2.8.x и 3.x). Он описывает все **16 системных настроек**, создаваемых обоими транспортными пакетами. Источник значений по умолчанию: `_build/data/transport.settings.php`, поведение сверено с PHP-кодом.
 

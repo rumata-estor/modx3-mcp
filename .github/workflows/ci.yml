@@ -37,6 +37,7 @@ jobs:
           python3 _build/test.manager-platform-package.py
           python3 _build/test.manager-dashboard.py
           python3 _build/test.manager-graph-dashboard.py
+          python3 _build/test.docs-localization.py
 
       - name: Multilingual manager localization (9 languages)
         run: |
