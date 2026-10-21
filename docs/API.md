@@ -1,6 +1,6 @@
 # MODX MCP — API reference
 
-**Version 1.2.3 · 12 October 2026 · 192 public MCP tools**
+**Version 1.2.4 · 21 October 2026 · 192 public MCP tools**
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [Security](SECURITY.md)
 
@@ -15,7 +15,7 @@ Install the MODX transport package for your platform, then configure a compatibl
   "mcpServers": {
     "modx": {
       "command": "npx",
-      "args": ["-y", "github:rumata-estor/modx3-mcp#v1.2.3"],
+      "args": ["-y", "github:rumata-estor/modx3-mcp#v1.2.4"],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
         "MODX_MCP_TOKEN": "YOUR_PRIVATE_SITE_TOKEN"
