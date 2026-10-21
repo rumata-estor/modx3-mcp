@@ -770,7 +770,7 @@ Ext.onReady(function () {
         if (n.id) { html += ' · id ' + n.id; }
         if (src.category) { html += ' · ' + esc(src.category); }
         if (src.tv_type) { html += ' · ' + esc(src.tv_type); }
-        if (src.static) { html += ' · static'; }
+        if (src.static) { html += ' · ' + esc(TXT.static_flag); }
         if (src.disabled) { html += ' · ' + esc(TXT.disabled); }
         html += '</div>';
 
