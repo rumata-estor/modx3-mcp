@@ -19,17 +19,26 @@ function loadManagerLexicon($file) {
     return $_lang;
 }
 
-$ru = loadManagerLexicon($root . '/core/components/modxmcp/lexicon/ru/default.inc.php');
-$en = loadManagerLexicon($root . '/core/components/modxmcp/lexicon/en/default.inc.php');
+$lexicons = array();
+foreach (array('ru', 'en', 'es') as $language) {
+    $lexicons[$language] = loadManagerLexicon(
+        $root . '/core/components/modxmcp/lexicon/' . $language . '/default.inc.php'
+    );
+}
 
-$ruKeys = array_keys($ru);
+$en = $lexicons['en'];
 $enKeys = array_keys($en);
-sort($ruKeys);
 sort($enKeys);
-checkLocalization($ruKeys === $enKeys, 'RU and EN lexicon keys differ');
-
-foreach ($en as $key => $value) {
-    checkLocalization(isset($ru[$key]) && is_string($value) && $value !== '' && $ru[$key] !== '', 'empty value: ' . $key);
+foreach ($lexicons as $language => $entries) {
+    $languageKeys = array_keys($entries);
+    sort($languageKeys);
+    checkLocalization($languageKeys === $enKeys, 'lexicon keys differ for ' . $language);
+    foreach ($enKeys as $key) {
+        checkLocalization(
+            isset($entries[$key]) && is_string($entries[$key]) && $entries[$key] !== '',
+            'empty lexicon value: ' . $language . ':' . $key
+        );
+    }
 }
 
 $template = file_get_contents($root . '/core/components/modxmcp/templates/graph.tpl');
@@ -40,7 +49,12 @@ preg_match_all('/\{\$g\.([a-z_]+)\}/', $template, $templateMatches);
 preg_match_all('/\bTXT\.([a-z_]+)\b/', $graphJs, $jsMatches);
 $used = array_unique(array_merge($templateMatches[1], $jsMatches[1]));
 foreach ($used as $name) {
-    checkLocalization(isset($en['modxmcp_graph_' . $name]), 'undefined graph label: ' . $name);
+    foreach ($lexicons as $language => $entries) {
+        checkLocalization(
+            isset($entries['modxmcp_graph_' . $name]),
+            'undefined graph label: ' . $language . ':' . $name
+        );
+    }
 }
 checkLocalization(count($used) >= 80, 'graph localization keys unexpectedly missing');
 
@@ -72,5 +86,5 @@ foreach ($variants as $prefix) {
     }
 }
 
-echo 'OK: ' . count($enKeys) . ' lexicon keys, ' . count($used)
+echo 'OK: ' . count($enKeys) . ' lexicon keys in ru/en/es, ' . count($used)
     . ' graph labels, ' . count($capabilityKeys) . " capability labels, MODX 2/3 manager overlays.\n";
