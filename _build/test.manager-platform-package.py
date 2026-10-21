@@ -12,7 +12,7 @@ with tempfile.TemporaryDirectory() as d:
             assert (core/rel).is_file(), (plat,rel)
         for rel in ['css/dashboard.css','css/graph.css','js/home.js','js/graph.js']:
             assert (assets/rel).is_file(), (plat,rel)
-        for lang in ('ru', 'en', 'es', 'de', 'fr', 'uk'):
+        for lang in ('ru', 'en', 'es', 'de', 'fr', 'uk', 'kk'):
             lex=(core/'lexicon'/lang/'default.inc.php').read_text()
             assert "'modxmcp_graph_heading'" in lex, (plat, lang, 'graph headings')
             assert "'modxmcp_cmp_cap_access'" in lex, (plat, lang, 'capability labels')
