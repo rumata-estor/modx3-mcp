@@ -19,7 +19,7 @@ class ElementMutationSupport
 
         if (in_array($action, array('create_element', 'update_element'), true)
             && isset($data['static_file'])
-            && in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)) {
+            && in_array($type, array('chunk', 'snippet', 'template', 'plugin', 'tv'), true)) {
             $data['static_file'] = self::validateStaticFile($context, $data['static_file']);
         }
 
@@ -59,7 +59,7 @@ class ElementMutationSupport
             'snippet' => array('id', 'name', 'description', 'snippet', 'category', 'static', 'static_file', 'source', 'property_preprocess'),
             'template' => array('id', 'templatename', 'description', 'content', 'category', 'static', 'static_file', 'source'),
             'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
-            'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank'),
+            'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank', 'static', 'static_file', 'source'),
             'category' => array('id', 'category', 'parent', 'rank'),
             'plugin' => array('id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'),
         );
@@ -264,7 +264,7 @@ class ElementMutationSupport
 
     public static function shouldAutoStatic($context, $type)
     {
-        if (!in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)) {
+        if (!in_array($type, array('chunk', 'snippet', 'template', 'plugin', 'tv'), true)) {
             return false;
         }
         return (bool)$context->modx()->getOption('modxmcp.auto_static', null, false);
@@ -277,6 +277,7 @@ class ElementMutationSupport
             'snippet' => array('class' => $context->platform()->className('snippet'), 'field' => 'snippet', 'dir' => 'snippets', 'ext' => 'php'),
             'template' => array('class' => $context->platform()->className('template'), 'field' => 'content', 'dir' => 'templates', 'ext' => 'tpl'),
             'plugin' => array('class' => $context->platform()->className('plugin'), 'field' => 'plugincode', 'dir' => 'plugins', 'ext' => 'php'),
+            'tv' => array('class' => $context->platform()->className('tv'), 'field' => 'default_text', 'dir' => 'tvs', 'ext' => 'tpl'),
         );
     }
 

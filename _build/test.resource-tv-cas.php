@@ -27,7 +27,18 @@ namespace ModxMcp\Tools {
     public $values = array('primary' => '111', 'secondary' => '222');
     public $failName = null;
     public function get($key) { return $key === 'template' ? 5 : null; }
-    public function getTVValue($name) { return $this->values[$name] ?? null; }
+    // getTVValue in MODX core calls renderOutput() returning formatted/rendered HTML
+    public function getTVValue($name) { return isset($this->values[$name]) ? '<b>' . $this->values[$name] . '</b>' : null; }
+    public function getTemplateVars() {
+      $list = array();
+      foreach ($this->values as $name => $val) {
+        $id = ($name === 'primary') ? 1 : 2;
+        $tv = new FakeTV($id, null, $name);
+        $tv->loadedValue = (string)$val;
+        $list[] = $tv;
+      }
+      return $list;
+    }
     public function setTVValue($name, $value) {
       if ($name === $this->failName) { return false; }
       $this->values[$name] = $value;
@@ -36,8 +47,39 @@ namespace ModxMcp\Tools {
   }
   class FakeTV {
     private $id;
-    public function __construct($id) { $this->id = $id; }
-    public function get($key) { return $key === 'id' ? $this->id : null; }
+    private $modx;
+    private $name;
+    public $loadedValue = null;
+    public function __construct($id, $modx = null, $name = '') {
+      $this->id = $id;
+      $this->modx = $modx;
+      $this->name = $name;
+    }
+    public function get($key) {
+      if ($key === 'id') return $this->id;
+      if ($key === 'name') return $this->name;
+      if ($key === 'caption') return $this->name;
+      if ($key === 'type') return 'text';
+      if ($key === 'value') return $this->loadedValue;
+      return null;
+    }
+    public function getValue($resourceId = 0) {
+      return $this->modx && isset($this->modx->resource->values[$this->name])
+        ? $this->modx->resource->values[$this->name] : $this->loadedValue;
+    }
+    public function setValue($resourceId, $value) {
+      if ($this->modx) {
+        if ($this->name === $this->modx->resource->failName) { return false; }
+        $this->modx->resource->values[$this->name] = $value;
+      }
+      return true;
+    }
+    public function save() {
+      if ($this->modx && $this->name === $this->modx->resource->failName) {
+        return false;
+      }
+      return true;
+    }
   }
   class FakeLink {}
   class FakePlatform {
@@ -62,7 +104,7 @@ namespace ModxMcp\Tools {
     public function getObject($type, $id) {
       if ($type==='resource') return $id===1 ? $this->resource : null;
       if ($type==='tv') return isset($this->linked[$id['name']])
-        ? new FakeTV($this->linked[$id['name']]) : null;
+        ? new FakeTV($this->linked[$id['name']], $this, $id['name']) : null;
       if ($type==='template_var_template') return
         $id['templateid']===5 && in_array($id['tmplvarid'], $this->assigned, true)
           ? new FakeLink() : null;

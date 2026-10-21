@@ -23,21 +23,43 @@ class ResourceTvListTool implements ToolInterface
         }
 
         $templateId = (int) $resource->get('template');
-        $tvLinks = $modx->getCollection(
-            $platform->className('template_var_template'),
-            array('templateid' => $templateId)
-        );
         $result = array();
-        foreach ($tvLinks as $link) {
-            $tv = $modx->getObject($platform->className('tv'), $link->get('tmplvarid'));
-            if (!$tv) { continue; }
-            $result[] = array(
-                'id' => $tv->get('id'),
-                'name' => $tv->get('name'),
-                'caption' => $tv->get('caption'),
-                'type' => $tv->get('type'),
-                'value' => $resource->getTVValue($tv->get('name')),
+
+        if (method_exists($resource, 'getTemplateVars')) {
+            $tvCollection = $resource->getTemplateVars();
+            if (is_array($tvCollection) || $tvCollection instanceof \Traversable) {
+                foreach ($tvCollection as $tv) {
+                    $result[] = array(
+                        'id' => (int) $tv->get('id'),
+                        'name' => (string) $tv->get('name'),
+                        'caption' => (string) $tv->get('caption'),
+                        'type' => (string) $tv->get('type'),
+                        'value' => (string) $tv->get('value'),
+                    );
+                }
+            }
+        }
+
+        if (empty($result) && $templateId > 0) {
+            $tvLinks = $modx->getCollection(
+                $platform->className('template_var_template'),
+                array('templateid' => $templateId)
             );
+            if ($tvLinks) {
+                foreach ($tvLinks as $link) {
+                    $tv = $modx->getObject($platform->className('tv'), $link->get('tmplvarid'));
+                    if (!$tv) { continue; }
+                    $result[] = array(
+                        'id' => (int) $tv->get('id'),
+                        'name' => (string) $tv->get('name'),
+                        'caption' => (string) $tv->get('caption'),
+                        'type' => (string) $tv->get('type'),
+                        'value' => method_exists($tv, 'getValue')
+                            ? (string) $tv->getValue($resourceId)
+                            : (string) $resource->getTVValue($tv->get('name')),
+                    );
+                }
+            }
         }
 
         return array(

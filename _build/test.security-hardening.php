@@ -4,8 +4,12 @@ class ModxMCPClientException extends Exception {}
 
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ToolInterface.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ElementSupport.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
+require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/SystemSettingCreateTool.php';
+require_once __DIR__ . '/../core/components/modxmcp/src/Tools/SystemSettingListTool.php';
+require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ProcessorMutationTool.php';
 
 class SecurityTestModx {
     private $paths;
@@ -87,6 +91,49 @@ try {
             $context, array('key' => 'modxmcp.require_https', 'value' => 0)
         );
     });
+    mustRejectSecurity('reserved context setting creation', function () use ($context) {
+        (new \ModxMcp\Tools\ProcessorMutationTool(
+            'create_context_setting',
+            array('group' => 'contexts', 'processor' => 'context/setting/create', 'route' => 'context')
+        ))->execute($context, array('context_key' => 'mgr', 'key' => 'modxmcp.enabled', 'value' => 1));
+    });
+    mustRejectSecurity('reserved context setting update', function () use ($context) {
+        (new \ModxMcp\Tools\ProcessorMutationTool(
+            'update_context_setting',
+            array('group' => 'contexts', 'processor' => 'context/setting/update', 'route' => 'context')
+        ))->execute($context, array('context_key' => 'web', 'key' => 'modxmcp.allowed_ips', 'value' => ''));
+    });
+    mustRejectSecurity('reserved context setting creation whitespace bypass', function () use ($context) {
+        (new \ModxMcp\Tools\ProcessorMutationTool(
+            'create_context_setting',
+            array('group' => 'contexts', 'processor' => 'context/setting/create', 'route' => 'context')
+        ))->execute($context, array('context_key' => 'mgr', 'key' => '   modxmcp.enabled  ', 'value' => 1));
+    });
+    mustRejectSecurity('reserved context setting update case bypass', function () use ($context) {
+        (new \ModxMcp\Tools\ProcessorMutationTool(
+            'update_context_setting',
+            array('group' => 'contexts', 'processor' => 'context/setting/update', 'route' => 'context')
+        ))->execute($context, array('context_key' => 'web', 'key' => 'ModxMCP.allowed_ips', 'value' => ''));
+    });
+    mustRejectSecurity('tv static_file traversal', function () use ($context) {
+        \ModxMcp\Tools\ElementMutationSupport::prepare(
+            $context, 'tv', array('id' => 1, 'static' => 1, 'static_file' => '/etc/passwd'), 'update_element'
+        );
+    });
+
+    // Verify token masking in system setting normalization
+    class MockSettingObject {
+        private $data;
+        public function __construct(array $data) { $this->data = $data; }
+        public function get($k) { return isset($this->data[$k]) ? $this->data[$k] : null; }
+    }
+    $norm = \ModxMcp\Tools\SystemSettingListTool::normalize(new MockSettingObject(array(
+        'id' => 1, 'key' => 'modxmcp.api_token', 'value' => 'abcdef1234567890abcdef', 'xtype' => 'textfield', 'namespace' => 'modxmcp', 'area' => 'security'
+    )));
+    if ($norm['value'] !== 'abcdef…cdef') {
+        throw new RuntimeException('API token was not properly masked: ' . $norm['value']);
+    }
+
     echo "SECURITY_HARDENING_PHP_OK\n";
 } finally {
     deleteSecurityDirectory($base);

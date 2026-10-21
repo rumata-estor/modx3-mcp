@@ -29,10 +29,15 @@ class SystemSettingListTool implements ToolInterface
 
     public static function normalize($setting)
     {
+        $key = (string)$setting->get('key');
+        $value = $setting->get('value');
+        if ($key === 'modxmcp.api_token' && is_string($value) && $value !== '') {
+            $value = substr($value, 0, 6) . '…' . substr($value, -4);
+        }
         return array(
             'id' => $setting->get('id'),
-            'key' => $setting->get('key'),
-            'value' => $setting->get('value'),
+            'key' => $key,
+            'value' => $value,
             'xtype' => $setting->get('xtype'),
             'namespace' => $setting->get('namespace'),
             'area' => $setting->get('area'),
