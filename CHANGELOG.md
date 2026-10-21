@@ -5,7 +5,8 @@
 ## Unreleased
 
 - Complete Russian/English localization of the MODX 2 and MODX 3 manager UI: dependency graph controls, labels, diagnostics, and capability group names now use shared lexicons instead of embedded Russian text.
-- Both platform staging trees include the `ru` and `en` lexicons; localization parity and graph JavaScript syntax are checked in CI.
+- Add full Spanish (`es`) manager lexicon for MODX 2 and MODX 3, covering all 166 labels, settings, graph diagnostics, and capability group names.
+- Both platform staging trees include the `ru`, `en`, and `es` lexicons; three-language localization parity and graph JavaScript syntax are checked in CI.
 - MCP API and graph payload semantics remain unchanged; no automatic token rotation or settings migration.
 
 ## 1.2.3 (2026-10-12)
