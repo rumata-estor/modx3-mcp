@@ -65,8 +65,8 @@ foreach ($variants as $prefix) {
     foreach ($capabilityKeys as $key) {
         checkLocalization(strpos($index, "lexicon('" . $key . "')") !== false, 'missing capability label: ' . $prefix . $key);
     }
-    checkLocalization(strpos($graph, "'ui'            => \\$this->graphLabels()") !== false, 'missing JavaScript labels in ' . $prefix);
-    checkLocalization(strpos($graph, "'g'            => \\$this->graphLabels()") !== false, 'missing template labels in ' . $prefix);
+    checkLocalization(strpos($graph, "'ui'            => \$this->graphLabels()") !== false, 'missing JavaScript labels in ' . $prefix);
+    checkLocalization(strpos($graph, "'g'            => \$this->graphLabels()") !== false, 'missing template labels in ' . $prefix);
     foreach ($used as $name) {
         checkLocalization(strpos($graph, "'" . $name . "'") !== false, 'missing label in graph controller: ' . $prefix . $name);
     }
