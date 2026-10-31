@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## 1.2.5 (2026-10-31)
+
 - Add six dedicated modCategory MCP tools for MODX 2.8.x and MODX 3.x: list, get, create, rename/move/reorder, safely delete, and assign elements. Assignments update one field without rewriting source code.
 - Block cyclic category moves and deletion of occupied categories; expose counts of child categories, elements and property sets in preview. Generic element mutations use the same safeguards.
 - Update nine-language tool catalogs and bundled help. miniShop2 and the resource tree are unchanged.

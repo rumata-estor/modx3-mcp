@@ -2,17 +2,20 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 / 192**
+**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP verbindet KI-Assistenten über das Model Context Protocol mit einer MODX-Website. Die PHP-Komponente stellt eine authentifizierte HTTP-API bereit; ein lokaler Node.js-Client stellt diese als MCP-Server über stdio zur Verfügung. Ein zusätzlicher Orchestrierungsserver ist nicht erforderlich.
+
 
 ## Für wen ist das Projekt gedacht?
 
 Für MODX-Entwickler, Webagenturen und Administratoren, die Websites kontrolliert mit KI-Werkzeugen verwalten möchten.
 
+
 ## Funktionen und Werkzeuge
 
 - Ressourcen, Vorlagen, Chunks, Snippets, Plugins und TVs durchsuchen, lesen und ändern.
+- MODX-Elementkategorien erstellen, umbenennen, verschieben, sicher löschen und Elementen zuweisen.
 - Abhängigkeiten und möglicherweise ungenutzten Code im Manager-Graphen untersuchen.
 - Systemeinstellungen, Medienquellen, Pakete und ausgewählte Erweiterungen verwalten.
 - Änderungen durch Vorbedingungen, Vorschauläufe und Sicherungen absichern.
@@ -24,6 +27,8 @@ Wählen Sie zuerst das Transportpaket für Ihre MODX-Hauptversion. Für den MCP-
 - **MODX 2.8.x:** [Transportpaket MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Transportpaket MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
 - [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+
+> Die Download-Links oben verweisen auf die zuletzt veröffentlichte Version 1.2.4. Die 1.2.5-Transport-ZIPs sind noch nicht erstellt.
 
 Melden Sie sich im MODX-Manager an und installieren Sie das passende ZIP über die Paketverwaltung.
 

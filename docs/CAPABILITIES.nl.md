@@ -4,7 +4,7 @@
 
 [Installatie](INSTALL.nl.md) · [API-referentie](API.nl.md)
 
-**MODX MCP 1.2.4 · 198 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.5 · 198 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP biedt een MCP-compatibele AI-client benoemde handelingen voor MODX-objecten zonder dat elke taak als ruwe SQL of een bestandssysteemcommando moet worden beschreven. Het ondersteunt het bekijken van sites, het wijzigen van inhoud en code, TV-velden, pakketten, toegangsbeheer en geselecteerde uitbreidingen.
 
@@ -17,7 +17,7 @@ Dit overzicht beantwoordt **Wat kan ik met MODX MCP doen?** Voor de exacte veldt
 
 | Groep | Tools |
 | --- | ---: |
-| [Elementen en resources](#elementen-en-resources) | 15 |
+| [Elementen en resources](#elementen-en-resources) | 21 |
 | [Resource-TV’s](#resource-tvs) | 4 |
 | [TV-veldtypen](#tv-veldtypen) | 2 |
 | [Systeeminstellingen](#systeeminstellingen) | 5 |

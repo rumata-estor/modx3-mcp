@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Instalacja](INSTALL.pl.md) · [Możliwości](CAPABILITIES.pl.md) · [API](API.pl.md)
 
-Ten przewodnik opisuje granicę zaufania publicznego **MODX MCP 1.2.4**, jego ustawienia bezpieczeństwa i istotne ograniczenia. Nie opisuje żadnej zewnętrznej infrastruktury zarządzania agentami.
+Ten przewodnik opisuje granicę zaufania publicznego **MODX MCP 1.2.5**, jego ustawienia bezpieczeństwa i istotne ograniczenia. Nie opisuje żadnej zewnętrznej infrastruktury zarządzania agentami.
 
 ## Najważniejsza zasada
 

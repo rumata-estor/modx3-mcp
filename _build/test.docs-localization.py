@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parent.parent
 LANGS=('en','ru','es','de','fr','uk','kk','nl','pl')
 NEW_LANGS=('es','de','fr','uk','kk','nl','pl')
 PAGES=('INSTALL','SECURITY','SETTINGS','CAPABILITIES','API','BUILD-ARCHITECTURE','VALIDATION')
-RELEASES=('modx2mcp-1.2.4','modx3mcp-1.2.4')
+RELEASES=('modx2mcp-1.2.5','modx3mcp-1.2.5')
 SETTINGS=('modxmcp.enabled','modxmcp.api_token','modxmcp.service_user_id',
 'modxmcp.require_https','modxmcp.trust_proxy_https','modxmcp.allowed_ips',
 'modxmcp.disabled_groups','modxmcp.allow_run_processor','modxmcp.allow_root_filesystem_read',
@@ -46,7 +46,7 @@ for lang in LANGS:
         validate(ROOT/'docs'/'extras'/filename(release,lang))
 for lang in NEW_LANGS:
     readme=(ROOT/filename('README',lang)).read_text()
-    assert 'v1.2.4' in readme and 'MODX_MCP_TOKEN' in readme,lang
+    assert '1.2.5' in readme and 'MODX_MCP_TOKEN' in readme,lang
     assert 'docs/LANGUAGES.md' not in readme or (ROOT/'docs/LANGUAGES.md').exists()
     settings=(ROOT/'docs'/filename('SETTINGS',lang)).read_text()
     assert all(chr(96)+key+chr(96) in settings for key in SETTINGS),lang

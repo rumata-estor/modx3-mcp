@@ -1,5 +1,9 @@
 # Перевірка версії 1.2.4 — MODX MCP
 
+## 1.2.5 — source validation
+
+Перевірки коду 1.2.5 охоплюють PHP, сумісність MODX 2/3 та шість команд modCategory. Транспортні ZIP 1.2.5 ще не перевірені реальною установкою.
+
 [English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 Усі дев’ять лексиконів перевірено через API MODX на стендах 2.8.9-pl та 3.2.4-pl. Усі 16 налаштувань, включно з токеном, збережено. Для MODX 3 виконано повний цикл установлення, перевстановлення та видалення.

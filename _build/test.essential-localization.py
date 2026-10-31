@@ -29,7 +29,7 @@ for lang in LOCALES:
     assert len(files['INSTALL'].splitlines())>=85,(lang,'install too brief')
     assert len(files['SECURITY'].splitlines())>=60,(lang,'security too brief')
     assert len(files['CAPABILITIES'].splitlines())>=250,(lang,'capabilities too brief')
-    assert all('v1.2.4' in files[page] or '1.2.4' in files[page]
+    assert all('v1.2.5' in files[page] or '1.2.5' in files[page]
                for page in ('INSTALL','CAPABILITIES')),(lang,'version')
     for required in ('modxmcp.api_token','modxmcp.disabled_groups','modxmcp.require_https'):
         assert required in files['SECURITY'],(lang,'security key',required)

@@ -1,6 +1,6 @@
 # MODX MCP · Documentation / Документация
 
-**MODX MCP 1.2.4** — multilingual guides for MODX 2.8.x and MODX 3.x.
+**MODX MCP 1.2.5** — multilingual guides for MODX 2.8.x and MODX 3.x.
 
 | Language / Язык | Installation | Security | Settings | Capabilities | API | Build | Validation |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,4 +22,4 @@ Detailed per-tool input-schema tables remain in the canonical [English API](API.
 
 All API names, JSON fields, command-line flags, paths and environment variables are intentionally left unchanged in translated guides.
 
-[GitHub Release 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)
+[Last published transport release 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)

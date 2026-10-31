@@ -2,17 +2,20 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 / 192**
+**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP conecta asistentes de IA con sitios MODX mediante Model Context Protocol. El componente PHP expone una API HTTP autenticada y el cliente local Node.js la ofrece a las aplicaciones compatibles a través de stdio. No se necesita un servidor de orquestación adicional.
+
 
 ## ¿A quién va dirigido?
 
 Para desarrolladores, agencias y administradores que necesitan gestionar sitios MODX de forma controlada con IA.
 
+
 ## Funciones y herramientas
 
 - Buscar, leer y modificar recursos, plantillas, chunks, snippets, plugins y TVs.
+- Administrar categorías de elementos MODX: crear, renombrar, mover, eliminar con seguridad y asignar a elementos.
 - Examinar dependencias, referencias rotas y código posiblemente sin utilizar mediante el grafo.
 - Trabajar con ajustes del sistema, fuentes multimedia, paquetes y complementos compatibles.
 - Proteger los cambios con condiciones previas, simulaciones y copias de seguridad.
@@ -24,6 +27,8 @@ Elija el paquete de transporte correspondiente a la versión principal de MODX. 
 - **MODX 2.8.x:** [Paquete para MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Paquete para MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
 - [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+
+> Los enlaces de descarga anteriores corresponden a 1.2.4, la última versión publicada. Los ZIP 1.2.5 siguen pendientes de compilación.
 
 Acceda al administrador MODX e instale el ZIP adecuado desde el gestor de paquetes.
 

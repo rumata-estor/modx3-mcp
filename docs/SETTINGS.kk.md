@@ -2,7 +2,7 @@
 
 [English](SETTINGS.md) · [Русский](SETTINGS.ru.md) · [Español](SETTINGS.es.md) · [Deutsch](SETTINGS.de.md) · [Français](SETTINGS.fr.md) · [Українська](SETTINGS.uk.md) · [Қазақша](SETTINGS.kk.md) · [Nederlands](SETTINGS.nl.md) · [Polski](SETTINGS.pl.md) · [Орнату](INSTALL.kk.md) · [Қауіпсіздік](SECURITY.kk.md)
 
-MODX 2.8.x және 3.x жүйелеріндегі **MODX MCP 1.2.4** үшін. Бұл құжат екі тасымалдау пакетінде анықталған **барлық 16 жүйелік баптауды** қамтиды. Әдепкі мәндер `_build/data/transport.settings.php` файлынан алынған; жұмыс тәртібі PHP іске асыруымен салыстырылып тексерілген.
+MODX 2.8.x және 3.x жүйелеріндегі **MODX MCP 1.2.5** үшін. Бұл құжат екі тасымалдау пакетінде анықталған **барлық 16 жүйелік баптауды** қамтиды. Әдепкі мәндер `_build/data/transport.settings.php` файлынан алынған; жұмыс тәртібі PHP іске асыруымен салыстырылып тексерілген.
 
 MODX басқару панелінде: **System → System Settings**, `modxmcp` атаулар кеңістігі. **Components → MODX MCP** бөлімі де Audit log, Auto-static, мүмкіндік топтарын өзгертуге және API токенін қауіпсіз көруге/көшіруге мүмкіндік береді. Қалған параметрлерді System Settings бөлімінде өзгертіңіз. Қажет болғанда MODX кэштерін жаңартыңыз және өзгерістерден кейін MCP клиентінің мүмкіндіктерін жаңартыңыз.
 

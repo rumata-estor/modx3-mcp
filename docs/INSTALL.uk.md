@@ -8,8 +8,10 @@ MODX MCP дає змогу стандартному ШІ-клієнту, сум�
 
 ## 1. Виберіть пакет MODX
 
-- **MODX 2.8.x:** `modx2mcp-1.2.4-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.4-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Статус:** вихідний код 1.2.5 підготовлено, але транспортні ZIP ще не опубліковано. Для встановлення використовуйте [версію 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4).
 
 Обидва варіанти використовують однаковий публічний контракт інструментів і клієнт Node.js. Завантажте відповідний пакет із [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) або від підтримуваного постачальника пакетів MODX.
 

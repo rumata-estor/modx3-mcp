@@ -4,8 +4,8 @@
 
 Eén broncodebasis levert twee aparte transportpakketten voor MODX 2.8.x en MODX 3.x. De gedeelde tools, registry en API bevinden zich in `core/components/modxmcp/src/`.
 
-- MODX 2.8.x: `modx2mcp-1.2.4-pl.transport.zip`
-- MODX 3.x: `modx3mcp-1.2.4-pl.transport.zip
+- MODX 2.8.x: `modx2mcp-1.2.5-pl.transport.zip`
+- MODX 3.x: `modx3mcp-1.2.5-pl.transport.zip`
 
 ```bash
 python3 _build/prepare-release.py --platform modx2 --output /tmp/modxmcp-modx2

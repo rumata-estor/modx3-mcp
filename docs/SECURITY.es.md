@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Instalación](INSTALL.es.md) · [Capacidades](CAPABILITIES.es.md) · [API](API.es.md)
 
-Esta guía documenta el límite de confianza de la versión pública **MODX MCP 1.2.4**, sus ajustes de seguridad y limitaciones importantes. No describe ninguna infraestructura externa de gestión de agentes.
+Esta guía documenta el límite de confianza de la versión pública **MODX MCP 1.2.5**, sus ajustes de seguridad y limitaciones importantes. No describe ninguna infraestructura externa de gestión de agentes.
 
 ## La regla fundamental
 

@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Installation](INSTALL.fr.md) · [Fonctionnalités](CAPABILITIES.fr.md) · [API](API.fr.md)
 
-Ce guide décrit la frontière de confiance de la version publique **MODX MCP 1.2.4**, ses paramètres de sécurité et ses limites importantes. Il ne décrit aucune infrastructure externe de gestion d’agents.
+Ce guide décrit la frontière de confiance de la version publique **MODX MCP 1.2.5**, ses paramètres de sécurité et ses limites importantes. Il ne décrit aucune infrastructure externe de gestion d’agents.
 
 ## La règle essentielle
 

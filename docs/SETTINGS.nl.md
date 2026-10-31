@@ -4,7 +4,7 @@
 
 [Installatie](INSTALL.nl.md) · [Beveiliging](SECURITY.nl.md)
 
-Voor **MODX MCP 1.2.4** op MODX 2.8.x en 3.x. Dit document behandelt alle **16 systeeminstellingen** die beide transportpakketten definiëren. De standaardwaarden komen uit `_build/data/transport.settings.php`; het gedrag is gecontroleerd aan de hand van de PHP-implementatie.
+Voor **MODX MCP 1.2.5** op MODX 2.8.x en 3.x. Dit document behandelt alle **16 systeeminstellingen** die beide transportpakketten definiëren. De standaardwaarden komen uit `_build/data/transport.settings.php`; het gedrag is gecontroleerd aan de hand van de PHP-implementatie.
 
 In de MODX-manager: **Systeem → Systeeminstellingen**, namespace `modxmcp`. Via **Componenten → MODX MCP** kunt u ook Audit log, Auto-static en functiegroepen wijzigen en het API-token veilig bekijken/kopiëren. Wijzig andere opties onder Systeeminstellingen. Vernieuw waar nodig de MODX-caches en vernieuw na wijzigingen de beschikbare functies in de MCP-client.
 

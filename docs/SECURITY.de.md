@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Installation](INSTALL.de.md) · [Funktionsumfang](CAPABILITIES.de.md) · [API](API.de.md)
 
-Dieser Leitfaden dokumentiert die Vertrauensgrenze der öffentlichen Version **MODX MCP 1.2.4**, ihre Sicherheitseinstellungen und wichtige Einschränkungen. Er beschreibt keine externe Infrastruktur zur Agentenverwaltung.
+Dieser Leitfaden dokumentiert die Vertrauensgrenze der öffentlichen Version **MODX MCP 1.2.5**, ihre Sicherheitseinstellungen und wichtige Einschränkungen. Er beschreibt keine externe Infrastruktur zur Agentenverwaltung.
 
 ## Die wichtigste Regel
 

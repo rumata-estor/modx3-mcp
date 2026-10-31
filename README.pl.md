@@ -2,9 +2,10 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 / 192**
+**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP łączy asystentów AI z witrynami MODX za pomocą Model Context Protocol. Komponent PHP udostępnia uwierzytelniane API HTTP, a lokalny klient Node.js przekazuje je aplikacjom obsługującym MCP przez stdio. Osobny serwer orkiestracji nie jest wymagany.
+
 
 ## Dla kogo jest ten projekt?
 
@@ -13,6 +14,7 @@ Dla programistów MODX, agencji internetowych i administratorów, którzy chcą 
 ## Możliwości i narzędzia
 
 - Wyszukiwanie, odczytywanie i edytowanie zasobów, szablonów, chunków, snippetów, pluginów i TV.
+- Zarządzać kategoriami elementów MODX: tworzyć, zmieniać nazwy, przenosić, bezpiecznie usuwać i przypisywać.
 - Analizowanie zależności, uszkodzonych odwołań oraz potencjalnie nieużywanego kodu w grafie.
 - Obsługa ustawień systemowych, źródeł mediów, pakietów i wspieranych dodatków.
 - Zabezpieczanie zmian przez warunki wstępne, podgląd i kopie zapasowe.
@@ -24,6 +26,8 @@ Wybierz pakiet transportowy zgodny z główną wersją MODX. Klient MCP wymaga N
 - **MODX 2.8.x:** [Pakiet dla MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Pakiet dla MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
 - [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+
+> Powyższe linki do pobierania dotyczą ostatniej opublikowanej wersji 1.2.4. Pakiety transportowe 1.2.5 nie są jeszcze zbudowane.
 
 Zaloguj się do panelu MODX i zainstaluj odpowiedni ZIP przez Menedżer pakietów.
 

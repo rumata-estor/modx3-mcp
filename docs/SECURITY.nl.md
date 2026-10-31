@@ -4,7 +4,7 @@
 
 [Installatie](INSTALL.nl.md) · [Mogelijkheden](CAPABILITIES.nl.md) · [API](API.nl.md)
 
-Deze handleiding beschrijft de vertrouwensgrens van de openbare **MODX MCP 1.2.4**, de beveiligingsinstellingen en belangrijke beperkingen. Ze beschrijft geen externe infrastructuur voor agentbeheer.
+Deze handleiding beschrijft de vertrouwensgrens van de openbare **MODX MCP 1.2.5**, de beveiligingsinstellingen en belangrijke beperkingen. Ze beschrijft geen externe infrastructuur voor agentbeheer.
 
 ## De belangrijkste regel
 

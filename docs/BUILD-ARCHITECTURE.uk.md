@@ -4,8 +4,8 @@
 
 З однієї кодової бази створюються два окремі транспортні пакети для MODX 2.8.x і MODX 3.x. Спільні інструменти, реєстр та API розміщені у `core/components/modxmcp/src/`.
 
-- MODX 2.8.x: `modx2mcp-1.2.4-pl.transport.zip`
-- MODX 3.x: `modx3mcp-1.2.4-pl.transport.zip
+- MODX 2.8.x: `modx2mcp-1.2.5-pl.transport.zip`
+- MODX 3.x: `modx3mcp-1.2.5-pl.transport.zip`
 
 ```bash
 python3 _build/prepare-release.py --platform modx2 --output /tmp/modxmcp-modx2
