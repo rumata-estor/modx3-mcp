@@ -1,10 +1,10 @@
 # MODX MCP — API reference
 
-**Version 1.2.4 · 21 October 2026 · 192 public MCP tools**
+**Development branch (unreleased) · 31 October 2026 · 198 public MCP tools**
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [Security](SECURITY.md)
 
-Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 192 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 193rd action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
+Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 198 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 199th action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
 
 ## Connecting an MCP client
 
@@ -56,7 +56,72 @@ The tables reproduce the **declared MCP input schema**, including required field
 
 ## Tool catalog
 
-## 1. Elements and resources (15)
+## 1. Elements and resources (21)
+
+### `modx_list_categories`
+
+List MODX element categories with id, parent and rank. Filter by parent or name. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `parent` | integer | no | Parent filter, 0 = root |
+| `query` | string | no | Name search |
+| `limit` | integer | no | 1–500 |
+| `start` | integer | no | Pagination offset |
+
+
+### `modx_get_category`
+
+Read a category with child and element assignment counts. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `id` | integer | yes | Category id |
+
+
+### `modx_create_category`
+
+Create a MODX element category in MODX 2 or 3. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `name` | string | yes | New category name |
+| `parent` | integer | no | Parent id, 0 = root |
+| `rank` | integer | no | Sort rank |
+
+
+### `modx_update_category`
+
+Rename, move or reorder a category with cycle protection. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `id` | integer | yes | Category id |
+| `name` | string | no | New name |
+| `parent` | integer | no | Parent id, 0 = root |
+| `rank` | integer | no | Sort rank |
+
+
+### `modx_delete_category`
+
+Delete only an empty category; requires dry_run and refuses occupied categories. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `id` | integer | yes | Category id |
+| `dry_run` | boolean | yes | true previews, false deletes |
+
+
+### `modx_assign_element_category`
+
+Set a category on a chunk, snippet, template, TV or plugin. category_id:0 removes assignment. Not for resources. Supported on MODX Revolution 2.8.x and 3.x.
+
+| Parameter | Type | Required | Notes and allowed values |
+| --- | --- | :---: | --- |
+| `type` | string | yes | chunk, snippet, template, tv, plugin |
+| `id` | integer | yes | Element id |
+| `category_id` | integer | yes | Category id, 0 = uncategorized |
+
 
 ### `modx_list_elements`
 

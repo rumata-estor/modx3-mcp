@@ -367,7 +367,7 @@ class ElementMutationSupport
         }
         $name = (string)$object->get($nameField);
         $usages = $type === 'category'
-            ? array('name' => $name)
+            ? CategorySupport::usages($context, $id)
             : (new FindUsagesTool())->execute(
                 $context,
                 array('name' => $name, 'limit' => 100)

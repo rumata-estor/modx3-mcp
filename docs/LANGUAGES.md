@@ -17,7 +17,7 @@
 ## Translation coverage / Состояние перевода
 
 English and Russian contain the original comprehensive API and development references.
-For seven additional languages, the project overview, full installation instructions, security guide, all 16 system settings, detailed descriptions of all 192 MCP tools, API quick reference, build overview, validation summary, and both current MODX Extras release notes are localized.
+For seven additional languages, the project overview, full installation instructions, security guide, all 16 system settings, detailed descriptions of all 198 MCP tools, API quick reference, build overview, validation summary, and both current MODX Extras release notes are localized.
 Detailed per-tool input-schema tables remain in the canonical [English API](API.md) and [Русский API](API.ru.md); the seven translated API pages link to those tables. Historical changelogs, developer documents and archival release descriptions remain in English/Russian only. **CHANGELOG is intentionally maintained only in English and Russian.**
 
 All API names, JSON fields, command-line flags, paths and environment variables are intentionally left unchanged in translated guides.

@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Ескерту: бұл аударылған қысқаша шолу. 192 MCP құралының барлық параметрлер кестесі әзірге ағылшын және орыс тілдерінде қолжетімді.
+> Ескерту: бұл аударылған қысқаша шолу. 198 MCP құралының барлық параметрлер кестесі әзірге ағылшын және орыс тілдерінде қолжетімді.
 Ашық MCP құралдарының атауы `modx_` префиксінен басталады. PHP HTTP әрекеттерінде бұл префикс қолданылмайды. Параметрлердің толық кестелері мен JSON схемалары ағылшын анықтамалығында берілген.
 
 ## MCP
@@ -27,7 +27,7 @@ JSON POST сұрауларын HTTPS арқылы `X-MCP-Token` тақырыбы
 **Толық техникалық анықтамалар:** [API параметрлері (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [қауіпсіздік (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [әзірлеуші құжаттамасы (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Техникалық кестелердің толық нұсқасы әзірге ағылшын тілінде.
 
 
-## 192 MCP құралының тізімі
+## 198 MCP құралының тізімі
 
 > Сипаттамалар аударылған; міндетті өрістер, түрлер, шектер және тізімдер үшін сілтемедегі ағылшын не орыс техникалық анықтамалығын қараңыз.
 
@@ -38,6 +38,12 @@ JSON POST сұрауларын HTTPS арқылы `X-MCP-Token` тақырыбы
 | Құрал | Аударылған сипаттама | Әсері |
 | --- | --- | --- |
 | [modx_list_elements](API.md#modx_list_elements) | Белгілі бір түрдегі MODX элементтерін тізімдеу (id + name). | Оқу |
+| [modx_list_categories](API.md#modx_list_categories) | Элемент санаттарын тізімдеу. | Оқу |
+| [modx_get_category](API.md#modx_get_category) | Санатты және қолданылуын қарау. | Оқу |
+| [modx_create_category](API.md#modx_create_category) | Санат жасау. | Значний вплив |
+| [modx_update_category](API.md#modx_update_category) | Санатты қайта атау немесе жылжыту. | Значний вплив |
+| [modx_delete_category](API.md#modx_delete_category) | Бос санатты тексеріп жою. | Значний вплив |
+| [modx_assign_element_category](API.md#modx_assign_element_category) | Элементке санат тағайындау. | Сайтты өзгертеді |
 | [modx_make_static](API.md#modx_make_static) | Чанкті/сниппетті/шаблонды/плагинді core/elements/ ішіндегі статикалық файлға түрлендіру (файлды жазады, static=1 + source=Filesystem орнатады). | Әсері жоғары |
 | [modx_get_element](API.md#modx_get_element) | MODX элементін оқу (өрістерін + толық кодын қайтарады). | Оқу |
 | [modx_update_element_property](API.md#modx_update_element_property) | Күтілетін мәнді CAS арқылы тексеріп, бір қолданыстағы әдепкі қасиетті қауіпсіз өзгерту; кодты немесе басқа қасиеттерді ешқашан алмастырмайды. | Сайтты өзгертеді |

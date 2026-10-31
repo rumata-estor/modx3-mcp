@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parent.parent
 LOCALES=('es','de','fr','uk','kk','nl','pl')
 REFERENCE=(ROOT/'docs/CAPABILITIES.md').read_text(encoding='utf-8')
 TOOLS=re.findall(r'^\| \u0060(modx_[a-z0-9_]+)\u0060 \|',REFERENCE,re.M)
-assert len(TOOLS)==192 and len(set(TOOLS))==192
+assert len(TOOLS)==198 and len(set(TOOLS))==198
 SETTINGS=re.findall(r'^\| \u0060(modxmcp\.[a-z0-9_]+)\u0060 \|',
                     (ROOT/'docs/SETTINGS.md').read_text(encoding='utf-8'),re.M)
 assert len(SETTINGS)==16 and len(set(SETTINGS))==16
@@ -19,7 +19,7 @@ for lang in LOCALES:
     assert localized==TOOLS,(lang,'tool count/order mismatch',len(localized))
     api=(base/f'API.{lang}.md').read_text(encoding='utf-8')
     pairs=re.findall(r'^\| \[(modx_[a-z0-9_]+)\]\(API.md#(modx_[a-z0-9_]+)\) \|',api,re.M)
-    assert len(pairs)==192 and [a for a,b in pairs]==TOOLS and all(a==b for a,b in pairs),(lang,'localized API directory missing tools or schema links')
+    assert len(pairs)==198 and [a for a,b in pairs]==TOOLS and all(a==b for a,b in pairs),(lang,'localized API directory missing tools or schema links')
 
     settings=re.findall(r'^\| \u0060(modxmcp\.[a-z0-9_]+)\u0060 \|',files['SETTINGS'],re.M)
     assert settings==SETTINGS,(lang,'settings mismatch')
@@ -37,4 +37,4 @@ for lang in LOCALES:
         assert required in files['INSTALL'],(lang,'install configuration',required)
     assert 'dry_run' in files['CAPABILITIES'],(lang,'dangerous actions safeguard')
     assert 'modx_update_element_property' in files['CAPABILITIES'],(lang,'CAS tool')
-print('ESSENTIAL_TRANSLATION_COVERAGE_OK',len(LOCALES),'languages x 192 tools x 16 settings')
+print('ESSENTIAL_TRANSLATION_COVERAGE_OK',len(LOCALES),'languages x 198 tools x 16 settings')

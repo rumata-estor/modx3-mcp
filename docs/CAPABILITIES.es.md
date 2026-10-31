@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Instalación](INSTALL.es.md) · [Referencia de la API](API.es.md)
 
-**MODX MCP 1.2.4 · 192 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.4 · 198 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP proporciona a un cliente MCP con capacidades de IA operaciones con nombre para trabajar con datos y elementos MODX, en lugar de exigir que cada tarea se exprese como SQL sin procesar o comandos del sistema de archivos. Admite la inspección del sitio, la edición de contenido y código, valores de TV, paquetes, administración de acceso y determinados complementos de terceros. La lista real de herramientas depende de la compilación instalada y de las capacidades habilitadas.
 
@@ -33,7 +33,7 @@ Esta guía responde a **«¿Qué puedo hacer con MODX MCP?»**. Para conocer tod
 | [Espacios de nombres](#espacios-de-nombres) | 4 |
 | [Léxico y traducciones](#léxico-y-traducciones) | 4 |
 | [Mantenimiento y diagnóstico](#mantenimiento-y-diagnóstico) | 13 |
-| **Total** | **192** |
+| **Total** | **198** |
 
 ## Elementos y recursos
 
@@ -42,6 +42,12 @@ Gestione páginas, plantillas, chunks, snippets, plugins, TV y categorías como 
 | Herramienta | Qué hace | Impacto |
 | --- | --- | --- |
 | `modx_list_elements` | Enumera elementos MODX de un tipo (id + name). | Lectura |
+| `modx_list_categories` | Listar categorías de elementos. | Lectura |
+| `modx_get_category` | Ver categoría y su uso. | Lectura |
+| `modx_create_category` | Crear categoría de elementos. | Alto impacto |
+| `modx_update_category` | Renombrar o mover categoría. | Alto impacto |
+| `modx_delete_category` | Eliminar categoría vacía tras revisión. | Alto impacto |
+| `modx_assign_element_category` | Asignar categoría a un elemento. | Modifica el sitio |
 | `modx_make_static` | Convierte un chunk/snippet/template/plugin en un archivo estático bajo core/elements/ (escribe el archivo y establece static=1 + source=Filesystem). | Alto impacto |
 | `modx_get_element` | Lee un elemento MODX (devuelve sus campos + el código completo). | Lectura |
 | `modx_update_element_property` | Modifica de forma segura una propiedad predeterminada existente mediante una comprobación CAS del valor esperado; nunca reemplaza el código ni otras propiedades. | Modifica el sitio |

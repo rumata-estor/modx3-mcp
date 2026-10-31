@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Примітка: це перекладений стислий огляд. Повні таблиці параметрів усіх 192 MCP-інструментів наразі доступні англійською та російською мовами.
+> Примітка: це перекладений стислий огляд. Повні таблиці параметрів усіх 198 MCP-інструментів наразі доступні англійською та російською мовами.
 Публічні MCP-інструменти мають префікс `modx_`, а HTTP-дії PHP використовують назви без цього префікса. Повні таблиці параметрів та JSON-схеми доступні в англомовному довіднику.
 
 ## MCP
@@ -27,7 +27,7 @@ X-MCP-Token: <private token>
 **Повні технічні довідники:** [параметри API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [безпека (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [розробка (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Детальні технічні таблиці поки доступні англійською.
 
 
-## Каталог 192 інструментів MCP
+## Каталог 198 інструментів MCP
 
 > Опис перекладено; обов’язкові поля, типи, обмеження та перелічення перевіряйте в англомовному або російськомовному технічному довіднику за посиланням.
 
@@ -38,6 +38,12 @@ X-MCP-Token: <private token>
 | Інструмент | Перекладений опис | Вплив |
 | --- | --- | --- |
 | [modx_list_elements](API.md#modx_list_elements) | Перелічує елементи MODX заданого типу (id + name). | Читання |
+| [modx_list_categories](API.md#modx_list_categories) | Перелічити категорії елементів. | Читання |
+| [modx_get_category](API.md#modx_get_category) | Прочитати категорію та її використання. | Читання |
+| [modx_create_category](API.md#modx_create_category) | Створити категорію. | Значний вплив |
+| [modx_update_category](API.md#modx_update_category) | Перейменувати або перемістити категорію. | Значний вплив |
+| [modx_delete_category](API.md#modx_delete_category) | Видалити порожню категорію після перевірки. | Значний вплив |
+| [modx_assign_element_category](API.md#modx_assign_element_category) | Призначити категорію елементу. | Змінює сайт |
 | [modx_make_static](API.md#modx_make_static) | Перетворює чанк/сніпет/шаблон/плагін на статичний файл у core/elements/ (записує файл, установлює static=1 + source=Filesystem). | Значний вплив |
 | [modx_get_element](API.md#modx_get_element) | Читає елемент MODX (повертає його поля + повний код). | Читання |
 | [modx_update_element_property](API.md#modx_update_element_property) | Безпечно змінює одну наявну властивість за замовчуванням із CAS-перевіркою очікуваного значення; ніколи не замінює код або інші властивості. | Змінює сайт |

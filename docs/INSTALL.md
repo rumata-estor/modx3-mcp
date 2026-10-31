@@ -73,7 +73,7 @@ Restart the MCP integration or refresh the host’s servers. Look for the `modx`
 Show the MODX version and an overview of the site structure. Make no changes.
 ```
 
-This can use `modx_system_info` and `modx_project_overview`. Your host may show fewer than 192 tools, depending on the server build, disabled groups, and installed addons.
+This can use `modx_system_info` and `modx_project_overview`. Your host may show fewer than 198 tools, depending on the server build, disabled groups, and installed addons.
 
 The [complete system settings reference](SETTINGS.md) documents **all 16 settings**, defaults, behavior, and security implications.
 

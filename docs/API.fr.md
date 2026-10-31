@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Remarque : cette page est une présentation traduite. Les tableaux complets des paramètres des 192 outils MCP restent disponibles en anglais et en russe.
+> Remarque : cette page est une présentation traduite. Les tableaux complets des paramètres des 198 outils MCP restent disponibles en anglais et en russe.
 Les outils MCP publics commencent par `modx_` ; les actions HTTP PHP utilisent les noms sans ce préfixe. Les tableaux exhaustifs des paramètres et les schémas JSON restent consultables dans la référence anglaise.
 
 ## MCP
@@ -27,7 +27,7 @@ Envoyez un `POST` JSON avec `X-MCP-Token` via HTTPS. `api.php` n’est pas un po
 **Références techniques complètes :** [paramètres API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [sécurité (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [développement (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Les tables techniques détaillées restent en anglais.
 
 
-## Répertoire des 192 outils MCP
+## Répertoire des 198 outils MCP
 
 > Les descriptions sont traduites ; pour les champs requis, types, limites et énumérations, consultez la référence technique anglaise ou russe liée.
 
@@ -38,6 +38,12 @@ Envoyez un `POST` JSON avec `X-MCP-Token` via HTTPS. `api.php` n’est pas un po
 | Outil | Description traduite | Impact |
 | --- | --- | --- |
 | [modx_list_elements](API.md#modx_list_elements) | Liste les éléments MODX d’un type (id + name). | Lecture |
+| [modx_list_categories](API.md#modx_list_categories) | Lister les catégories des éléments. | Lecture |
+| [modx_get_category](API.md#modx_get_category) | Lire une catégorie et ses usages. | Lecture |
+| [modx_create_category](API.md#modx_create_category) | Créer une catégorie. | Impact élevé |
+| [modx_update_category](API.md#modx_update_category) | Renommer ou déplacer la catégorie. | Impact élevé |
+| [modx_delete_category](API.md#modx_delete_category) | Supprimer une catégorie vide après contrôle. | Impact élevé |
+| [modx_assign_element_category](API.md#modx_assign_element_category) | Affecter une catégorie à un élément. | Modifie le site |
 | [modx_make_static](API.md#modx_make_static) | Convertit un chunk/snippet/template/plugin en fichier statique sous core/elements/ (écrit le fichier, définit static=1 + source=Filesystem). | Impact élevé |
 | [modx_get_element](API.md#modx_get_element) | Lit un élément MODX (renvoie ses champs + son code complet). | Lecture |
 | [modx_update_element_property](API.md#modx_update_element_property) | Modifie de manière sûre une seule propriété par défaut existante, avec un contrôle CAS de la valeur attendue ; ne remplace jamais le code ni les autres propriétés. | Modifie le site |
