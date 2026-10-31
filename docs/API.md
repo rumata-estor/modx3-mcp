@@ -6,6 +6,8 @@
 
 Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 198 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 199th action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
 
+> **Version note:** This reference documents 1.2.5 source. The example below uses the current main branch for review; published v1.2.4 lacks the six category tools. Use a published tagged release in production when its transport ZIPs are available.
+
 ## Connecting an MCP client
 
 Install the MODX transport package for your platform, then configure a compatible **stdio** MCP host using **Node.js 18+**:
@@ -15,7 +17,7 @@ Install the MODX transport package for your platform, then configure a compatibl
   "mcpServers": {
     "modx": {
       "command": "npx",
-      "args": ["-y", "github:rumata-estor/modx3-mcp#v1.2.4"],
+      "args": ["-y", "github:rumata-estor/modx3-mcp#main"],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
         "MODX_MCP_TOKEN": "YOUR_PRIVATE_SITE_TOKEN"

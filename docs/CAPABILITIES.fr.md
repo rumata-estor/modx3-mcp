@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.fr.md) · [Référence de l’API](API.fr.md)
 
-**MODX MCP 1.2.4 · 198 outils publics · 19 groupes fonctionnels · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.5 · 198 outils publics · 19 groupes fonctionnels · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP fournit à un client MCP doté de capacités d’IA des opérations nommées pour travailler avec les données et les éléments MODX, au lieu d’exiger que chaque tâche soit exprimée sous forme de SQL brut ou de commandes du système de fichiers. Il prend en charge l’inspection du site, la modification du contenu et du code, les valeurs des TV, les paquets, l’administration des accès et certaines extensions tierces. La liste réelle des outils dépend de la version installée et des fonctionnalités activées.
 
@@ -14,7 +14,7 @@ Ce guide répond à la question **« Que puis-je faire avec MODX MCP ? »**. Pou
 
 | Groupe | Outils |
 | --- | ---: |
-| [Éléments et ressources](#éléments-et-ressources) | 15 |
+| [Éléments et ressources](#éléments-et-ressources) | 21 |
 | [TV des ressources](#tv-des-ressources) | 4 |
 | [Types de champs TV](#types-de-champs-tv) | 2 |
 | [Paramètres système](#paramètres-système) | 5 |

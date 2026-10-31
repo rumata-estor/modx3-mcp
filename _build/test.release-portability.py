@@ -7,7 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 errors = []
 
-EXPECTED_VERSION = "1.2.4"
+EXPECTED_VERSION = "1.2.5"
 EXPECTED_NODE_NAME = "modx3-mcp"
 EXPECTED_MODX3_TRANSPORT_NAME = "MODX3MCP"
 EXPECTED_MODX2_TRANSPORT_NAME = "MODX2MCP"
@@ -310,7 +310,7 @@ for needle, message in {
     "MCP_ENDPOINT_SMOKE_OK": "endpoint CRUD smoke success marker missing",
     "MCP_ENDPOINT_READ_ONLY_SMOKE_OK": "endpoint read-only smoke marker missing",
     "finally": "endpoint smoke must guarantee CRUD cleanup",
-    "actionCount !== 193": "endpoint smoke must detect client/server action skew",
+    "actionCount !== 199": "endpoint smoke must detect client/server action skew",
     "modxmcp.site_revision": "endpoint smoke must separate CAS runtime state from config settings",
     "$runtimeSettings": "endpoint smoke runtime-setting separation missing",
 }.items():

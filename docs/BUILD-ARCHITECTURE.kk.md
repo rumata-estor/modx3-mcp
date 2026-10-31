@@ -4,8 +4,8 @@
 
 Бір бастапқы кодтан MODX 2.8.x және MODX 3.x үшін екі жеке көлік пакеті жасалады. Ортақ құралдар, реестр және API орналасқан жер: `core/components/modxmcp/src/`.
 
-- MODX 2.8.x: `modx2mcp-1.2.4-pl.transport.zip`
-- MODX 3.x: `modx3mcp-1.2.4-pl.transport.zip
+- MODX 2.8.x: `modx2mcp-1.2.5-pl.transport.zip`
+- MODX 3.x: `modx3mcp-1.2.5-pl.transport.zip`
 
 ```bash
 python3 _build/prepare-release.py --platform modx2 --output /tmp/modxmcp-modx2

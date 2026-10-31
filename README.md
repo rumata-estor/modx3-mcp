@@ -10,7 +10,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**Development branch (unreleased) · MODX Revolution 2.8.x / 3.x · 199 server actions (198 public MCP tools) · MIT**
+**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 server actions (198 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -50,6 +50,7 @@ Giving an AI agent normal server access means it can edit files, run SQL queries
 MODX MCP gives the agent a dedicated management layer that works with these things as MODX objects. The agent can:
 
 - find resources, templates, chunks, snippets, plugins, and TVs;
+- Manage MODX element categories: create, rename, nest, move, safely delete, and assign to chunks, snippets, templates, TVs and plugins.
 - inspect dependencies and where elements are used;
 - create, update, and delete MODX objects through controlled operations;
 - work with system settings, media sources, and supported extras;
@@ -234,20 +235,20 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 ## Install with the MODX transport package
 
-**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.3](docs/extras/modx2mcp-1.2.4.md) · [MODX 3.x — MODX MCP 1.2.3](docs/extras/modx3mcp-1.2.4.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.4.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.4.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
+**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.5](docs/extras/modx2mcp-1.2.5.md) · [MODX 3.x — MODX MCP 1.2.5](docs/extras/modx3mcp-1.2.5.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.5.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.5.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
 
-Version 1.2.4 produces two platform-specific transport packages from the same source tree:
+Version 1.2.5 is prepared for two platform-specific transport packages, **not yet published**:
 
-- MODX 2.8.x: `modx2mcp-1.2.4-pl.transport.zip`;
-- MODX 3.x: `modx3mcp-1.2.4-pl.transport.zip`.
+- MODX 2.8.x: `modx2mcp-1.2.5-pl.transport.zip`;
+- MODX 3.x: `modx3mcp-1.2.5-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
-**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install `modx2mcp-1.2.4-pl.transport.zip`. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install the matching transport ZIP **after it is published**. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
 
 For subsequent reinstalls or upgrades of the new `modx2mcp` package itself, existing `modxmcp.*` settings and the API token are preserved.
 
-Version **1.2.4** is the current stable localization patch release.
+Version **1.2.5** adds MODX element-category lifecycle management for MODX 2 and 3.
 
 ## Command-line installation
 
@@ -275,7 +276,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-For production use, pin the stable 1.2.4 release tag:
+For production use, pin the last **published transport-compatible** tag (1.2.4) until 1.2.5 packages are available:
 
 ```json
 {
@@ -311,8 +312,8 @@ Before a release, the project checks:
 
 - PHP syntax and Node.js client syntax;
 - version consistency across the shared source and both platform build configs;
-- the complete client/server contract: **193 actions**;
-- modular migration coverage: **81/81 reads + 112/112 mutations**;
+- the complete client/server contract: **199 actions**;
+- modular migration coverage: **83/83 reads + 116/116 mutations**;
 - MODX 2 platform staging and PHP compatibility;
 - MODX 3 processor compatibility across 3.2.2-pl, 3.2.4-pl and current 3.x;
 - installation portability, secure defaults and platform-specific transport requirements;
@@ -330,11 +331,11 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Current stable version: **1.2.4**.
+Current source version: **1.2.5** (transport build pending).
 
-Latest published stable release: **[1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)**.
+Latest published stable release with transport ZIPs: **[1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)**.
 
-The 1.2.4 release includes GitHub source archives, separate MODX 2 and MODX 3 transport packages, and their SHA-256 checksums.
+The 1.2.5 release targets separate MODX 2 and MODX 3 transport packages and keeps normal upgrade settings/token intact.
 
 ---
 

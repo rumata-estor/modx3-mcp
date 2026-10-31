@@ -339,7 +339,7 @@ if (is_array($actions)) {
         }
     }
 }
-if ($actionCount !== 193) {
+if ($actionCount !== 199) {
     throw new RuntimeException("list_actions: expected 199 server actions, got {$actionCount}.");
 }
 echo "ACTIONS_OK count={$actionCount}\n";

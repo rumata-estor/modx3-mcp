@@ -2,7 +2,7 @@
 
 [English](SECURITY.md) · [Русский](SECURITY.ru.md) · [Español](SECURITY.es.md) · [Deutsch](SECURITY.de.md) · [Français](SECURITY.fr.md) · [Українська](SECURITY.uk.md) · [Қазақша](SECURITY.kk.md) · [Nederlands](SECURITY.nl.md) · [Polski](SECURITY.pl.md) · [Встановлення](INSTALL.uk.md) · [Можливості](CAPABILITIES.uk.md) · [API](API.uk.md)
 
-Цей посібник описує межу довіри публічного **MODX MCP 1.2.4**, його налаштування безпеки та важливі обмеження. Він не описує жодної зовнішньої інфраструктури керування агентами.
+Цей посібник описує межу довіри публічного **MODX MCP 1.2.5**, його налаштування безпеки та важливі обмеження. Він не описує жодної зовнішньої інфраструктури керування агентами.
 
 ## Головне правило
 

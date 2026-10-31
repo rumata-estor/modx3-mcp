@@ -8,8 +8,10 @@ MODX MCP стандартты MCP-үйлесімді ЖИ клиентіне **M
 
 ## 1. MODX пакетін таңдау
 
-- **MODX 2.8.x:** `modx2mcp-1.2.4-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.4-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Мәртебе:** 1.2.5 бастапқы коды дайын, бірақ transport ZIP пакеттері әлі жарияланбаған. Орнату үшін [1.2.4 нұсқасын](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) пайдаланыңыз.
 
 Екі нұсқа да бірдей жария құралдар келісімшартын және Node.js клиентін пайдаланады. Тиісті пакетті [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) бетінен немесе қолдау көрсетілетін MODX пакет провайдерінен жүктеңіз.
 

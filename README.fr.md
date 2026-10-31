@@ -2,17 +2,20 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 / 192**
+**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP connecte les assistants IA aux sites MODX grâce au Model Context Protocol. Le composant PHP fournit une API HTTP authentifiée, tandis que le client Node.js local l’expose en tant que serveur MCP via stdio. Aucun serveur d’orchestration supplémentaire n’est nécessaire.
+
 
 ## À qui s’adresse ce projet ?
 
 Aux développeurs, agences et administrateurs souhaitant gérer des sites MODX avec des outils IA contrôlés.
 
+
 ## Fonctions et outils
 
 - Rechercher, consulter et modifier des ressources, modèles, chunks, snippets, plugins et TV.
+- Gérer les catégories des éléments MODX : créer, renommer, déplacer, supprimer en sécurité et affecter aux éléments.
 - Analyser les dépendances, les références rompues et le code potentiellement inutilisé grâce au graphe.
 - Gérer les paramètres système, sources de médias, paquets et extensions compatibles.
 - Protéger les modifications avec des préconditions, des simulations et des sauvegardes.
@@ -24,6 +27,8 @@ Choisissez l’archive adaptée à la version principale de MODX. Le client MCP 
 - **MODX 2.8.x:** [Paquet MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Paquet MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
 - [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+
+> Les liens de téléchargement ci-dessus concernent la dernière version publiée, 1.2.4. Les ZIP de transport 1.2.5 restent à produire.
 
 Connectez-vous au gestionnaire MODX et installez le ZIP approprié via la gestion des paquets.
 

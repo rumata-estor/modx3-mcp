@@ -1,5 +1,9 @@
 # Validierung von 1.2.4 — MODX MCP
 
+## 1.2.5 — source validation
+
+Die Quellcodeprüfungen für 1.2.5 umfassen PHP, MODX-2/3-Kompatibilität und sechs modCategory-Werkzeuge. Eine Installation der 1.2.5-Transport-ZIPs wurde noch nicht verifiziert.
+
 [English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 Alle neun Lexika wurden auf MODX 2.8.9-pl und 3.2.4-pl über die MODX-Lexikon-API geprüft. Die 16 Systemeinstellungen einschließlich Token blieben beim Upgrade unverändert. Die vollständige Installation, Neuinstallation und Deinstallation wurden auf MODX 3 getestet.

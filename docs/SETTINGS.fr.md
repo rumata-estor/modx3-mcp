@@ -2,7 +2,7 @@
 
 [English](SETTINGS.md) · [Русский](SETTINGS.ru.md) · [Español](SETTINGS.es.md) · [Deutsch](SETTINGS.de.md) · [Français](SETTINGS.fr.md) · [Українська](SETTINGS.uk.md) · [Қазақша](SETTINGS.kk.md) · [Nederlands](SETTINGS.nl.md) · [Polski](SETTINGS.pl.md) · [Installation](INSTALL.fr.md) · [Sécurité](SECURITY.fr.md)
 
-Pour **MODX MCP 1.2.4** sur MODX 2.8.x et 3.x. Ce document couvre les **16 paramètres système** définis par les deux paquets de transport. Les valeurs par défaut proviennent de `_build/data/transport.settings.php` ; le comportement a été vérifié par rapport à l’implémentation PHP.
+Pour **MODX MCP 1.2.5** sur MODX 2.8.x et 3.x. Ce document couvre les **16 paramètres système** définis par les deux paquets de transport. Les valeurs par défaut proviennent de `_build/data/transport.settings.php` ; le comportement a été vérifié par rapport à l’implémentation PHP.
 
 Dans le gestionnaire MODX : **Système → Paramètres système**, espace de noms `modxmcp`. **Composants → MODX MCP** permet aussi de modifier le journal d’audit, Auto-static et les groupes de fonctionnalités, ainsi que d’afficher/copier le jeton API en toute sécurité. Modifiez les autres options dans les paramètres système. Actualisez les caches MODX lorsque nécessaire et actualisez les fonctionnalités du client MCP après les changements.
 

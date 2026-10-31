@@ -1,5 +1,9 @@
 # Validatie van 1.2.4 — MODX MCP
 
+## 1.2.5 — source validation
+
+De broncodecontroles voor 1.2.5 omvatten PHP, MODX 2/3 en zes modCategory-tools. De 1.2.5-transport-ZIPs zijn nog niet via een echte installatie gevalideerd.
+
 [English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 Alle negen lexicons zijn via de MODX-API geladen op MODX 2.8.9-pl en 3.2.4-pl. Alle 16 instellingen, inclusief token, bleven behouden. Op MODX 3 is ook de volledige installatie-, herinstallatie- en verwijdercyclus geslaagd.

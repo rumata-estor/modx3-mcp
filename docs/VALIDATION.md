@@ -2,6 +2,10 @@
 
 # Connector validation status
 
+## 1.2.5 source / CI validation (31 October 2026)
+
+Version 1.2.5 includes six new modCategory tools and 199 server actions (198 public MCP tools). The source checks cover PHP syntax, MODX 2 compatibility, MODX 3 core-processor compatibility, category lifecycle/assignment regression, both platform staging trees, and nine-language documentation. **These checks do not establish that either v1.2.5 transport ZIP has been built, installed, or tested on a live MODX site.** See the corresponding GitHub pull request and Actions run for current CI status. Previously verified v1.2.4 deployments are described below.
+
 ## Production integration addendum (2026-10-13–14)
 
 The statements below about production being unchanged on **2026-10-12** are accurate for that release-test date; production sites were upgraded **later**.

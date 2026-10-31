@@ -1,6 +1,6 @@
 <?php
 /** Validate transport README/CHANGELOG links without bootstrapping MODX. */
-define('PKG_VERSION', '1.2.4');
+define('PKG_VERSION', '1.2.5');
 require_once __DIR__ . '/transport.documentation.php';
 
 function checkTransportDocs($condition, $message) {
@@ -24,11 +24,11 @@ foreach (array('README.md', 'CHANGELOG.md') as $name) {
         );
     }
     checkTransportDocs(
-        strpos($converted, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.4/') !== false,
+        strpos($converted, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.5/') !== false,
         $name . ': missing GitHub docs URL'
     );
     checkTransportDocs(
-        strpos(file_get_contents($root . $name), 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.4/README.ru.md') === false,
+        strpos(file_get_contents($root . $name), 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.5/README.ru.md') === false,
         $name . ': original Markdown was unexpectedly rewritten'
     );
     echo "TRANSPORT_DOCS_OK " . $name . " links=" . count($found[1]) . "\n";
@@ -40,19 +40,19 @@ $sample = "[Русский](README.ru.md)\n"
     . "[local](#section) [external](https://example.com/)\n";
 $out = modxmcpTransportDocumentation($sample, 'README.md');
 checkTransportDocs(
-    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.4/README.ru.md') !== false,
+    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.5/README.ru.md') !== false,
     'language-switch link'
 );
 checkTransportDocs(
-    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.4/CHANGELOG.ru.md#release') !== false,
+    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.5/CHANGELOG.ru.md#release') !== false,
     'changelog and fragment link'
 );
 checkTransportDocs(
-    strpos($out, 'https://raw.githubusercontent.com/rumata-estor/modx3-mcp/v1.2.4/docs/images/modxmcp-graph-en.png') !== false,
+    strpos($out, 'https://raw.githubusercontent.com/rumata-estor/modx3-mcp/v1.2.5/docs/images/modxmcp-graph-en.png') !== false,
     'image link'
 );
 checkTransportDocs(
-    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.4/README.md#section') !== false,
+    strpos($out, 'https://github.com/rumata-estor/modx3-mcp/blob/v1.2.5/README.md#section') !== false,
     'internal section link'
 );
 checkTransportDocs(strpos($out, '[external](https://example.com/)') !== false, 'external URL unchanged');

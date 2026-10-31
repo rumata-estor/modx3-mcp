@@ -1,5 +1,9 @@
 # 1.2.4 нұсқасын тексеру — MODX MCP
 
+## 1.2.5 — source validation
+
+1.2.5 кодының тексерулері PHP, MODX 2/3 үйлесімділігі және алты modCategory құралын қамтиды. 1.2.5 transport ZIP пакеттері нақты орнатумен әлі расталмаған.
+
 [English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 Тоғыз лексиконның барлығы MODX 2.8.9-pl және 3.2.4-pl жүйелерінде MODX API арқылы тексерілді. Токенді қоса алғанда барлық 16 баптау сақталды. MODX 3 үшін орнату, қайта орнату және жою сынақтарының толық циклі өтті.

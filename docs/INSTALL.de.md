@@ -8,8 +8,10 @@ MODX MCP ermöglicht einem standardkonformen MCP-kompatiblen KI-Client die Arbei
 
 ## 1. MODX-Paket auswählen
 
-- **MODX 2.8.x:** `modx2mcp-1.2.4-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.4-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Status:** Der Quellcode für 1.2.5 ist vorbereitet, die Transport-ZIPs sind aber noch nicht veröffentlicht. Für die Installation verwenden Sie [Version 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4).
 
 Beide Varianten verwenden denselben öffentlichen Tool-Vertrag und denselben Node.js-Client. Laden Sie das passende Paket von [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) oder einem unterstützten MODX-Paketanbieter herunter.
 

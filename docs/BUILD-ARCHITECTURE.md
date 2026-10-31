@@ -2,6 +2,10 @@
 
 # Build architecture
 
+## Release 1.2.5 source preparation
+
+Shared category management is implemented once in the modular runtime and included in both platform staging trees. The upcoming packages have separate MODX2MCP / MODX3MCP identities and use the same 199-action server contract (198 public MCP tools). The transport ZIPs must still be built and installed on test sites before publication.
+
 > User documentation: [installation](INSTALL.md), [capabilities](CAPABILITIES.md), [API reference](API.md), [security](SECURITY.md).
 
 One connector source tree produces two platform-specific release artifacts:

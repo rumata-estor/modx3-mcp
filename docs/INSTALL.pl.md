@@ -8,8 +8,10 @@ MODX MCP umożliwia standardowemu klientowi AI zgodnemu z MCP pracę z **MODX Re
 
 ## 1. Wybierz pakiet MODX
 
-- **MODX 2.8.x:** `modx2mcp-1.2.4-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.4-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Status:** kod źródłowy 1.2.5 jest przygotowany, ale pakiety transportowe ZIP nie zostały jeszcze opublikowane. Do instalacji użyj [wersji 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4).
 
 Oba warianty korzystają z tego samego publicznego kontraktu narzędzi i klienta Node.js. Pobierz odpowiedni pakiet z [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) lub od obsługiwanego dostawcy pakietów MODX.
 

@@ -2,7 +2,7 @@
 
 [English](SETTINGS.md) · [Русский](SETTINGS.ru.md) · [Español](SETTINGS.es.md) · [Deutsch](SETTINGS.de.md) · [Français](SETTINGS.fr.md) · [Українська](SETTINGS.uk.md) · [Қазақша](SETTINGS.kk.md) · [Nederlands](SETTINGS.nl.md) · [Polski](SETTINGS.pl.md) · [Instalacja](INSTALL.pl.md) · [Bezpieczeństwo](SECURITY.pl.md)
 
-Dla **MODX MCP 1.2.4** na MODX 2.8.x i 3.x. Dokument obejmuje wszystkie **16 ustawień systemowych** zdefiniowanych w obu pakietach transportowych. Wartości domyślne pochodzą z `_build/data/transport.settings.php`; działanie zostało sprawdzone względem implementacji PHP.
+Dla **MODX MCP 1.2.5** na MODX 2.8.x i 3.x. Dokument obejmuje wszystkie **16 ustawień systemowych** zdefiniowanych w obu pakietach transportowych. Wartości domyślne pochodzą z `_build/data/transport.settings.php`; działanie zostało sprawdzone względem implementacji PHP.
 
 W menedżerze MODX: **System → Ustawienia systemowe**, przestrzeń nazw `modxmcp`. **Komponenty → MODX MCP** umożliwia również zmianę Audit log, Auto-static, grup funkcji oraz bezpieczne wyświetlanie/kopiowanie tokenu API. Pozostałe opcje zmieniaj w ustawieniach systemowych. W razie potrzeby odśwież pamięć podręczną MODX, a po zmianach odśwież listę funkcji klienta MCP.
 
