@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Hinweis: Diese Seite ist eine übersetzte Kurzübersicht. Die vollständigen Parametertabellen der 192 MCP-Werkzeuge sind weiterhin auf Englisch und Russisch verfügbar.
+> Hinweis: Diese Seite ist eine übersetzte Kurzübersicht. Die vollständigen Parametertabellen der 198 MCP-Werkzeuge sind weiterhin auf Englisch und Russisch verfügbar.
 Öffentliche MCP-Werkzeuge tragen das Präfix `modx_`. Die PHP-HTTP-API verwendet dagegen Aktionsnamen ohne Präfix. Die vollständigen Parametertabellen und JSON-Schemata bleiben in der englischen Referenz verfügbar.
 
 ## MCP
@@ -27,7 +27,7 @@ Senden Sie `POST` mit JSON und `X-MCP-Token` über HTTPS. `api.php` ist kein MCP
 **Vollständige technische Referenzen:** [API-Parameter (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [Sicherheit (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [Entwicklerdokumentation (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Die ausführlichen englischen Referenztabellen sind maßgeblich.
 
 
-## Verzeichnis der 192 MCP-Werkzeuge
+## Verzeichnis der 198 MCP-Werkzeuge
 
 > Die Beschreibungen sind übersetzt; verbindliche Felder, Typen, Grenzen und Aufzählungen stehen in der verlinkten englischen oder russischen technischen Referenz.
 
@@ -38,6 +38,12 @@ Senden Sie `POST` mit JSON und `X-MCP-Token` über HTTPS. `api.php` ist kein MCP
 | Werkzeug | Lokalisierte Beschreibung | Auswirkung |
 | --- | --- | --- |
 | [modx_list_elements](API.md#modx_list_elements) | MODX-Elemente eines Typs auflisten (id + name). | Lesen |
+| [modx_list_categories](API.md#modx_list_categories) | Elementkategorien auflisten. | Lesen |
+| [modx_get_category](API.md#modx_get_category) | Kategorie und Belegungen ansehen. | Lesen |
+| [modx_create_category](API.md#modx_create_category) | Kategorie erstellen. | Weitreichende Auswirkungen |
+| [modx_update_category](API.md#modx_update_category) | Kategorie umbenennen oder verschieben. | Weitreichende Auswirkungen |
+| [modx_delete_category](API.md#modx_delete_category) | Leere Kategorie nach Prüfung löschen. | Weitreichende Auswirkungen |
+| [modx_assign_element_category](API.md#modx_assign_element_category) | Kategorie einem Element zuweisen. | Ändert die Website |
 | [modx_make_static](API.md#modx_make_static) | Einen Chunk/ein Snippet/Template/Plugin in eine statische Datei unter core/elements/ umwandeln (schreibt die Datei, setzt static=1 + source=Filesystem). | Weitreichende Auswirkungen |
 | [modx_get_element](API.md#modx_get_element) | Ein MODX-Element lesen (liefert seine Felder + den vollständigen Code). | Lesen |
 | [modx_update_element_property](API.md#modx_update_element_property) | Eine vorhandene Standardeigenschaft sicher mit einer CAS-Prüfung des erwarteten Werts ändern; niemals Code oder andere Eigenschaften ersetzen. | Ändert die Website |

@@ -8,6 +8,7 @@ first** (the recommended workflow), and call `modx_project_overview` to orient i
 - `tv_input_types` — choose the right TV input type per task and wire it (see also `modx_suggest_tv_type`).
 - `migx` — repeating structured rows: inline configs, `inputTV` (+ `ForMigx` convention), gotchas.
 - `study_component` — learn & use a newly-installed add-on from its source.
+- `element_categories` — manage MODX modCategory and assign elements on MODX 2/3.
 - `minishop2` — products, options, links, categories, orders.
 - `acl` — users, groups, roles, policies, resource/context access.
 

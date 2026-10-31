@@ -48,6 +48,7 @@ jobs:
       - name: Modular core and platform mapping
         run: |
           php _build/test.modular-core.php
+          php _build/test.category-management.php
           php _build/test.platform-mapping.php
           php _build/test.transport-documentation.php
 

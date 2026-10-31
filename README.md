@@ -10,7 +10,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**MODX MCP 1.2.4 · MODX Revolution 2.8.x / 3.x · 193 server actions (192 public MCP tools) · MIT**
+**Development branch (unreleased) · MODX Revolution 2.8.x / 3.x · 199 server actions (198 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -37,7 +37,7 @@ Use the manager dashboard to review the API endpoint, manage token access, confi
 | --- | --- | --- |
 | Install and connect | [Installation and setup](docs/INSTALL.md) | [Установка](docs/INSTALL.ru.md) |
 | Explore all features | [Capabilities and tools](docs/CAPABILITIES.md) | [Возможности](docs/CAPABILITIES.ru.md) |
-| Build integrations | [API reference: 192 tools](docs/API.md) | [Справочник API](docs/API.ru.md) |
+| Build integrations | [API reference: 198 tools](docs/API.md) | [Справочник API](docs/API.ru.md) |
 | Deploy safely | [Security and trust model](docs/SECURITY.md) | [Безопасность](docs/SECURITY.ru.md) |
 | System settings | [All 16 system settings](docs/SETTINGS.md) | [Все 16 настроек](docs/SETTINGS.ru.md) |
 

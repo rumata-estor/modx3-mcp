@@ -72,6 +72,8 @@ const PROJECT_LOCK_READ_ONLY_TOOLS = new Set([
   "modx_get_system_setting",
   "modx_help",
   "modx_list_actions",
+  "modx_list_categories",
+  "modx_get_category",
   "modx_list_elements",
   "modx_list_installed_components",
   "modx_list_media_source_files",
@@ -402,7 +404,7 @@ async function autoBackupElement(type, args, action) {
   const dir = path.join(root, `${stamp}_auto_${safeFilePart(action)}`);
   fs.mkdirSync(dir, { recursive: true });
 
-  const label = element.name || element.templatename || element.pagetitle || lookup.name || ("id-" + element.id);
+  const label = element.name || element.category || element.templatename || element.pagetitle || lookup.name || ("id-" + element.id);
   const file = path.join(dir, `${safeFilePart(type)}--${safeFilePart(label)}.json`);
   const record = {
     format: 1,
@@ -579,6 +581,13 @@ async function autoBackupForMutation(name, args) {
     if (process.env.MODX_MCP_ALLOW_SAFE_PLUGIN_CREATE !== "1") {
       throw new Error("Safety: direct plugin creation is disabled. Use the safe plugin workflow.");
     }
+  }
+
+  if (name === "modx_assign_element_category") {
+    return [await autoBackupElement(args.type, {id:args.id}, name)];
+  }
+  if (name === "modx_update_category" || (name === "modx_delete_category" && args.dry_run === false)) {
+    return [await autoBackupElement("category", {id:args.id}, name)];
   }
 
   if (name === "modx_update_element_property") {
@@ -765,7 +774,58 @@ const VIRTUALPAGE_HANDLER_TYPES = [
   "3",
 ];
 
+const CATEGORY_ELEMENT_TYPES = ["chunk", "snippet", "template", "tv", "plugin"];
+
 const toolDefinitions = [
+  {
+    name: "modx_list_categories",
+    description: "List MODX element categories (modCategory, NOT miniShop2 or resource folders), including id, name, parent and rank. Supports tree-level filtering.",
+    inputSchema: {type:"object",properties:{
+      parent:{type:"integer",minimum:0,description:"Optional parent category id; 0 lists only root categories."},
+      query:{type:"string",description:"Optional substring of category name."},
+      limit:{type:"integer",minimum:1,maximum:500},
+      start:{type:"integer",minimum:0}
+    }}
+  },
+  {
+    name: "modx_get_category",
+    description: "Read a MODX element category by id, including child/element usage counts before moving or deleting.",
+    inputSchema: {type:"object",properties:{id:{type:"integer",minimum:1}},required:["id"]}
+  },
+  {
+    name: "modx_create_category",
+    description: "Create a MODX element category (modCategory), optionally nested under an existing element category. Works on MODX 2 and 3.",
+    inputSchema: {type:"object",properties:{
+      name:{type:"string",minLength:1,description:"Category display name."},
+      parent:{type:"integer",minimum:0,description:"Parent modCategory id, 0 for root."},
+      rank:{type:"integer",minimum:0}
+    },required:["name"]}
+  },
+  {
+    name: "modx_update_category",
+    description: "Rename, move under a different parent, or reorder a MODX element category. Parent-cycle checks prevent moving a category into itself or its descendants.",
+    inputSchema: {type:"object",properties:{
+      id:{type:"integer",minimum:1},name:{type:"string",minLength:1},
+      parent:{type:"integer",minimum:0,description:"New parent modCategory id, 0 for root."},
+      rank:{type:"integer",minimum:0}
+    },required:["id"]}
+  },
+  {
+    name: "modx_delete_category",
+    description: "Safely delete an EMPTY MODX element category. FIRST call with dry_run:true to see child categories and assigned element/property-set counts. Deletion refuses nonempty categories and requires explicit dry_run:false.",
+    inputSchema: {type:"object",properties:{
+      id:{type:"integer",minimum:1},dry_run:{type:"boolean",description:"true previews; false performs deletion after checking dependencies."}
+    },required:["id","dry_run"]}
+  },
+  {
+    name: "modx_assign_element_category",
+    description: "Assign or move an existing chunk, snippet, template, TV, or plugin to a MODX element category. category_id:0 removes the assignment. Ordinary resources do not support modCategory.",
+    inputSchema: {type:"object",properties:{
+      type:{type:"string",enum:CATEGORY_ELEMENT_TYPES},
+      id:{type:"integer",minimum:1},
+      category_id:{type:"integer",minimum:0,description:"Destination modCategory id (0 for uncategorized)."}
+    },required:["type","id","category_id"]}
+  },
   {
     name: "modx_list_elements",
     description: "List MODX elements of a type (id + name). Supports an optional name filter and pagination.",

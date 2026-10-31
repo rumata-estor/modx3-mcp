@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Opmerking: dit is een vertaald overzicht. De volledige parametertabellen van alle 192 MCP-tools zijn beschikbaar in het Engels en Russisch.
+> Opmerking: dit is een vertaald overzicht. De volledige parametertabellen van alle 198 MCP-tools zijn beschikbaar in het Engels en Russisch.
 Openbare MCP-tools gebruiken het voorvoegsel `modx_`; PHP-HTTP-acties gebruiken de naam zonder dit voorvoegsel. De volledige parametertabellen en JSON-schema’s staan in de Engelstalige referentie.
 
 ## MCP
@@ -27,7 +27,7 @@ Stuur JSON via `POST` met de header `X-MCP-Token` over HTTPS. `api.php` is geen 
 **Volledige technische naslagwerken:** [API-parameters (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [beveiliging (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [ontwikkeling (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). De gedetailleerde technische tabellen zijn voorlopig in het Engels.
 
 
-## Overzicht van 192 MCP-tools
+## Overzicht van 198 MCP-tools
 
 > De beschrijvingen zijn vertaald; controleer verplichte velden, typen, limieten en enumeraties in de gekoppelde Engelse of Russische technische referentie.
 
@@ -38,6 +38,12 @@ Stuur JSON via `POST` met de header `X-MCP-Token` over HTTPS. `api.php` is geen 
 | Tool | Vertaald doel | Impact |
 | --- | --- | --- |
 | [modx_list_elements](API.md#modx_list_elements) | Geef MODX-elementen van een bepaald type weer (id + name). | Lezen |
+| [modx_list_categories](API.md#modx_list_categories) | Elementcategorieën tonen. | Lezen |
+| [modx_get_category](API.md#modx_get_category) | Categorie en gebruik lezen. | Lezen |
+| [modx_create_category](API.md#modx_create_category) | Categorie maken. | Grote impact |
+| [modx_update_category](API.md#modx_update_category) | Categorie hernoemen of verplaatsen. | Grote impact |
+| [modx_delete_category](API.md#modx_delete_category) | Lege categorie gecontroleerd verwijderen. | Grote impact |
+| [modx_assign_element_category](API.md#modx_assign_element_category) | Categorie aan element toewijzen. | Wijzigt de site |
 | [modx_make_static](API.md#modx_make_static) | Zet een chunk/snippet/template/plugin om naar een statisch bestand onder core/elements/ (schrijft het bestand, stelt static=1 + source=Filesystem in). | Grote impact |
 | [modx_get_element](API.md#modx_get_element) | Lees een MODX-element (retourneert de velden + volledige code). | Lezen |
 | [modx_update_element_property](API.md#modx_update_element_property) | Wijzig veilig één bestaande standaardeigenschap met een CAS-controle op de verwachte waarde; vervang nooit code of andere eigenschappen. | Wijzigt de site |

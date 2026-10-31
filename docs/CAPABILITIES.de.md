@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.4 · 192 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.4 · 198 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP stellt einem KI-fähigen MCP-Client benannte Aktionen für MODX-Daten und Elemente zur Verfügung, ohne jede Aufgabe als SQL- oder Dateisystembefehl ausdrücken zu müssen. Es unterstützt die Seitenprüfung, Inhalts- und Codeänderungen, TV-Werte, Pakete, Rechteverwaltung und ausgewählte Erweiterungen. Die tatsächlich verfügbaren Werkzeuge hängen von der installierten Version und den aktivierten Funktionen ab.
 
@@ -33,7 +33,7 @@ Dieser Leitfaden beantwortet **„Was kann ich mit MODX MCP tun?“**. Alle Feld
 | [Namespaces](#namespaces) | 4 |
 | [Lexikon und Übersetzungen](#lexikon-und-übersetzungen) | 4 |
 | [Wartung und Diagnose](#wartung-und-diagnose) | 13 |
-| **Gesamt** | **192** |
+| **Gesamt** | **198** |
 
 ## Elemente und Ressourcen
 
@@ -42,6 +42,12 @@ MODX-Seiten, Vorlagen, Chunks, Snippets, Plugins, TVs und Kategorien als Objekte
 | Werkzeug | Beschreibung | Auswirkung |
 | --- | --- | --- |
 | `modx_list_elements` | MODX-Elemente eines Typs auflisten (id + name). | Lesen |
+| `modx_list_categories` | Elementkategorien auflisten. | Lesen |
+| `modx_get_category` | Kategorie und Belegungen ansehen. | Lesen |
+| `modx_create_category` | Kategorie erstellen. | Weitreichende Auswirkungen |
+| `modx_update_category` | Kategorie umbenennen oder verschieben. | Weitreichende Auswirkungen |
+| `modx_delete_category` | Leere Kategorie nach Prüfung löschen. | Weitreichende Auswirkungen |
+| `modx_assign_element_category` | Kategorie einem Element zuweisen. | Ändert die Website |
 | `modx_make_static` | Einen Chunk/ein Snippet/Template/Plugin in eine statische Datei unter core/elements/ umwandeln (schreibt die Datei, setzt static=1 + source=Filesystem). | Weitreichende Auswirkungen |
 | `modx_get_element` | Ein MODX-Element lesen (liefert seine Felder + den vollständigen Code). | Lesen |
 | `modx_update_element_property` | Eine vorhandene Standardeigenschaft sicher mit einer CAS-Prüfung des erwarteten Werts ändern; niemals Code oder andere Eigenschaften ersetzen. | Ändert die Website |

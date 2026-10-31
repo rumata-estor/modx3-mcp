@@ -4,7 +4,7 @@
 
 [Installatie](INSTALL.nl.md) · [API-referentie](API.nl.md)
 
-**MODX MCP 1.2.4 · 192 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.4 · 198 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP biedt een MCP-compatibele AI-client benoemde handelingen voor MODX-objecten zonder dat elke taak als ruwe SQL of een bestandssysteemcommando moet worden beschreven. Het ondersteunt het bekijken van sites, het wijzigen van inhoud en code, TV-velden, pakketten, toegangsbeheer en geselecteerde uitbreidingen.
 
@@ -36,7 +36,7 @@ Dit overzicht beantwoordt **Wat kan ik met MODX MCP doen?** Voor de exacte veldt
 | [Namespaces](#namespaces) | 4 |
 | [Lexicon en vertalingen](#lexicon-en-vertalingen) | 4 |
 | [Onderhoud en diagnostiek](#onderhoud-en-diagnostiek) | 13 |
-| **Totaal** | **192** |
+| **Totaal** | **198** |
 
 ## Elementen en resources
 
@@ -45,6 +45,12 @@ Beheer pagina’s, templates, chunks, snippets, plugins, TV’s en categorieën 
 | Tool | Wat deze doet | Impact |
 | --- | --- | --- |
 | `modx_list_elements` | Geef MODX-elementen van een bepaald type weer (id + name). | Lezen |
+| `modx_list_categories` | Elementcategorieën tonen. | Lezen |
+| `modx_get_category` | Categorie en gebruik lezen. | Lezen |
+| `modx_create_category` | Categorie maken. | Grote impact |
+| `modx_update_category` | Categorie hernoemen of verplaatsen. | Grote impact |
+| `modx_delete_category` | Lege categorie gecontroleerd verwijderen. | Grote impact |
+| `modx_assign_element_category` | Categorie aan element toewijzen. | Wijzigt de site |
 | `modx_make_static` | Zet een chunk/snippet/template/plugin om naar een statisch bestand onder core/elements/ (schrijft het bestand, stelt static=1 + source=Filesystem in). | Grote impact |
 | `modx_get_element` | Lees een MODX-element (retourneert de velden + volledige code). | Lezen |
 | `modx_update_element_property` | Wijzig veilig één bestaande standaardeigenschap met een CAS-controle op de verwachte waarde; vervang nooit code of andere eigenschappen. | Wijzigt de site |

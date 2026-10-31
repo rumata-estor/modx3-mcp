@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.4 · 192 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
+**Development branch (unreleased) · 198 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP gives an AI-capable MCP client named operations for working with MODX data and elements, rather than requiring every task to be expressed as raw SQL or filesystem commands. It supports site inspection, content and code editing, TV values, packages, access administration, and selected third-party extras. The actual tool list depends on the installed build and enabled capabilities.
 
@@ -14,7 +14,7 @@ This guide answers **“What can I do with MODX MCP?”**. For the complete fiel
 
 | Group | Tools |
 | --- | ---: |
-| [Elements and resources](#elements-and-resources) | 15 |
+| [Elements and resources](#elements-and-resources) | 21 |
 | [Resource TVs](#resource-tvs) | 4 |
 | [TV field types](#tv-field-types) | 2 |
 | [System settings](#system-settings) | 5 |
@@ -33,7 +33,7 @@ This guide answers **“What can I do with MODX MCP?”**. For the complete fiel
 | [Namespaces](#namespaces) | 4 |
 | [Lexicon and translations](#lexicon-and-translations) | 4 |
 | [Maintenance and diagnostics](#maintenance-and-diagnostics) | 13 |
-| **Total** | **192** |
+| **Total** | **198** |
 
 ## Elements and resources
 
@@ -42,6 +42,12 @@ Manage pages, templates, chunks, snippets, plugins, TVs, and categories as MODX 
 | Tool | What it does | Impact |
 | --- | --- | --- |
 | `modx_list_elements` | List MODX elements of a type (id + name). | Read |
+| `modx_list_categories` | List MODX element categories with id, parent and rank. Filter by parent or name. | Read |
+| `modx_get_category` | Read a category with child and element assignment counts. | Read |
+| `modx_create_category` | Create a MODX element category in MODX 2 or 3. | High impact |
+| `modx_update_category` | Rename, move or reorder a category with cycle protection. | High impact |
+| `modx_delete_category` | Delete only an empty category; requires dry_run and refuses occupied categories. | High impact |
+| `modx_assign_element_category` | Set a category on a chunk, snippet, template, TV or plugin. category_id:0 removes assignment. Not for resources. | Changes site |
 | `modx_make_static` | Convert a chunk/snippet/template/plugin to a static file under core/elements/ (writes the file, sets static=1 + source=Filesystem). | High impact |
 | `modx_get_element` | Read a MODX element (returns its fields + full code). | Read |
 | `modx_update_element_property` | Safely change one existing default property with an expected-value CAS check; never replace code or other properties. | Changes site |
