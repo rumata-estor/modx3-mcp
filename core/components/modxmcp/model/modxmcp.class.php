@@ -114,9 +114,12 @@ class modxMCP {
         }
     }
 
-    public function processRequest($action, $elementType, $data =[]) {
+    public function processRequest($action, $elementType, $data =[], $trustedPermitDecision = null) {
         if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
-            self::assertExternalAuthorizationBoundary($action);
+            if (!($trustedPermitDecision instanceof ModxMcpPermitVerifier) ||
+                !$trustedPermitDecision->allowsAction($action)) {
+                self::assertExternalAuthorizationBoundary($action);
+            }
         }
         $serviceUser = $this->resolveServiceUser();
         $this->modx->user = $serviceUser;
