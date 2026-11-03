@@ -45,3 +45,13 @@ The tests exercise explicit read actions, mutation rejections and unknown-action
 5. Isolated MODX 2 and MODX 3 integration tests, including rejected direct bearer-token writes and simulated bridge outage.
 
 **No changes to production sites, server configuration, version numbers, main or develop.**
+
+## Signed transport primitives (development only)
+
+- `endpoint/permit-wire.php`: strict ASCII field order `SITEAGENT-MODX-PERMIT-V1` with HMAC-SHA256, shared with the Python `siteagent/permit_wire.py` implementation. Signed fields: version, audience, site, contour, task, immutable plan digest, operation ID, action, target digest, parameter digest, raw request digest, nonce, expiry.
+- `endpoint/permit-nonce-ledger.php`: atomic create-exclusive consumption of a 128-bit nonce in a private directory, with path/permission checks. It does not yet provide a fully durable commit protocol, distributed lock or robust crash recovery.
+- `tests/test-permit-wire.php` uses a shared fixed vector with Python and rejects altered scope. `tests/test-permit-nonce-ledger.php` checks replay, malformed nonce and unsafe ledger directory. Both run offline in CI.
+
+**Neither helper is called by the live endpoint. The external_authorization_required mode still denies all writes.** This is intentional: connecting these utilities before an isolated issuer, verified audience and endpoint-bound request digest exist would produce a false approval path.
+
+Outstanding before real writes: authenticated issuer/service identity, protected per-site key provisioning/rotation, expiry and clock handling, request-body canonical binding, site/contour binding from trusted configuration rather than user input, atomic nonce consumption at the actual mutation boundary, verified outcome/unknown reconciliation and fail-closed fallback for both MODX platforms.
