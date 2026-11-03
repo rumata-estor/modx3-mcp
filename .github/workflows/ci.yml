@@ -51,6 +51,7 @@ jobs:
           php tests/test-external-authorization-boundary.php modx3
           php tests/test-permit-wire.php
           php tests/test-permit-nonce-ledger.php
+          php tests/test-permit-verifier.php
 
       - name: Modular core and platform mapping
         run: |
