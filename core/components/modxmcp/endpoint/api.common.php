@@ -185,8 +185,29 @@ try {
     );
     require_once $corePath . 'model/modxmcp.class.php';
 
+    $trustedPermitDecision = null;
+    if ((bool)$modx->getOption('modxmcp.external_authorization_required', null, false)) {
+        try {
+            // Explicit read-only actions do not require a mutation permit.
+            modxMCP::assertExternalAuthorizationBoundary($action);
+        } catch (ModxMCPClientException $readDenied) {
+            // Unknown and unclassified actions must never obtain an override.
+            modxMCP::assertExternalAuthorizedWriteAction($action);
+            try {
+                require_once $corePath . 'endpoint/protected-api.php';
+                $trustedPermitDecision = modxmcpVerifyProtectedHttpRequest(
+                    $modx, $rawInput, $action
+                );
+            } catch (Throwable $permitError) {
+                throw new ModxMCPClientException(
+                    'Protected Site Agent mode: missing or invalid trusted operation permit.'
+                );
+            }
+        }
+    }
+
     $mcp = new modxMCP($modx);
-    $result = $mcp->processRequest($action, $type, $data);
+    $result = $mcp->processRequest($action, $type, $data, $trustedPermitDecision);
 
     // 'caps' = capability fingerprint; the client watches it to live-refresh its tool list.
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
