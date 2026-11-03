@@ -9,6 +9,20 @@ require_once __DIR__ . '/permit-nonce-ledger.php';
 
 class ModxMcpPermitVerifier
 {
+    private $action;
+    private $requestDigest;
+
+    private function __construct($action, $requestDigest)
+    {
+        $this->action = $action;
+        $this->requestDigest = $requestDigest;
+    }
+
+    public function allowsAction($action)
+    {
+        return is_string($action) && hash_equals($this->action, $action);
+    }
+
     public static function authorize(
         array $permit, $rawBody, $action, array $trusted, $key,
         ModxMcpPermitNonceLedger $ledger, $clock = null
@@ -41,6 +55,6 @@ class ModxMcpPermitVerifier
         }
         // After every check, consume before invoking any MODX mutation.
         $ledger->reserve($claims['nonce']);
-        return array('action' => $action, 'request_digest' => $claims['request_digest']);
+        return new self($action, $claims['request_digest']);
     }
 }
