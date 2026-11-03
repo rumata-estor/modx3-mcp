@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feature/mcp-security-hardening' ]
   pull_request:
   workflow_dispatch:
 
@@ -44,6 +44,11 @@ jobs:
         run: |
           node --check assets/components/modxmcp/js/graph.js
           php _build/test.manager-localization.php
+
+      - name: Protected-mode authorization boundaries (MODX 2 and 3)
+        run: |
+          php tests/test-external-authorization-boundary.php modx2
+          php tests/test-external-authorization-boundary.php modx3
 
       - name: Modular core and platform mapping
         run: |
