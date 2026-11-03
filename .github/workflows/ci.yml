@@ -49,6 +49,7 @@ jobs:
         run: |
           php tests/test-external-authorization-boundary.php modx2
           php tests/test-external-authorization-boundary.php modx3
+          php tests/test-permit-wire.php
 
       - name: Modular core and platform mapping
         run: |
