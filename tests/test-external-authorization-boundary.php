@@ -30,4 +30,26 @@ foreach ($blocked as $action) {
         exit(1);
     }
 }
+// The real dispatcher must reject a write BEFORE any service-user lookup,
+// modular registry route or legacy fallback is reached.
+$reflection = new ReflectionClass('modxMCP');
+$dispatcher = $reflection->newInstanceWithoutConstructor();
+$dispatcher->modx = new class {
+    public function getOption($name, $options = null, $default = null) {
+        if ($name === 'modxmcp.external_authorization_required') {
+            return true;
+        }
+        throw new RuntimeException('Service-user or runtime path reached: ' . $name);
+    }
+};
+try {
+    $dispatcher->processRequest('update_element', 'chunk', array('id' => 1));
+    fwrite(STDERR, "Dispatcher accepted a protected write\\n");
+    exit(1);
+} catch (ModxMCPClientException $e) {
+    if (strpos($e->getMessage(), 'Protected Site Agent mode') === false) {
+        throw $e;
+    }
+}
+
 echo "EXTERNAL_GATE_FAIL_CLOSED_OK\n";
