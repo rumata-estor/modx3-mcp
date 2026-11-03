@@ -1,6 +1,11 @@
 <?php
 /* Offline boundary regression for MODX 2/3 shared model. No CMS bootstrap. */
-require_once __DIR__ . '/../core/components/modxmcp/model/modxmcp.class.php';
+$variant = isset($argv[1]) ? $argv[1] : 'modx3';
+if (!in_array($variant, array('modx2', 'modx3'), true)) { exit(2); }
+$path = $variant === 'modx2'
+    ? '/../core/components/modxmcp/legacy/modx2/modxmcp.class.php'
+    : '/../core/components/modxmcp/model/modxmcp.class.php';
+require_once __DIR__ . $path;
 
 $reads = array('list_elements', 'get_element', 'list_categories', 'get_site_state', 'read_media_source_file');
 $blocked = array(
