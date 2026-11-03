@@ -37,6 +37,7 @@ class ResourceTvUpdateTool implements ToolInterface
         // and reject unknown/unassigned TV names before any write.
         $modx = $context->modx();
         $templateId = (int)$resource->get('template');
+        $tvObjects = array();
         foreach ($data['tvs'] as $name => $value) {
             if (!is_string($name) || $name === '' || !is_string($value)) {
                 throw new \ModxMCPClientException(
@@ -59,6 +60,7 @@ class ResourceTvUpdateTool implements ToolInterface
                     'TV is not assigned to the resource template: ' . $name
                 );
             }
+            $tvObjects[$name] = $tv;
         }
         // Execute the field-level compare under the same connector-wide
         // mutation lock as the site revision check. This catches an edit
@@ -80,9 +82,10 @@ class ResourceTvUpdateTool implements ToolInterface
                 );
             }
             foreach ($expected as $name => $beforeValue) {
-                if (!is_string($beforeValue)
-                    || (string)$resource->getTVValue($name) !== $beforeValue
-                ) {
+                $actual = method_exists($tvObjects[$name], 'getValue')
+                    ? (string)$tvObjects[$name]->getValue($resourceId)
+                    : (string)$resource->getTVValue($name);
+                if (!is_string($beforeValue) || $actual !== $beforeValue) {
                     throw new \ModxMCPClientException(
                         'STALE_STATE {"status":"STALE_STATE","reason":"tv_values_changed"}'
                     );
@@ -93,7 +96,14 @@ class ResourceTvUpdateTool implements ToolInterface
         $modx->beginTransaction();
         try {
             foreach ($data['tvs'] as $name => $value) {
-                if ($resource->setTVValue($name, $value) === false) {
+                $written = false;
+                if (isset($tvObjects[$name]) && method_exists($tvObjects[$name], 'setValue')) {
+                    $tvObjects[$name]->setValue($resourceId, $value);
+                    $written = (bool)$tvObjects[$name]->save();
+                } else {
+                    $written = ($resource->setTVValue($name, $value) !== false);
+                }
+                if (!$written) {
                     throw new \ModxMCPClientException('Failed to write TV: ' . $name);
                 }
             }

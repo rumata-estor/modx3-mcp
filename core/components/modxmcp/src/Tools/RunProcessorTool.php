@@ -33,6 +33,16 @@ class RunProcessorTool implements ToolInterface
             && is_array($data['properties'])
             ? $data['properties']
             : array();
+
+        if (preg_match('#^(context/setting|system/settings)/#', $processor)) {
+            $key = isset($properties['key']) ? trim((string)$properties['key']) : '';
+            if ($key !== '' && stripos($key, 'modxmcp.') === 0) {
+                throw new \ModxMCPClientException(
+                    'Managing modxmcp.* settings via run_processor is not allowed.'
+                );
+            }
+        }
+
         $options = array();
         if (!empty($data['processors_path'])) {
             $options['processors_path'] = (string)$data['processors_path'];
