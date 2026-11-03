@@ -41,7 +41,10 @@ try {
         ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',$trusted,$key,$ledger,time()+50);
     }, 'expired permit');
     $ok=ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',$trusted,$key,$ledger);
-    if ($ok['request_digest'] !== hash('sha256',$raw)) { throw new RuntimeException('not bound'); }
+    if (!($ok instanceof ModxMcpPermitVerifier) || !$ok->allowsAction('update_element') ||
+        $ok->allowsAction('delete_element')) {
+        throw new RuntimeException('authorization decision not bound to action');
+    }
     denied(function () use ($permit,$raw,$trusted,$key,$ledger) {
         ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',$trusted,$key,$ledger);
     }, 'replayed permit');
