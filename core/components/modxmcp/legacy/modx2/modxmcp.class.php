@@ -59,7 +59,38 @@ class modxMCP {
         return $user;
     }
 
+    /**
+     * Development-only closed boundary for deployments using the independent
+     * Site Agent authorizer. Until a trusted per-operation verifier is wired,
+     * this mode permits a small exact read-only list and refuses every write.
+     * Never infer safety from an action name prefix: unknown actions are denied.
+     */
+    public static function assertExternalAuthorizationBoundary($action) {
+        $readOnly = array(
+            'list_actions', 'get_capabilities', 'get_site_state', 'help',
+            'system_info', 'project_overview', 'describe_object',
+            'list_elements', 'get_element', 'view_element',
+            'list_categories', 'get_category', 'get_resource_tvs',
+            'list_tv_values', 'list_tv_input_types', 'suggest_tv_type',
+            'list_resources', 'search_code', 'find_usages', 'dependency_graph',
+            'list_system_settings', 'get_system_setting',
+            'list_media_sources', 'get_media_source',
+            'list_media_source_files', 'read_media_source_file',
+            'list_installed_components', 'get_component_files',
+            'read_component_file', 'check_integrations'
+        );
+        if (!is_string($action) || !in_array($action, $readOnly, true)) {
+            throw new ModxMCPClientException(
+                'Protected Site Agent mode: write or unclassified action denied ' .
+                'until independent operation authorization is implemented.'
+            );
+        }
+    }
+
     public function processRequest($action, $elementType, $data =[]) {
+        if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
+            self::assertExternalAuthorizationBoundary($action);
+        }
         $serviceUser = $this->resolveServiceUser();
         $this->modx->user = $serviceUser;
 
