@@ -114,10 +114,26 @@ class modxMCP {
         }
     }
 
+    public static function assertExternalAuthorizedWriteAction($action) {
+        $supported = array(
+            'create_element', 'update_element', 'delete_element',
+            'create_category', 'update_category', 'delete_category',
+            'assign_element_category', 'update_element_property',
+            'update_resource_tvs',
+        );
+        if (!is_string($action) || !in_array($action, $supported, true)) {
+            throw new ModxMCPClientException(
+                'Protected Site Agent mode: this mutation is not yet classified for signed execution.'
+            );
+        }
+    }
+
     public function processRequest($action, $elementType, $data =[], $trustedPermitDecision = null) {
         if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
-            if (!($trustedPermitDecision instanceof ModxMcpPermitVerifier) ||
-                !$trustedPermitDecision->allowsAction($action)) {
+            if ($trustedPermitDecision instanceof ModxMcpPermitVerifier &&
+                $trustedPermitDecision->allowsAction($action)) {
+                self::assertExternalAuthorizedWriteAction($action);
+            } else {
                 self::assertExternalAuthorizationBoundary($action);
             }
         }
