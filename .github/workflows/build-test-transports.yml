@@ -9,6 +9,8 @@ on:
       - '_build/smoke.endpoint.php'
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/chunk-cas.php'
+      - 'core/components/modxmcp/endpoint/permit-nonce-ledger-db.php'
+      - 'tests/ci-nonce-ledger-db.php'
       - 'tests/live-chunk-cas-innodb.php'
       - 'tests/ci-modx-chunk-processor-lock.php'
       - 'core/components/modxmcp/model/modxmcp.class.php'
@@ -101,6 +103,13 @@ jobs:
           (cd "$RUNNER_TEMP/modx-site/setup" && php ./index.php --installmode=new)
           test -f "$RUNNER_TEMP/modx-site/config.core.php"
           test -f "$RUNNER_TEMP/modx-site/core/config/config.inc.php"
+      - name: Durable one-use InnoDB nonce ledger on disposable database
+        env:
+          MODXMCP_CI_DB_HOST: 127.0.0.1
+          MODXMCP_CI_DB_NAME: modx_build
+          MODXMCP_CI_DB_USER: modx_ci
+          MODXMCP_CI_DB_PASSWORD: ci-throwaway-only-user
+        run: php tests/ci-nonce-ledger-db.php
       - name: Real InnoDB CAS regression on disposable MODX chunk table
         env:
           MODXMCP_CI_DB_HOST: 127.0.0.1
