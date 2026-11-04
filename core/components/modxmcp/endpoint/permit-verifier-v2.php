@@ -80,6 +80,24 @@ class ModxMcpCasPermitVerifierV2
             (string)$body['data']['id'] !== $claims['chunk_id']) {
             throw new RuntimeException('CAS request is not an exact chunk content update');
         }
+        // Require one unambiguous canonical wire form. `json_decode()` alone
+        // silently keeps the LAST duplicate key. Re-encoding the exact pilot
+        // shape rejects duplicate/reordered/extra whitespace representations
+        // even when an attacker supplies a newly signed raw-body digest.
+        if (!defined('JSON_UNESCAPED_LINE_TERMINATORS')) {
+            throw new RuntimeException('CAS JSON canonicalization unavailable');
+        }
+        $canonicalContent = json_encode($body['data']['content'],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_LINE_TERMINATORS);
+        if (!is_string($canonicalContent)) {
+            throw new RuntimeException('CAS content cannot be encoded');
+        }
+        $canonicalRaw = '{"action":"update_element","type":"chunk","data":{"id":'
+            . $body['data']['id'] . ',"content":' . $canonicalContent . '}}';
+        if (!hash_equals($canonicalRaw, $rawBody)) {
+            throw new RuntimeException('noncanonical or ambiguous CAS JSON');
+        }
         $baseline = $permit['baseline'];
         if (!self::exactKeys($baseline, array('element_type','id','storage_field',
                                              'static','before_content',

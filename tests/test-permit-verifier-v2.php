@@ -72,6 +72,22 @@ try {
     mustRejectCasVerify(function() use ($tampered,$raw,$trusted,$key,$ledger,$clock) {
         ModxMcpCasPermitVerifierV2::authorize($tampered,$raw,$trusted,$key,$ledger,$clock);
     },'different signed ID');
+    // A signed raw request digest does NOT make ambiguous JSON acceptable.
+    foreach (array(
+        '{"action":"update_element","action":"update_element","type":"chunk","data":{"id":7,"content":"NEW β"}}',
+        '{"action":"update_element","type":"chunk","data":{"id":7,"id":7,"content":"NEW β"}}',
+        '{"action":"update_element","type":"chunk","data":{"id":7,"content":"OLD","content":"NEW β"}}',
+        '{"type":"chunk","action":"update_element","data":{"id":7,"content":"NEW β"}}',
+        $raw.' ',
+    ) as $ambiguous) {
+        $alternate=$permit;
+        $alternate['claims']['request_digest']=hash('sha256',$ambiguous);
+        $alternate['mac']=ModxMcpCasPermitWireV2::sign($alternate['claims'],$key);
+        mustRejectCasVerify(function() use ($alternate,$ambiguous,$trusted,$key,$ledger,$clock) {
+            ModxMcpCasPermitVerifierV2::authorize($alternate,$ambiguous,
+                $trusted,$key,$ledger,$clock);
+        },'signed but noncanonical JSON body');
+    }
     $approved=ModxMcpCasPermitVerifierV2::authorize(
         $permit,$raw,$trusted,$key,$ledger,$clock);
     if ($approved!==array('chunk_id'=>7,'before_content'=>$before,'after_content'=>$after)) {
