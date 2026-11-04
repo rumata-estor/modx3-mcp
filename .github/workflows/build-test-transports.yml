@@ -1,6 +1,9 @@
 name: Build test transport packages (isolated)
 
 on:
+  push:
+    branches: ['feature/mcp-security-hardening']
+    paths: ['.github/workflows/build-test-transports.yml']
   workflow_dispatch:
 
 jobs:
