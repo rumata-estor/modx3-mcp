@@ -30,6 +30,29 @@ foreach ($blocked as $action) {
         exit(1);
     }
 }
+// Positive pilot scope + fail-closed negative shape tests on both models.
+modxMCP::assertExternalAuthorizedWriteShape(
+    'update_element', 'chunk', array('id'=>7, 'content'=>'new')
+);
+$invalidShapes = array(
+    array('delete_element','chunk',array('id'=>7,'content'=>'new')),
+    array('create_element','chunk',array('id'=>7,'content'=>'new')),
+    array('update_element','snippet',array('id'=>7,'content'=>'new')),
+    array('update_element','chunk',array('id'=>0,'content'=>'new')),
+    array('update_element','chunk',array('id'=>'7','content'=>'new')),
+    array('update_element','chunk',array('id'=>true,'content'=>'new')),
+    array('update_element','chunk',array('id'=>7,'content'=>null)),
+    array('update_element','chunk',array('id'=>7,'content'=>'new','name'=>'evil')),
+    array('update_element','chunk',array('id'=>7,'content'=>'new','_runtime_preconditions'=>array())),
+    array('update_element','chunk',array('id'=>7)),
+);
+foreach ($invalidShapes as $params) {
+    try {
+        modxMCP::assertExternalAuthorizedWriteShape($params[0],$params[1],$params[2]);
+        throw new RuntimeException('Unclassified protected mutation shape accepted');
+    } catch (ModxMCPClientException $expected) { /* deny */ }
+}
+
 // The real dispatcher must reject a write BEFORE any service-user lookup,
 // modular registry route or legacy fallback is reached.
 $reflection = new ReflectionClass('modxMCP');

@@ -192,7 +192,9 @@ try {
             modxMCP::assertExternalAuthorizationBoundary($action);
         } catch (ModxMCPClientException $readDenied) {
             // Unknown and unclassified actions must never obtain an override.
-            modxMCP::assertExternalAuthorizedWriteAction($action);
+            // Deny unclassified writes before consuming any one-use nonce.
+            // The exact scope is checked again inside the model dispatcher.
+            modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data);
             try {
                 require_once $corePath . 'endpoint/protected-api.php';
                 $trustedPermitDecision = modxmcpVerifyProtectedHttpRequest(

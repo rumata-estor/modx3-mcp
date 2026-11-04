@@ -88,15 +88,23 @@ class modxMCP {
     }
 
     public static function assertExternalAuthorizedWriteAction($action) {
-        $supported = array(
-            'create_element', 'update_element', 'delete_element',
-            'create_category', 'update_category', 'delete_category',
-            'assign_element_category', 'update_element_property',
-            'update_resource_tvs',
-        );
-        if (!is_string($action) || !in_array($action, $supported, true)) {
+        // Pilot-only. Other mutations require their own reviewed semantics,
+        // atomic preconditions and independent verification before admission.
+        if ($action !== 'update_element') {
             throw new ModxMCPClientException(
                 'Protected Site Agent mode: this mutation is not yet classified for signed execution.'
+            );
+        }
+    }
+
+    public static function assertExternalAuthorizedWriteShape($action, $elementType, $data) {
+        self::assertExternalAuthorizedWriteAction($action);
+        if ($elementType !== 'chunk' || !is_array($data) ||
+            count($data) !== 2 || !array_key_exists('id', $data) ||
+            !array_key_exists('content', $data) || !is_int($data['id']) ||
+            $data['id'] <= 0 || !is_string($data['content'])) {
+            throw new ModxMCPClientException(
+                'Protected Site Agent mode: only exact chunk content updates are classified.'
             );
         }
     }
@@ -105,7 +113,7 @@ class modxMCP {
         if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
             if ($trustedPermitDecision instanceof ModxMcpPermitVerifier &&
                 $trustedPermitDecision->allowsAction($action)) {
-                self::assertExternalAuthorizedWriteAction($action);
+                self::assertExternalAuthorizedWriteShape($action, $elementType, $data);
             } else {
                 self::assertExternalAuthorizationBoundary($action);
             }
