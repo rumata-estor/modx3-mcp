@@ -11,6 +11,8 @@ on:
       - 'core/components/modxmcp/endpoint/chunk-cas.php'
       - 'core/components/modxmcp/endpoint/permit-nonce-ledger-db.php'
       - 'tests/ci-nonce-ledger-db.php'
+      - 'core/components/modxmcp/endpoint/chunk-cas-processor-v2.php'
+      - 'tests/ci-protected-cas-processor-v2.php'
       - 'tests/live-chunk-cas-innodb.php'
       - 'tests/ci-modx-chunk-processor-lock.php'
       - 'core/components/modxmcp/model/modxmcp.class.php'
@@ -184,6 +186,9 @@ jobs:
           PHP
           BUILD_PLATFORM='${{ matrix.platform }}' php "$RUNNER_TEMP/refresh-modx-cache.php"
           BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-modx-chunk-processor-lock.php
+          MODXMCP_CI_DB_HOST=127.0.0.1 MODXMCP_CI_DB_NAME=modx_build \
+          MODXMCP_CI_DB_USER=modx_ci MODXMCP_CI_DB_PASSWORD=ci-throwaway-only-user \
+          BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-cas-processor-v2.php
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/modx-site"             > "$RUNNER_TEMP/modx-http.log" 2>&1 &
           http_pid=$!
           trap 'kill "$http_pid" 2>/dev/null || true' EXIT
