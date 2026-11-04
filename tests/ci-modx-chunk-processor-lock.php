@@ -37,7 +37,7 @@ $connection=$modx->getConnection();
 if (!is_object($connection) || !method_exists($modx,'prepare')) {
     throw new RuntimeException('MODX transaction-bound SQL connection unavailable');
 }
-$table=$modx->getTableName($chunkClass);
+$table=trim((string)$modx->getTableName($chunkClass),'`');
 if (!is_string($table) || !preg_match('/\A[A-Za-z_][A-Za-z0-9_]*\z/D',$table)) {
     throw new RuntimeException('unexpected chunk table name');
 }
