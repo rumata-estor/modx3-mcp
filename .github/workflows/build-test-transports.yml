@@ -140,6 +140,10 @@ jobs:
             sleep 1
           done
           php "$RUNNER_TEMP/modxmcp-stage/_build/smoke.endpoint.php" --read-only
+          # An actual HTTP request must be rejected by the installed model
+          # when the test-only external authorization setting is enabled.
+          BUILD_PLATFORM='${{ matrix.platform }}' php \
+            "$RUNNER_TEMP/modxmcp-stage/_build/smoke.protected-boundary.php"
           echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
       - uses: actions/upload-artifact@v4
         with:
