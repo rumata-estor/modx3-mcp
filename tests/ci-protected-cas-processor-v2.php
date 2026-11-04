@@ -99,10 +99,24 @@ $get=function() use ($read,$id) {
 };
 try {
     $first=$make('before','after');
-    $result=$run($first);
-    if ($result['site_revision']!==1 || $result['chunk_id']!==$id ||
-        $get()['snippet']!=='after') {
+    $cacheUnverified=false;
+    try {
+        $result=$run($first);
+    } catch (RuntimeException $error) {
+        if ($error->getMessage()!=='CAS persisted but cache refresh unverified') {
+            throw $error;
+        }
+        // This is an UNKNOWN outcome to the caller: do not resend the
+        // permit. Prove its database commit separately and report the gap.
+        $cacheUnverified=true;
+        $result=null;
+    }
+    if (($result!==null && ($result['site_revision']!==1 ||
+            $result['chunk_id']!==$id)) || $get()['snippet']!=='after') {
         throw new RuntimeException('signed CAS processor did not persist desired bytes');
+    }
+    if ($cacheUnverified) {
+        echo "CAS_CACHE_REFRESH_UNVERIFIED_FAIL_CLOSED $platform\n";
     }
     if ((int)$db->query('SELECT COUNT(*) FROM `'.$auditTable.'`')->fetchColumn()!==1) {
         throw new RuntimeException('transactional audit was not persisted');
