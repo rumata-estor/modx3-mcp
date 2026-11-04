@@ -65,7 +65,8 @@ foreach (array(
     if ($status<400 || !empty($data['success']) || !isset($data['error']) ||
         strpos((string)$data['error'],'Protected Site Agent mode:')===false) {
         throw new RuntimeException('Protected mode failed closed: '.(string)$probe['action'].
-                                   ', HTTP '.(string)$status);
+                                   ', HTTP '.(string)$status.
+                                   ', error '.json_encode(isset($data['error']) ? $data['error'] : null));
     }
     echo 'PROTECTED_DENY_OK ' . $probe['action'] . "\n";
 }
