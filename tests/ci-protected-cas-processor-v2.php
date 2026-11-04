@@ -32,6 +32,13 @@ $nonceDir=$root.'/cas-v2-nonces-'.bin2hex(random_bytes(8));
 if (!mkdir($nonceDir,0700)) {
     throw new RuntimeException('cannot provision disposable nonce directory');
 }
+$originalSettings=array();
+foreach (array('modxmcp.external_authorization_required','modxmcp.auto_static',
+               'modxmcp.site_revision') as $settingKey) {
+    $original=$modx->getObject($settingClass,array('key'=>$settingKey));
+    $originalSettings[$settingKey]=$original ? array('present'=>true,
+        'value'=>(string)$original->get('value')) : array('present'=>false);
+}
 $set=function($key,$value) use ($modx,$settingClass) {
     $row=$modx->getObject($settingClass,array('key'=>$key));
     if (!$row) {
@@ -157,6 +164,17 @@ try {
     echo "SIGNED_V2_CAS_NO_NEW_TABLES_OK $platform\n";
 } finally {
     $modx->removeObject($chunkClass,array('id'=>$id));
+    // The next CI step checks the installed component exactly. Restore the
+    // original settings, including removing the temporary revision setting
+    // when it did not exist before this test.
+    foreach ($originalSettings as $settingKey=>$oldSetting) {
+        if ($oldSetting['present']) {
+            $set($settingKey,$oldSetting['value']);
+        } else {
+            $modx->removeObject($settingClass,array('key'=>$settingKey));
+        }
+    }
+    $modx->getCacheManager()->refresh();
     foreach (glob($nonceDir.'/*.used') as $file) { unlink($file); }
     rmdir($nonceDir);
 }
