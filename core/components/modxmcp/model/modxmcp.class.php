@@ -99,6 +99,11 @@ class modxMCP {
      */
     public static function isExternalAuthorizationRequired($modx) {
         $cached = (bool)$modx->getOption('modxmcp.external_authorization_required', null, false);
+        // A cached enabled flag can never weaken the boundary, and avoids
+        // querying the database on this already fail-closed path.
+        if ($cached) {
+            return true;
+        }
         $version = $modx->getVersionData();
         $major = isset($version['version']) ? (int)$version['version'] : 0;
         $settingClass = $major >= 3 ? 'MODX\\Revolution\\modSystemSetting' : 'modSystemSetting';
