@@ -116,7 +116,16 @@ try {
         throw new RuntimeException('signed CAS processor did not persist desired bytes');
     }
     if ($cacheUnverified) {
-        echo "CAS_CACHE_REFRESH_UNVERIFIED_FAIL_CLOSED $platform\n";
+        // Only a disposable CI fixture may collect partition diagnostics.
+        // No cached payloads, HTTP headers, tokens or filesystem paths.
+        $partitions=array();
+        $modx->getCacheManager()->refresh(array(),$partitions);
+        $failed=array();
+        foreach ($partitions as $name=>$status) {
+            if ($status===false) { $failed[]=(string)$name; }
+        }
+        echo "CAS_CACHE_REFRESH_UNVERIFIED_FAIL_CLOSED $platform ".
+            json_encode($failed)."\n";
     }
     if ((int)$db->query('SELECT COUNT(*) FROM `'.$auditTable.'`')->fetchColumn()!==1) {
         throw new RuntimeException('transactional audit was not persisted');
