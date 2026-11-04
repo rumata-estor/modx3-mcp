@@ -114,7 +114,7 @@ jobs:
           test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/model/modxmcp.class.php"
           test -s "$RUNNER_TEMP/modx-site/assets/components/modxmcp/api.php"
           # Save only a hash, never export the dummy token value in CI logs.
-          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=$db->query("SELECT value FROM modx_system_settings WHERE `key`='modxmcp.api_token'")->fetchColumn(); if(!is_string($v)||strlen($v)!==64)exit(3); file_put_contents(getenv("RUNNER_TEMP")."/previous-token-sha256",hash("sha256",$v));'
+          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=(function() use ($db) { $stmt=$db->prepare("SELECT value FROM modx_system_settings WHERE `key`=?"); $stmt->execute(["modxmcp.api_token"]); return $stmt->fetchColumn(); })(); if(!is_string($v)||strlen($v)!==64)exit(3); file_put_contents(getenv("RUNNER_TEMP")."/previous-token-sha256",hash("sha256",$v));'
           echo "MODX2_PREVIOUS_124_INSTALLED_OK"
       - name: Build real transport ZIP from installed MODX
         env:
@@ -142,7 +142,7 @@ jobs:
             test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/model/modxmcp.class.php"
             test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/endpoint/api.common.php"
             test -s "$RUNNER_TEMP/modx-site/assets/components/modxmcp/api.php"
-            php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=$db->query("SELECT value FROM modx_system_settings WHERE `key`='modxmcp.api_token'")->fetchColumn(); if(!is_string($v)||!hash_equals(trim(file_get_contents(getenv("RUNNER_TEMP")."/previous-token-sha256")),hash("sha256",$v)))exit(4);'
+            php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=(function() use ($db) { $stmt=$db->prepare("SELECT value FROM modx_system_settings WHERE `key`=?"); $stmt->execute(["modxmcp.api_token"]); return $stmt->fetchColumn(); })(); if(!is_string($v)||!hash_equals(trim(file_get_contents(getenv("RUNNER_TEMP")."/previous-token-sha256")),hash("sha256",$v)))exit(4);'
             echo "MODX2_REAL_124_TO_125_UPGRADE_FILES_TOKEN_OK"
           fi
           # Only the ephemeral CI database is modified. Regular deployments
