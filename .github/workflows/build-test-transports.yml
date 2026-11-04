@@ -114,7 +114,9 @@ jobs:
           php "$RUNNER_TEMP/modxmcp-stage/_build/install.transport.php"
           # Only the ephemeral CI database is modified. Regular deployments
           # preserve the production component's default disabled setting.
-          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $stmt=$db->prepare("UPDATE modx_system_settings SET value=? WHERE `key`=?"); $stmt->execute(["1","modxmcp.enabled"]); if ($stmt->rowCount()!==1) exit(3);'
+          # This plain-HTTP change affects ONLY a throwaway localhost CI
+          # instance. It is not a runtime or live-site installation default.
+          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $stmt=$db->prepare("UPDATE modx_system_settings SET value=? WHERE `key`=?"); foreach (["modxmcp.enabled"=>"1","modxmcp.require_https"=>"0"] as $key=>$value) { $stmt->execute([$value,$key]); if ($stmt->rowCount()!==1) exit(3); }'
           cat > "$RUNNER_TEMP/refresh-modx-cache.php" <<'PHP'
           <?php
           require getenv('MODX_CONFIG_CORE');
