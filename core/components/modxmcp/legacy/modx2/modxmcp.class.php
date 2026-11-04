@@ -64,7 +64,31 @@ class modxMCP {
      * Site Agent authorizer. Until a trusted per-operation verifier is wired,
      * this mode permits a small exact read-only list and refuses every write.
      * Never infer safety from an action name prefix: unknown actions are denied.
+     *
+     * Query the actual persisted setting as well as the in-memory MODX option.
+     * MODX 3 can retain an old cached option after a settings change; that
+     * must never allow mutations when the protected boundary is enabled.
+     * A database/read error must fail closed rather than fall through.
      */
+    public static function isExternalAuthorizationRequired($modx) {
+        $cached = (bool)$modx->getOption('modxmcp.external_authorization_required', null, false);
+        $version = $modx->getVersionData();
+        $major = isset($version['version']) ? (int)$version['version'] : 0;
+        $settingClass = $major >= 3 ? 'MODX\\Revolution\\modSystemSetting' : 'modSystemSetting';
+        $setting = $modx->getObject($settingClass, array('key' => 'modxmcp.external_authorization_required'));
+        if (!$setting) {
+            // A cached enabled state may still be effective after an update.
+            return $cached;
+        }
+        $value = trim((string)$setting->get('value'));
+        if ($value !== '0' && $value !== '1') {
+            throw new ModxMCPClientException(
+                'Protected Site Agent mode: invalid external authorization setting.'
+            );
+        }
+        return $cached || $value === '1';
+    }
+
     public static function assertExternalAuthorizationBoundary($action) {
         $readOnly = array(
             'list_actions', 'get_capabilities', 'get_site_state', 'help',
@@ -120,7 +144,7 @@ class modxMCP {
     }
 
     public function processRequest($action, $elementType, $data =[], $trustedPermitDecision = null) {
-        if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
+        if (self::isExternalAuthorizationRequired($this->modx)) {
             if ($trustedPermitDecision instanceof ModxMcpPermitVerifier &&
                 $trustedPermitDecision->allowsAction($action)) {
                 self::assertExternalAuthorizedWriteShape($action, $elementType, $data);

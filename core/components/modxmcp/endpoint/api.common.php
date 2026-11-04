@@ -186,7 +186,7 @@ try {
     require_once $corePath . 'model/modxmcp.class.php';
 
     $trustedPermitDecision = null;
-    if ((bool)$modx->getOption('modxmcp.external_authorization_required', null, false)) {
+    if (modxMCP::isExternalAuthorizationRequired($modx)) {
         try {
             // Explicit read-only actions do not require a mutation permit.
             modxMCP::assertExternalAuthorizationBoundary($action);
