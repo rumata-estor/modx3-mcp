@@ -20,9 +20,15 @@ class ModxMcpCasPermitVerifierV2
 
     public static function observationDigest($site, $task, array $baseline)
     {
+        // Python ensure_ascii=False keeps U+2028/U+2029 literally. PHP
+        // requires an explicit flag to avoid silently re-escaping them.
+        if (!defined('JSON_UNESCAPED_LINE_TERMINATORS')) {
+            throw new RuntimeException('cross-language CAS Unicode canonicalization unavailable');
+        }
         $json = json_encode(self::canonical(array(
             'site_id'=>$site,'task_id'=>$task,'baseline'=>$baseline,
-        )), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        )), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_LINE_TERMINATORS);
         if (!is_string($json)) {
             throw new RuntimeException('CAS observation cannot be encoded');
         }

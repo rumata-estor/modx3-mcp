@@ -22,6 +22,13 @@ try {
     if (ModxMcpCasPermitVerifierV2::observationDigest($site,$task,$baseline)!==$snapshot) {
         throw new RuntimeException('PHP/Python observation snapshot canonicalization drift');
     }
+    $lineSeparators=$baseline;
+    $lineSeparators['before_content']="line\u{2028}separator\u{2029}body";
+    $lineSeparators['before_sha256']=hash('sha256',$lineSeparators['before_content']);
+    if (ModxMcpCasPermitVerifierV2::observationDigest($site,$task,$lineSeparators)
+        !== '91fc1cc6479a4eae29fa6cbfb69846e21d390a237b039a30a1313317197ea968') {
+        throw new RuntimeException('PHP/Python U+2028/U+2029 canonicalization drift');
+    }
     $claims=array('version'=>'2','audience'=>'modx-test-two','site_id'=>$site,
         'contour'=>'test','task_id'=>$task,'plan_digest'=>str_repeat('a',64),
         'snapshot_digest'=>$snapshot,'operation_id'=>'op-1',
