@@ -115,6 +115,22 @@ try {
         }
         echo "CAS_V2_PHP74_FAIL_CLOSED_NO_DB_MUTATION_OK $platform\n";
     } else {
+    // Disposable-CI cache fixtures: a newly installed MODX often has no
+    // scripts/resource/media partition directories. Missing partitions
+    // currently make core refresh() return false. Seed real file-cache
+    // entries, then demand that the protected write invalidates them.
+    $manager=$modx->getCacheManager();
+    $cacheProbe='CAS_V2_CI_'.bin2hex(random_bytes(5));
+    $partKeys=array();
+    foreach (array('media_sources','scripts','default','resource','action_map') as $part) {
+        $key=(string)$modx->getOption('cache_'.$part.'_key',null,$part);
+        if ($key==='') { throw new RuntimeException('CI partition key missing'); }
+        $partKeys[$part]=$key;
+        $probeValue='stale';
+        if (!$manager->set($cacheProbe,$probeValue,0,array('cache_key'=>$key))) {
+            throw new RuntimeException('CI cache partition cannot be seeded: '.$part);
+        }
+    }
     $first=$make('before','after');
     $cacheUnverified=false;
     try {
@@ -143,6 +159,14 @@ try {
         }
         echo "CAS_CACHE_REFRESH_UNVERIFIED_FAIL_CLOSED $platform ".
             json_encode($failed)."\n";
+    }
+    if (!$cacheUnverified) {
+        foreach ($partKeys as $part=>$key) {
+            if ($manager->get($cacheProbe,array('cache_key'=>$key))!==null) {
+                throw new RuntimeException('CAS left stale cache entry: '.$part);
+            }
+        }
+        echo "CAS_CACHE_INVALIDATION_VERIFIED $platform\n";
     }
     $deny(function() use ($run,$first) { $run($first); },'replayed nonce');
     $stale=$make('before','forged');
@@ -178,7 +202,12 @@ try {
     }
     $deny(function() use ($run,$rollback) { $run($rollback); },'failed nonce replay');
     $set('modxmcp.site_revision','1');
-    echo "SIGNED_V2_CAS_NO_NEW_TABLES_OK $platform\n";
+    echo "SIGNED_V2_CAS_NO_NEW_TABLES_ATOMIC_OK $platform\n";
+    // The signed row/revision and replay tests can pass while cache update
+    // remains unknown. Never present that as a successful FULL write gate.
+    if ($cacheUnverified) {
+        throw new RuntimeException('CAS cache refresh remains unverified: release NO-GO');
+    }
     }
 } finally {
     $modx->removeObject($chunkClass,array('id'=>$id));
