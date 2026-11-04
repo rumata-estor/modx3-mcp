@@ -10,6 +10,7 @@ on:
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/chunk-cas.php'
       - 'tests/live-chunk-cas-innodb.php'
+      - 'tests/ci-modx-chunk-processor-lock.php'
       - 'core/components/modxmcp/model/modxmcp.class.php'
       - 'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
   workflow_dispatch:
@@ -173,6 +174,7 @@ jobs:
           $modx->getCacheManager()->refresh();
           PHP
           BUILD_PLATFORM='${{ matrix.platform }}' php "$RUNNER_TEMP/refresh-modx-cache.php"
+          BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-modx-chunk-processor-lock.php
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/modx-site"             > "$RUNNER_TEMP/modx-http.log" 2>&1 &
           http_pid=$!
           trap 'kill "$http_pid" 2>/dev/null || true' EXIT
