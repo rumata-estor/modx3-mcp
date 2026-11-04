@@ -3,7 +3,13 @@ name: Build test transport packages (isolated)
 on:
   push:
     branches: ['feature/mcp-security-hardening']
-    paths: ['.github/workflows/build-test-transports.yml']
+    paths:
+      - '.github/workflows/build-test-transports.yml'
+      - '_build/smoke.protected-boundary.php'
+      - '_build/smoke.endpoint.php'
+      - 'core/components/modxmcp/endpoint/api.common.php'
+      - 'core/components/modxmcp/model/modxmcp.class.php'
+      - 'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
   workflow_dispatch:
 
 jobs:
