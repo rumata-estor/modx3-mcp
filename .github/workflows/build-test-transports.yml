@@ -112,6 +112,31 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           php "$RUNNER_TEMP/modxmcp-stage/_build/install.transport.php"
+          # Only the ephemeral CI database is modified. Regular deployments
+          # preserve the production component's default disabled setting.
+          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $stmt=$db->prepare("UPDATE modx_system_settings SET value=? WHERE `key`=?"); $stmt->execute(["1","modxmcp.enabled"]); if ($stmt->rowCount()!==1) exit(3);'
+          cat > "$RUNNER_TEMP/refresh-modx-cache.php" <<'PHP'
+          <?php
+          require getenv('MODX_CONFIG_CORE');
+          if (getenv('BUILD_PLATFORM') === 'modx3') {
+              require MODX_CORE_PATH . 'vendor/autoload.php';
+              $modx = \MODX\Revolution\modX::getInstance();
+          } else {
+              require MODX_CORE_PATH . 'model/modx/modx.class.php';
+              $modx = new modX();
+          }
+          $modx->initialize('mgr');
+          $modx->getCacheManager()->refresh();
+          PHP
+          BUILD_PLATFORM='${{ matrix.platform }}' php "$RUNNER_TEMP/refresh-modx-cache.php"
+          php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/modx-site"             > "$RUNNER_TEMP/modx-http.log" 2>&1 &
+          http_pid=$!
+          trap 'kill "$http_pid" 2>/dev/null || true' EXIT
+          export MODX_MCP_SMOKE_SITE_URL='http://127.0.0.1:8080'
+          for i in {1..25}; do
+            if curl --silent --max-time 3 --fail                 "$MODX_MCP_SMOKE_SITE_URL/assets/components/modxmcp/api.php"                 > "$RUNNER_TEMP/modx-health.json"; then break; fi
+            sleep 1
+          done
           php "$RUNNER_TEMP/modxmcp-stage/_build/smoke.endpoint.php" --read-only
           echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
       - uses: actions/upload-artifact@v4
