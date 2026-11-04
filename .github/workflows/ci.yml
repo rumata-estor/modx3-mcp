@@ -52,6 +52,7 @@ jobs:
           php tests/test-permit-wire.php
           php tests/test-permit-nonce-ledger.php
           php tests/test-permit-verifier.php
+          php tests/test-chunk-cas.php
           php tests/test-protected-http.php
           node tests/test-permit-transport.cjs
 
