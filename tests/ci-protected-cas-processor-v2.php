@@ -122,7 +122,11 @@ try {
     $manager=$modx->getCacheManager();
     $cacheProbe='CAS_V2_CI_'.bin2hex(random_bytes(5));
     $partKeys=array();
-    foreach (array('media_sources','scripts','default','resource','action_map') as $part) {
+    // MODX 3 removed the old action_map partition from core refresh().
+    // Only assert eviction for partitions MODX actually refreshes.
+    $refreshPartitions=array('media_sources','scripts','default','resource');
+    if ($platform==='modx2') { $refreshPartitions[]='action_map'; }
+    foreach ($refreshPartitions as $part) {
         $key=(string)$modx->getOption('cache_'.$part.'_key',null,$part);
         if ($key==='') { throw new RuntimeException('CI partition key missing'); }
         $partKeys[$part]=$key;
