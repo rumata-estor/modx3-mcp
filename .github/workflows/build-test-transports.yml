@@ -19,7 +19,7 @@ on:
 
 jobs:
   build:
-    name: Build MODX MCP 1.2.5 for ${{ matrix.platform }}
+    name: Build MODX MCP 1.2.5 for ${{ matrix.platform }} / PHP ${{ matrix.php_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,6 +28,10 @@ jobs:
           - platform: modx2
             modx_version: '2.8.9'
             php_version: '7.4'
+            signature: 'modx2mcp-1.2.5-pl'
+          - platform: modx2
+            modx_version: '2.8.9'
+            php_version: '8.2'
             signature: 'modx2mcp-1.2.5-pl'
           - platform: modx3
             modx_version: '3.2.4'
@@ -194,7 +198,7 @@ jobs:
           echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.signature }}-test-only
+          name: ${{ matrix.signature }}-php${{ matrix.php_version }}-test-only
           path: ${{ runner.temp }}/artifacts/${{ matrix.signature }}.transport.zip
           if-no-files-found: error
           retention-days: 7

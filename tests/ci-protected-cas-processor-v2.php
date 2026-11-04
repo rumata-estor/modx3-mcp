@@ -98,6 +98,23 @@ $get=function() use ($read,$id) {
     return $read->fetch(PDO::FETCH_ASSOC);
 };
 try {
+    if (!function_exists('fsync')) {
+        // PHP 7.4 cannot persist a single-use nonce durably. This is a
+        // mandatory denial, never a reason to skip validation or permit retry.
+        $oldPhp=$make('before','should-not-write');
+        $blocked=false;
+        try {
+            $run($oldPhp);
+        } catch (RuntimeException $error) {
+            $blocked=strpos($error->getMessage(),
+                'nonce ledger durability unavailable')!==false;
+        }
+        if (!$blocked || $get()['snippet']!=='before' ||
+            count(glob($nonceDir.'/*.used'))!==1) {
+            throw new RuntimeException('PHP without fsync did not deny protected CAS');
+        }
+        echo "CAS_V2_PHP74_FAIL_CLOSED_NO_DB_MUTATION_OK $platform\n";
+    } else {
     $first=$make('before','after');
     $cacheUnverified=false;
     try {
@@ -162,6 +179,7 @@ try {
     $deny(function() use ($run,$rollback) { $run($rollback); },'failed nonce replay');
     $set('modxmcp.site_revision','1');
     echo "SIGNED_V2_CAS_NO_NEW_TABLES_OK $platform\n";
+    }
 } finally {
     $modx->removeObject($chunkClass,array('id'=>$id));
     // The next CI step checks the installed component exactly. Restore the
