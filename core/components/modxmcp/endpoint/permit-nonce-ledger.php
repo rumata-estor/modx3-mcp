@@ -65,5 +65,20 @@ class ModxMcpPermitNonceLedger
         } finally {
             fclose($fp);
         }
+        // fsync(file) alone does not durably commit the newly created
+        // directory entry. On Linux/PHP 8.1+ a directory can be opened as
+        // a read stream and fsynced. If this filesystem refuses, deny the
+        // permit: never send a write with an uncommitted nonce reservation.
+        $directory = @fopen($this->root, 'r');
+        if ($directory === false) {
+            throw new RuntimeException('nonce ledger directory durability unavailable');
+        }
+        try {
+            if (!fsync($directory)) {
+                throw new RuntimeException('nonce ledger directory fsync failed');
+            }
+        } finally {
+            fclose($directory);
+        }
     }
 }
