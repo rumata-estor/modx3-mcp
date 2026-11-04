@@ -1,0 +1,109 @@
+name: Build test transport packages (isolated)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build MODX MCP 1.2.5 for ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: modx2
+            modx_version: '2.8.9'
+            php_version: '7.4'
+            signature: 'modx2mcp-1.2.5-pl'
+          - platform: modx3
+            modx_version: '3.2.4'
+            php_version: '8.2'
+            signature: 'modx3mcp-1.2.5-pl'
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-throwaway-only-root
+          MARIADB_DATABASE: modx_build
+          MARIADB_USER: modx_ci
+          MARIADB_PASSWORD: ci-throwaway-only-user
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mysqli, pdo_mysql, zip, gd, intl, mbstring, xml
+          coverage: none
+      - name: Prepare platform-specific source tree
+        run: |
+          python3 _build/prepare-release.py --platform '${{ matrix.platform }}' --output "$RUNNER_TEMP/modxmcp-stage"
+          python3 _build/test.cas-pilot-disconnected.py
+      - name: Install official MODX on disposable CI database
+        env:
+          MODX_VERSION: ${{ matrix.modx_version }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://modx.s3.amazonaws.com/releases/${MODX_VERSION}/modx-${MODX_VERSION}-pl.zip" \
+            -o "$RUNNER_TEMP/modx.zip"
+          mkdir -p "$RUNNER_TEMP/modx-extract" "$RUNNER_TEMP/modx-site"
+          unzip -q "$RUNNER_TEMP/modx.zip" -d "$RUNNER_TEMP/modx-extract"
+          found="$(find "$RUNNER_TEMP/modx-extract" -type f -path '*/setup/index.php' -print -quit)"
+          if [ -z "$found" ]; then echo 'MODX setup missing'; exit 1; fi
+          root="$(dirname "$(dirname "$found")")"
+          cp -a "$root"/. "$RUNNER_TEMP/modx-site/"
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as E
+          site=pathlib.Path(os.environ['RUNNER_TEMP'])/'modx-site'
+          values={
+             'database_type':'mysql','database_server':'127.0.0.1:3306',
+             'database':'modx_build','database_user':'modx_ci',
+             'database_password':'ci-throwaway-only-user',
+             'database_connection_charset':'utf8mb4',
+             'database_charset':'utf8mb4','database_collation':'utf8mb4_unicode_ci',
+             'table_prefix':'modx_', 'inplace':'1', 'unpacked':'0',
+             'language':'en','cmsadmin':'testadmin',
+             'cmspassword':'ci-throwaway-admin-only',
+             'cmsadminemail':'ci@example.invalid',
+             'remove_setup_directory':'0','http_host':'localhost',
+             'context_web_path':str(site)+'/', 'context_web_url':'/',
+             'core_path':str(site/'core')+'/',
+             'context_mgr_path':str(site/'manager')+'/',
+             'context_mgr_url':'/manager/',
+             'context_connectors_path':str(site/'connectors')+'/',
+             'context_connectors_url':'/connectors/',
+             'assets_path':str(site/'assets')+'/', 'assets_url':'/assets/',
+          }
+          parent=E.Element('modx')
+          for key,value in values.items():E.SubElement(parent,key).text=value
+          E.ElementTree(parent).write(site/'setup/config.xml',encoding='utf-8',xml_declaration=True)
+          PY
+          (cd "$RUNNER_TEMP/modx-site/setup" && php ./index.php --installmode=new)
+          test -f "$RUNNER_TEMP/modx-site/config.core.php"
+          test -f "$RUNNER_TEMP/modx-site/core/config/config.inc.php"
+      - name: Build real transport ZIP from installed MODX
+        env:
+          EXPECTED_SIGNATURE: ${{ matrix.signature }}
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php "$RUNNER_TEMP/modxmcp-stage/_build/build.transport.php"
+          zip="$RUNNER_TEMP/modx-site/core/packages/$EXPECTED_SIGNATURE.transport.zip"
+          test -s "$zip"
+          unzip -t "$zip" | tail -3
+          mkdir -p "$RUNNER_TEMP/artifacts"
+          cp "$zip" "$RUNNER_TEMP/artifacts/"
+          sha256sum "$RUNNER_TEMP/artifacts/"*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.signature }}-test-only
+          path: ${{ runner.temp }}/artifacts/${{ matrix.signature }}.transport.zip
+          if-no-files-found: error
+          retention-days: 7
