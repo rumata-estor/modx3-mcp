@@ -35,6 +35,24 @@ try {
             array('audience'=>'other','site_id'=>'site-one','contour'=>'test'),$key,$ledger);
     }, 'wrong audience');
     denied(function () use ($permit,$raw,$trusted,$key,$ledger) {
+        ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',
+            array('audience'=>'modx-site-one','site_id'=>'other','contour'=>'test'),$key,$ledger);
+    }, 'wrong site identity');
+    denied(function () use ($permit,$raw,$trusted,$key,$ledger) {
+        ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',
+            array('audience'=>'modx-site-one','site_id'=>'site-one','contour'=>'production'),$key,$ledger);
+    }, 'wrong contour');
+    $tampered = $permit;
+    $tampered['mac'] = str_repeat('0',64);
+    denied(function () use ($tampered,$raw,$trusted,$key,$ledger) {
+        ModxMcpPermitVerifier::authorize($tampered,$raw,'update_element',$trusted,$key,$ledger);
+    }, 'tampered signature');
+    $invalid = $permit;
+    $invalid['claims']['request_digest'] = str_repeat('a',64);
+    denied(function () use ($invalid,$raw,$trusted,$key,$ledger) {
+        ModxMcpPermitVerifier::authorize($invalid,$raw,'update_element',$trusted,$key,$ledger);
+    }, 'tampered claim with stale signature');
+    denied(function () use ($permit,$raw,$trusted,$key,$ledger) {
         ModxMcpPermitVerifier::authorize($permit,$raw,'update_element',$trusted,str_repeat('Z',32),$ledger);
     }, 'wrong key');
     denied(function () use ($permit,$raw,$trusted,$key,$ledger) {

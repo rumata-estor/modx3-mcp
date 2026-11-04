@@ -21,6 +21,14 @@ try {
             throw $e;
         }
     }
+    // Simulate process restart with a separately constructed ledger object.
+    $reopened = new ModxMcpPermitNonceLedger($directory);
+    try {
+        $reopened->reserve($nonce);
+        throw new RuntimeException('nonce accepted after ledger reopen');
+    } catch (RuntimeException $e) {
+        if ($e->getMessage() === 'nonce accepted after ledger reopen') { throw $e; }
+    }
     $ledger->reserve(str_repeat('f', 32));
     try {
         $ledger->reserve('../' . $nonce);

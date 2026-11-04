@@ -57,8 +57,10 @@ class ModxMcpPermitNonceLedger
                 throw new RuntimeException('nonce ledger write not durable');
             }
             // Fail closed: do not delete this reservation on any later error.
-            if (function_exists('fsync') && !fsync($fp)) {
-                throw new RuntimeException('nonce ledger fsync failed');
+            if (!function_exists('fsync') || !fsync($fp)) {
+                // PHP runtimes without fsync may still serve read-only MCP,
+                // but cannot safely authorize this protected write path.
+                throw new RuntimeException('nonce ledger durability unavailable');
             }
         } finally {
             fclose($fp);
