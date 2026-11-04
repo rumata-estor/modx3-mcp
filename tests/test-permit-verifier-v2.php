@@ -26,7 +26,7 @@ try {
     $lineSeparators['before_content']="line\u{2028}separator\u{2029}body";
     $lineSeparators['before_sha256']=hash('sha256',$lineSeparators['before_content']);
     if (ModxMcpCasPermitVerifierV2::observationDigest($site,$task,$lineSeparators)
-        !== '91fc1cc6479a4eae29fa6cbfb69846e21d390a237b039a30a1313317197ea968') {
+        !== '6e33b67128e54c2d74baf7a85639908df0a555ca879be0e359bb49ea21a0ad02') {
         throw new RuntimeException('PHP/Python U+2028/U+2029 canonicalization drift');
     }
     $claims=array('version'=>'2','audience'=>'modx-test-two','site_id'=>$site,
