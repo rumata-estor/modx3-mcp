@@ -104,6 +104,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/artifacts"
           cp "$zip" "$RUNNER_TEMP/artifacts/"
           sha256sum "$RUNNER_TEMP/artifacts/"*.zip
+      - name: Install and smoke-test transport in disposable MODX
+        env:
+          EXPECTED_SIGNATURE: ${{ matrix.signature }}
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php "$RUNNER_TEMP/modxmcp-stage/_build/install.transport.php"
+          php "$RUNNER_TEMP/modxmcp-stage/_build/smoke.endpoint.php" --read-only
+          echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.signature }}-test-only
