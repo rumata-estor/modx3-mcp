@@ -195,6 +195,9 @@ try {
             // Deny unclassified writes before consuming any one-use nonce.
             // The exact scope is checked again inside the model dispatcher.
             modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data);
+            // Until a signed baseline is checked atomically at actual write,
+            // refuse BEFORE reading keys or consuming a single-use permit.
+            modxMCP::assertExternalAtomicPreconditionReady();
             try {
                 require_once $corePath . 'endpoint/protected-api.php';
                 $trustedPermitDecision = modxmcpVerifyProtectedHttpRequest(

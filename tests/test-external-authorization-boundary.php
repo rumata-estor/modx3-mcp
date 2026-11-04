@@ -53,6 +53,16 @@ foreach ($invalidShapes as $params) {
     } catch (ModxMCPClientException $expected) { /* deny */ }
 }
 
+// A valid signature and exact chunk shape still cannot bypass missing CAS.
+try {
+    modxMCP::assertExternalAtomicPreconditionReady();
+    throw new RuntimeException('Protected signed write admitted without atomic CAS');
+} catch (ModxMCPClientException $expected) {
+    if (strpos($expected->getMessage(), 'atomic reviewed-state precondition') === false) {
+        throw $expected;
+    }
+}
+
 // The real dispatcher must reject a write BEFORE any service-user lookup,
 // modular registry route or legacy fallback is reached.
 $reflection = new ReflectionClass('modxMCP');

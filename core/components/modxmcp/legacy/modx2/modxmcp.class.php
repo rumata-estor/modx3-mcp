@@ -109,11 +109,22 @@ class modxMCP {
         }
     }
 
+    public static function assertExternalAtomicPreconditionReady() {
+        // Signed approval alone is NOT a concurrency-safe write. Existing
+        // runtime preconditions are optional, not cryptographically bound to
+        // the reviewed proposal and not guaranteed for legacy dispatch.
+        // Deny until a site-side atomic, reviewed-state CAS is implemented.
+        throw new ModxMCPClientException(
+            'Protected Site Agent mode: atomic reviewed-state precondition is not implemented.'
+        );
+    }
+
     public function processRequest($action, $elementType, $data =[], $trustedPermitDecision = null) {
         if ((bool)$this->modx->getOption('modxmcp.external_authorization_required', null, false)) {
             if ($trustedPermitDecision instanceof ModxMcpPermitVerifier &&
                 $trustedPermitDecision->allowsAction($action)) {
                 self::assertExternalAuthorizedWriteShape($action, $elementType, $data);
+                self::assertExternalAtomicPreconditionReady();
             } else {
                 self::assertExternalAuthorizationBoundary($action);
             }
