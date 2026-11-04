@@ -55,7 +55,7 @@ function modxmcpProtectedKey($filename)
     return hex2bin($hex);
 }
 
-function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
+function modxmcpProtectedPermitEnvelope()
 {
     if (!isset($_SERVER['HTTP_X_SITEAGENT_PERMIT'])) {
         throw new RuntimeException('missing independent Site Agent permit');
@@ -72,6 +72,11 @@ function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
     if (!is_array($permit)) {
         throw new RuntimeException('invalid permit JSON');
     }
+    return $permit;
+}
+
+function modxmcpProtectedRuntimeConfig($modx)
+{
     $trusted = array(
         'audience' => (string)$modx->getOption('modxmcp.permit_audience', null, ''),
         'site_id' => (string)$modx->getOption('modxmcp.permit_site_id', null, ''),
@@ -84,7 +89,39 @@ function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
     $ledger = new ModxMcpPermitNonceLedger(
         $modx->getOption('modxmcp.permit_nonce_directory', null, '')
     );
+    return array($trusted, $key, $ledger);
+}
+
+function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
+{
+    $permit = modxmcpProtectedPermitEnvelope();
+    list($trusted,$key,$ledger) = modxmcpProtectedRuntimeConfig($modx);
     return ModxMcpPermitVerifier::authorize(
         $permit, $rawBody, $action, $trusted, $key, $ledger
     );
+}
+
+/** Source pilot only. No environment flag is set by the MODX package. */
+function modxmcpExecuteSignedChunkCasV2($modx, $mcp, $rawBody)
+{
+    if (getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only') {
+        throw new RuntimeException('protected CAS v2 HTTP gate not enabled');
+    }
+    if (!is_object($mcp) || !method_exists($mcp, 'processProtectedChunkCasV2')) {
+        throw new RuntimeException('protected CAS processor bridge unavailable');
+    }
+    $permit = modxmcpProtectedPermitEnvelope();
+    if (!isset($permit['claims']) || !is_array($permit['claims']) ||
+        !isset($permit['claims']['version']) || $permit['claims']['version'] !== '2') {
+        throw new RuntimeException('protected HTTP request requires CAS permit v2');
+    }
+    list($trusted,$key,$ledger) = modxmcpProtectedRuntimeConfig($modx);
+    if ($trusted['contour'] !== 'test' ||
+        !in_array($trusted['site_id'], array(
+            'modx2-alex-palochkin','modx3-alex-palochkin'
+        ), true)) {
+        throw new RuntimeException('protected HTTP CAS restricted to approved test sites');
+    }
+    $trusted['auto_static'] = false;
+    return $mcp->processProtectedChunkCasV2($permit,$rawBody,$trusted,$key,$ledger);
 }

@@ -148,6 +148,40 @@ class modxMCP {
         );
     }
 
+    /**
+     * Strict test-only bridge to the existing MODX processor CAS primitive.
+     * This path is unreachable from the package unless the server operator
+     * explicitly sets the separate environment gate. Do not allow normal
+     * processRequest() to bypass the atomic precondition interlock.
+     */
+    public function processProtectedChunkCasV2(
+        $permit, $rawBody, array $trusted, $key,
+        ModxMcpPermitNonceLedger $ledger
+    ) {
+        if (getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only' ||
+            !self::isExternalAuthorizationRequired($this->modx) ||
+            !isset($trusted['contour'],$trusted['site_id']) ||
+            $trusted['contour'] !== 'test' ||
+            !in_array($trusted['site_id'], array(
+                'modx2-alex-palochkin','modx3-alex-palochkin'
+            ), true)) {
+            throw new ModxMCPClientException(
+                'Protected CAS v2 execution remains closed on this site.'
+            );
+        }
+        $this->assertCapabilityEnabled('update_element');
+        $this->modx->user = $this->resolveServiceUser();
+        $source = rtrim((string)$this->config['corePath'], '/\\')
+            . DIRECTORY_SEPARATOR . 'endpoint/chunk-cas-processor-v2.php';
+        if (!is_file($source)) {
+            throw new ModxMCPClientException('Protected CAS processor is unavailable.');
+        }
+        require_once $source;
+        return ModxMcpChunkCasProcessorV2::executeUnconnected(
+            $this->modx, $permit, $rawBody, $trusted, $key, $ledger
+        );
+    }
+
     public function processRequest($action, $elementType, $data =[], $trustedPermitDecision = null) {
         if (self::isExternalAuthorizationRequired($this->modx)) {
             if ($trustedPermitDecision instanceof ModxMcpPermitVerifier &&

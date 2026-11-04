@@ -8,6 +8,8 @@ on:
       - '_build/smoke.protected-boundary.php'
       - '_build/smoke.endpoint.php'
       - 'core/components/modxmcp/endpoint/api.common.php'
+      - 'core/components/modxmcp/endpoint/protected-api.php'
+      - 'tests/test-protected-http-v2.php'
       - 'core/components/modxmcp/endpoint/chunk-cas.php'
       - 'core/components/modxmcp/endpoint/chunk-cas-processor-v2.php'
       - 'tests/ci-protected-cas-processor-v2.php'
