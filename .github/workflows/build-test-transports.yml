@@ -8,6 +8,8 @@ on:
       - '_build/smoke.protected-boundary.php'
       - '_build/smoke.endpoint.php'
       - 'core/components/modxmcp/endpoint/api.common.php'
+      - 'core/components/modxmcp/endpoint/chunk-cas.php'
+      - 'tests/live-chunk-cas-innodb.php'
       - 'core/components/modxmcp/model/modxmcp.class.php'
       - 'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
   workflow_dispatch:
@@ -98,6 +100,13 @@ jobs:
           (cd "$RUNNER_TEMP/modx-site/setup" && php ./index.php --installmode=new)
           test -f "$RUNNER_TEMP/modx-site/config.core.php"
           test -f "$RUNNER_TEMP/modx-site/core/config/config.inc.php"
+      - name: Real InnoDB CAS regression on disposable MODX chunk table
+        env:
+          MODXMCP_CI_DB_HOST: 127.0.0.1
+          MODXMCP_CI_DB_NAME: modx_build
+          MODXMCP_CI_DB_USER: modx_ci
+          MODXMCP_CI_DB_PASSWORD: ci-throwaway-only-user
+        run: php tests/live-chunk-cas-innodb.php
       - name: Install previous 1.2.4 in MODX 2 to test real upgrade
         if: matrix.platform == 'modx2'
         run: |
