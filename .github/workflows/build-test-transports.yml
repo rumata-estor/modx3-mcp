@@ -42,6 +42,8 @@ jobs:
           --health-interval=5s --health-timeout=5s --health-retries=20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # v1.2.4 is needed for the real 2.8.9 upgrade regression
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php_version }}
@@ -96,6 +98,24 @@ jobs:
           (cd "$RUNNER_TEMP/modx-site/setup" && php ./index.php --installmode=new)
           test -f "$RUNNER_TEMP/modx-site/config.core.php"
           test -f "$RUNNER_TEMP/modx-site/core/config/config.inc.php"
+      - name: Install previous 1.2.4 in MODX 2 to test real upgrade
+        if: matrix.platform == 'modx2'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/modxmcp-v124"
+          git archive v1.2.4 | tar -x -C "$RUNNER_TEMP/modxmcp-v124"
+          python3 "$RUNNER_TEMP/modxmcp-v124/_build/prepare-release.py" \
+            --platform modx2 --output "$RUNNER_TEMP/modxmcp-v124-stage"
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php "$RUNNER_TEMP/modxmcp-v124-stage/_build/build.transport.php"
+          php "$RUNNER_TEMP/modxmcp-v124-stage/_build/install.transport.php" \
+            --signature=modx2mcp-1.2.4-pl
+          test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/model/modxmcp.class.php"
+          test -s "$RUNNER_TEMP/modx-site/assets/components/modxmcp/api.php"
+          # Save only a hash, never export the dummy token value in CI logs.
+          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=$db->query("SELECT value FROM modx_system_settings WHERE `key`='modxmcp.api_token'")->fetchColumn(); if(!is_string($v)||strlen($v)!==64)exit(3); file_put_contents(getenv("RUNNER_TEMP")."/previous-token-sha256",hash("sha256",$v));'
+          echo "MODX2_PREVIOUS_124_INSTALLED_OK"
       - name: Build real transport ZIP from installed MODX
         env:
           EXPECTED_SIGNATURE: ${{ matrix.signature }}
@@ -118,6 +138,13 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           php "$RUNNER_TEMP/modxmcp-stage/_build/install.transport.php"
+          if [ '${{ matrix.platform }}' = 'modx2' ]; then
+            test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/model/modxmcp.class.php"
+            test -s "$RUNNER_TEMP/modx-site/core/components/modxmcp/endpoint/api.common.php"
+            test -s "$RUNNER_TEMP/modx-site/assets/components/modxmcp/api.php"
+            php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $v=$db->query("SELECT value FROM modx_system_settings WHERE `key`='modxmcp.api_token'")->fetchColumn(); if(!is_string($v)||!hash_equals(trim(file_get_contents(getenv("RUNNER_TEMP")."/previous-token-sha256")),hash("sha256",$v)))exit(4);'
+            echo "MODX2_REAL_124_TO_125_UPGRADE_FILES_TOKEN_OK"
+          fi
           # Only the ephemeral CI database is modified. Regular deployments
           # preserve the production component's default disabled setting.
           # This plain-HTTP change affects ONLY a throwaway localhost CI
