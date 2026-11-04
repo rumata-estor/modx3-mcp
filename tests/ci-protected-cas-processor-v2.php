@@ -27,18 +27,11 @@ if ($platform==='modx3') {
 }
 $modx->initialize('mgr');
 require_once __DIR__.'/../core/components/modxmcp/endpoint/chunk-cas-processor-v2.php';
-require_once __DIR__.'/../core/components/modxmcp/endpoint/permit-nonce-ledger-db.php';
-$db=new PDO('mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
-    'modx_ci','ci-throwaway-only-user',array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,
-                                              PDO::ATTR_EMULATE_PREPARES=>false));
-$nonceTable='modxmcp_v2_nonce_ci';
-$auditTable='modxmcp_v2_audit_ci';
-$db->exec('DROP TABLE IF EXISTS `'.$nonceTable.'`');
-$db->exec('DROP TABLE IF EXISTS `'.$auditTable.'`');
-$db->exec('CREATE TABLE `'.$nonceTable.'` (nonce_sha256 CHAR(64) PRIMARY KEY) ENGINE=InnoDB');
-$db->exec('CREATE TABLE `'.$auditTable.'` (nonce_sha256 CHAR(64) PRIMARY KEY, '.
-    'chunk_id INT NOT NULL, before_sha256 CHAR(64) NOT NULL, '.
-    'after_sha256 CHAR(64) NOT NULL, site_revision INT NOT NULL) ENGINE=InnoDB');
+// No schema changes or additional tables: only private CI filesystem state.
+$nonceDir=$root.'/cas-v2-nonces-'.bin2hex(random_bytes(8));
+if (!mkdir($nonceDir,0700)) {
+    throw new RuntimeException('cannot provision disposable nonce directory');
+}
 $set=function($key,$value) use ($modx,$settingClass) {
     $row=$modx->getObject($settingClass,array('key'=>$key));
     if (!$row) {
@@ -81,10 +74,10 @@ $make=function($before,$after) use ($trusted,$key,$id) {
     return array($raw,array('claims'=>$claims,'baseline'=>$baseline,
         'mac'=>ModxMcpCasPermitWireV2::sign($claims,$key)));
 };
-$ledger=new ModxMcpPermitNonceLedgerDb($db,$nonceTable);
-$run=function($fixture) use ($modx,$trusted,$key,$ledger,$auditTable) {
+$ledger=new ModxMcpPermitNonceLedger($nonceDir);
+$run=function($fixture) use ($modx,$trusted,$key,$ledger) {
     return ModxMcpChunkCasProcessorV2::executeUnconnected(
-        $modx,$fixture[1],$fixture[0],$trusted,$key,$ledger,$auditTable);
+        $modx,$fixture[1],$fixture[0],$trusted,$key,$ledger);
 };
 $deny=function($callback,$message) {
     try { $callback(); }
@@ -92,7 +85,7 @@ $deny=function($callback,$message) {
     throw new RuntimeException('unsafe CAS admitted '.$message);
 };
 $table=trim((string)$modx->getTableName($chunkClass),'`');
-$read=$db->prepare('SELECT snippet,static FROM `'.$table.'` WHERE id=?');
+$read=$modx->prepare('SELECT snippet,static FROM `'.$table.'` WHERE id=?');
 $get=function() use ($read,$id) {
     $read->execute(array($id));
     return $read->fetch(PDO::FETCH_ASSOC);
@@ -127,16 +120,13 @@ try {
         echo "CAS_CACHE_REFRESH_UNVERIFIED_FAIL_CLOSED $platform ".
             json_encode($failed)."\n";
     }
-    if ((int)$db->query('SELECT COUNT(*) FROM `'.$auditTable.'`')->fetchColumn()!==1) {
-        throw new RuntimeException('transactional audit was not persisted');
-    }
     $deny(function() use ($run,$first) { $run($first); },'replayed nonce');
     $stale=$make('before','forged');
     $deny(function() use ($run,$stale) { $run($stale); },'stale original');
     if ($get()['snippet']!=='after') {
         throw new RuntimeException('stale permit mutated chunk');
     }
-    $used=(int)$db->query('SELECT COUNT(*) FROM `'.$nonceTable.'`')->fetchColumn();
+    $used=count(glob($nonceDir.'/*.used'));
     $blocked=$make('after','forbidden');
     $set('modxmcp.auto_static','1');
     $deny(function() use ($run,$blocked) { $run($blocked); },'auto_static flag');
@@ -144,27 +134,29 @@ try {
     $set('modxmcp.external_authorization_required','0');
     $deny(function() use ($run,$blocked) { $run($blocked); },'authorization flag');
     $set('modxmcp.external_authorization_required','1');
-    if ((int)$db->query('SELECT COUNT(*) FROM `'.$nonceTable.'`')->fetchColumn()!==$used) {
-        throw new RuntimeException('disabled mode consumed a permit');
+    if (count(glob($nonceDir.'/*.used'))!==$used) {
+        throw new RuntimeException('denied precondition consumed permission');
     }
-    // With no transactional audit table, the processor change and revision
-    // must both roll back; the separately committed nonce must remain used.
-    $db->exec('DROP TABLE `'.$auditTable.'`');
+    // Force revision validation failure AFTER a successful MODX processor
+    // update in the same transaction. No extra audit table is needed.
+    $set('modxmcp.site_revision','invalid');
     $rollback=$make('after','should-rollback');
-    $deny(function() use ($run,$rollback) { $run($rollback); },'missing audit');
+    $deny(function() use ($run,$rollback) { $run($rollback); },'invalid revision');
     if ($get()['snippet']!=='after') {
-        throw new RuntimeException('failed audit allowed a processor mutation');
+        throw new RuntimeException('failed revision allowed a processor mutation');
     }
-    $revision=$modx->getObject($settingClass,array('key'=>'modxmcp.site_revision'));
-    if (!$revision || (string)$revision->get('value')!=='1') {
-        throw new RuntimeException('failed CAS did not rollback revision');
+    $setting=$modx->getObject($settingClass,array('key'=>'modxmcp.site_revision'));
+    if (!$setting || (string)$setting->get('value')!=='invalid') {
+        throw new RuntimeException('failed revision mutated settings');
     }
-    if ((int)$db->query('SELECT COUNT(*) FROM `'.$nonceTable.'`')->fetchColumn()!==$used+1) {
-        throw new RuntimeException('failed processor write released nonce');
+    if (count(glob($nonceDir.'/*.used'))!==$used+1) {
+        throw new RuntimeException('failed processor released nonce');
     }
-    echo "SIGNED_V2_CAS_PROCESSOR_ATOMIC_TEST_OK $platform\n";
+    $deny(function() use ($run,$rollback) { $run($rollback); },'failed nonce replay');
+    $set('modxmcp.site_revision','1');
+    echo "SIGNED_V2_CAS_NO_NEW_TABLES_OK $platform\n";
 } finally {
     $modx->removeObject($chunkClass,array('id'=>$id));
-    $db->exec('DROP TABLE IF EXISTS `'.$auditTable.'`');
-    $db->exec('DROP TABLE IF EXISTS `'.$nonceTable.'`');
+    foreach (glob($nonceDir.'/*.used') as $file) { unlink($file); }
+    rmdir($nonceDir);
 }

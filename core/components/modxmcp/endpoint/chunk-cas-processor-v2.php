@@ -3,11 +3,11 @@
  * NOT AN HTTP ROUTE. Strict source-only MODX 2/3 v2 CAS processor pilot.
  *
  * Signed, one-use permission -> xPDO row lock -> actual MODX update processor
- * -> exact postcondition -> revision + InnoDB audit in the SAME transaction
+ * -> exact postcondition -> existing MODX revision in the SAME transaction
  * -> commit -> cache invalidation. No ordinary API fallback is permissible.
  *
- * Prerequisites provisioned by trusted operator: private key, *separate*
- * autocommit InnoDB nonce connection, InnoDB audit table and revision setting.
+ * Prerequisites: private key, private FILE nonce ledger and existing
+ * MODX revision setting. Controller records the audit outside MODX.
  * No guarantee about arbitrary third-party plugin external side effects;
  * do not enable on live sites before plugin/rollback/cutover audit.
  */
@@ -22,6 +22,18 @@ class ModxMcpChunkCasProcessorV2
             throw new RuntimeException('untrusted MODX table identifier');
         }
         return '`'.$table.'`';
+    }
+
+    private static function requireInnoDb($modx, $table)
+    {
+        // The row lock and revision MUST both be transactional. A
+        // MyISAM or missing table would make rollback proofs meaningless.
+        $stmt=self::one($modx,
+            'SELECT ENGINE FROM information_schema.TABLES '
+            .'WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?', array($table));
+        if (strcasecmp((string)$stmt->fetchColumn(), 'InnoDB') !== 0) {
+            throw new RuntimeException('protected CAS requires preprovisioned InnoDB tables');
+        }
     }
 
     private static function persisted($modx, $class, $key)
@@ -44,7 +56,7 @@ class ModxMcpChunkCasProcessorV2
 
     public static function executeUnconnected(
         $modx, $permit, $rawBody, array $trusted, $key,
-        ModxMcpPermitNonceLedger $ledger, $auditTable, $clock=null
+        ModxMcpPermitNonceLedger $ledger, $clock=null
     ) {
         $version=$modx->getVersionData();
         $major=isset($version['version']) ? (int)$version['version'] : 0;
@@ -61,7 +73,6 @@ class ModxMcpChunkCasProcessorV2
         $settingClass=$major===3 ? 'MODX\\Revolution\\modSystemSetting' : 'modSystemSetting';
         $chunkTable=self::table($modx->getTableName($chunkClass));
         $settingTable=self::table($modx->getTableName($settingClass));
-        $auditTable=self::table($auditTable);
 
         // Read persisted options, not only potentially stale MODX cache.
         // Even this unconnected pilot fails closed if any option is ambiguous.
@@ -73,11 +84,16 @@ class ModxMcpChunkCasProcessorV2
             $trusted['auto_static']!==false) {
             throw new RuntimeException('CAS processor requires protected nonstatic mode');
         }
+        // Fail closed on schema drift BEFORE spending any one-use nonce.
+        // Recheck after beginning the write transaction below as well.
+        foreach (array($chunkTable,$settingTable) as $name) {
+            self::requireInnoDb($modx,trim($name,'`'));
+        }
         $processor=$major===3
             ? 'MODX\\Revolution\\Processors\\Element\\Chunk\\Update'
             : 'element/chunk/update';
 
-        // This consumes nonce in independently committed store BEFORE MODX
+        // This consumes nonce in private file ledger BEFORE MODX
         // starts its transaction. No rollback/retry may unspend a permission.
         $authorized=ModxMcpCasPermitVerifierV2::authorize(
             $permit,$rawBody,$trusted,$key,$ledger,$clock
@@ -91,8 +107,13 @@ class ModxMcpChunkCasProcessorV2
         }
         $committed=false;
         try {
-            $row=self::one($modx,
-                'SELECT name, snippet, static FROM '.$chunkTable.
+            // Revalidate the storage engines after entering the transaction.
+            // This guards schema changes between preflight and row locking.
+            foreach (array($chunkTable,$settingTable) as $name) {
+                self::requireInnoDb($modx,trim($name,'`'));
+            }
+                $row=self::one($modx,
+                'SELECT * FROM '.$chunkTable.
                 ' WHERE id=? FOR UPDATE',array($id))->fetch(PDO::FETCH_ASSOC);
             if (!is_array($row) || (int)$row['static']!==0 ||
                 !is_string($row['snippet']) || !hash_equals($before,$row['snippet'])) {
@@ -106,13 +127,23 @@ class ModxMcpChunkCasProcessorV2
                 throw new RuntimeException('MODX processor refused protected CAS');
             }
             $current=self::one($modx,
-                'SELECT name, snippet, static FROM '.$chunkTable.
+                'SELECT * FROM '.$chunkTable.
                 ' WHERE id=?',array($id))->fetch(PDO::FETCH_ASSOC);
             if (!is_array($current) || (int)$current['static']!==0 ||
                 (string)$current['name']!==$name ||
                 !is_string($current['snippet']) ||
-                !hash_equals($after,$current['snippet'])) {
+                !hash_equals($after,$current['snippet']) ||
+                count($current)!==count($row)) {
                 throw new RuntimeException('processor changed protected CAS target');
+            }
+            // Human approved a change to content ONLY. A processor/plugin
+            // modification of any other field is outside that approval and
+            // MUST roll back, not be hidden inside a success response.
+            foreach ($row as $field=>$value) {
+                if ($field!=='snippet' &&
+                    (!array_key_exists($field,$current) || $current[$field]!==$value)) {
+                    throw new RuntimeException('processor modified an unapproved chunk field');
+                }
             }
 
             $revisionRow=self::one($modx,
@@ -133,16 +164,6 @@ class ModxMcpChunkCasProcessorV2
                 throw new RuntimeException('protected revision was not updated');
             }
 
-            $audit=self::one($modx,
-                'INSERT INTO '.$auditTable.
-                ' (nonce_sha256,chunk_id,before_sha256,after_sha256,site_revision)'.
-                ' VALUES (?,?,?,?,?)',array(
-                    hash('sha256',$permit['claims']['nonce']),$id,
-                    hash('sha256',$before),hash('sha256',$after),$revision
-                ));
-            if ($audit->rowCount()!==1) {
-                throw new RuntimeException('transactional CAS audit missing');
-            }
             if ($modx->commit()===false) {
                 throw new RuntimeException('protected transaction commit failed');
             }

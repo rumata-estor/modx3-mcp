@@ -1,6 +1,6 @@
 <?php
 /** Real MariaDB/InnoDB CAS regression using the actual MODX chunk schema.
- * CI ONLY: isolated DB and a disposable clone of modx_site_htmlsnippets.
+ * CI ONLY: isolated DB with disposable ROWS in the existing chunk table.
  * Never run against any configured/remote/live CMS instance.
  */
 require_once __DIR__ . '/../core/components/modxmcp/endpoint/chunk-cas.php';
@@ -19,7 +19,7 @@ function casCiPdo() {
             PDO::ATTR_EMULATE_PREPARES => false,
         ));
 }
-$table = 'modxmcp_chunk_cas_ci';
+$table = 'modx_site_htmlsnippets';
 $db = casCiPdo();
 if (isset($argv[1]) && $argv[1] === 'worker') {
     if (count($argv) !== 6) { throw new RuntimeException('invalid worker args'); }
@@ -57,17 +57,17 @@ function mustRejectRealCas($db, $table, $id, $before, $after) {
         return true;
     }
 }
-$db->exec('DROP TABLE IF EXISTS `' . $table . '`');
+// No new tables, not even in CI: exercise existing MODX chunk storage.
+$created=array();
 try {
-    $db->exec('CREATE TABLE `' . $table . '` LIKE `modx_site_htmlsnippets`');
-    $db->exec('ALTER TABLE `' . $table . '` ENGINE=InnoDB');
     $engine = $db->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'modx_build' AND TABLE_NAME = '".$table."'")->fetchColumn();
     checkCas(strcasecmp($engine, 'InnoDB') === 0, 'real InnoDB table');
     $insert = $db->prepare('INSERT INTO `'.$table.'` (`name`,`snippet`,`static`) VALUES (?,?,?)');
     $get = $db->prepare('SELECT `snippet`,`static` FROM `'.$table.'` WHERE `id`=?');
     $getRow = function($id) use ($get) { $get->execute(array($id)); return $get->fetch(PDO::FETCH_ASSOC); };
-    $insert->execute(array('CAS_Synthetic_Pilot', "Alpha\n", 0));
+    $insert->execute(array('CAS_Synthetic_Pilot_'.bin2hex(random_bytes(6)), "Alpha\n", 0));
     $id=(int)$db->lastInsertId();checkCas($id>0,'chunk inserted');
+    $created[]=$id;
     checkCas(ModxMcpChunkCas::compareAndSwap($db,$table,$id,"Alpha\n","Beta\n")===true,'initial write');
     checkCas($getRow($id)['snippet']==="Beta\n",'exact after');
     mustRejectRealCas($db,$table,$id,"Alpha\n","stale lost update");
@@ -81,8 +81,9 @@ try {
     checkCas(ModxMcpChunkCas::compareAndSwap($db,$table,$id,"Beta\n","Unicode Ещё 😀\n")===true,'Unicode');
     checkCas($getRow($id)['snippet']==="Unicode Ещё 😀\n",'Unicode exact bytes');
 
-    $insert->execute(array('CAS_Concurrent_Synthetic', 'same-before', 0));
+    $insert->execute(array('CAS_Concurrent_Synthetic_'.bin2hex(random_bytes(6)), 'same-before', 0));
     $raceId=(int)$db->lastInsertId();
+    $created[]=$raceId;
     $start=microtime(true)+0.6;
     $processes=array();
     foreach (array('parallel-first','parallel-second') as $desired) {
@@ -109,6 +110,7 @@ try {
     checkCas(in_array($winner,array('parallel-first','parallel-second'),true),'exact winner persisted');
     echo "REAL_INNODB_CHUNK_CAS_PASS engine=$engine; two concurrent processes; one winner\n";
 } finally {
-    // This CI fixture never retains any test table or test data.
-    $db->exec('DROP TABLE IF EXISTS `'.$table.'`');
+    // Only rows created by this test are removed; schema is untouched.
+    $remove=$db->prepare('DELETE FROM `'.$table.'` WHERE id=?');
+    foreach ($created as $createdId) { $remove->execute(array($createdId)); }
 }
