@@ -30,9 +30,12 @@ $modx->initialize('mgr');
 if (!method_exists($modx,'getConnection')) {
     throw new RuntimeException('MODX database connection not exposed');
 }
-$db=$modx->getConnection();
-if (!($db instanceof PDO)) {
-    throw new RuntimeException('MODX connection is not PDO');
+// xPDO::getConnection() returns xPDOConnection, NOT PDO. Using
+// xPDO::prepare() on this same $modx instance binds SQL to its selected
+// connection/transaction; a fresh PDO could silently break the row lock.
+$connection=$modx->getConnection();
+if (!is_object($connection) || !method_exists($modx,'prepare')) {
+    throw new RuntimeException('MODX transaction-bound SQL connection unavailable');
 }
 $table=$modx->getTableName($chunkClass);
 if (!is_string($table) || !preg_match('/\A[A-Za-z_][A-Za-z0-9_]*\z/D',$table)) {
@@ -50,13 +53,13 @@ $chunk->set('snippet',$before);
 $chunk->set('static',0);
 if (!$chunk->save()) { throw new RuntimeException('could not create disposable chunk'); }
 $id=(int)$chunk->get('id');
-$get=$db->prepare('SELECT snippet FROM `'.$table.'` WHERE id=?');
+$get=$modx->prepare('SELECT snippet FROM `'.$table.'` WHERE id=?');
 try {
     if ($modx->beginTransaction() === false) {
         throw new RuntimeException('transaction unavailable');
     }
     try {
-        $lock=$db->prepare('SELECT snippet, static FROM `'.$table.'` WHERE id=? FOR UPDATE');
+        $lock=$modx->prepare('SELECT snippet, static FROM `'.$table.'` WHERE id=? FOR UPDATE');
         $lock->execute(array($id));
         $original=$lock->fetch(PDO::FETCH_ASSOC);
         if (!is_array($original) || $original['snippet']!==$before || (int)$original['static']!==0) {
