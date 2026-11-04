@@ -10,6 +10,7 @@ on:
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/protected-api.php'
       - 'tests/test-protected-http-v2.php'
+      - 'tests/ci-protected-http-v2.php'
       - 'core/components/modxmcp/endpoint/chunk-cas.php'
       - 'core/components/modxmcp/endpoint/chunk-cas-processor-v2.php'
       - 'tests/ci-protected-cas-processor-v2.php'
@@ -186,7 +187,7 @@ jobs:
           BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-cas-processor-v2.php
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/modx-site"             > "$RUNNER_TEMP/modx-http.log" 2>&1 &
           http_pid=$!
-          trap 'kill "$http_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$http_pid" ${cas_pid:-} 2>/dev/null || true' EXIT
           export MODX_MCP_SMOKE_SITE_URL='http://127.0.0.1:8080'
           for i in {1..25}; do
             if curl --silent --max-time 3 --fail                 "$MODX_MCP_SMOKE_SITE_URL/assets/components/modxmcp/api.php"                 > "$RUNNER_TEMP/modx-health.json"; then break; fi
@@ -197,6 +198,21 @@ jobs:
           # when the test-only external authorization setting is enabled.
           BUILD_PLATFORM='${{ matrix.platform }}' php \
             "$RUNNER_TEMP/modxmcp-stage/_build/smoke.protected-boundary.php"
+          # Optional pilot is tested ONLY on a throwaway loopback server.
+          # PHP 7.4 has no fsync: that matrix must keep its denied write gate.
+          if [ '${{ matrix.php_version }}' != '7.4' ]; then
+            BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-http-v2.php prepare
+            MODXMCP_CAS_V2_TEST_ENABLE=signed-pilot-only php -S 127.0.0.1:8081 \
+              -t "$RUNNER_TEMP/modx-site" > "$RUNNER_TEMP/cas-v2-http.log" 2>&1 &
+            cas_pid=$!
+            for i in {1..20}; do
+              if curl --silent --max-time 2 --fail \
+                http://127.0.0.1:8081/assets/components/modxmcp/api.php \
+                > /dev/null; then break; fi
+              sleep 0.25
+            done
+            BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-http-v2.php exercise
+          fi
           echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
       - uses: actions/upload-artifact@v4
         with:
