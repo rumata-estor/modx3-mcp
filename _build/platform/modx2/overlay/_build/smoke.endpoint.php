@@ -108,7 +108,7 @@ if (isset($runtimeSettings['modxmcp.site_revision'])
 }
 
 if ($settingsExport !== '') {
-    if (count($settings) > 16) {
+    if (count($settings) > 22) {
         fwrite(STDERR, "Refusing settings snapshot with unexpected extra modxmcp settings: found " . count($settings) . ".\n");
         exit(3);
     }
@@ -143,7 +143,7 @@ if ($settingsRestore !== '') {
         echo "SETTINGS_RESTORE_SKIP empty-snapshot\n";
         exit(0);
     }
-    if (count($restore) > 16) {
+    if (count($restore) > 22) {
         fwrite(STDERR, "Invalid settings snapshot count: " . count($restore) . ".\n");
         exit(3);
     }
@@ -200,7 +200,7 @@ if ($settingsCompare !== '') {
 }
 
 if ($settingsHashOnly) {
-    if (count($settings) > 16) {
+    if (count($settings) > 22) {
         fwrite(STDERR, "Unexpected modxmcp settings count: " . count($settings) . ".\n");
         exit(3);
     }
@@ -208,8 +208,8 @@ if ($settingsHashOnly) {
     exit(0);
 }
 
-if (count($settings) !== 16) {
-    fwrite(STDERR, "Expected 16 modxmcp settings, found " . count($settings) . ".\n");
+if (count($settings) !== 22) {
+    fwrite(STDERR, "Expected 22 modxmcp settings, found " . count($settings) . ".\n");
     exit(3);
 }
 

@@ -34,3 +34,22 @@ No separate MODX audit, nonce, or operation tables are allowed. The previously i
 Use disposable nonstatic chunks on isolated MODX 2 and MODX 3 databases, no production sites. Demonstrate case- and whitespace-sensitive CAS against the actual table/collation, concurrent manager/process updates, plugin events, existing revision, external control-plane audit and cache correctness, failure rollback, and nonce persistence. Validate both original and resulting `snippet` values independently; repeat with `modxmcp.auto_static` enabled and require denial before permit consumption. Audit all write routes and remove ordinary Agent access to unrestricted credentials only under a separately authorized, reversible cutover. The entire gate must pass before wiring `chunk-cas-pilot.php` into a live endpoint or removing either CAS interlock.
 
 Sources: `core/components/modxmcp/src/Tools/ElementUpdateTool.php`, `ElementMutationSupport.php`, MODX documentation for `modChunk::save`, `OnChunkFormSave`, and cache manager refresh behavior.
+
+## November 5, 2026: transport preparation (not deployed)
+
+The existing MODX 2/3 transport setting definitions now provision six
+**default-off** values needed by the protected HTTP bridge: external
+authorization required (default `0`), permit audience, test site ID, contour,
+private signing-key path, and nonce directory (the latter five default to
+empty strings). These are ordinary system-settings **rows in MODX's existing
+settings table; no new tables are created**. Transport upgrades use
+`xPDOTransport::UPDATE_OBJECT => false` and preserve administrator-edited
+settings. CI tests assert a total of 22 package settings, including explicit
+fail-closed defaults for the new six settings, on MODX 2 and MODX 3.
+
+This does not enable signed writes, install the package on the two live test
+sites, grant permission to replace sensitive PHP files through Web Bridge, or
+repair the MODX 2 token mismatch. The live test domains lack
+`chunk-cas-processor-v2.php`. Until the approved package rollout, private
+key provisioning, and end-to-end test with Controller/Executor are finished,
+the release gate remains **NO-GO**.

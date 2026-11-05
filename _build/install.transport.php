@@ -201,7 +201,7 @@ $ns = $modx->getObject(modNamespace::class, array('name' => 'modxmcp'));
 $runtimeRevisionSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.site_revision'));
 $countSettingsAll = (int)$modx->getCount(modSystemSetting::class, array('key:LIKE' => 'modxmcp.%'));
 $countSettings = $countSettingsAll - ($runtimeRevisionSetting ? 1 : 0);
-$expectedSettings = 16;
+$expectedSettings = 22;
 $runtimeRevision = $runtimeRevisionSetting ? (string)$runtimeRevisionSetting->get('value') : '';
 $runtimeRevisionValid = !$runtimeRevisionSetting || preg_match('/^[0-9]+$/', $runtimeRevision);
 $tokenSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.api_token'));

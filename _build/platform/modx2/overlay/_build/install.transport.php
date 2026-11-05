@@ -93,7 +93,7 @@ $runtimeRevision=$runtimeRevisionSetting?(string)$runtimeRevisionSetting->get('v
 $runtimeRevisionValid=!$runtimeRevisionSetting||preg_match('/^[0-9]+$/',$runtimeRevision);
 $checks=array(
     (bool)$modx->getObject('modNamespace',array('name'=>'modxmcp')),
-    $countSettings===16,
+    $countSettings===22,
     (bool)$runtimeRevisionValid,
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp')),
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp_graph')),

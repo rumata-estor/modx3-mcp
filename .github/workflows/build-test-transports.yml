@@ -7,6 +7,13 @@ on:
       - '.github/workflows/build-test-transports.yml'
       - '_build/smoke.protected-boundary.php'
       - '_build/smoke.endpoint.php'
+      - '_build/data/transport.settings.php'
+      - '_build/install.headless.php'
+      - '_build/platform/modx2/overlay/_build/install.headless.php'
+      - '_build/install.transport.php'
+      - '_build/platform/modx2/overlay/_build/install.transport.php'
+      - '_build/platform/modx2/overlay/_build/smoke.endpoint.php'
+      - '_build/test.secure-cas-transport-settings.py'
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/protected-api.php'
       - 'tests/test-protected-http-v2.php'
@@ -65,6 +72,7 @@ jobs:
         run: |
           python3 _build/prepare-release.py --platform '${{ matrix.platform }}' --output "$RUNNER_TEMP/modxmcp-stage"
           python3 _build/test.cas-pilot-disconnected.py
+          python3 _build/test.secure-cas-transport-settings.py
       - name: Install official MODX on disposable CI database
         env:
           MODX_VERSION: ${{ matrix.modx_version }}

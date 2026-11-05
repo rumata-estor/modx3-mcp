@@ -359,6 +359,12 @@ $settings = array(
         'modxmcp:main'
     ),
     'modxmcp.allow_run_processor' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.external_authorization_required' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.permit_audience' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_site_id' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_contour' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_key_file' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_nonce_directory' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.max_payload_bytes' => array(1048576, 'textfield', 'modxmcp:limits'),
     'modxmcp.max_read_bytes' => array(262144, 'textfield', 'modxmcp:limits'),
     'modxmcp.allow_root_filesystem_read' => array(0, 'combo-boolean', 'modxmcp:security'),
