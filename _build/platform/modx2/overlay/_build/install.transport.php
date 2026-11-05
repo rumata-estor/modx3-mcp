@@ -88,9 +88,9 @@ if($modx->getCacheManager()) $modx->getCacheManager()->refresh();
 $token=$modx->getObject('modSystemSetting',array('key'=>'modxmcp.api_token'));
 $runtimeRevisionSetting=$modx->getObject('modSystemSetting',array('key'=>'modxmcp.site_revision'));
 $countSettingsAll=(int)$modx->getCount('modSystemSetting',array('key:LIKE'=>'modxmcp.%'));
-$countSettings=$countSettingsAll-($runtimeRevisionSetting?1:0);
+$countSettings=$countSettingsAll;
 $runtimeRevision=$runtimeRevisionSetting?(string)$runtimeRevisionSetting->get('value'):'';
-$runtimeRevisionValid=!$runtimeRevisionSetting||preg_match('/^[0-9]+$/',$runtimeRevision);
+$runtimeRevisionValid=$runtimeRevisionSetting&&preg_match('/^[0-9]+$/',$runtimeRevision);
 $checks=array(
     (bool)$modx->getObject('modNamespace',array('name'=>'modxmcp')),
     $countSettings===23,

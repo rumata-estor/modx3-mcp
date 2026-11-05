@@ -200,10 +200,10 @@ if ($modx->getCacheManager()) {
 $ns = $modx->getObject(modNamespace::class, array('name' => 'modxmcp'));
 $runtimeRevisionSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.site_revision'));
 $countSettingsAll = (int)$modx->getCount(modSystemSetting::class, array('key:LIKE' => 'modxmcp.%'));
-$countSettings = $countSettingsAll - ($runtimeRevisionSetting ? 1 : 0);
+$countSettings = $countSettingsAll;
 $expectedSettings = 23;
 $runtimeRevision = $runtimeRevisionSetting ? (string)$runtimeRevisionSetting->get('value') : '';
-$runtimeRevisionValid = !$runtimeRevisionSetting || preg_match('/^[0-9]+$/', $runtimeRevision);
+$runtimeRevisionValid = $runtimeRevisionSetting && preg_match('/^[0-9]+$/', $runtimeRevision);
 $tokenSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.api_token'));
 $token = $tokenSetting ? trim((string)$tokenSetting->get('value')) : '';
 $enabledSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.enabled'));

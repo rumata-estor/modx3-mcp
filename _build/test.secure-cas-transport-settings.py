@@ -58,6 +58,8 @@ for p in (
 ):
     s=p.read_text()
     assert ('$expectedSettings = 23' in s or '$countSettings===23' in s),p
+    assert '$runtimeRevisionSetting ? 1 : 0' not in s and '$runtimeRevisionSetting?1:0' not in s, p
+    assert 'runtimeRevisionValid' in s and 'preg_match' in s, p
 for p in (
     root/'core/components/modxmcp/endpoint/chunk-cas-processor-v2.php',
     root/'tests/ci-protected-cas-processor-v2.php',
