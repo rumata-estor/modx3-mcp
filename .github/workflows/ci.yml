@@ -57,6 +57,7 @@ jobs:
           php tests/test-permit-verifier-v2.php
           php tests/test-permit-nonce-ledger.php
           php tests/test-permit-verifier.php
+          php tests/test-reviewed-cas-contract-v1.php
           php tests/test-chunk-cas.php
           php tests/test-chunk-cas-pilot.php
           php tests/test-protected-http.php

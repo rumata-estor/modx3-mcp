@@ -181,6 +181,36 @@ class modxMCP {
      * private key and signed one-use permit are mandatory; no PHP-FPM
      * environment switch is needed on shared hosting. No legacy fallback.
      */
+    /**
+     * Ordinary MODX pages/templates/TVs use the SAME independent permit lane.
+     * This entrypoint cannot be reached by unauthenticated generic MCP writes.
+     */
+    public function processProtectedReviewedCasV1(
+        $permit, $rawBody, array $trusted, $key,
+        ModxMcpPermitNonceLedger $ledger
+    ) {
+        if (!self::isExternalAuthorizationRequired($this->modx)) {
+            throw new ModxMCPClientException('Protected reviewed CAS not enabled');
+        }
+        $decoded = json_decode($rawBody,true);
+        if (!is_array($decoded) || !isset($decoded['action']) ||
+            !in_array($decoded['action'],array('create_element',
+                'update_element','update_resource_tvs'),true)) {
+            throw new ModxMCPClientException('Unclassified protected CAS action');
+        }
+        $this->assertCapabilityEnabled($decoded['action']);
+        $this->modx->user = $this->resolveServiceUser();
+        $source = rtrim((string)$this->config['corePath'], '/\\')
+            . DIRECTORY_SEPARATOR . 'endpoint/reviewed-cas-processor-v1.php';
+        if (!is_file($source)) {
+            throw new ModxMCPClientException('Reviewed CAS processor unavailable');
+        }
+        require_once $source;
+        return ModxMcpReviewedCasV1::executeUnconnected(
+            $this->modx,$permit,$rawBody,$trusted,$key,$ledger
+        );
+    }
+
     public function processProtectedChunkCasV2(
         $permit, $rawBody, array $trusted, $key,
         ModxMcpPermitNonceLedger $ledger

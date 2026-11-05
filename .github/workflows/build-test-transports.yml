@@ -198,6 +198,7 @@ jobs:
           BUILD_PLATFORM='${{ matrix.platform }}' php "$RUNNER_TEMP/refresh-modx-cache.php"
           BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-modx-chunk-processor-lock.php
           BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-cas-processor-v2.php
+          BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-reviewed-cas-v1.php
           php -S 127.0.0.1:8080 -t "$RUNNER_TEMP/modx-site"             > "$RUNNER_TEMP/modx-http.log" 2>&1 &
           http_pid=$!
           trap 'kill "$http_pid" ${cas_pid:-} 2>/dev/null || true' EXIT

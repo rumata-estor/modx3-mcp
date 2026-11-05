@@ -191,16 +191,23 @@ try {
             // Explicit read-only actions do not require a mutation permit.
             modxMCP::assertExternalAuthorizationBoundary($action);
         } catch (ModxMCPClientException $readDenied) {
-            // Unknown and unclassified actions must never obtain an override.
-            // Deny unclassified writes before consuming any one-use nonce.
-            // The exact scope is checked again inside the model dispatcher.
-            modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data);
-            // The protected setting is off by default. Once explicitly
-            // enabled, only exact chunk CAS v2 with a signed one-use permit
-            // is eligible on two approved test sites. No legacy fallback.
+            // Protected writes NEVER fall through to the legacy dispatcher.
+            // The exact v1 operation scope is verified inside the transactional
+            // reviewed CAS processor, after the independent permit is checked.
+            // Existing v2 one-chunk CAS continues via its own strict branch.
             require_once $corePath . 'endpoint/protected-api.php';
+            $permit = modxmcpProtectedPermitEnvelope();
+            $version = isset($permit['claims']['version'])
+                ? $permit['claims']['version'] : null;
             $mcp = new modxMCP($modx);
-            $result = modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput);
+            if ($version === '1') {
+                $result = modxmcpExecuteReviewedCasV1($modx,$mcp,$rawInput);
+            } elseif ($version === '2') {
+                modxMCP::assertExternalAuthorizedWriteShape($action,$type,$data);
+                $result = modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput);
+            } else {
+                throw new RuntimeException('Unsupported independent CAS permit');
+            }
             $caps = (string)$modx->getOption('modxmcp.disabled_groups', null, '');
             echo json_encode(array(
                 'success'=>true,'data'=>$result,'caps'=>$caps,

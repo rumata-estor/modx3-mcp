@@ -42,10 +42,26 @@ try {
     $key=str_repeat('K',32);
     $permit=array('claims'=>$claims,'baseline'=>$base,
                   'mac'=>ModxMcpCasPermitWireV2::sign($claims,$key));
-    $trusted=array('site_id'=>$site,'audience'=>'modx-test-two','contour'=>'test');
+    $trusted=array('site_id'=>$site,'audience'=>'modx-test-two',
+                   'contour'=>'test','auto_static'=>false);
     $clock=1793999960;
     $ledger=new ModxMcpPermitNonceLedger($dir);
     $database=new MockPilotDatabase(1);
+    foreach (array(true, 1, '0', null) as $unsafeAutoStatic) {
+        $badTrusted=$trusted;
+        if ($unsafeAutoStatic === null) {
+            unset($badTrusted['auto_static']);
+        } else {
+            $badTrusted['auto_static']=$unsafeAutoStatic;
+        }
+        mustRejectPilot(function() use ($permit,$raw,$badTrusted,$key,$ledger,$database,$clock) {
+            ModxMcpChunkCasPilot::executeUnconnected($permit,$raw,$badTrusted,$key,
+                $ledger,$database,'modx_site_htmlsnippets',$clock);
+        },'auto_static enabled or unknown');
+        if ($database->prepares!==0) {
+            throw new RuntimeException('unsafe auto_static reached SQL');
+        }
+    }
     $invalid=$permit;
     $invalid['baseline']['before_content']='FORGED';
     mustRejectPilot(function() use ($invalid,$raw,$trusted,$key,$ledger,$database,$clock) {

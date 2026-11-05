@@ -13,6 +13,13 @@ class ModxMcpChunkCasPilot
         $permit, $rawBody, array $trusted, $key,
         ModxMcpPermitNonceLedger $ledger, $connection, $trustedTable, $clock = null
     ) {
+        // For the first pilot, file-backed conversion must be impossible.
+        // A MODX deployment with auto_static enabled is outside the approved
+        // SQL-only CAS scope; reject BEFORE consuming any one-use nonce.
+        if (!array_key_exists('auto_static', $trusted) ||
+            $trusted['auto_static'] !== false) {
+            throw new RuntimeException('CAS pilot requires trusted auto_static=false');
+        }
         // The verifier consumes one nonce BEFORE any SQL is attempted. A CAS
         // conflict or DB error must NOT release it for blind retries.
         $authorized = ModxMcpCasPermitVerifierV2::authorize(

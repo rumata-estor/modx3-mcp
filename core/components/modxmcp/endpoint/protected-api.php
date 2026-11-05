@@ -102,6 +102,33 @@ function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
 }
 
 /**
+ * One signed, single-use operation from the existing reviewed Controller
+ * packet. Never call ordinary processRequest() after a CAS failure.
+ */
+function modxmcpExecuteReviewedCasV1($modx,$mcp,$rawBody)
+{
+    if ((string)$modx->getOption('modxmcp.external_authorization_required',
+            null,'0') !== '1') {
+        throw new RuntimeException('Protected reviewed CAS HTTP mode not active');
+    }
+    $permit=modxmcpProtectedPermitEnvelope();
+    if (!isset($permit['claims']) || !is_array($permit['claims']) ||
+        !isset($permit['claims']['version']) ||
+        $permit['claims']['version']!=='1') {
+        throw new RuntimeException('Reviewed CAS requires independent v1 permit');
+    }
+    list($trusted,$key,$ledger)=modxmcpProtectedRuntimeConfig($modx);
+    if ($trusted['contour']!=='test' || !in_array($trusted['site_id'],array(
+          'modx2-alex-palochkin','modx3-alex-palochkin'),true) ||
+        !is_object($mcp) || !method_exists($mcp,'processProtectedReviewedCasV1')) {
+        throw new RuntimeException('Reviewed CAS restricted to test processor');
+    }
+    return $mcp->processProtectedReviewedCasV1(
+        $permit,$rawBody,$trusted,$key,$ledger
+    );
+}
+
+/**
  * Test-site-only signed CAS v2. Activation requires the existing protected
  * MODX setting and a valid private-key/nonce scope, not a PHP-FPM env var.
  */
