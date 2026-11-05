@@ -384,19 +384,27 @@ final class ModxMcpReviewedCasV1
                     throw new RuntimeException('Static element cannot be protected by DB CAS');
                 }
                 self::validateBefore($original,$expected['fields']);
-                $args=array_merge(array('id'=>$id),$data);
-                if (($kind==='chunk' || $kind==='snippet') &&
-                    !isset($args['name'])) {
-                    $args['name']=$original['name'];
+                // The MODX 2 and MODX 3 resource-update processors have
+                // different implicit context requirements and can fire plugin
+                // hooks. A signed exact-field CAS does not need either: apply
+                // only the reviewed columns to the already locked row.
+                $set=array(); $params=array();
+                foreach ($data as $field=>$value) {
+                    if (!array_key_exists($field,$original) ||
+                        !is_scalar($value)) {
+                        throw new RuntimeException('Protected CAS field is not a scalar DB column');
+                    }
+                    $set[]=self::table($field).'=?';
+                    $params[]=is_bool($value) ? ($value ? 1 : 0) : $value;
                 }
-                $processor=$major===3
-                    ? 'MODX\\Revolution\\Processors\\'
-                      .($kind==='resource'?'Resource':
-                        'Element\\'.($kind==='tv'?'TemplateVar':ucfirst($kind))).'\\Update'
-                    : ($kind==='resource'?'resource':'element/'.$kind).'/update';
-                $response=$modx->runProcessor($processor,$args);
-                if (!$response || $response->isError()) {
-                    throw new RuntimeException('MODX update processor refused CAS');
+                if (!$set) {
+                    throw new RuntimeException('Protected CAS update has no fields');
+                }
+                $params[]=$id;
+                $stmt=self::query($modx,'UPDATE '.$table.' SET '.
+                    implode(',',$set).' WHERE `id`=?',$params);
+                if ($stmt->rowCount()!==1) {
+                    throw new RuntimeException('Protected CAS update must affect exactly one row');
                 }
                 $after=self::row($modx,$table,'id',$id,true);
                 if (!is_array($after)) { throw new RuntimeException('Updated CAS row missing'); }
