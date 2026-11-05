@@ -36,6 +36,7 @@ jobs:
           python3 _build/test.secure-cas-transport-settings.py
           python3 _build/test.modx2-php-compat.py
           python3 _build/test.modx2-https-proxy-deny.py
+          python3 _build/test.no-webshell-runtime.py
           python3 _build/test.migration-coverage.py
           python3 _build/test.release-staging.py
           python3 _build/test.manager-platform-package.py
