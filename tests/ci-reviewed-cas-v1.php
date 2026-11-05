@@ -102,7 +102,8 @@ try {
     } else {
         $newPage=$make('create_element','resource',array(
             'pagetitle'=>$unique,'content'=>'BEFORE','published'=>0,
-            'template'=>0,'parent'=>0,'alias'=>strtolower($unique),
+            'template'=>0,'parent'=>0,
+            'alias'=>'cas-test-'.bin2hex(random_bytes(6)),
             '_cas_expected'=>array('absent'=>true)));
         $result=$run($newPage);
         $page=$modx->getObject($classes['resource'],array('pagetitle'=>$unique));
