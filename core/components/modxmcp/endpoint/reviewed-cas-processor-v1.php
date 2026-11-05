@@ -210,7 +210,8 @@ final class ModxMcpReviewedCasV1
             if ($field==='templates') { continue; }
             if (!array_key_exists($field,$row) ||
                 !self::equality($row[$field],$value)) {
-                throw new RuntimeException('MODX postcondition differs from approved fields');
+                // Field NAME only: never put page content or secrets in logs.
+                throw new RuntimeException('MODX postcondition mismatch in: '.$field);
             }
         }
     }
