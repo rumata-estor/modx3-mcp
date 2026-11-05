@@ -32,6 +32,7 @@ jobs:
           python3 _build/test.build-architecture.py
           python3 _build/test.endpoint-architecture.py
           python3 _build/test.cas-pilot-disconnected.py
+          python3 _build/test.pilot-upgrade-preparation.py
           python3 _build/test.secure-cas-transport-settings.py
           python3 _build/test.modx2-php-compat.py
           python3 _build/test.migration-coverage.py

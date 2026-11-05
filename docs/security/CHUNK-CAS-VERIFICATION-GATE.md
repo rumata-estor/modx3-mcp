@@ -55,3 +55,31 @@ repair the MODX 2 token mismatch. The live test domains lack
 `chunk-cas-processor-v2.php`. Until the approved package rollout, private
 key provisioning, and end-to-end test with Controller/Executor are finished,
 the release gate remains **NO-GO**.
+
+## November 5, 2026: separate manager-installable CAS pilot transport
+
+The public `1.2.5-pl` source and package metadata remain unchanged. A
+separately selected `prepare-release.py --pilot-test-upgrade` produces a
+**test-only** transport `modx2mcp-1.2.6-dev` or `modx3mcp-1.2.6-dev`, with the
+same installed package name/namespace, only in the temporary staging tree.
+This is a distinct version that MODX Package Management can install over an
+existing `1.2.5-pl` without uninstalling it first. It is NOT a public 1.2.6
+release; neither production sites nor a public package registry should use it.
+
+The full MODX 2/PHP 8.2 and MODX 3/PHP 8.2 CI build now first installs
+`1.2.5-pl`, exercises the signed CAS on an isolated HTTP host, then builds
+and installs `1.2.6-dev` *onto that same disposable CMS*. A verifier must
+confirm that all prior system-setting values including the existing API token
+remain unchanged, that the new package replaces the model and installs the
+protected CAS source, and that the total number of database tables has not
+changed. The public package ZIP and the two new DEV ZIPs are uploaded as
+separate, explicitly marked test-only artifacts. This is an installation
+**test**, not permission to activate CAS on live hosts.
+
+Before real test-site installation: back up the CMS and existing package,
+use the trusted manager/package installer (never `site-file` to bypass a
+sensitive-PHP guard), keep `modxmcp.external_authorization_required=0`, and
+run read-only health, capability, and token checks. The `MODXMCP_CAS_V2_TEST_ENABLE`
+HTTP pilot environment switch is deliberately absent from the transport and
+requires independent server-operator provisioning. Runtime site-restricted
+Controller-issued permits and private nonce directories remain prerequisites.

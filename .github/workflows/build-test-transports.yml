@@ -14,6 +14,11 @@ on:
       - '_build/platform/modx2/overlay/_build/install.transport.php'
       - '_build/platform/modx2/overlay/_build/smoke.endpoint.php'
       - '_build/test.secure-cas-transport-settings.py'
+      - '_build/prepare-release.py'
+      - '_build/build.config.php'
+      - '_build/platform/modx2/overlay/_build/build.config.php'
+      - 'tests/ci-pilot-transport-upgrade.php'
+      - '_build/test.pilot-upgrade-preparation.py'
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/protected-api.php'
       - 'tests/test-protected-http-v2.php'
@@ -222,6 +227,40 @@ jobs:
             BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-http-v2.php exercise
           fi
           echo "TEST_TRANSPORT_INSTALL_SMOKE_OK $EXPECTED_SIGNATURE"
+      - name: Verify separate CAS pilot upgrade on disposable 1.2.5 installation
+        if: matrix.php_version == '8.2'
+        env:
+          BUILD_PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php tests/ci-pilot-transport-upgrade.php before
+          python3 _build/prepare-release.py --platform '${{ matrix.platform }}' \
+            --pilot-test-upgrade --output "$RUNNER_TEMP/modxmcp-cas-pilot-stage"
+          pilot_signature='${{ matrix.platform }}mcp-1.2.6-dev'
+          grep -Fq "define('PKG_VERSION', '1.2.6');" \
+            "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/build.config.php"
+          grep -Fq "define('PKG_RELEASE', 'dev');" \
+            "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/build.config.php"
+          php "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/build.transport.php"
+          pilot_zip="$RUNNER_TEMP/modx-site/core/packages/$pilot_signature.transport.zip"
+          test -s "$pilot_zip"
+          unzip -t "$pilot_zip" | tail -3
+          php "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/install.transport.php" \
+              --signature="$pilot_signature"
+          php tests/ci-pilot-transport-upgrade.php after
+          mkdir -p "$RUNNER_TEMP/cas-pilot-artifact"
+          cp "$pilot_zip" "$RUNNER_TEMP/cas-pilot-artifact/"
+          sha256sum "$RUNNER_TEMP/cas-pilot-artifact/"*.zip
+          echo "CAS_PILOT_REAL_UPGRADE_VERIFIED ${{ matrix.platform }}"
+      - uses: actions/upload-artifact@v4
+        if: matrix.php_version == '8.2'
+        with:
+          name: ${{ matrix.platform }}mcp-1.2.6-dev-php82-TEST-ONLY
+          path: ${{ runner.temp }}/cas-pilot-artifact/*.zip
+          if-no-files-found: error
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.signature }}-php${{ matrix.php_version }}-test-only
