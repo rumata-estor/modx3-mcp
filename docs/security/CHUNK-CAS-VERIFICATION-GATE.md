@@ -37,15 +37,15 @@ Sources: `core/components/modxmcp/src/Tools/ElementUpdateTool.php`, `ElementMuta
 
 ## November 5, 2026: transport preparation (not deployed)
 
-The existing MODX 2/3 transport setting definitions now provision six
-**default-off** values needed by the protected HTTP bridge: external
-authorization required (default `0`), permit audience, test site ID, contour,
-private signing-key path, and nonce directory (the latter five default to
-empty strings). These are ordinary system-settings **rows in MODX's existing
+The existing MODX 2/3 transport setting definitions now provision seven
+**safe-initial** values needed by the protected HTTP bridge: external
+authorization required (default `0`), persisted site revision (default `0`),
+permit audience, test site ID, contour, private signing-key path, and nonce
+directory (the latter five default to empty strings). These are ordinary system-settings **rows in MODX's existing
 settings table; no new tables are created**. Transport upgrades use
 `xPDOTransport::UPDATE_OBJECT => false` and preserve administrator-edited
-settings. CI tests assert a total of 22 package settings, including explicit
-fail-closed defaults for the new six settings, on MODX 2 and MODX 3.
+settings. CI tests assert a total of 23 package settings, including explicit
+fail-closed defaults for the new seven settings, on MODX 2 and MODX 3.
 
 This does not enable signed writes, install the package on the two live test
 sites, grant permission to replace sensitive PHP files through Web Bridge, or

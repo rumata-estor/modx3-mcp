@@ -17,6 +17,7 @@ $defs = array(
     array('modxmcp.disabled_groups', 'versionx,virtualpage,minishop2,migx,access,property_sets,contexts,package_management,namespaces,lexicon', 'textfield', 'modxmcp:main'),
     array('modxmcp.allow_run_processor', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.external_authorization_required', 0, 'combo-boolean', 'modxmcp:security'),
+    array('modxmcp.site_revision', 0, 'textfield', 'modxmcp:security'),
     array('modxmcp.permit_audience', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.permit_site_id', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.permit_contour', '', 'textfield', 'modxmcp:security'),

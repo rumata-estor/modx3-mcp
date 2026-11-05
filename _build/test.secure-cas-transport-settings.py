@@ -10,6 +10,7 @@ import re
 root=Path(__file__).resolve().parents[1]
 pairs={
     'modxmcp.external_authorization_required':('0','combo-boolean'),
+    'modxmcp.site_revision':('0','textfield'),
     'modxmcp.permit_audience':('', 'textfield'),
     'modxmcp.permit_site_id':('', 'textfield'),
     'modxmcp.permit_contour':('', 'textfield'),
@@ -36,9 +37,9 @@ for path in files:
             assert "'', 'textfield'" in line,(path,key)
     # No accidental duplicate or missing keys for the complete transport
     if path.name=='transport.settings.php':
-        assert src.count("    array('modxmcp.")==22
+        assert src.count("    array('modxmcp.")==23
     else:
-        assert len(re.findall(r"^    'modxmcp\.[a-z_]+\s*'\s*=>",src,re.M))==22,path
+        assert len(re.findall(r"^    'modxmcp\.[a-z_]+\s*'\s*=>",src,re.M))==23,path
 
 builder=(root/'_build/build.transport.php').read_text()
 assert 'xPDOTransport::UPDATE_OBJECT => false' in builder, 'package upgrades must preserve administrator settings'
@@ -48,15 +49,15 @@ for p in (
     root/'_build/platform/modx2/overlay/_build/smoke.endpoint.php',
 ):
     s=p.read_text()
-    assert 'count($settings) !== 22' in s
-    assert 'count($settings) > 22' in s
-    assert 'count($restore) > 22' in s
+    assert 'count($settings) !== 23' in s
+    assert 'count($settings) > 23' in s
+    assert 'count($restore) > 23' in s
 for p in (
     root/'_build/install.transport.php',
     root/'_build/platform/modx2/overlay/_build/install.transport.php',
 ):
     s=p.read_text()
-    assert ('$expectedSettings = 22' in s or '$countSettings===22' in s),p
+    assert ('$expectedSettings = 23' in s or '$countSettings===23' in s),p
 for p in (
     root/'core/components/modxmcp/endpoint/chunk-cas-processor-v2.php',
     root/'tests/ci-protected-cas-processor-v2.php',

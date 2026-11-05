@@ -360,6 +360,7 @@ $settings = array(
     ),
     'modxmcp.allow_run_processor' => array(0, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.external_authorization_required' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.site_revision' => array(0, 'textfield', 'modxmcp:security'),
     'modxmcp.permit_audience' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.permit_site_id' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.permit_contour' => array('', 'textfield', 'modxmcp:security'),
