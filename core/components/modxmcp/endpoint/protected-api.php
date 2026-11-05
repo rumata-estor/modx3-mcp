@@ -101,11 +101,24 @@ function modxmcpVerifyProtectedHttpRequest($modx, $rawBody, $action)
     );
 }
 
-/** Source pilot only. No environment flag is set by the MODX package. */
+/**
+ * Test-site-only signed CAS v2. Activation requires the existing protected
+ * MODX setting and a valid private-key/nonce scope, not a PHP-FPM env var.
+ */
 function modxmcpExecuteSignedChunkCasV2($modx, $mcp, $rawBody)
 {
-    if (getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only') {
-        throw new RuntimeException('protected CAS v2 HTTP gate not enabled');
+    // A stale cache may delay activation, but must never permit a write.
+    if ((string)$modx->getOption(
+        'modxmcp.external_authorization_required', null, '0'
+    ) !== '1') {
+        throw new RuntimeException('protected CAS v2 HTTP mode not active');
+    }
+    $configuredSite=(string)$modx->getOption('modxmcp.permit_site_id',null,'');
+    $configuredContour=(string)$modx->getOption('modxmcp.permit_contour',null,'');
+    if ($configuredContour !== 'test' || !in_array($configuredSite,array(
+            'modx2-alex-palochkin','modx3-alex-palochkin'
+        ),true)) {
+        throw new RuntimeException('protected CAS v2 restricted to pilot test sites');
     }
     if (!is_object($mcp) || !method_exists($mcp, 'processProtectedChunkCasV2')) {
         throw new RuntimeException('protected CAS processor bridge unavailable');

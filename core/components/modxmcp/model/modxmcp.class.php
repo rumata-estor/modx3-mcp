@@ -177,16 +177,15 @@ class modxMCP {
 
     /**
      * Strict test-only bridge to the existing MODX processor CAS primitive.
-     * This path is unreachable from the package unless the server operator
-     * explicitly sets the separate environment gate. Do not allow normal
-     * processRequest() to bypass the atomic precondition interlock.
+     * The persisted external-authorization setting, exact test-site scope,
+     * private key and signed one-use permit are mandatory; no PHP-FPM
+     * environment switch is needed on shared hosting. No legacy fallback.
      */
     public function processProtectedChunkCasV2(
         $permit, $rawBody, array $trusted, $key,
         ModxMcpPermitNonceLedger $ledger
     ) {
-        if (getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only' ||
-            !self::isExternalAuthorizationRequired($this->modx) ||
+        if (!self::isExternalAuthorizationRequired($this->modx) ||
             !isset($trusted['contour'],$trusted['site_id']) ||
             $trusted['contour'] !== 'test' ||
             !in_array($trusted['site_id'], array(

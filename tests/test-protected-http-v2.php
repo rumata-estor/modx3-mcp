@@ -46,6 +46,7 @@ class MockMcpV2Writer {
     }
 }
 $settings=array(
+    'modxmcp.external_authorization_required'=>'1',
     'modxmcp.permit_audience'=>'test-v2',
     'modxmcp.permit_site_id'=>$site,
     'modxmcp.permit_contour'=>'test',
@@ -59,18 +60,18 @@ function failClosedV2($call,$message) {
     catch (Exception $e) { return; }
     throw new RuntimeException('v2 protected HTTP admitted '.$message);
 }
-$previous=getenv('MODXMCP_CAS_V2_TEST_ENABLE');
 try {
     $_SERVER['HTTP_X_SITEAGENT_PERMIT']=base64_encode(json_encode($permit));
-    putenv('MODXMCP_CAS_V2_TEST_ENABLE');
-    failClosedV2(function() use($modx,$writer,$raw) {
-        modxmcpExecuteSignedChunkCasV2($modx,$writer,$raw);
-    },'request without test-only server gate');
+    $disabledSite=new MockModxV2Config(array_merge($settings,array(
+        'modxmcp.external_authorization_required'=>'0',
+    )));
+    failClosedV2(function() use($disabledSite,$writer,$raw) {
+        modxmcpExecuteSignedChunkCasV2($disabledSite,$writer,$raw);
+    },'request without active external authorization');
     if ($writer->calls!==0 || count(glob($dir.'/used/*.used'))!==0) {
         throw new RuntimeException('disabled v2 HTTP bridge reached write-point');
     }
 
-    putenv('MODXMCP_CAS_V2_TEST_ENABLE=signed-pilot-only');
     $wrongVersion=$permit;
     $wrongVersion['claims']['version']='1';
     $_SERVER['HTTP_X_SITEAGENT_PERMIT']=base64_encode(json_encode($wrongVersion));
@@ -103,11 +104,6 @@ try {
     },'replayed permit');
     echo "CAS_V2_HTTP_BRIDGE_TEST_ONLY_OK\n";
 } finally {
-    if ($previous===false) {
-        putenv('MODXMCP_CAS_V2_TEST_ENABLE');
-    } else {
-        putenv('MODXMCP_CAS_V2_TEST_ENABLE='.$previous);
-    }
     unset($_SERVER['HTTP_X_SITEAGENT_PERMIT']);
     foreach (glob($dir.'/used/*.used') as $path) { unlink($path); }
     unlink($dir.'/signing-key');

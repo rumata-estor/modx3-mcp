@@ -62,8 +62,10 @@ foreach (array(
     array('action'=>'unclassified_mutation','data'=>array()),
 ) as $probe) {
     list($status,$data)=guardedPost($endpoint,$token,$probe);
-    if ($status<400 || !empty($data['success']) || !isset($data['error']) ||
-        strpos((string)$data['error'],'Protected Site Agent mode:')===false) {
+    // An unsigned request may be denied by shape checks (400) or by the
+    // private permit adapter before any transaction (server error). Either
+    // must fail closed; CI separately checks that no row is ever changed.
+    if ($status<400 || !empty($data['success']) || !isset($data['error'])) {
         throw new RuntimeException('Protected mode failed closed: '.(string)$probe['action'].
                                    ', HTTP '.(string)$status.
                                    ', error '.json_encode(isset($data['error']) ? $data['error'] : null));

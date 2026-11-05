@@ -195,32 +195,17 @@ try {
             // Deny unclassified writes before consuming any one-use nonce.
             // The exact scope is checked again inside the model dispatcher.
             modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data);
-            // The new signed CAS route has a separate exact environment
-            // interlock and a hardcoded two-site test scope. Without it the
-            // original protected deny-only path remains unchanged.
-            if (getenv('MODXMCP_CAS_V2_TEST_ENABLE') === 'signed-pilot-only') {
-                require_once $corePath . 'endpoint/protected-api.php';
-                $mcp = new modxMCP($modx);
-                $result = modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput);
-                $caps = (string)$modx->getOption('modxmcp.disabled_groups', null, '');
-                echo json_encode(array(
-                    'success'=>true,'data'=>$result,'caps'=>$caps,
-                ), JSON_UNESCAPED_UNICODE);
-                exit;
-            }
-            // Until this test-only route is explicitly enabled, refuse
-            // BEFORE reading keys or consuming any single-use permit.
-            modxMCP::assertExternalAtomicPreconditionReady();
-            try {
-                require_once $corePath . 'endpoint/protected-api.php';
-                $trustedPermitDecision = modxmcpVerifyProtectedHttpRequest(
-                    $modx, $rawInput, $action
-                );
-            } catch (Throwable $permitError) {
-                throw new ModxMCPClientException(
-                    'Protected Site Agent mode: missing or invalid trusted operation permit.'
-                );
-            }
+            // The protected setting is off by default. Once explicitly
+            // enabled, only exact chunk CAS v2 with a signed one-use permit
+            // is eligible on two approved test sites. No legacy fallback.
+            require_once $corePath . 'endpoint/protected-api.php';
+            $mcp = new modxMCP($modx);
+            $result = modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput);
+            $caps = (string)$modx->getOption('modxmcp.disabled_groups', null, '');
+            echo json_encode(array(
+                'success'=>true,'data'=>$result,'caps'=>$caps,
+            ), JSON_UNESCAPED_UNICODE);
+            exit;
         }
     }
 

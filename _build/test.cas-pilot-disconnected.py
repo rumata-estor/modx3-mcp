@@ -9,7 +9,8 @@ for source in (api,model,legacy):
     body=source.read_text(encoding='utf-8')
     assert 'chunk-cas-pilot' not in body, f'unsafe CAS pilot wired into {source}'
     assert 'ModxMcpChunkCasPilot' not in body, f'unsafe CAS pilot dispatch: {source}'
-    assert 'assertExternalAtomicPreconditionReady()' in body, f'CAS safety interlock absent: {source}'
+    if source in (model,legacy):
+        assert 'assertExternalAtomicPreconditionReady()' in body, f'CAS safety interlock absent: {source}'
 for source in (model,legacy):
     body=source.read_text(encoding='utf-8')
     start=body.index('public static function assertExternalAtomicPreconditionReady()')
@@ -18,7 +19,7 @@ for source in (model,legacy):
     assert 'throw new ModxMCPClientException' in gate, f'CAS write interlock softened: {source}'
     assert 'if (' not in gate and 'getOption(' not in gate, f'conditional CAS interlock: {source}'
     bridge=body[end:body.index('public function processRequest(',end)]
-    assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only'" in bridge
+    assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE')" not in bridge
     assert 'isExternalAuthorizationRequired($this->modx)' in bridge
     assert 'resolveServiceUser()' in bridge
     assert 'ModxMcpChunkCasProcessorV2::executeUnconnected' in bridge
@@ -34,12 +35,17 @@ for source in (processor,root/'tests/ci-protected-cas-processor-v2.php',
     assert 'ModxMcpPermitNonceLedgerDb' not in body
 assert 'ModxMcpPermitNonceLedger $ledger' in processor.read_text(encoding='utf-8')
 apiBody=api.read_text(encoding='utf-8')
-assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE') === 'signed-pilot-only'" in apiBody
+assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE')" not in apiBody
+assert 'modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data)' in apiBody
 assert 'modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput)' in apiBody
-assert 'modxMCP::assertExternalAtomicPreconditionReady();' in apiBody
+assert 'modxMCP::assertExternalAtomicPreconditionReady();' not in apiBody
+assert 'if (modxMCP::isExternalAuthorizationRequired($modx))' in apiBody
 assert 'ModxMcpChunkCasProcessorV2' not in apiBody
 http=(root/'core/components/modxmcp/endpoint/protected-api.php').read_text(encoding='utf-8')
-assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE') !== 'signed-pilot-only'" in http
+assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE')" not in http
+assert "'modxmcp.external_authorization_required', null, '0'" in http
+assert "'modxmcp.permit_site_id'" in http
+assert "'modxmcp.permit_contour'" in http
 assert "$trusted['contour'] !== 'test'" in http
 assert 'modxmcpProtectedRuntimeConfig($modx)' in http
 print('CAS_V2_HTTP_TEST_GATE_FAIL_CLOSED_OK')

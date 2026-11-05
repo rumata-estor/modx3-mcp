@@ -1,6 +1,6 @@
 # Nonstatic chunk CAS: go/no-go for MODX 2 and MODX 3
 
-**Status: NO-GO for live mutations.** The source now contains a narrowly scoped HTTP CAS v2 pilot route, but it is unavailable unless a server operator explicitly sets `MODXMCP_CAS_V2_TEST_ENABLE=signed-pilot-only`. The default HTTP behavior remains deny-only for protected writes. No deployment or test-site changes are approved by this source work.
+**Status: NO-GO for live mutations.** The source contains a narrowly scoped HTTP CAS v2 pilot route for exactly two test site IDs. It cannot run unless the administrator explicitly enables `modxmcp.external_authorization_required=1` and provisions the correct site identity, private signing key, private nonce store, and signed one-use permit. The installed default remains `0` (legacy mode); on protected sites unknown/unsigned mutations fail closed. No deployment or test-site changes are approved by source work alone.
 
 ## What is actually proven
 
@@ -79,7 +79,9 @@ separate, explicitly marked test-only artifacts. This is an installation
 Before real test-site installation: back up the CMS and existing package,
 use the trusted manager/package installer (never `site-file` to bypass a
 sensitive-PHP guard), keep `modxmcp.external_authorization_required=0`, and
-run read-only health, capability, and token checks. The `MODXMCP_CAS_V2_TEST_ENABLE`
-HTTP pilot environment switch is deliberately absent from the transport and
-requires independent server-operator provisioning. Runtime site-restricted
-Controller-issued permits and private nonce directories remain prerequisites.
+run read-only health, capability, and token checks. The authenticated
+HTTP pilot now uses the persisted `modxmcp.external_authorization_required`
+setting instead of a PHP-FPM environment flag. The transport keeps it `0`
+by default. The site must separately provision its private key and nonce
+ledger, test-specific site identity and Controller-issued signed permits
+before an administrator can safely enable it.

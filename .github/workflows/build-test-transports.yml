@@ -215,7 +215,7 @@ jobs:
           # PHP 7.4 has no fsync: that matrix must keep its denied write gate.
           if [ '${{ matrix.php_version }}' != '7.4' ]; then
             BUILD_PLATFORM='${{ matrix.platform }}' php tests/ci-protected-http-v2.php prepare
-            MODXMCP_CAS_V2_TEST_ENABLE=signed-pilot-only php -S 127.0.0.1:8081 \
+            php -S 127.0.0.1:8081 \
               -t "$RUNNER_TEMP/modx-site" > "$RUNNER_TEMP/cas-v2-http.log" 2>&1 &
             cas_pid=$!
             for i in {1..20}; do
