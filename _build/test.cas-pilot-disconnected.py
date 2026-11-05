@@ -14,11 +14,15 @@ for source in (api,model,legacy):
 for source in (model,legacy):
     body=source.read_text(encoding='utf-8')
     start=body.index('public static function assertExternalAtomicPreconditionReady()')
-    end=body.index('public function processProtectedChunkCasV2(',start)
-    gate=body[start:end]
+    # A new reviewed CAS processor precedes the unchanged v2 processor.
+    # Check ONLY the unconditional old static guard, not its new neighbor.
+    reviewed=body.index('public function processProtectedReviewedCasV1(',start)
+    end=body.index('public function processProtectedChunkCasV2(',reviewed)
+    gate=body[start:reviewed]
     assert 'throw new ModxMCPClientException' in gate, f'CAS write interlock softened: {source}'
     assert 'if (' not in gate and 'getOption(' not in gate, f'conditional CAS interlock: {source}'
     bridge=body[end:body.index('public function processRequest(',end)]
+    assert 'processProtectedReviewedCasV1(' in body[reviewed:end]
     assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE')" not in bridge
     assert 'isExternalAuthorizationRequired($this->modx)' in bridge
     assert 'resolveServiceUser()' in bridge
@@ -36,7 +40,9 @@ for source in (processor,root/'tests/ci-protected-cas-processor-v2.php',
 assert 'ModxMcpPermitNonceLedger $ledger' in processor.read_text(encoding='utf-8')
 apiBody=api.read_text(encoding='utf-8')
 assert "getenv('MODXMCP_CAS_V2_TEST_ENABLE')" not in apiBody
-assert 'modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data)' in apiBody
+assert any(call in apiBody for call in (
+    'modxMCP::assertExternalAuthorizedWriteShape($action, $type, $data)',
+    'modxMCP::assertExternalAuthorizedWriteShape($action,$type,$data)'))
 assert 'modxmcpExecuteSignedChunkCasV2($modx,$mcp,$rawInput)' in apiBody
 assert 'modxMCP::assertExternalAtomicPreconditionReady();' not in apiBody
 assert 'if (modxMCP::isExternalAuthorizationRequired($modx))' in apiBody
