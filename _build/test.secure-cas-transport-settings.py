@@ -49,9 +49,12 @@ for p in (
     root/'_build/platform/modx2/overlay/_build/smoke.endpoint.php',
 ):
     s=p.read_text()
-    assert 'count($settings) !== 23' in s
-    assert 'count($settings) > 23' in s
-    assert 'count($restore) > 23' in s
+    # site_revision is an installed setting, but deliberately excluded from
+    # configuration snapshots because the CAS transaction increments it.
+    assert 'count($settings) !== 22' in s
+    assert 'count($settings) > 22' in s
+    assert 'count($restore) > 22' in s
+    assert "unset($settings[$runtimeKey])" in s
 for p in (
     root/'_build/install.transport.php',
     root/'_build/platform/modx2/overlay/_build/install.transport.php',

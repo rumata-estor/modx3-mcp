@@ -44,8 +44,10 @@ permit audience, test site ID, contour, private signing-key path, and nonce
 directory (the latter five default to empty strings). These are ordinary system-settings **rows in MODX's existing
 settings table; no new tables are created**. Transport upgrades use
 `xPDOTransport::UPDATE_OBJECT => false` and preserve administrator-edited
-settings. CI tests assert a total of 23 package settings, including explicit
-fail-closed defaults for the new seven settings, on MODX 2 and MODX 3.
+settings. CI tests assert 23 settings installed on MODX 2 and MODX 3. Configuration
+snapshot tests deliberately exclude the monotonic `site_revision`, and
+therefore check 22 settings plus the revision separately. No extra CMS
+tables are created.
 
 This does not enable signed writes, install the package on the two live test
 sites, grant permission to replace sensitive PHP files through Web Bridge, or
