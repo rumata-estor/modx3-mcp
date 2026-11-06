@@ -105,7 +105,9 @@ $http = function ($action, $kind, array $data) use ($endpoint, $token) {
 // type-changed properties break old consumers.
 $shape = function ($value) use (&$shape) {
     if (is_array($value)) {
-        $assoc = array_keys($value) !== range(0,count($value)-1);
+        // PHP has one array type for both JSON [] and {}. Treat an empty
+        // legacy response as an empty list, not an object with missing keys.
+        $assoc = !empty($value) && array_keys($value) !== range(0,count($value)-1);
         if (!$assoc) {
             return array('list', $value ? $shape(reset($value)) : null);
         }
