@@ -11,8 +11,11 @@ root = Path(__file__).resolve().parents[1]
 ap = argparse.ArgumentParser()
 ap.add_argument('--platform', choices=('modx2','modx3'), required=True)
 ap.add_argument('--output', required=True)
-ap.add_argument('--pilot-test-upgrade', action='store_true',
-                help='make disposable, distinct dev transport over installed 1.2.5-pl')
+upgrade = ap.add_mutually_exclusive_group()
+upgrade.add_argument('--pilot-test-upgrade', action='store_true',
+                     help='make disposable 1.2.6-dev transport over 1.2.5-pl')
+upgrade.add_argument('--release-126-pl', action='store_true',
+                     help='stage 1.2.6-pl release package for tested MODX 2/3')
 args = ap.parse_args()
 out = Path(args.output).expanduser().resolve()
 if out == root or root in out.parents:
@@ -67,7 +70,7 @@ if platform_root.exists():
 # 1.2.5-pl. Do not alter source release metadata or public transport defaults.
 # The dev package overlays the already installed namespace in place, just as a
 # proper version upgrade would, without uninstalling or losing site token data.
-if args.pilot_test_upgrade:
+if args.pilot_test_upgrade or args.release_126_pl:
     build_config = out / '_build/build.config.php'
     content = build_config.read_text(encoding='utf-8')
     old_v = "define('PKG_VERSION', '1.2.5');"
@@ -75,12 +78,15 @@ if args.pilot_test_upgrade:
     if content.count(old_v) != 1 or content.count(old_r) != 1:
         raise SystemExit('refuse pilot package: unexpected public version')
     content = content.replace(old_v, "define('PKG_VERSION', '1.2.6');")
-    content = content.replace(old_r, "define('PKG_RELEASE', 'dev');")
+    content = content.replace(old_r,
+        "define('PKG_RELEASE', 'dev');" if args.pilot_test_upgrade
+        else "define('PKG_RELEASE', 'pl');")
     build_config.write_text(content, encoding='utf-8')
-    (out / 'PILOT_TEST_PACKAGE_DO_NOT_PUBLISH').write_text(
-        'Temporary CAS v2 integration pilot, no public release.\n',
-        encoding='utf-8'
-    )
+    if args.pilot_test_upgrade:
+        (out / 'PILOT_TEST_PACKAGE_DO_NOT_PUBLISH').write_text(
+            'Temporary CAS v2 integration pilot, no public release.\n',
+            encoding='utf-8'
+        )
 
 # Keep the staged connector version aligned with the selected platform build.
 # This deliberately derives the version from build.config.php so release staging

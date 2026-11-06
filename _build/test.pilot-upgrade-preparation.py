@@ -17,6 +17,7 @@ with TemporaryDirectory(prefix='modxmcp-pilot-upgrade-') as temp:
         for option,expected_v,expected_release in (
             ([], '1.2.5','pl'),
             (['--pilot-test-upgrade'],'1.2.6','dev'),
+            (['--release-126-pl'],'1.2.6','pl'),
         ):
             stage=Path(temp)/(platform+'-'+expected_release)
             subprocess.run([sys.executable,str(root/'_build/prepare-release.py'),

@@ -20,6 +20,7 @@ on:
       - 'tests/ci-pilot-transport-upgrade.php'
       - 'tests/ci-legacy-client-http-compat.php'
       - 'tests/ci-historic-upgrade-compat.php'
+      - 'tests/ci-release-126-pl.php'
       - '_build/test.pilot-upgrade-preparation.py'
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/protected-api.php'
@@ -295,12 +296,42 @@ jobs:
           php "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/install.transport.php" \
               --signature="$pilot_signature"
           php tests/ci-pilot-transport-upgrade.php after
+          if [ '${{ matrix.php_version }}' = '8.2' ]; then
+            # The final 1.2.6-pl package must be the exact build tested here.
+            # Check a second in-place upgrade and old API calls on the final
+            # package. Never publish the earlier dev transport as stable.
+            php tests/ci-release-126-pl.php before
+            python3 _build/prepare-release.py --platform '${{ matrix.platform }}' \
+              --release-126-pl --output "$RUNNER_TEMP/modxmcp-126-pl-stage"
+            stable_signature='${{ matrix.platform }}mcp-1.2.6-pl'
+            grep -Fq "define('PKG_RELEASE', 'pl');" \
+              "$RUNNER_TEMP/modxmcp-126-pl-stage/_build/build.config.php"
+            test ! -e "$RUNNER_TEMP/modxmcp-126-pl-stage/PILOT_TEST_PACKAGE_DO_NOT_PUBLISH"
+            php "$RUNNER_TEMP/modxmcp-126-pl-stage/_build/build.transport.php"
+            stable_zip="$RUNNER_TEMP/modx-site/core/packages/$stable_signature.transport.zip"
+            test -s "$stable_zip"
+            unzip -t "$stable_zip" | tail -2
+            php "$RUNNER_TEMP/modxmcp-126-pl-stage/_build/install.transport.php" \
+              --signature="$stable_signature"
+            php tests/ci-release-126-pl.php after
+            mkdir -p "$RUNNER_TEMP/stable-artifact"
+            cp "$stable_zip" "$RUNNER_TEMP/stable-artifact/"
+            sha256sum "$RUNNER_TEMP/stable-artifact/"*.zip
+            echo "MODXMCP_126_PL_FULL_UPGRADE_REGRESSION_OK ${{ matrix.platform }}"
+          fi
           php tests/ci-legacy-client-http-compat.php after
           echo "LEGACY_CLIENT_REAL_HTTP_UPGRADE_REGRESSION_OK ${{ matrix.platform }}"
           mkdir -p "$RUNNER_TEMP/cas-pilot-artifact"
           cp "$pilot_zip" "$RUNNER_TEMP/cas-pilot-artifact/"
           sha256sum "$RUNNER_TEMP/cas-pilot-artifact/"*.zip
           echo "CAS_PILOT_REAL_UPGRADE_VERIFIED ${{ matrix.platform }}"
+      - uses: actions/upload-artifact@v4
+        if: matrix.php_version == '8.2'
+        with:
+          name: ${{ matrix.platform }}mcp-1.2.6-pl-VERIFIED
+          path: ${{ runner.temp }}/stable-artifact/*.zip
+          if-no-files-found: error
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         if: matrix.php_version == '8.2'
         with:
