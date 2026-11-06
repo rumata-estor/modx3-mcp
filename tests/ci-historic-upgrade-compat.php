@@ -58,9 +58,11 @@ if ($stage==='baseline') {
         if (!$setting->save()) { throw new RuntimeException('Cannot edit old setting'); }
         $values[$key]=$value;
     }
-    if (!$modx->getCacheManager()->refresh()) {
-        throw new RuntimeException('Historical settings cache refresh failed');
-    }
+    // MODX 2/3 cache refresh may return NULL on success in older releases;
+    // do not mistake an absent boolean for a failed installation.
+    $cache=$modx->getCacheManager();
+    if (!$cache) { throw new RuntimeException('Historical cache manager missing'); }
+    $cache->refresh();
     $hashes=array();
     foreach ($values as $key=>$value) { $hashes[$key]=hash('sha256',$value); }
     $record=array('version'=>$expectedVersion[$stage],'settings_sha256'=>$hashes);
