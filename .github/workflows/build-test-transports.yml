@@ -208,7 +208,9 @@ jobs:
           # preserve the production component's default disabled setting.
           # This plain-HTTP change affects ONLY a throwaway localhost CI
           # instance. It is not a runtime or live-site installation default.
-          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $stmt=$db->prepare("UPDATE modx_system_settings SET value=? WHERE `key`=?"); foreach (["modxmcp.enabled"=>"1","modxmcp.require_https"=>"0"] as $key=>$value) { $stmt->execute([$value,$key]); if ($stmt->rowCount()!==1) exit(3); }'
+          # A user-customized old setting may ALREADY have the required
+          # CI value; MySQL correctly reports zero affected rows in that case.
+          php -r '$db=new PDO("mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4","modx_ci","ci-throwaway-only-user"); $stmt=$db->prepare("UPDATE modx_system_settings SET value=? WHERE `key`=?"); $check=$db->prepare("SELECT value FROM modx_system_settings WHERE `key`=?"); foreach (["modxmcp.enabled"=>"1","modxmcp.require_https"=>"0"] as $key=>$value) { $stmt->execute([$value,$key]); $check->execute([$key]); if ((string)$check->fetchColumn()!==$value) exit(3); }'
           cat > "$RUNNER_TEMP/refresh-modx-cache.php" <<'PHP'
           <?php
           require getenv('MODX_CONFIG_CORE');
