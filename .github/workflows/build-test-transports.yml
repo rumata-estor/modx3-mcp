@@ -18,6 +18,7 @@ on:
       - '_build/build.config.php'
       - '_build/platform/modx2/overlay/_build/build.config.php'
       - 'tests/ci-pilot-transport-upgrade.php'
+      - 'tests/ci-legacy-client-http-compat.php'
       - '_build/test.pilot-upgrade-preparation.py'
       - 'core/components/modxmcp/endpoint/api.common.php'
       - 'core/components/modxmcp/endpoint/protected-api.php'
@@ -236,6 +237,21 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          # Exercise the OLD client HTTP wire format against 1.2.5, then
+          # against 1.2.6-dev on the SAME disposable MODX database.
+          export MODXMCP_LEGACY_HTTP_URL='http://127.0.0.1:8084/assets/components/modxmcp/api.php'
+          php tests/ci-legacy-client-http-compat.php prepare
+          php -S 127.0.0.1:8084 -t "$RUNNER_TEMP/modx-site" \
+            > "$RUNNER_TEMP/legacy-compat-http.log" 2>&1 &
+          legacy_pid=$!
+          trap 'kill "$legacy_pid" 2>/dev/null || true' EXIT
+          for i in {1..25}; do
+            if curl --silent --max-time 2 --fail \
+              'http://127.0.0.1:8084/assets/components/modxmcp/api.php' \
+              > /dev/null; then break; fi
+            sleep 0.25
+          done
+          php tests/ci-legacy-client-http-compat.php before
           php tests/ci-pilot-transport-upgrade.php before
           python3 _build/prepare-release.py --platform '${{ matrix.platform }}' \
             --pilot-test-upgrade --output "$RUNNER_TEMP/modxmcp-cas-pilot-stage"
@@ -251,6 +267,8 @@ jobs:
           php "$RUNNER_TEMP/modxmcp-cas-pilot-stage/_build/install.transport.php" \
               --signature="$pilot_signature"
           php tests/ci-pilot-transport-upgrade.php after
+          php tests/ci-legacy-client-http-compat.php after
+          echo "LEGACY_CLIENT_REAL_HTTP_UPGRADE_REGRESSION_OK ${{ matrix.platform }}"
           mkdir -p "$RUNNER_TEMP/cas-pilot-artifact"
           cp "$pilot_zip" "$RUNNER_TEMP/cas-pilot-artifact/"
           sha256sum "$RUNNER_TEMP/cas-pilot-artifact/"*.zip
