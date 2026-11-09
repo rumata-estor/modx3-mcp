@@ -96,13 +96,7 @@ class ResourceTvUpdateTool implements ToolInterface
         $modx->beginTransaction();
         try {
             foreach ($data['tvs'] as $name => $value) {
-                $written = false;
-                if (isset($tvObjects[$name]) && method_exists($tvObjects[$name], 'setValue')) {
-                    $tvObjects[$name]->setValue($resourceId, $value);
-                    $written = (bool)$tvObjects[$name]->save();
-                } else {
-                    $written = ($resource->setTVValue($name, $value) !== false);
-                }
+                $written = ($resource->setTVValue($name, $value) !== false);
                 if (!$written) {
                     throw new \ModxMCPClientException('Failed to write TV: ' . $name);
                 }

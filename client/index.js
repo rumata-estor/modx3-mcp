@@ -2136,7 +2136,7 @@ const toolDefinitions = [
   },
   {
     name: "modx_run_processor",
-    description: "Run ANY MODX processor directly (escape hatch). Requires the modxmcp.allow_run_processor setting to be enabled. High privilege — prefer a dedicated tool when one exists.",
+    description: "Run a MODX processor directly (escape hatch). Requires modxmcp.allow_run_processor. High privilege; dedicated tools are preferred. Server-side guards still block changes to modxmcp.* through setting and context-update processors.",
     inputSchema: {
       type: "object",
       properties: {

@@ -2,6 +2,12 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- Log-tail reads now return one explicitly marked, JSON-safe suffix of up to 8 KiB for an oversized error-log line, omit truncated audit JSON, and report `result_complete`, `scanned_bytes`, and `truncated_lines` when truncation, an I/O failure, or the 16 MiB scan window makes a result incomplete.
+- Resource TV CAS still compares raw values, while writes use the established `modResource::setTVValue()` contract on MODX 2 and 3.
+- `run_processor` blocks `modxmcp.*` changes through system, context, user, and user-group setting processors across legacy paths, MODX 3 class names, grid payloads, and processor-path overrides.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
