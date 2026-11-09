@@ -68,17 +68,10 @@ namespace ModxMcp\Tools {
         ? $this->modx->resource->values[$this->name] : $this->loadedValue;
     }
     public function setValue($resourceId, $value) {
-      if ($this->modx) {
-        if ($this->name === $this->modx->resource->failName) { return false; }
-        $this->modx->resource->values[$this->name] = $value;
-      }
-      return true;
+      throw new \RuntimeException('TV writes must use modResource::setTVValue()');
     }
     public function save() {
-      if ($this->modx && $this->name === $this->modx->resource->failName) {
-        return false;
-      }
-      return true;
+      throw new \RuntimeException('TV writes must use modResource::setTVValue()');
     }
   }
   class FakeLink {}

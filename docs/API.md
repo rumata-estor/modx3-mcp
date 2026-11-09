@@ -2029,7 +2029,7 @@ Schema introspection: list an xPDO class's fields (name + php/db type, null, def
 
 ### `modx_read_error_log`
 
-Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100).
+Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100). A line over 512 KiB is returned once as an explicitly marked suffix of up to 8 KiB. The suffix remains valid UTF-8; non-UTF-8 bytes are Base64-encoded and marked accordingly. The response includes `result_complete`, `scanned_bytes`, and `truncated_lines`; `result_complete=false` means that truncation, an I/O failure, or the 16 MiB scan window may have omitted data.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
@@ -2094,7 +2094,7 @@ Refresh the MODX cache. Pass partitions (e.g. ['resource','context_settings']) t
 
 ### `modx_read_audit_log`
 
-Read the modxMCP write-audit trail (newest last). Optionally filter to one action.
+Read the modxMCP write-audit trail (newest last). Optionally filter to one action. Oversized or incomplete JSON entries are omitted rather than returned as malformed data. The response includes `result_complete`, `scanned_bytes`, and `truncated_lines`; `result_complete=false` means the filter result may be incomplete.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
@@ -2103,7 +2103,7 @@ Read the modxMCP write-audit trail (newest last). Optionally filter to one actio
 
 ### `modx_run_processor`
 
-Run ANY MODX processor directly (escape hatch). Requires the modxmcp.allow_run_processor setting to be enabled. High privilege — prefer a dedicated tool when one exists.
+Run a MODX processor directly (escape hatch). Requires the `modxmcp.allow_run_processor` setting to be enabled. High privilege — prefer a dedicated tool when one exists. Server-side guards still block changes to `modxmcp.*` through system, context, user and user-group setting processors, including context-update and grid payloads.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
