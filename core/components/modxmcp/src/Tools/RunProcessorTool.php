@@ -33,9 +33,19 @@ class RunProcessorTool implements ToolInterface
             && is_array($data['properties'])
             ? $data['properties']
             : array();
+
+        $processorsPath = !empty($data['processors_path'])
+            ? (string)$data['processors_path']
+            : '';
+        ProtectedSettingsGuard::assertAllowed(
+            $processor,
+            $properties,
+            $processorsPath
+        );
+
         $options = array();
-        if (!empty($data['processors_path'])) {
-            $options['processors_path'] = (string)$data['processors_path'];
+        if ($processorsPath !== '') {
+            $options['processors_path'] = $processorsPath;
         }
 
         if (

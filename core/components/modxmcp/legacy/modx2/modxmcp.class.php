@@ -270,7 +270,7 @@ class modxMCP {
                 if ($currentResponse->isError()) throw new ModxMCPClientException($this->formatProcessorErrors($currentResponse));
 
                 $currentData = $currentResponse->getObject();
-                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin', 'tv'], true)) {
                     $data['static_file'] = $this->validateStaticFile($data['static_file']);
                 }
                 $updateData = array_merge($currentData, $data);
@@ -293,7 +293,7 @@ class modxMCP {
 
             case 'create_element':
                 $createData = $data;
-                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin', 'tv'], true)) {
                     $createData['static_file'] = $this->validateStaticFile($data['static_file']);
                 }
                 unset($createData['events'], $createData['templates'], $createData['input_properties'], $createData['media_source'], $createData['field_type']);
@@ -1874,12 +1874,13 @@ class modxMCP {
 
     private function readErrorLog($data) {
         $path = rtrim($this->modx->getOption('core_path'), '/') . '/cache/logs/error.log';
-        if (!file_exists($path)) { return array('total' => 0, 'lines' => array(), 'path' => $path); }
-        $lines = file($path, FILE_IGNORE_NEW_LINES);
-        if ($lines === false) { $lines = array(); }
+        if (!file_exists($path)) {
+            return array('total' => 0, 'lines' => array(), 'path' => $path, 'result_complete' => true, 'scanned_bytes' => 0, 'truncated_lines' => 0);
+        }
         $limit = isset($data['limit']) ? max(1, (int) $data['limit']) : 100;
-        $tail = array_slice($lines, -$limit);
-        return array('total' => count($tail), 'lines' => $tail);
+        $metadata = array();
+        $tail = $this->readTailLinesFromFile($path, $limit, null, $metadata);
+        return array_merge(array('total' => count($tail), 'lines' => $tail), $metadata);
     }
 
     private function refreshUris($data) {
@@ -2957,7 +2958,11 @@ class modxMCP {
 
         // context/setting/create identifies the context via `fk` (get/remove/getlist use
         // `context_key`); mirror context_key -> fk so a single param works everywhere.
-        if (in_array($action, array('create_context_setting', 'update_context_setting'), true)) {
+        if (in_array($action, array('create_context_setting', 'update_context_setting', 'delete_context_setting'), true)) {
+            $key = trim(isset($props['key']) ? (string)$props['key'] : '');
+            if ($key !== '' && stripos($key, 'modxmcp.') === 0) {
+                throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+            }
             if (!isset($props['fk']) && isset($props['context_key'])) { $props['fk'] = $props['context_key']; }
             if (!isset($props['namespace'])) { $props['namespace'] = 'core'; }
         }
@@ -2968,6 +2973,12 @@ class modxMCP {
         $response = $this->modx->runProcessor($cfg['processor'], $props);
         if (!$response) { throw new ModxMCPClientException("Context processor not found or returned nothing: {$cfg['processor']}"); }
         if ($response->isError()) { throw new ModxMCPClientException($this->formatProcessorErrors($response)); }
+
+        if (in_array($action, array('create_context_setting', 'update_context_setting', 'delete_context_setting'), true)) {
+            if ($this->modx->getCacheManager()) {
+                $this->modx->getCacheManager()->refresh(array('context_settings' => array()));
+            }
+        }
 
         $this->logAudit($action, 'context', array_intersect_key($props, array_flip(array('key', 'context_key', 'name'))));
 
@@ -3104,7 +3115,7 @@ class modxMCP {
             'snippet' => ['id', 'name', 'description', 'snippet', 'category', 'static', 'static_file', 'source', 'property_preprocess'],
             'template' => ['id', 'templatename', 'description', 'content', 'category', 'static', 'static_file', 'source'],
             'resource' => ['id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'],
-            'tv' => ['id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank'],
+            'tv' => ['id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank', 'static', 'static_file', 'source'],
             'category' => ['id', 'category', 'parent', 'rank'],
             'plugin' => ['id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'],
         ];
@@ -3225,20 +3236,21 @@ class modxMCP {
      */
     private function readAuditLog($data) {
         $path = $this->auditLogPath();
-        if (!file_exists($path)) { return array('total' => 0, 'entries' => array()); }
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if ($lines === false) { $lines = array(); }
-        $filterAction = isset($data['action']) ? (string) $data['action'] : '';
-        $entries = array();
-        foreach ($lines as $line) {
-            $e = json_decode($line, true);
-            if (!is_array($e)) { continue; }
-            if ($filterAction !== '' && (!isset($e['action']) || $e['action'] !== $filterAction)) { continue; }
-            $entries[] = $e;
+        if (!file_exists($path)) {
+            return array('total' => 0, 'entries' => array(), 'result_complete' => true, 'scanned_bytes' => 0, 'truncated_lines' => 0);
         }
+        $filterAction = isset($data['action']) ? (string) $data['action'] : '';
         $limit = isset($data['limit']) ? max(1, (int) $data['limit']) : 100;
-        $entries = array_slice($entries, -$limit);
-        return array('total' => count($entries), 'entries' => $entries);
+        $metadata = array();
+        $entries = $this->readTailLinesFromFile($path, $limit, function ($line) use ($filterAction) {
+            $line = trim($line);
+            if ($line === '') { return null; }
+            $e = json_decode($line, true);
+            if (!is_array($e)) { return null; }
+            if ($filterAction !== '' && (!isset($e['action']) || $e['action'] !== $filterAction)) { return null; }
+            return $e;
+        }, $metadata);
+        return array_merge(array('total' => count($entries), 'entries' => $entries), $metadata);
     }
 
     /**
@@ -3270,14 +3282,64 @@ class modxMCP {
         $processor = isset($data['processor']) ? (string) $data['processor'] : '';
         if ($processor === '') { throw new ModxMCPClientException('run_processor: "processor" path is required.'); }
         $props = (isset($data['properties']) && is_array($data['properties'])) ? $data['properties'] : array();
+        $processorsPath = !empty($data['processors_path']) ? (string)$data['processors_path'] : '';
+        $this->assertRunProcessorProtectedSettings($processor, $props, $processorsPath);
         $options = array();
-        if (!empty($data['processors_path'])) { $options['processors_path'] = (string) $data['processors_path']; }
+        if ($processorsPath !== '') { $options['processors_path'] = $processorsPath; }
         $response = $this->modx->runProcessor($processor, $props, $options);
         if (!$response) { throw new ModxMCPClientException('run_processor: no response (processor not found?).'); }
         if ($response->isError()) { throw new ModxMCPClientException($this->formatProcessorErrors($response)); }
         $this->logAudit('run_processor', 'system', array('processor' => $processor));
         $decoded = json_decode($response->getResponse(), true);
         return is_array($decoded) ? $decoded : $this->normalizeProcessorResponse($response);
+    }
+
+    private function assertRunProcessorProtectedSettings($processor, array $properties, $processorsPath = '') {
+        $processor = $this->normalizeRunProcessorPath($processor);
+        $combined = $processor;
+        if (trim((string)$processorsPath) !== '') {
+            $combined = $this->normalizeRunProcessorPath($processorsPath . '/' . $processor);
+        }
+        $settingsRoute = '(?:context/setting|system/settings|security/(?:user|group)/setting)';
+        $directSettingMutation = preg_match('#(?:^|/)' . $settingsRoute . '/(create|update|remove|updatefromgrid)(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
+        $contextUpdate = preg_match('#(?:^|/)context/update(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
+        if (!$directSettingMutation && !$contextUpdate) { return; }
+        $payloads = array($properties);
+        foreach (array('data', 'settings') as $field) {
+            if (!isset($properties[$field])) { continue; }
+            $nested = is_array($properties[$field])
+                ? $properties[$field]
+                : json_decode((string)$properties[$field], true);
+            if (is_array($nested)) { $payloads[] = $nested; }
+        }
+        foreach ($payloads as $payload) {
+            if ($this->runProcessorPayloadHasProtectedKey($payload)) {
+                throw new ModxMCPClientException('Managing modxmcp.* settings via run_processor is not allowed.');
+            }
+        }
+    }
+
+    private function runProcessorPayloadHasProtectedKey(array $payload) {
+        foreach ($payload as $field => $value) {
+            if (($field === 'key' || $field === 'oldkey') && is_scalar($value)) {
+                $key = trim((string)$value);
+                if ($key !== '' && stripos($key, 'modxmcp.') === 0) { return true; }
+            }
+            if (is_array($value) && $this->runProcessorPayloadHasProtectedKey($value)) { return true; }
+        }
+        return false;
+    }
+
+    private function normalizeRunProcessorPath($path) {
+        $path = str_replace('\\', '/', strtolower(trim((string)$path)));
+        $path = trim(preg_replace('#/+#', '/', $path), '/');
+        $segments = array();
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') { continue; }
+            if ($segment === '..') { array_pop($segments); continue; }
+            $segments[] = $segment;
+        }
+        return implode('/', $segments);
     }
 
     /**
@@ -4146,7 +4208,9 @@ class modxMCP {
                 'name' => $tv->get('name'),
                 'caption' => $tv->get('caption'),
                 'type' => $tv->get('type'),
-                'value' => $resource->getTVValue($tv->get('name')),
+                'value' => method_exists($tv, 'getValue')
+                    ? (string)$tv->getValue($resourceId)
+                    : (string)$resource->getTVValue($tv->get('name')),
             ];
         }
 
@@ -5627,6 +5691,126 @@ class modxMCP {
         }
 
         return strpos($path, $rootPath . DIRECTORY_SEPARATOR) === 0;
+    }
+
+    private function readTailLinesFromFile($filePath, $limit = 100, $filter = null, &$metadata = null) {
+        $limit = max(1, min((int)$limit, 1000));
+        $metadata = array('result_complete' => true, 'scanned_bytes' => 0, 'truncated_lines' => 0);
+        if (!file_exists($filePath)) { return []; }
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            $metadata['result_complete'] = false;
+            return [];
+        }
+        $fp = @fopen($filePath, 'rb');
+        if (!$fp) {
+            $metadata['result_complete'] = false;
+            return [];
+        }
+
+        $lines = [];
+        $buffer = '';
+        $chunkSize = 8192;
+        $maxBufferSize = 524288;
+        $maxBytesToScan = 16777216;
+        $totalBytesRead = 0;
+        $discardingTruncatedLine = false;
+        $readFailed = false;
+        $appendLine = function ($line) use (&$lines, $filter, &$metadata, $maxBufferSize, $chunkSize) {
+            $line = rtrim($line, "\r");
+            if (strlen($line) > $maxBufferSize) {
+                $metadata['truncated_lines']++;
+                if ($filter === null) {
+                    $lines[] = $this->tailFragment($line, $chunkSize);
+                }
+                return;
+            }
+            if ($filter !== null) {
+                $item = call_user_func($filter, $line);
+                if ($item !== null) { $lines[] = $item; }
+            } else {
+                $lines[] = $line;
+            }
+        };
+
+        if (fseek($fp, 0, SEEK_END) !== 0) {
+            fclose($fp);
+            $metadata['result_complete'] = false;
+            return [];
+        }
+        $pos = ftell($fp);
+        if ($pos === false) {
+            fclose($fp);
+            $metadata['result_complete'] = false;
+            return [];
+        }
+        $firstChunk = true;
+
+        while ($pos > 0 && count($lines) < $limit && $totalBytesRead < $maxBytesToScan) {
+            $readSize = min($chunkSize, $pos, $maxBytesToScan - $totalBytesRead);
+            $pos -= $readSize;
+            $totalBytesRead += $readSize;
+            fseek($fp, $pos, SEEK_SET);
+            $chunk = fread($fp, $readSize);
+            if ($chunk === false) {
+                $readFailed = true;
+                break;
+            }
+
+            if ($discardingTruncatedLine) {
+                $newlinePos = strrpos($chunk, "\n");
+                if ($newlinePos === false) { continue; }
+                $chunk = substr($chunk, 0, $newlinePos);
+                $discardingTruncatedLine = false;
+            }
+
+            $buffer = $chunk . $buffer;
+            if ($firstChunk) {
+                $buffer = rtrim($buffer, "\r\n");
+                $firstChunk = false;
+            }
+
+            if (strlen($buffer) > $maxBufferSize && strpos($buffer, "\n") === false) {
+                $metadata['truncated_lines']++;
+                if ($filter === null) {
+                    $lines[] = $this->tailFragment($buffer, $chunkSize);
+                }
+                $buffer = '';
+                $discardingTruncatedLine = true;
+                continue;
+            }
+
+            $parts = explode("\n", $buffer);
+            if ($pos > 0) {
+                $buffer = array_shift($parts);
+            } else {
+                $buffer = '';
+            }
+
+            for ($i = count($parts) - 1; $i >= 0; $i--) {
+                $appendLine($parts[$i]);
+                if (count($lines) >= $limit) { break; }
+            }
+        }
+        fclose($fp);
+        $metadata['result_complete'] = !$readFailed
+            && $metadata['truncated_lines'] === 0
+            && (count($lines) >= $limit || $pos === 0);
+        $metadata['scanned_bytes'] = $totalBytesRead;
+        return array_reverse($lines);
+    }
+
+    private function tailFragment($line, $maxBytes) {
+        $fragment = substr((string)$line, -(int)$maxBytes);
+        if (preg_match('//u', $fragment) === 1) {
+            return '[MODX MCP: line truncated; showing last 8192 bytes] ' . $fragment;
+        }
+        for ($offset = 1; $offset <= 3 && $offset < strlen($fragment); $offset++) {
+            $candidate = substr($fragment, $offset);
+            if (preg_match('//u', $candidate) === 1) {
+                return '[MODX MCP: line truncated; showing UTF-8-safe suffix] ' . $candidate;
+            }
+        }
+        return '[MODX MCP: line truncated; base64 of last 8192 bytes] ' . base64_encode($fragment);
     }
 
     private function isFilesystemMediaSource($source) {

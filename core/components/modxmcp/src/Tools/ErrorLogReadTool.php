@@ -12,12 +12,18 @@ class ErrorLogReadTool implements ToolInterface
     {
         $path = rtrim($context->modx()->getOption('core_path'), '/') . '/cache/logs/error.log';
         if (!file_exists($path)) {
-            return array('total' => 0, 'lines' => array(), 'path' => $path);
+            return array(
+                'total' => 0,
+                'lines' => array(),
+                'path' => $path,
+                'result_complete' => true,
+                'scanned_bytes' => 0,
+                'truncated_lines' => 0,
+            );
         }
-        $lines = file($path, FILE_IGNORE_NEW_LINES);
-        if ($lines === false) { $lines = array(); }
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 100;
-        $tail = array_slice($lines, -$limit);
-        return array('total' => count($tail), 'lines' => $tail);
+        $metadata = array();
+        $tail = FilesystemSupport::readTailLines($path, $limit, null, $metadata);
+        return array_merge(array('total' => count($tail), 'lines' => $tail), $metadata);
     }
 }
