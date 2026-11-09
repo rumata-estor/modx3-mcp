@@ -1,6 +1,10 @@
-[English](BUILD-ARCHITECTURE.md) | **Русский**
+[English](BUILD-ARCHITECTURE.md) · [Русский](BUILD-ARCHITECTURE.ru.md) · [Español](BUILD-ARCHITECTURE.es.md) · [Deutsch](BUILD-ARCHITECTURE.de.md) · [Français](BUILD-ARCHITECTURE.fr.md) · [Українська](BUILD-ARCHITECTURE.uk.md) · [Қазақша](BUILD-ARCHITECTURE.kk.md) · [Nederlands](BUILD-ARCHITECTURE.nl.md) · [Polski](BUILD-ARCHITECTURE.pl.md)
 
 # Архитектура сборки
+
+## Подготовка исходников релиза 1.2.5
+
+Управление категориями реализовано в общем модульном ядре и входит в оба платформенных дерева сборки. Для будущих пакетов MODX2MCP и MODX3MCP предусмотрен единый контракт из 199 серверных действий (198 публичных инструментов MCP). До публикации необходимо собрать ZIP и проверить установку на тестовых сайтах.
 
 > Документация пользователя: [установка](INSTALL.ru.md), [возможности](CAPABILITIES.ru.md), [API](API.ru.md), [безопасность](SECURITY.ru.md).
 

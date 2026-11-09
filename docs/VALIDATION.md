@@ -1,6 +1,10 @@
-**English** | [Русский](VALIDATION.ru.md)
+[English](VALIDATION.md) · [Русский](VALIDATION.ru.md) · [Español](VALIDATION.es.md) · [Deutsch](VALIDATION.de.md) · [Français](VALIDATION.fr.md) · [Українська](VALIDATION.uk.md) · [Қазақша](VALIDATION.kk.md) · [Nederlands](VALIDATION.nl.md) · [Polski](VALIDATION.pl.md)
 
 # Connector validation status
+
+## 1.2.5 source / CI validation (31 October 2026)
+
+Version 1.2.5 includes six new modCategory tools and 199 server actions (198 public MCP tools). The source checks cover PHP syntax, MODX 2 compatibility, MODX 3 core-processor compatibility, category lifecycle/assignment regression, both platform staging trees, and nine-language documentation. **These checks do not establish that either v1.2.5 transport ZIP has been built, installed, or tested on a live MODX site.** See the corresponding GitHub pull request and Actions run for current CI status. Previously verified v1.2.4 deployments are described below.
 
 ## Production integration addendum (2026-10-13–14)
 
@@ -69,7 +73,7 @@ For the **historical 1.2.0 release**, both MODX 2.8.9-pl and MODX 3.2.4-pl compl
 
 The 1.2.0 registry contains all 81 read-only actions. Compared with the 74 read-only actions in v1.1.0, version 1.2.0 adds `get_site_state`, two ClientConfig reads, and four access-policy/resource-group read helpers.
 
-<!-- READONLY_MIGRATION_COVERAGE: 81/81 -->
+<!-- READONLY_MIGRATION_COVERAGE: 83/83 -->
 
 The 1.2.0 read-only migration is complete: all 81 read-only server actions are registered in the modular runtime. The coverage marker above is checked by `_build/test.migration-coverage.py` so the documented current-source count cannot silently drift from the code.
 
@@ -155,7 +159,7 @@ Migrated actions:
 
 The modular runtime now owns all **112** mutation actions.
 
-<!-- MUTATION_MIGRATION_COVERAGE: 112/112 -->
+<!-- MUTATION_MIGRATION_COVERAGE: 116/116 -->
 
 The first mutation block is the direct MODX-processor layer: Access/ACL, Context,
 Namespace and Lexicon writes. These actions now execute through

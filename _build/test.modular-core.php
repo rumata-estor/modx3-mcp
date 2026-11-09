@@ -337,5 +337,17 @@ foreach (array('bulk_resources', 'replace_across') as $name) {
         throw new Exception('Bad final mutation registration: ' . $name);
     }
 }
-if (count($runtime->registry()->all()) !== 193) { throw new Exception('Unexpected tool count'); }
+foreach (array('list_categories', 'get_category') as $name) {
+    $tool = $runtime->registry()->get($name);
+    if (!$tool || $tool->isMutation() || $tool->group() !== 'elements') {
+        throw new Exception('Bad category read tool registration: ' . $name);
+    }
+}
+foreach (array('create_category', 'update_category', 'delete_category', 'assign_element_category') as $name) {
+    $tool = $runtime->registry()->get($name);
+    if (!$tool || !$tool->isMutation() || $tool->group() !== 'elements') {
+        throw new Exception('Bad category mutation tool registration: ' . $name);
+    }
+}
+if (count($runtime->registry()->all()) !== 199) { throw new Exception('Unexpected tool count'); }
 echo "MODULAR_CORE_OK\n";

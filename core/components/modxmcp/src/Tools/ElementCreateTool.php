@@ -19,6 +19,17 @@ class ElementCreateTool implements ToolInterface
         unset($data['_runtime_preconditions']);
         $prepared = ElementMutationSupport::prepare($context, $type, $data, $this->name());
 
+        if ($type === 'category') {
+            CategorySupport::validateParent(
+                $context, isset($prepared['parent']) ? $prepared['parent'] : 0
+            );
+        } elseif (in_array($type, array('chunk', 'snippet', 'template', 'tv', 'plugin'), true)
+            && array_key_exists('category', $prepared)) {
+            $prepared['category'] = CategorySupport::validateElementCategory(
+                $context, $type, $prepared['category']
+            );
+        }
+
         $createData = $prepared;
         unset(
             $createData['events'],

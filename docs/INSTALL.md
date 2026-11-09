@@ -1,6 +1,6 @@
 # Installing and connecting MODX MCP
 
-**English** | [Русский](INSTALL.ru.md) · [Capabilities](CAPABILITIES.md) · [API reference](API.md) · [Security](SECURITY.md)
+[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md) · [Capabilities](CAPABILITIES.md) · [API reference](API.md) · [Security](SECURITY.md)
 
 MODX MCP lets a standard MCP-compatible AI client work with **MODX Revolution 2.8.x and 3.x**. A regular installation requires a MODX transport package, **Node.js 18+** on the machine running your MCP client, and an application capable of starting **stdio** MCP servers.
 
@@ -8,8 +8,10 @@ MODX MCP lets a standard MCP-compatible AI client work with **MODX Revolution 2.
 
 ## 1. Choose the MODX package
 
-- **MODX 2.8.x:** `modx2mcp-1.2.3-pl.transport.zip`.
-- **MODX 3.x:** `modx3mcp-1.2.3-pl.transport.zip`.
+- **MODX 2.8.x:** `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x:** `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Version status:** 1.2.5 source is prepared but its MODX transport ZIPs are not yet published. For an installable package, use [v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4). Do not install an archive merely renamed to 1.2.5.
 
 Both variants use the same public tool contract and Node.js client. Download the appropriate package from [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) or a supported MODX package provider.
 
@@ -52,7 +54,7 @@ On the machine running your AI application, install **Node.js 18+** with npm/`np
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.3"
+        "github:rumata-estor/modx3-mcp#v1.2.4"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -73,7 +75,7 @@ Restart the MCP integration or refresh the host’s servers. Look for the `modx`
 Show the MODX version and an overview of the site structure. Make no changes.
 ```
 
-This can use `modx_system_info` and `modx_project_overview`. Your host may show fewer than 192 tools, depending on the server build, disabled groups, and installed addons.
+This can use `modx_system_info` and `modx_project_overview`. Your host may show fewer than 198 tools, depending on the server build, disabled groups, and installed addons.
 
 The [complete system settings reference](SETTINGS.md) documents **all 16 settings**, defaults, behavior, and security implications.
 

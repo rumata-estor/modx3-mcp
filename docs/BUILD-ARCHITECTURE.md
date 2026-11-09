@@ -1,6 +1,10 @@
-**English** | [Русский](BUILD-ARCHITECTURE.ru.md)
+[English](BUILD-ARCHITECTURE.md) · [Русский](BUILD-ARCHITECTURE.ru.md) · [Español](BUILD-ARCHITECTURE.es.md) · [Deutsch](BUILD-ARCHITECTURE.de.md) · [Français](BUILD-ARCHITECTURE.fr.md) · [Українська](BUILD-ARCHITECTURE.uk.md) · [Қазақша](BUILD-ARCHITECTURE.kk.md) · [Nederlands](BUILD-ARCHITECTURE.nl.md) · [Polski](BUILD-ARCHITECTURE.pl.md)
 
 # Build architecture
+
+## Release 1.2.5 source preparation
+
+Shared category management is implemented once in the modular runtime and included in both platform staging trees. The upcoming packages have separate MODX2MCP / MODX3MCP identities and use the same 199-action server contract (198 public MCP tools). The transport ZIPs must still be built and installed on test sites before publication.
 
 > User documentation: [installation](INSTALL.md), [capabilities](CAPABILITIES.md), [API reference](API.md), [security](SECURITY.md).
 

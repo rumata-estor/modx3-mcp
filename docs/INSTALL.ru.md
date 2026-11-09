@@ -1,6 +1,6 @@
 # Установка и подключение MODX MCP
 
-[English](INSTALL.md) | **Русский** · [Возможности](CAPABILITIES.ru.md) · [Справочник API](API.ru.md) · [Безопасность](SECURITY.ru.md)
+[English](INSTALL.md) · [Русский](INSTALL.ru.md) · [Español](INSTALL.es.md) · [Deutsch](INSTALL.de.md) · [Français](INSTALL.fr.md) · [Українська](INSTALL.uk.md) · [Қазақша](INSTALL.kk.md) · [Nederlands](INSTALL.nl.md) · [Polski](INSTALL.pl.md) · [Возможности](CAPABILITIES.ru.md) · [Справочник API](API.ru.md) · [Безопасность](SECURITY.ru.md)
 
 MODX MCP позволяет подключить ИИ-клиент к сайту на **MODX Revolution 2.8.x или 3.x** через стандартный протокол **MCP (Model Context Protocol)**. Для обычной работы нужны транспортный пакет на сайте, Node.js 18+ на компьютере или сервере, где запускается MCP-клиент, и поддерживающая MCP программа.
 
@@ -8,8 +8,10 @@ MODX MCP позволяет подключить ИИ-клиент к сайту
 
 ## 1. Выберите пакет для своей версии MODX
 
-- **MODX 2.8.x**: `modx2mcp-1.2.3-pl.transport.zip`.
-- **MODX 3.x**: `modx3mcp-1.2.3-pl.transport.zip`.
+- **MODX 2.8.x**: `modx2mcp-1.2.5-pl.transport.zip`.
+- **MODX 3.x**: `modx3mcp-1.2.5-pl.transport.zip`.
+
+> **Статус версии:** исходники 1.2.5 подготовлены, но транспортные ZIP пока не опубликованы. Для установки используйте [последнюю готовую версию 1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4). Нельзя просто переименовывать архивы 1.2.4 в 1.2.5.
 
 Транспортные пакеты соответствуют разным версиям платформы, но используют общий набор публичных команд и один Node.js MCP-клиент. Актуальные файлы ищите в [релизах GitHub](https://github.com/rumata-estor/modx3-mcp/releases); при необходимости используйте соответствующий источник пакетов MODX.
 
@@ -52,7 +54,7 @@ https://example.com/assets/components/modxmcp/api.php
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.3"
+        "github:rumata-estor/modx3-mcp#v1.2.4"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",

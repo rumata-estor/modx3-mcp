@@ -8,7 +8,7 @@ if (!class_exists("ModxMCPClientException")) {
     class ModxMCPClientException extends Exception {}
 }
 class modxMCP {
-    const VERSION = '1.2.3';
+    const VERSION = '1.2.5';
     const VARIANT = 'modx3';
     public $modx;
     public $config =[];
@@ -131,6 +131,7 @@ class modxMCP {
                     $runtimeContext = $this->modularRuntime->context();
                     $dryRunActions = array(
                         'delete_element',
+                        'delete_category',
                         'bulk_resources',
                         'replace_across',
                     );
@@ -382,6 +383,12 @@ class modxMCP {
     private function actionRegistry() {
         return array(
             'elements' => array(
+                'list_categories' => array('element' => true),
+                'get_category' => array('element' => true),
+                'create_category' => array('element' => true),
+                'update_category' => array('element' => true),
+                'delete_category' => array('element' => true),
+                'assign_element_category' => array('element' => true),
                 'list_elements'   => array('element' => true),
                 'get_element'     => array('element' => true),
                 'create_element'  => array('element' => true),

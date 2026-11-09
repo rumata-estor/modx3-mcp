@@ -21,6 +21,11 @@ class ElementDeleteTool implements ToolInterface
         }
         $id = (int)$prepared['id'];
 
+        // Never let the generic API bypass category usage checks.
+        if ($type === 'category') {
+            return CategorySupport::delete($context, $prepared);
+        }
+
         if (!empty($prepared['dry_run'])) {
             return ElementMutationSupport::previewDelete($context, $type, $id);
         }

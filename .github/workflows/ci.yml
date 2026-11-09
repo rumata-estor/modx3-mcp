@@ -37,10 +37,18 @@ jobs:
           python3 _build/test.manager-platform-package.py
           python3 _build/test.manager-dashboard.py
           python3 _build/test.manager-graph-dashboard.py
+          python3 _build/test.docs-localization.py
+          python3 _build/test.essential-localization.py
+
+      - name: Multilingual manager localization (9 languages)
+        run: |
+          node --check assets/components/modxmcp/js/graph.js
+          php _build/test.manager-localization.php
 
       - name: Modular core and platform mapping
         run: |
           php _build/test.modular-core.php
+          php _build/test.category-management.php
           php _build/test.platform-mapping.php
           php _build/test.transport-documentation.php
 

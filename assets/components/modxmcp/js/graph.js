@@ -16,18 +16,29 @@ Ext.onReady(function () {
     if (!root || typeof MODx === 'undefined' || !MODx.Ajax) { return; }
 
     var cfg = (typeof ModxmcpGraph !== 'undefined') ? ModxmcpGraph : {};
+    var TXT = cfg.ui || {};
 
     var COLORS = {
         template: '#2563eb', chunk: '#16a34a', snippet: '#d97706',
         tv: '#9333ea', plugin: '#dc2626', resource: '#64748b', missing: '#ef4444'
     };
     var LABEL = {
-        template: 'Шаблоны', chunk: 'Чанки', snippet: 'Сниппеты', tv: 'TV',
-        plugin: 'Плагины', resource: 'Ресурсы', missing: 'Битые ссылки'
+        template: TXT.template_plural,
+        chunk: TXT.chunk_plural,
+        snippet: TXT.snippet_plural,
+        tv: TXT.tv_plural,
+        plugin: TXT.plugin_plural,
+        resource: TXT.resource_plural,
+        missing: TXT.missing_plural
     };
     var ONE = {
-        template: 'шаблон', chunk: 'чанк', snippet: 'сниппет', tv: 'TV',
-        plugin: 'плагин', resource: 'ресурс', missing: 'не существует'
+        template: TXT.template_singular,
+        chunk: TXT.chunk_singular,
+        snippet: TXT.snippet_singular,
+        tv: TXT.tv_singular,
+        plugin: TXT.plugin_singular,
+        resource: TXT.resource_singular,
+        missing: TXT.missing_singular
     };
     var EDIT = {
         template: 'element/template/update', chunk: 'element/chunk/update',
@@ -35,8 +46,15 @@ Ext.onReady(function () {
         plugin: 'element/plugin/update', resource: 'resource/update'
     };
     var KIND = {
-        tag: 'тег', attached: 'привязан', property: 'свойство', php: 'PHP',
-        migx: 'MIGX', binding: 'биндинг', link: 'ссылка', template: 'шаблон', missing: 'битая'
+        tag: TXT.kind_tag,
+        attached: TXT.kind_attached,
+        property: TXT.kind_property,
+        php: TXT.kind_php,
+        migx: TXT.kind_migx,
+        binding: TXT.kind_binding,
+        link: TXT.kind_link,
+        template: TXT.kind_template,
+        missing: TXT.kind_missing
     };
 
     var $ = function (id) { return document.getElementById(id); };
@@ -73,6 +91,21 @@ Ext.onReady(function () {
         return String(s === null || s === undefined ? '' : s)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    // Graph data keeps its MCP contract; only the manager renders localized diagnostics.
+    function reasonText(reason) {
+        var reasons = {
+            'no resources use it': TXT.reason_template,
+            'not attached to any template and never referenced': TXT.reason_tv,
+            'never referenced': TXT.reason_other
+        };
+        return Object.prototype.hasOwnProperty.call(reasons, reason) ? reasons[reason] : reason;
+    }
+    function usedByText(value) {
+        if (value.indexOf('system setting ') === 0) { return TXT.system_setting + value.slice('system setting '.length); }
+        if (value.indexOf('miniShop2 order status ') === 0) { return TXT.order_status + value.slice('miniShop2 order status '.length); }
+        return value;
+    }
+
     function mgrUrl(type, id) {
         var base = cfg.manager_url || ((typeof MODx !== 'undefined' && MODx.config) ? MODx.config.manager_url : '');
         return (base && EDIT[type] && id) ? (base + '?a=' + EDIT[type] + '&id=' + id) : null;
@@ -86,8 +119,8 @@ Ext.onReady(function () {
     // ---- load -------------------------------------------------------------------------
     function load() {
         overlay.style.display = 'flex';
-        overlay.textContent = 'Загружаю граф…';
-        stat.textContent = 'Загружаю…';
+        overlay.textContent = TXT.loading_graph;
+        stat.textContent = TXT.loading;
         MODx.Ajax.request({
             url: cfg.connector_url,
             params: {
@@ -97,11 +130,11 @@ Ext.onReady(function () {
             listeners: {
                 success: { fn: function (r) {
                     raw = (r && r.object) ? r.object : null;
-                    if (!raw || !raw.nodes) { fail('Сервер вернул пустой ответ.'); return; }
+                    if (!raw || !raw.nodes) { fail(TXT.empty_response); return; }
                     ingest();
                 } },
                 failure: { fn: function (r) {
-                    fail((r && r.message) ? r.message : 'Не удалось построить граф.');
+                    fail((r && r.message) ? r.message : TXT.build_failed);
                 } }
             }
         });
@@ -109,7 +142,7 @@ Ext.onReady(function () {
     function fail(msg) {
         overlay.style.display = 'flex';
         overlay.textContent = msg;
-        stat.textContent = 'Ошибка';
+        stat.textContent = TXT.error;
     }
 
     // Turn the payload into simulation nodes. "missing" targets become hollow ghost nodes so a
@@ -309,10 +342,10 @@ Ext.onReady(function () {
         if (!raw) { return; }
         var s = raw.stats || {};
         var shown = visN.length, total = N.length;
-        stat.textContent = (shown === total ? (total + ' узлов') : (shown + ' из ' + total + ' узлов'))
-            + ' · ' + visL.length + ' связей'
-            + (s.missing ? ' · ' + s.missing + ' битых' : '')
-            + (s.orphans ? ' · ' + s.orphans + ' без ссылок' : '');
+        stat.textContent = (shown === total ? (total + ' ' + TXT.nodes_unit) : (shown + ' ' + TXT.of + ' ' + total + ' ' + TXT.nodes_unit))
+            + ' · ' + visL.length + ' ' + TXT.links_unit
+            + (s.missing ? ' · ' + s.missing + ' ' + TXT.broken_unit : '')
+            + (s.orphans ? ' · ' + s.orphans + ' ' + TXT.orphan_unit : '');
     }
 
     // ---- sidebar ----------------------------------------------------------------------
@@ -352,24 +385,24 @@ Ext.onReady(function () {
         miss.forEach(function (m) {
             var idx = byKey[m.kind + ':' + m.name];
             mh += '<li data-go="' + (idx === undefined ? '' : idx) + '">' + dot('missing')
-               + '<span><b>' + esc(m.name) + '</b><br><span class="t">из ' + esc(m.from) + '</span></span></li>';
+               + '<span><b>' + esc(m.name) + '</b><br><span class="t">' + esc(TXT.from) + ' ' + esc(m.from) + '</span></span></li>';
         });
-        $('g-miss').innerHTML = mh || '<li class="g-empty-note">Битых ссылок нет.</li>';
+        $('g-miss').innerHTML = mh || '<li class="g-empty-note">' + esc(TXT.no_broken) + '</li>';
 
         var oh = '';
         orph.forEach(function (o) {
             var idx = byKey[o.type + ':' + o.name];
             oh += '<li data-go="' + (idx === undefined ? '' : idx) + '">' + dot(o.type)
-               + '<span>' + esc(o.name) + '<br><span class="t">' + esc(o.reason) + '</span></span></li>';
+               + '<span>' + esc(o.name) + '<br><span class="t">' + esc(reasonText(o.reason)) + '</span></span></li>';
         });
-        $('g-orph').innerHTML = oh || '<li class="g-empty-note">Все элементы используются.</li>';
+        $('g-orph').innerHTML = oh || '<li class="g-empty-note">' + esc(TXT.all_used) + '</li>';
 
         $('g-nvendor').textContent = vendorUnusedCount;
         $('g-norph2').textContent = orph.length;
 
         $('g-orph-note').textContent = (raw.stats && raw.stats.orphans_verified === false)
-            ? 'Не сверялось с контентом ресурсов (сайт большой) — проверьте перед удалением.'
-            : 'Кандидаты, не доказательство: аддон может ссылаться из своих таблиц.';
+            ? TXT.unverified_note
+            : TXT.candidate_note;
 
         [['g-miss'], ['g-orph']].forEach(function (p) {
             Array.prototype.forEach.call($(p[0]).querySelectorAll('li[data-go]'), function (li) {
@@ -413,8 +446,8 @@ Ext.onReady(function () {
         var dbtn = function (v) { return '<button class="g-btn' + (depth === v ? ' on' : '') + '" data-d="' + v + '">' + v + '</button>'; };
         var rbtn = function (v, t) { return '<button class="g-btn' + (dir === v ? ' on' : '') + '" data-r="' + v + '">' + t + '</button>'; };
         crumb.innerHTML = dot(n.type) + '<b>' + esc(n.name) + '</b>'
-            + '<span style="color:#7b8794;">шагов</span>' + dbtn(1) + dbtn(2) + dbtn(3)
-            + rbtn('both', 'всё') + rbtn('out', 'использует') + rbtn('in', 'используется')
+            + '<span style="color:#7b8794;">' + esc(TXT.steps) + '</span>' + dbtn(1) + dbtn(2) + dbtn(3)
+            + rbtn('both', TXT.all) + rbtn('out', TXT.uses) + rbtn('in', TXT.used_in)
             + '<button class="g-btn" data-x="1">✕</button>';
         crumb.style.display = 'flex';
         Array.prototype.forEach.call(crumb.querySelectorAll('button'), function (b) {
@@ -737,28 +770,28 @@ Ext.onReady(function () {
         if (n.id) { html += ' · id ' + n.id; }
         if (src.category) { html += ' · ' + esc(src.category); }
         if (src.tv_type) { html += ' · ' + esc(src.tv_type); }
-        if (src.static) { html += ' · static'; }
-        if (src.disabled) { html += ' · выключен'; }
+        if (src.static) { html += ' · ' + esc(TXT.static_flag); }
+        if (src.disabled) { html += ' · ' + esc(TXT.disabled); }
         html += '</div>';
 
         if (n.type === 'missing') {
-            html += '<div class="warn"><b>Битая ссылка.</b> ' + esc(src.missing_kind === 'snippet' ? 'Сниппет' : 'Чанк')
-                 + ' с таким именем не существует — тег отрендерится пустотой.</div>';
+            html += '<div class="warn"><b>' + esc(TXT.broken_title) + '</b> ' + esc(src.missing_kind === 'snippet' ? TXT.snippet_cap : TXT.chunk_cap)
+                 + ' ' + esc(TXT.missing_explanation) + '</div>';
         }
         if (n.orphan) {
-            html += '<div class="note"><b>Никто не ссылается.</b> ' + esc(n.orphanReason || '')
-                 + '. Кандидат на удаление — но сначала проверьте dry-run.</div>';
+            html += '<div class="note"><b>' + esc(TXT.unreferenced_title) + '</b> ' + esc(reasonText(n.orphanReason || ''))
+                 + ' ' + esc(TXT.deletion_warning) + '</div>';
         }
-        if (src.used_by) { html += '<div class="note">Используется вне элементов: ' + esc(src.used_by) + '</div>'; }
+        if (src.used_by) { html += '<div class="note">' + esc(TXT.used_externally) + ': ' + esc(usedByText(src.used_by)) + '</div>'; }
 
         html += '<div class="acts">';
         var u = mgrUrl(n.type, n.id);
-        if (u) { html += '<a class="g-btn" href="' + esc(u) + '" target="_blank">Редактировать</a>'; }
-        if (n.type !== 'missing') { html += '<button class="g-btn" data-iso="1">Изолировать</button>'; }
+        if (u) { html += '<a class="g-btn" href="' + esc(u) + '" target="_blank">' + esc(TXT.edit) + '</a>'; }
+        if (n.type !== 'missing') { html += '<button class="g-btn" data-iso="1">' + esc(TXT.isolate) + '</button>'; }
         html += '</div>';
 
-        if (typeof src.resources === 'number') { html += '<div>Ресурсов на шаблоне: <b>' + src.resources + '</b></div>'; }
-        if (src.events && src.events.length) { html += '<div>События: ' + esc(src.events.join(', ')) + '</div>'; }
+        if (typeof src.resources === 'number') { html += '<div>' + esc(TXT.resources_on_template) + ': <b>' + src.resources + '</b></div>'; }
+        if (src.events && src.events.length) { html += '<div>' + esc(TXT.events) + ': ' + esc(src.events.join(', ')) + '</div>'; }
 
         function list(title, arr) {
             if (!arr.length) { return ''; }
@@ -767,11 +800,11 @@ Ext.onReady(function () {
                 s += '<li data-go="' + x.i + '">' + dot(N[x.i].type) + '<span>' + esc(N[x.i].name)
                    + ' <span class="t">' + esc(KIND[x.kind] || x.kind) + '</span></span></li>';
             });
-            if (arr.length > 60) { s += '<li class="t">…ещё ' + (arr.length - 60) + '</li>'; }
+            if (arr.length > 60) { s += '<li class="t">' + esc(TXT.more) + ' ' + (arr.length - 60) + '</li>'; }
             return s + '</ul>';
         }
-        html += list('Использует', out) + list('Используется в', inc);
-        if (!out.length && !inc.length) { html += '<p class="g-empty-note">Связей не найдено.</p>'; }
+        html += list(esc(TXT.uses_heading), out) + list(esc(TXT.used_in_heading), inc);
+        if (!out.length && !inc.length) { html += '<p class="g-empty-note">' + esc(TXT.no_relations) + '</p>'; }
 
         info.innerHTML = html;
         info.className = 'g-info open';
@@ -854,7 +887,7 @@ Ext.onReady(function () {
                         var ai = a.name.toLowerCase().indexOf(s), bi = b.name.toLowerCase().indexOf(s);
                         return ai !== bi ? ai - bi : b.deg - a.deg;
                     }).slice(0, 40);
-        if (!hits.length) { res.innerHTML = '<div style="color:#7b8794;">Ничего не найдено</div>'; res.style.display = 'block'; return; }
+        if (!hits.length) { res.innerHTML = '<div style="color:#7b8794;">' + esc(TXT.no_results) + '</div>'; res.style.display = 'block'; return; }
         res.innerHTML = hits.map(function (n) {
             return '<div data-go="' + n.i + '">' + dot(n.type) + '<span>' + esc(n.name)
                  + ' <span style="color:#7b8794;font-size:11px;">' + esc(ONE[n.type]) + '</span></span></div>';

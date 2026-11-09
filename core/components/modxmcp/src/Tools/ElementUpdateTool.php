@@ -25,6 +25,19 @@ class ElementUpdateTool implements ToolInterface
             );
         }
 
+        if ($type === 'category') {
+            CategorySupport::validateParent(
+                $context,
+                isset($prepared['parent']) ? $prepared['parent'] : (int)CategorySupport::find($context, $prepared['id'])->get('parent'),
+                (int)$prepared['id']
+            );
+        } elseif (in_array($type, array('chunk', 'snippet', 'template', 'tv', 'plugin'), true)
+            && array_key_exists('category', $prepared)) {
+            $prepared['category'] = CategorySupport::validateElementCategory(
+                $context, $type, $prepared['category']
+            );
+        }
+
         $current = $context->platform()->runProcessor(
             $context->modx(),
             ElementSupport::processorBase($type) . 'get',
