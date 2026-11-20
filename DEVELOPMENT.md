@@ -11,7 +11,7 @@ It is written so that an experienced developer can quickly understand the projec
 For a normal installation, the published release and MCP client configuration are usually enough. Development, server-side changes, security settings, production upgrades, and unusual failures require more technical experience. If, after reading the relevant section, you still cannot clearly explain what will change and how you will verify it, do not experiment on a live site. Use a test environment or involve someone with the right experience.
 
 
-MODX MCP 1.2.0 is designed for **MODX Revolution 2.8.x and 3.x** from one shared source tree. The two MODX generations differ in PHP class names, namespaces, core bootstrap, manager internals and processor routing, so platform-specific behavior must go through the platform adapters and release overlays rather than be copied between versions mechanically.
+MODX MCP 1.2.7 is designed for **MODX Revolution 2.8.x and 3.x** from one shared source tree. The two MODX generations differ in PHP class names, namespaces, core bootstrap, manager internals and processor routing, so platform-specific behavior must go through the platform adapters and release overlays rather than be copied between versions mechanically.
 
 > **The main rule of the project: do not give AI the widest possible access. Give it the correct, limited, and verifiable access to MODX objects.**
 
@@ -57,7 +57,7 @@ The basic setup is:
 5. Start with read-only operations.
 6. Enable write or dangerous operations only when they are actually needed.
 
-For production use, pin the latest published stable release. The current stable tag is `v1.2.0`; pin `v1.2.0` rather than `main`.
+For production use, pin the latest published stable release. The current stable tag is `v1.2.7`; pin `v1.2.7` rather than `main`.
 
 Example MCP client configuration:
 
@@ -68,7 +68,7 @@ Example MCP client configuration:
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.0"
+        "github:rumata-estor/modx3-mcp#v1.2.7"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -193,7 +193,7 @@ For example, the tool `modx_example_action` normally maps to the server action `
 
 An automated test checks that the Node.js tools and PHP server actions do not drift apart.
 
-Version 1.2.0 exposes a 192-action public server contract: 81 read-only actions and 111 mutations, all registered in the modular Runtime.
+Version 1.2.7 exposes **198 public MCP client tools and 199 server actions** (including the internal `get_capabilities` action). These are registered in the shared modular Runtime and platform adapters.
 
 ### Project version
 
@@ -219,7 +219,7 @@ If you add a setting, add it to both installation methods.
 
 ## 5. Platform architecture: MODX 2 and MODX 3
 
-Version 1.2.0 uses one shared modular Runtime for MODX Revolution 2.8.x and 3.x.
+Version 1.2.7 continues to use one shared modular Runtime for MODX Revolution 2.8.x and 3.x.
 
 The shared Tool classes must not depend directly on one MODX major version. Platform differences are isolated behind `PlatformInterface` and the release/bootstrap boundary:
 
@@ -507,11 +507,11 @@ One source version produces two transport packages.
 
 Prepare a staging tree for the target platform, then run its builder on a MODX installation of the same major version.
 
-Expected 1.2.0 artifacts:
+Expected 1.2.7 artifacts:
 
 ```text
-MODX 2.8.x: modx2mcp-1.2.3-pl.transport.zip
-MODX 3.x:   modx3mcp-1.2.3-pl.transport.zip
+MODX 2.8.x: modx2mcp-1.2.7-pl.transport.zip
+MODX 3.x:   modx3mcp-1.2.7-pl.transport.zip
 ```
 
 Example for MODX 3:
@@ -598,8 +598,8 @@ GitHub Actions checks:
 - PHP and Node.js syntax;
 - architecture and platform staging;
 - MODX 2 PHP/static compatibility;
-- the complete 192-action client/server contract;
-- modular migration coverage (81/81 reads + 111/111 mutations);
+- the complete current 198-public-tool / 199-server-action client/server contract;
+- modular migration/action coverage for the current registered contract (historical 1.2.0 baseline: 81 reads + 111 mutations);
 - release portability and secure defaults;
 - version consistency across shared and platform-specific release metadata;
 - changelog coverage for the current version;
@@ -622,6 +622,8 @@ MODX_CONFIG_CORE=/full/path/to/config.core.php bash _build/release.smoke.sh
 ```
 
 MODX 2 uses the same process with `--platform modx2` and the MODX 2 release overlay/smoke runner.
+
+For 1.2.7 the [isolated GitHub build matrix](https://github.com/rumata-estor/modx3-mcp/actions/runs/44759645674) validated transport ZIPs on MODX 2.8.9 (PHP 7.4 and 8.2) and MODX 3.2.4 (PHP 8.2), including upgrade from 1.2.3, token preservation and CAS v2 consistency. This does **not** assert that every historical full smoke suite was rerun for 1.2.7.
 
 A release is ready only when the required static checks pass and each platform artifact has completed its dedicated live smoke. For 1.2.0, MODX 2.8.9-pl and MODX 3.2.4-pl completed transport release-smoke and the current 81-action read parity; MODX 3 additionally completed the full 14-suite live regression. The MODX 2 positive MIGX lifecycle is skipped when MIGX is absent, while the same 3/3 lifecycle is verified on MODX 3.
 
@@ -652,7 +654,7 @@ The Node.js side compares its own version with the site API version and warns if
 On production, use a fixed release:
 
 ```text
-github:rumata-estor/modx3-mcp#v1.2.0
+github:rumata-estor/modx3-mcp#v1.2.7
 ```
 
 instead of a development branch.
@@ -767,7 +769,7 @@ If installation, upgrade, uninstall, system settings, API behaviour, write opera
 > **Never use a production site as a test bench for a new installer, component uninstall, or a new destructive workflow.**
 
 
-## Resource TV value CAS (unreleased)
+## Resource TV value CAS (released; further improvements under review)
 
 The modular MODX 2/3 dispatchers pass internal _runtime_preconditions to
 update_resource_tvs as well as element create/update. The mutation lock and
@@ -777,6 +779,4 @@ and makes an all-or-nothing transactional update. siteState now advertises
 precondition_version=2. Existing v1 clients remain compatible, but Runtime
 must refuse TV CAS until a server advertising v2 is installed.
 
-This change is **not** in the published 1.2.0 transport packages; perform
-PHP lint, package build and separate MODX 2 and MODX 3 live verification before
-tagging or deploying a new transport release.
+Transactional resource-TV CAS v2 was included in earlier stable packages; version 1.2.7 also fixes consistent CAS v2 capability reporting across the modular and adapter endpoints. The proposed raw-value comparison and TV read optimization remain **unmerged** in [draft PR #46](https://github.com/rumata-estor/modx3-mcp/pull/46), originating from [PR #40](https://github.com/rumata-estor/modx3-mcp/pull/40). These changes require separate MODX 2/3 integration verification before any future release.
