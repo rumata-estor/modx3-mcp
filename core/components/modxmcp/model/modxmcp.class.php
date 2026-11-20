@@ -3646,11 +3646,12 @@ class modxMCP {
                 )
             ),
             'atomic_preconditions' => ($this->modularRuntime !== null),
-            'precondition_version' => 1,
+            'precondition_version' => ($this->modularRuntime !== null ? 2 : 1),
         );
     }
 
     public function getCapabilities() {
+        $siteState = $this->getSiteState();
         $groups = $this->listSupportedActions();
         $toggle = $this->toggleableGroupKeys();
         $disabled = $this->disabledGroups();
@@ -3665,9 +3666,9 @@ class modxMCP {
             'disabled_groups'   => array_keys($disabled),
             'disabled_actions'  => $disabledActions,
             'features'          => array(
-                'atomic_preconditions' => ($this->modularRuntime !== null),
-                'site_revision' => ($this->modularRuntime !== null),
-                'precondition_version' => 1,
+                'atomic_preconditions' => $siteState['atomic_preconditions'],
+                'site_revision' => $siteState['atomic_preconditions'],
+                'precondition_version' => $siteState['precondition_version'],
             ),
             'fingerprint'       => $this->capabilitiesFingerprint(),
         );
