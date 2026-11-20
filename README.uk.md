@@ -26,7 +26,7 @@ MODX MCP підключає ШІ-асистентів до сайтів MODX ч�
 
 - **MODX 2.8.x:** [Пакет для MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Пакет для MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
-- [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- [GitHub v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.7/SHA256SUMS)
 
 > Посилання на завантаження вище ведуть до останньої опублікованої версії 1.2.4. Транспортні ZIP 1.2.7 ще не зібрані.
 

@@ -26,7 +26,7 @@ Elija el paquete de transporte correspondiente a la versión principal de MODX. 
 
 - **MODX 2.8.x:** [Paquete para MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Paquete para MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
-- [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- [GitHub v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.7/SHA256SUMS)
 
 > Los enlaces de descarga anteriores corresponden a 1.2.4, la última versión publicada. Los ZIP 1.2.7 siguen pendientes de compilación.
 

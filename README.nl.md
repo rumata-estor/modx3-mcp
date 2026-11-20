@@ -25,7 +25,7 @@ Kies het transportpakket voor uw MODX-hoofdversie. De MCP-client vereist Node.js
 
 - **MODX 2.8.x:** [Pakket voor MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Pakket voor MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
-- [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- [GitHub v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.7/SHA256SUMS)
 
 > De downloadlinks hierboven verwijzen naar de laatst gepubliceerde versie 1.2.4. De 1.2.7-transport-ZIPs zijn nog niet gebouwd.
 
