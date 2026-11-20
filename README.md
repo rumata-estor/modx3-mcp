@@ -10,7 +10,7 @@
 
 The project is based on the original [**modxMCP**](https://github.com/dampilov94/mcp-component), created by [**dampilov94**](https://github.com/dampilov94). The current codebase grew out of the MODX 3 port and now uses one shared modular runtime with platform adapters for MODX 2 and MODX 3.
 
-**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 server actions (198 public MCP tools) · MIT**
+**MODX MCP 1.2.7 · MODX Revolution 2.8.x / 3.x · 199 server actions (198 public MCP tools) · MIT**
 
 > The repository name `modx3-mcp`, Node package name, and existing technical identifiers are retained for backward compatibility. The product name shown in documentation and the MODX manager is now **MODX MCP**.
 
@@ -235,20 +235,20 @@ After that, you can move to more complex workflows and enable only the capabilit
 
 ## Install with the MODX transport package
 
-**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.5](docs/extras/modx2mcp-1.2.5.md) · [MODX 3.x — MODX MCP 1.2.5](docs/extras/modx3mcp-1.2.5.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.5.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.5.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
+**Version-specific MODX Extras documentation:** [MODX 2.8.x — MODX2MCP 1.2.7](docs/extras/modx2mcp-1.2.7.md) · [MODX 3.x — MODX MCP 1.2.7](docs/extras/modx3mcp-1.2.7.md). Russian translations: [MODX 2](docs/extras/modx2mcp-1.2.7.ru.md) · [MODX 3](docs/extras/modx3mcp-1.2.7.ru.md). These documents provide the platform-specific installation and release notes for the existing Extras catalog listings.
 
-Version 1.2.5 is prepared for two platform-specific transport packages, **not yet published**:
+Version 1.2.7 is prepared for two platform-specific transport packages, **published in GitHub Release v1.2.7**:
 
-- MODX 2.8.x: `modx2mcp-1.2.5-pl.transport.zip`;
-- MODX 3.x: `modx3mcp-1.2.5-pl.transport.zip`.
+- MODX 2.8.x: `modx2mcp-1.2.7-pl.transport.zip`;
+- MODX 3.x: `modx3mcp-1.2.7-pl.transport.zip`.
 
 Install only the package that matches the MODX major version. Both packages install the same `modxmcp` namespace, settings, MCP endpoint and modular action surface.
 
-**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install the matching transport ZIP **after it is published**. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
+**MODX 2 users upgrading from the previous `modxmcp` package should perform a clean reinstall.** Because the MODX 2 distribution was substantially reworked and now has its own package identity, first fully uninstall the old `modxmcp` package in Package Manager, then install the matching transport ZIP. Do not keep both package records installed side by side. A full uninstall removes the old `modxmcp.*` settings and API token, so verify the new settings after installation and update the MCP client token if necessary.
 
 For subsequent reinstalls or upgrades of the new `modx2mcp` package itself, existing `modxmcp.*` settings and the API token are preserved.
 
-Version **1.2.5** adds MODX element-category lifecycle management for MODX 2 and 3.
+Version **1.2.7** adds MODX element-category lifecycle management for MODX 2 and 3.
 
 ## Command-line installation
 
@@ -276,7 +276,7 @@ The installer creates the required settings and manager entries and generates an
 
 ## Configure an MCP client
 
-For production use, pin the last **published transport-compatible** tag (1.2.4) until 1.2.5 packages are available:
+For a production installation of version 1.2.7, pin the matching published release tag:
 
 ```json
 {
@@ -285,7 +285,7 @@ For production use, pin the last **published transport-compatible** tag (1.2.4) 
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.4"
+        "github:rumata-estor/modx3-mcp#v1.2.7"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
@@ -331,11 +331,11 @@ The original work and attribution are preserved in the project history and licen
 
 The project is distributed under the **MIT License**. See [LICENSE](LICENSE).
 
-Current source version: **1.2.5** (transport build pending).
+Current source version: **1.2.7** (validated transport packages published on GitHub).
 
-Latest published stable release with transport ZIPs: **[1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4)**.
+Latest published stable release with transport ZIPs: **[1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7)**.
 
-The 1.2.5 release targets separate MODX 2 and MODX 3 transport packages and keeps normal upgrade settings/token intact.
+The 1.2.7 release targets separate MODX 2 and MODX 3 transport packages and keeps normal upgrade settings/token intact.
 
 ---
 

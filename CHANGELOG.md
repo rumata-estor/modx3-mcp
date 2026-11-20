@@ -4,6 +4,15 @@
 
 ## Unreleased
 
+## 1.2.7 (2026-11-20)
+
+- Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
+- Fix contradictory CAS metadata: `get_site_state` and `get_capabilities` now expose a consistent `precondition_version` (2 with the modular CAS runtime, 1 without it).
+- Retain existing CAS guards, staging, rollback, and the 199 server-action / 198 public-tool contract; no new unrestricted writes.
+- Standard MODX 2 / MODX 3 transport packages are built and installed in isolated CI against old 1.2.3 and 1.2.4 upgrades before publishing artifacts.
+- PR #40 and draft PR #46 are deliberately excluded until their separate integration review is complete.
+
+
 ## 1.2.5 (2026-10-31)
 
 - Add six dedicated modCategory MCP tools for MODX 2.8.x and MODX 3.x: list, get, create, rename/move/reorder, safely delete, and assign elements. Assignments update one field without rewriting source code.

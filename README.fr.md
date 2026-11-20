@@ -2,7 +2,7 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
+**MODX MCP 1.2.7 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP connecte les assistants IA aux sites MODX grâce au Model Context Protocol. Le composant PHP fournit une API HTTP authentifiée, tandis que le client Node.js local l’expose en tant que serveur MCP via stdio. Aucun serveur d’orchestration supplémentaire n’est nécessaire.
 
@@ -26,9 +26,9 @@ Choisissez l’archive adaptée à la version principale de MODX. Le client MCP 
 
 - **MODX 2.8.x:** [Paquet MODX 2](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [Paquet MODX 3](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
-- [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- [GitHub v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.7/SHA256SUMS)
 
-> Les liens de téléchargement ci-dessus concernent la dernière version publiée, 1.2.4. Les ZIP de transport 1.2.5 restent à produire.
+> Les liens de téléchargement ci-dessus concernent la dernière version publiée, 1.2.4. Les ZIP de transport 1.2.7 restent à produire.
 
 Connectez-vous au gestionnaire MODX et installez le ZIP approprié via la gestion des paquets.
 

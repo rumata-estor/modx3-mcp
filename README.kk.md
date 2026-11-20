@@ -2,7 +2,7 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
-**MODX MCP 1.2.5 · MODX Revolution 2.8.x / 3.x · 199 / 198**
+**MODX MCP 1.2.7 · MODX Revolution 2.8.x / 3.x · 199 / 198**
 
 MODX MCP ЖИ көмекшілерін Model Context Protocol арқылы MODX сайтына қосады. PHP компоненті токенмен қорғалған HTTP API ұсынады, ал жергілікті Node.js клиенті оны stdio арқылы MCP сервері ретінде қолжетімді етеді. Қосымша оркестрация сервері қажет емес.
 
@@ -26,9 +26,9 @@ MODX негізгі нұсқасына сәйкес көлік пакетін т
 
 - **MODX 2.8.x:** [MODX 2 пакеті](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx2mcp-1.2.4-pl.transport.zip)
 - **MODX 3.x:** [MODX 3 пакеті](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/modx3mcp-1.2.4-pl.transport.zip)
-- [GitHub v1.2.4](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.4/SHA256SUMS)
+- [GitHub v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) · [SHA256SUMS](https://github.com/rumata-estor/modx3-mcp/releases/download/v1.2.7/SHA256SUMS)
 
-> Жоғарыдағы жүктеу сілтемелері соңғы жарияланған 1.2.4 нұсқасына апарады. 1.2.5 transport ZIP пакеттері әлі құрастырылмаған.
+> Жоғарыдағы жүктеу сілтемелері соңғы жарияланған 1.2.4 нұсқасына апарады. 1.2.7 transport ZIP пакеттері әлі құрастырылмаған.
 
 MODX басқару панеліне кіріп, сәйкес ZIP файлын пакеттер менеджері арқылы орнатыңыз.
 

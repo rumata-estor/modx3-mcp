@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Орнату](INSTALL.kk.md) · [API анықтамалығы](API.kk.md)
 
-**MODX MCP 1.2.5 · 198 жария құрал · 19 функционалдық топ · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 198 жария құрал · 19 функционалдық топ · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP ЖИ мүмкіндігі бар MCP клиентіне әр тапсырманы тікелей SQL немесе файлдық жүйе командалары түрінде беруді талап етпей, MODX деректерімен және элементтерімен жұмыс істеуге арналған атаулы операцияларды ұсынады. Ол сайтты зерттеуді, мазмұн мен кодты өңдеуді, TV мәндерімен, пакеттермен жұмыс істеуді, қолжетімділікті басқаруды және кейбір үшінші тарап қосымшаларын қолдайды. Нақты құралдар тізімі орнатылған құрастырылымға және қосылған мүмкіндіктерге байланысты.
 

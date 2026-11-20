@@ -61,6 +61,9 @@ jobs:
       - name: Client/server action contract
         run: python3 _build/test.client-server-actions.py
 
+      - name: CAS capability reports agree with authoritative site state
+        run: python3 _build/test.capabilities-cas-metadata.py
+
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata
         run: |
           MODX3_PKG=$(php -r "include '_build/build.config.php'; echo PKG_VERSION;")
