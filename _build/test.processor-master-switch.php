@@ -51,13 +51,20 @@ class ProcessorGateFakeModx {
     }
 }
 class ProcessorGateFakeResponse {
-    public function isError() {return false;}
+    public $fail=false;
+    public function __construct($fail=false){$this->fail=$fail;}
+    public function isError() {return $this->fail;}
     public function getResponse() {return '{"success":true}';}
+    public function getMessage() {return 'secret-should-not-appear';}
 }
 class ProcessorGateFakePlatform {
     public $called=0;
     public $respond=false;
-    public function runProcessor($modx,$path,$props) {$this->called++;return $this->respond?new ProcessorGateFakeResponse():false;}
+    public $fail=false;
+    public function runProcessor($modx,$path,$props) {
+        $this->called++;return $this->respond
+            ? new ProcessorGateFakeResponse($this->fail):false;
+    }
     public function processorTarget($path) {return $path;}
 }
 class ProcessorGateFakeContext {
@@ -106,6 +113,19 @@ $result=(new \ModxMcp\Tools\RunProcessorTool())->execute($ctx,array('processor'=
 if ($ctx->p->called!==1 || $m->called!==0 || !is_array($result) || !isset($result['success']) || $result['success']!==true
     || \ModxMcp\Tools\AuditSupport::$calls!==1) {
     throw new \RuntimeException('ALLOWLIST_POSITIVE_DISPATCH_FAILED');
+}
+// RU: Сбой стороннего процессора не должен раскрывать секретную строку.
+// EN: A failed third-party processor must not expose its raw secret message.
+$ctx->p->fail=true;
+try {
+    (new \ModxMcp\Tools\RunProcessorTool())->execute(
+        $ctx,array('processor'=>'system/clearcache')
+    );
+    throw new \RuntimeException('PROCESSOR_ERROR_UNSAFE_SUCCESS');
+} catch(ModxMCPClientException $e) {
+    if(strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN')!==0
+        || strpos($e->getMessage(),'secret-should-not-appear')!==false)
+        throw new \RuntimeException('PROCESSOR_ERROR_SECRET_LEAK');
 }
 // RU: В защищённом режиме фактическая политика БД важнее кеша PHP.
 // EN: Protected mode must use persisted policy even when PHP cache disagrees.
