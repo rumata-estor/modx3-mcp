@@ -31,6 +31,42 @@ class ProcessorSupport
         return $rows;
     }
 
+    /**
+     * RU: Универсальный процессор может вернуть учётные данные внутри
+     * RU: вложенных объектов и списков; не отдаём их вызывающей модели.
+     * EN: Arbitrary processor output may contain credentials in nested
+     * EN: objects and lists; redact them before returning to the client.
+     */
+    public static function sanitizeProcessorOutput($value, $depth = 0)
+    {
+        if (!is_array($value)) { return $value; }
+        if ($depth >= 16) {
+            return array('redacted' => 'Maximum processor response nesting exceeded.');
+        }
+        foreach ($value as $key => $item) {
+            $normalized = is_string($key) ? strtolower($key) : '';
+            $sensitive = in_array($normalized, array(
+                'password', 'passwd', 'cachepwd', 'salt', 'hash_class',
+                'remote_key', 'remote_data', 'session_stale', 'sudo',
+                'token', 'api_token', 'access_token', 'refresh_token',
+                'api_key', 'client_secret', 'private_key', 'secret',
+                'credentials', 'authorization', 'auth_token'
+            ), true);
+            // RU: Произвольные строки сообщений и ошибок могут содержать
+            // RU: временный пароль; не копируем их из чужого процессора.
+            // EN: Free-form messages/errors may contain generated passwords;
+            // EN: do not echo arbitrary text from third-party processors.
+            if (in_array($normalized, array('message', 'error', 'errors'), true)) {
+                $value[$key] = '[REDACTED]';
+            } elseif ($sensitive) {
+                $value[$key] = '[REDACTED]';
+            } else {
+                $value[$key] = self::sanitizeProcessorOutput($item, $depth + 1);
+            }
+        }
+        return $value;
+    }
+
     public static function unwrap($decoded)
     {
         if (is_array($decoded) && array_key_exists('object', $decoded) && array_key_exists('success', $decoded)) {

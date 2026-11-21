@@ -109,6 +109,7 @@ jobs:
           php _build/test.protected-processor-denial.php
           php _build/test.processor-master-switch.php
           php _build/test.processor-response-shapes.php
+          php _build/test.processor-secret-redaction.php
           php _build/test.multi-value-tv.php
           php _build/test.clientconfig-cache.php
       - name: Independent Ed25519 permit interoperability (no site writes)

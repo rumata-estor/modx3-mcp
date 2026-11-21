@@ -90,8 +90,13 @@ class RunProcessorTool implements ToolInterface
             );
         }
         if ($response->isError()) {
+            // RU: Не раскрываем строку ошибки стороннего процессора: она
+            // RU: может содержать пароли. Результат мутации неизвестен.
+            // EN: Third-party error text may contain credentials, and the
+            // EN: mutation may already have occurred. Require readback.
             throw new \ModxMCPClientException(
-                ProcessorSupport::error($response)
+                'MUTATION_OUTCOME_UNCERTAIN: processor reported an error; '
+                . 'verify actual state via MCP before any retry.'
             );
         }
 
@@ -106,8 +111,9 @@ class RunProcessorTool implements ToolInterface
         // EN: Preserve the native processor response; MODX 3 may return an
         // EN: already decoded array instead of JSON text.
         $decoded = ProcessorSupport::decodedResponse($response);
-        return !empty($decoded)
+        $result = !empty($decoded)
             ? $decoded
             : ProcessorSupport::normalize($response);
+        return ProcessorSupport::sanitizeProcessorOutput($result);
     }
 }

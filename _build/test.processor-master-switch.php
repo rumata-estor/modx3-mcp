@@ -12,6 +12,9 @@ namespace ModxMcp\Tools {
     class AuditSupport {public static $calls=0; public static function log($ctx,$name,$type,$data){self::$calls++;}}
     class ProcessorSupport {
         public static function normalize($response){return array('success'=>true);}
+        // RU: Fake проверяет контракт редактирования секретов отдельно.
+        // EN: The fake delegates credential redaction to its own regression.
+        public static function sanitizeProcessorOutput($result){return $result;}
         // RU: Модульный fake поддерживает новый контракт ответов MODX.
         // EN: The offline fake implements the MODX response shape contract.
         public static function decodedResponse($response){
