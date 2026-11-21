@@ -263,6 +263,18 @@ try:
     row = read(url, "get_element", {"type": "resource", "id": rid})
     expect(bool(row.get("deleted")), "HTTP MCP resource soft-deleted")
 
+    # Independent second client: Node 24 native fetch(), separate Ed25519
+    # signing invocation, same installed MODX endpoint and database. This
+    # exercises additional malformed headers, top-level alias injection and
+    # API token mismatches that cannot be found by direct PHP unit tests.
+    node_result = run([
+        "node", str(root / "_build/test.ci-protected-http.cjs"),
+        str(private), str(token_file), str(port), site,
+    ])
+    expect("PROTECTED_ED25519_HTTP_END_TO_END_OK" in node_result,
+           "independent Node HTTP client completed")
+    print(node_result, flush=True)
+
     print(f"PROTECTED_ED25519_HTTP_E2E_OK checks={checked} "
           "https_required=yes api_token=yes "
           "permit_signature=yes replay_denied=yes stale_denied=yes "
