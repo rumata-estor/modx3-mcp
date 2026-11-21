@@ -190,6 +190,63 @@ try {
     requireCas(!folderPresent($empty),'MCP delete folder readback');
     requireCas(rev()===$prev+1,'MCP folder delete revision increment once');
 
+    // Concurrent external write test: independent PHP clients race with the
+    // same strict site revision. Shared mutation lock and precondition check
+    // must yield exactly one successful writer, one STALE_STATE, and one
+    // revision increment. Both candidates change only this disposable file.
+    $raceRevision=rev();
+    $beforeRace=getFile($renamed);
+    $raceWorkers=array();
+    $raceGate=getenv('RUNNER_TEMP').'/cas-ext-'.$key.'.gate';
+    for($i=0;$i<2;$i++){
+        $readyFile=getenv('RUNNER_TEMP').'/cas-ext-'.$key.'-ready-'.$i;
+        $nextValue='racer-'.$i.'-'.$key;
+        $cmd=array(
+            PHP_BINARY,__DIR__.'/test.ci-external-cas-worker.php',
+            $renamed,(string)$raceRevision,(string)$beforeRace,
+            $nextValue,$readyFile,$raceGate,
+        );
+        $pipes=array();
+        $proc=proc_open($cmd,array(
+            0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+        ),$pipes);
+        requireCas(is_resource($proc),'start external CAS worker');
+        fclose($pipes[0]);
+        $raceWorkers[]=array($proc,$pipes,$readyFile,$nextValue);
+    }
+    $deadline=microtime(true)+15;
+    while ((!is_file($raceWorkers[0][2]) || !is_file($raceWorkers[1][2]))
+        && microtime(true)<$deadline) usleep(10000);
+    requireCas(is_file($raceWorkers[0][2]) && is_file($raceWorkers[1][2]),
+        'two media writers ready');
+    file_put_contents($raceGate,'go');
+    $outcomes=array();
+    foreach ($raceWorkers as $worker) {
+        $stdout=stream_get_contents($worker[1][1]);
+        $stderr=stream_get_contents($worker[1][2]);
+        fclose($worker[1][1]);fclose($worker[1][2]);
+        $exit=proc_close($worker[0]);
+        requireCas($exit===0,'external CAS worker exited cleanly: '.$stderr);
+        $outcomes[]=trim($stdout);
+    }
+    requireCas(count(array_filter($outcomes,function($v){
+        return $v==='EXTERNAL_CAS_WORKER_OK';
+    }))===1,'exactly one external writer committed');
+    requireCas(count(array_filter($outcomes,function($v){
+        return $v==='EXTERNAL_CAS_WORKER_STALE';
+    }))===1,'other external writer rejected as stale');
+    requireCas(rev()===$raceRevision+1,'external race revision incremented once');
+    $winner=getFile($renamed);
+    requireCas(in_array($winner,array($raceWorkers[0][3],$raceWorkers[1][3]),true),
+        'external race persisted exactly one writer');
+    rpc('update_media_file',array('source'=>1,'path'=>$renamed,'content'=>$beforeRace,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>$raceRevision+1,
+            'strict_site_revision'=>true,'read_set'=>array(),
+        )));
+    requireCas(getFile($renamed)===$beforeRace,'external race restored via CAS');
+    echo 'CAS_EXTERNAL_PARALLEL_WRITERS_ONE_WINNER_OK'.PHP_EOL;
+
     $prev=rev();
     $failure=null;
     try {
