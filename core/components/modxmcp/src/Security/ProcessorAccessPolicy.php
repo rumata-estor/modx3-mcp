@@ -65,6 +65,9 @@ final class ProcessorAccessPolicy
         // EN: delegated by the ordinary allowlist; require privileged + Ed25519.
         $sensitive = strpos($processor, 'security/') === 0
             || strpos($processor, 'workspace/package/') === 0
+            // RU: MODX использует и множественное workspace/packages.
+            // EN: Core MODX also uses the plural workspace/packages path.
+            || strpos($processor, 'workspace/packages/') === 0
             || strpos($processor, 'workspace/namespace/') === 0;
         if ($sensitive) {
             if ($mode === 'privileged' && isset($privileged[$processor])) {

@@ -39,6 +39,12 @@ rejects('security/user/create','allowlist',$allowed,$privileged);
 rejects('security/user/create','allowlist','security/user/create',$privileged);
 rejects('security/user/create','privileged','security/user/create','');
 rejects('workspace/package/install','allowlist','workspace/package/install',$privileged);
+// RU: Обычный белый список не должен открывать реальные пути MODX packages.
+// EN: Ordinary allowlisting must not grant the actual MODX packages routes.
+rejects('workspace/packages/install','allowlist','workspace/packages/install',$privileged);
+rejects('workspace/packages/uninstall','allowlist','workspace/packages/uninstall',$privileged);
+rejects('workspace/packages/rest/download','allowlist','workspace/packages/rest/download',$privileged);
+accepts('workspace/packages/install','privileged',$allowed,'workspace/packages/install');
 rejects('workspace/namespace/create','allowlist','workspace/namespace/create',$privileged);
 accepts('security/user/create','privileged',$allowed,$privileged);
 accepts('workspace/package/install','privileged',$allowed,$privileged);
