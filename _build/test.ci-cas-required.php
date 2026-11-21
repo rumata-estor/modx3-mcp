@@ -121,19 +121,22 @@ $update=$api->processRequest('update_element','',array(
     'type'=>'resource','id'=>$rid,'content'=>'POSITIVE_CAS_SEQUENCE',
     '_runtime_preconditions'=>$guard($afterCreate)
 ));
-$afterUpdate=(int)$update['_site_revision'];
-if($afterUpdate!==$afterCreate+1 ||
-   (int)$api->processRequest('get_site_state','',array())['site_revision']!==$afterUpdate)
+// update_element may return a plain text message; site state is the
+// authoritative source of the post-operation revision.
+$afterUpdate=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+if($afterUpdate!==$afterCreate+1)
     throw new RuntimeException('CAS ledger stale after second mutation in PHP process');
+$updated=$api->processRequest('get_element','',array('type'=>'resource','id'=>$rid));
+if(!is_array($updated) || (string)$updated['content']!=='POSITIVE_CAS_SEQUENCE')
+    throw new RuntimeException('Guarded update not persisted');
 $checks++;
 
 $delete=$api->processRequest('delete_element','',array(
     'type'=>'resource','id'=>$rid,'dry_run'=>false,
     '_runtime_preconditions'=>$guard($afterUpdate)
 ));
-$afterDelete=(int)$delete['_site_revision'];
-if($afterDelete!==$afterUpdate+1 ||
-   (int)$api->processRequest('get_site_state','',array())['site_revision']!==$afterDelete)
+$afterDelete=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+if($afterDelete!==$afterUpdate+1)
     throw new RuntimeException('CAS ledger stale after third mutation in PHP process');
 $check=$api->processRequest('get_element','',array('type'=>'resource','id'=>$rid));
 if(empty($check['deleted']))
