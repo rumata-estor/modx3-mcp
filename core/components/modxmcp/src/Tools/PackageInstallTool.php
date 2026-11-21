@@ -75,9 +75,7 @@ class PackageInstallTool implements ToolInterface
         if (!$listResponse || $listResponse->isError()) {
             throw new \ModxMCPClientException(
                 'install_package: provider search failed: '
-                . ($listResponse
-                    ? ProcessorSupport::error($listResponse)
-                    : 'no response')
+                . 'provider did not return a usable response'
             );
         }
         // RU: Поиск пакетов должен одинаково работать на MODX 2 и MODX 3.
@@ -135,9 +133,7 @@ class PackageInstallTool implements ToolInterface
         if (!$downloadResponse || $downloadResponse->isError()) {
             throw new \ModxMCPClientException(
                 'install_package: download failed: '
-                . ($downloadResponse
-                    ? ProcessorSupport::error($downloadResponse)
-                    : 'no response')
+                . 'download processor did not return a usable response'
             );
         }
 
@@ -152,11 +148,13 @@ class PackageInstallTool implements ToolInterface
             array('signature' => $signature)
         );
         if (!$installResponse || $installResponse->isError()) {
+            // RU: Во время установки транспортный пакет может изменить
+            // RU: файлы и БД до ошибки. Не обещаем откат или безопасный повтор.
+            // EN: Transport installation can affect files and database
+            // EN: before an error; outcome must be reconciled before retry.
             throw new \ModxMCPClientException(
-                'install_package: install failed: '
-                . ($installResponse
-                    ? ProcessorSupport::error($installResponse)
-                    : 'no response')
+                'MUTATION_OUTCOME_UNCERTAIN: package install did not confirm '
+                . 'completion; verify installed package state via MCP before retry.'
             );
         }
 

@@ -30,10 +30,13 @@ class PackageUninstallTool implements ToolInterface
             array('signature' => $signature)
         );
         if (!$response || $response->isError()) {
+            // RU: Процессор удаления способен удалить файлы и данные до
+            // RU: возврата ошибки. Результат неопределён — повтор опасен.
+            // EN: Package uninstall may remove files/data before reporting
+            // EN: an error. Do not echo processor text or allow blind retry.
             throw new \ModxMCPClientException(
-                $response
-                    ? ProcessorSupport::error($response)
-                    : 'uninstall_package: no response.'
+                'MUTATION_OUTCOME_UNCERTAIN: package uninstall did not confirm '
+                . 'completion; verify installed package state via MCP before retry.'
             );
         }
 
