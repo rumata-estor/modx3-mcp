@@ -3180,10 +3180,18 @@ class modxMCP {
             $this->modx->commit();
             return $result;
         } catch (Exception $e) {
-            $this->modx->rollback();
+            try {
+                $this->modx->rollback();
+            } catch (Throwable $rollbackFailure) {
+                // commit() already closed the transaction; keep the original error.
+            }
             throw $e;
         } catch (Throwable $e) {
-            $this->modx->rollback();
+            try {
+                $this->modx->rollback();
+            } catch (Throwable $rollbackFailure) {
+                // commit() already closed the transaction; keep the original error.
+            }
             throw $e;
         }
     }

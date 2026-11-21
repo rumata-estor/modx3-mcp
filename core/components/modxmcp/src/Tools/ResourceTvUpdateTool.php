@@ -103,7 +103,11 @@ class ResourceTvUpdateTool implements ToolInterface
             }
             $modx->commit();
         } catch (\Throwable $e) {
-            $modx->rollback();
+            try {
+                $modx->rollback();
+            } catch (\Throwable $rollbackFailure) {
+                // commit() already closed the transaction; keep the original error.
+            }
             throw $e;
         }
 

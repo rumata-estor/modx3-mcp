@@ -2096,11 +2096,11 @@ Schema introspection: list an xPDO class's fields (name + php/db type, null, def
 
 ### `modx_read_error_log`
 
-Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100). A line over 512 KiB is returned once as an explicitly marked suffix of up to 8 KiB. The suffix remains valid UTF-8; non-UTF-8 bytes are Base64-encoded and marked accordingly. The response includes `result_complete`, `scanned_bytes`, and `truncated_lines`; `result_complete=false` means that truncation, an I/O failure, or the 16 MiB scan window may have omitted data.
+Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100, capped at 1000). A line over 512 KiB is returned once as an explicitly marked suffix of up to 8 KiB. The suffix remains valid UTF-8: up to three invalid leading bytes are trimmed first; if the remainder is still not valid UTF-8, it is Base64-encoded and marked accordingly. The response includes `result_complete`, `scanned_bytes`, and `truncated_lines`; `result_complete=false` means that truncation, an I/O failure, or the 16 MiB scan window may have omitted data.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
-| `limit` | number | no | — |
+| `limit` | number | no | Lines (default 100, capped at 1000). |
 
 ### `modx_refresh_uris`
 
@@ -2166,7 +2166,7 @@ Read the modxMCP write-audit trail (newest last). Optionally filter to one actio
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
 | `action` | string | no | Filter to this action name. |
-| `limit` | number | no | Max entries (default 100). |
+| `limit` | number | no | Max entries (default 100, capped at 1000). |
 
 ### `modx_run_processor`
 

@@ -10,6 +10,7 @@
 - `run_processor` protection additionally covers the singular `system/setting/*` routes used by MODX 2.x, including `processors_path` overrides pointing at the singular directory.
 - API-token masking now also applies to the monolithic MODX 2/3 `normalizeSystemSetting` fallback; short tokens are fully masked instead of a reversible first-6/last-4 preview.
 - Context-setting mutations regenerate the affected context cache with an explicit `contexts` list (an empty refresh payload was a silent no-op in the MODX cache manager).
+- TV mutation failures no longer mask the original error with a secondary rollback exception when commit() has already closed the transaction; log-tool docs state the 1000-line limit cap and the exact Base64 fallback semantics.
 
 ## 1.2.7 (2026-11-20)
 
