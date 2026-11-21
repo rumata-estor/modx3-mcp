@@ -133,7 +133,8 @@ class modxMCP {
                                 $runtimeContext,
                                 $toolData,
                                 $runtimePreconditions,
-                                $isDryRun
+                                $isDryRun,
+                                $atomicTv
                             ) {
                                 if (is_array($runtimePreconditions)) {
                                     \ModxMcp\Tools\StateSupport::assertPreconditions(
@@ -141,7 +142,7 @@ class modxMCP {
                                         $runtimePreconditions
                                     );
                                 }
-                                $result = $managed
+                                $result = ($managed && $atomicTv)
                                     ? $tool->executeWithinRevisionTransaction(
                                         $runtimeContext,
                                         $toolData
