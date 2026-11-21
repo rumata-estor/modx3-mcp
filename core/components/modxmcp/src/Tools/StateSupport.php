@@ -5,6 +5,49 @@ class StateSupport
 {
     const REVISION_KEY = 'modxmcp.site_revision';
 
+    // PHP-request-local. Never stored in MODX system settings or client input.
+    // Callbacks do not fire when the database transaction is rolled back.
+    private static $transactionCallbacks = array();
+
+    public static function inRevisionTransaction($context)
+    {
+        return isset(self::$transactionCallbacks[spl_object_hash($context->modx())]);
+    }
+
+    public static function afterRevisionCommit($context, $callback)
+    {
+        $key = spl_object_hash($context->modx());
+        if (isset(self::$transactionCallbacks[$key])) {
+            self::$transactionCallbacks[$key][] = $callback;
+        } else {
+            call_user_func($callback);
+        }
+    }
+
+    /**
+     * Database-backed mutations only. No SQL transaction can roll back a
+     * media file, package install, emitted event, or external I/O.
+     */
+    public static function supportsAtomicRevision($context, $action, array $data)
+    {
+        if (in_array($action, array(
+            'update_resource_tvs',
+            'create_category', 'update_category', 'delete_category',
+            'assign_element_category',
+            'create_system_setting', 'update_system_setting',
+            'delete_system_setting', 'update_element_property',
+        ), true)) {
+            return true;
+        }
+        // Some element processors can write static files or fire plugins.
+        // Scope the first-stage atomic guarantee to regular resources only.
+        if (in_array($action, array('create_element', 'update_element', 'delete_element'), true)) {
+            return isset($data['type']) && $data['type'] === 'resource'
+                && empty($data['static']) && empty($data['static_file']);
+        }
+        return false;
+    }
+
     public static function siteState($context)
     {
         return array(
@@ -93,19 +136,36 @@ class StateSupport
     public static function withRevisionTransaction($context, $callback)
     {
         $modx = $context->modx();
+        $key = spl_object_hash($modx);
+        if (isset(self::$transactionCallbacks[$key])) {
+            throw new \RuntimeException('Nested CAS revision boundary not allowed.');
+        }
         if ($modx->beginTransaction() === false) {
             throw new \RuntimeException('Cannot start CAS revision transaction.');
         }
+        self::$transactionCallbacks[$key] = array();
         try {
             $result = call_user_func($callback);
             if ($modx->commit() === false) {
                 throw new \RuntimeException('CAS revision transaction commit failed.');
             }
-            return $result;
+            $callbacks = self::$transactionCallbacks[$key];
+            unset(self::$transactionCallbacks[$key]);
         } catch (\Throwable $e) {
+            unset(self::$transactionCallbacks[$key]);
             $modx->rollback();
             throw $e;
         }
+        // The DB commit is complete. Side effects must not falsely turn a
+        // committed write into a reported transaction failure.
+        foreach ($callbacks as $afterCommit) {
+            try {
+                call_user_func($afterCommit);
+            } catch (\Throwable $e) {
+                $modx->log(3, '[modxmcp] after-commit callback failed: ' . $e->getMessage());
+            }
+        }
+        return $result;
     }
 
     private static function isListArray(array $value)

@@ -33,7 +33,7 @@ class SystemSettingUpdateTool implements ToolInterface
             );
         }
 
-        $context->modx()->cacheManager->refresh();
+        ElementMutationSupport::refreshCache($context);
         AuditSupport::log(
             $context,
             $this->name(),

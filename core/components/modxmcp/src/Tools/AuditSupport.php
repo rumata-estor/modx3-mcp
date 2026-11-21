@@ -5,6 +5,14 @@ class AuditSupport
 {
     public static function log($context, $action, $type, array $payload = array())
     {
+        if (StateSupport::inRevisionTransaction($context)) {
+            StateSupport::afterRevisionCommit($context, function () use (
+                $context, $action, $type, $payload
+            ) {
+                self::log($context, $action, $type, $payload);
+            });
+            return;
+        }
         $modx = $context->modx();
         if (!(bool)$modx->getOption('modxmcp.audit_log', null, true)) { return; }
 

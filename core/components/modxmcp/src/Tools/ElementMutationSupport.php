@@ -129,6 +129,11 @@ class ElementMutationSupport
     public static function transaction($context, $callback)
     {
         $modx = $context->modx();
+        // When the dispatcher owns the DB transaction, the nested element
+        // transaction must not commit before site_revision is saved.
+        if (StateSupport::inRevisionTransaction($context)) {
+            return call_user_func($callback);
+        }
         $modx->beginTransaction();
         try {
             $result = call_user_func($callback);
@@ -403,6 +408,12 @@ class ElementMutationSupport
 
     public static function refreshCache($context)
     {
+        if (StateSupport::inRevisionTransaction($context)) {
+            StateSupport::afterRevisionCommit($context, function () use ($context) {
+                self::refreshCache($context);
+            });
+            return;
+        }
         $manager = $context->modx()->getCacheManager();
         if ($manager) { $manager->refresh(); }
     }

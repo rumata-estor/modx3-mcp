@@ -125,6 +125,9 @@ class modxMCP {
                             // success on revision persistence failure.
                             $atomicTv = $tool instanceof
                                 \ModxMcp\Tools\ResourceTvUpdateTool;
+                            $atomicDatabase = \ModxMcp\Tools\StateSupport::supportsAtomicRevision(
+                                $runtimeContext, $tool->name(), $toolData
+                            );
                             $apply = function ($managed) use (
                                 $tool,
                                 $runtimeContext,
@@ -154,17 +157,19 @@ class modxMCP {
                                 }
                                 return $result;
                             };
-                            if ($atomicTv && !$isDryRun) {
+                            if ($atomicDatabase && !$isDryRun) {
                                 $result = \ModxMcp\Tools\StateSupport::withRevisionTransaction(
                                     $runtimeContext,
                                     function () use ($apply) {
                                         return $apply(true);
                                     }
                                 );
-                                $tool->afterCommittedRevision(
-                                    $runtimeContext,
-                                    $toolData
-                                );
+                                if ($atomicTv) {
+                                    $tool->afterCommittedRevision(
+                                        $runtimeContext,
+                                        $toolData
+                                    );
+                                }
                                 return $result;
                             }
                             return $apply(false);

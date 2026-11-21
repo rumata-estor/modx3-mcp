@@ -38,7 +38,7 @@ class SystemSettingDeleteTool implements ToolInterface
                 'Failed to delete system setting: ' . $key . '.'
             );
         }
-        $context->modx()->cacheManager->refresh();
+        ElementMutationSupport::refreshCache($context);
         AuditSupport::log(
             $context,
             $this->name(),

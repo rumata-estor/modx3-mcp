@@ -51,7 +51,7 @@ class SystemSettingCreateTool implements ToolInterface
             );
         }
 
-        $modx->cacheManager->refresh();
+        ElementMutationSupport::refreshCache($context);
         AuditSupport::log(
             $context,
             $this->name(),
