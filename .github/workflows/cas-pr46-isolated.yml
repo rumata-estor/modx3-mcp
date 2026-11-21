@@ -22,18 +22,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: modx2
-            modx_version: '2.8.9'
-            php_version: '7.4'
-            signature: 'modx2mcp-1.2.7-pl'
-          - platform: modx2
-            modx_version: '2.8.9'
-            php_version: '8.2'
-            signature: 'modx2mcp-1.2.7-pl'
-          - platform: modx3
-            modx_version: '3.2.4'
-            php_version: '8.2'
-            signature: 'modx3mcp-1.2.7-pl'
+          # RU: Последняя ветка MODX 2; PHP 7.4 и 8.x тестируем отдельно.
+          # EN: Latest MODX 2; test PHP 7.4 and each stable 8.x separately.
+          - {platform: modx2, modx_version: '2.8.9', php_version: '7.4', signature: 'modx2mcp-1.2.7-pl'}
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.0', signature: 'modx2mcp-1.2.7-pl'}
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.1', signature: 'modx2mcp-1.2.7-pl'}
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.2', signature: 'modx2mcp-1.2.7-pl'}
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.3', signature: 'modx2mcp-1.2.7-pl'}
+          # RU: MODX 3.1 поддерживает PHP 7.4+, но не имеет гарантий для всех новых PHP.
+          # EN: MODX 3.1 starts at PHP 7.4; later PHP compatibility is verified empirically.
+          - {platform: modx3, modx_version: '3.1.2', php_version: '7.4', signature: 'modx3mcp-1.2.7-pl'}
+          - {platform: modx3, modx_version: '3.1.2', php_version: '8.1', signature: 'modx3mcp-1.2.7-pl'}
+          - {platform: modx3, modx_version: '3.1.2', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl'}
+          # RU: В MODX 3.2 минимальная версия PHP — 8.1.
+          # EN: MODX 3.2 requires PHP 8.1 or newer.
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.1', signature: 'modx3mcp-1.2.7-pl'}
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl'}
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.3', signature: 'modx3mcp-1.2.7-pl'}
     services:
       mariadb:
         image: mariadb:10.11
@@ -166,13 +171,6 @@ jobs:
           echo "INSTALLED_CAS_V2_CONSISTENCY_OK\n";
           '
           echo "MODXMCP_127_UPGRADE_PASS ${{ matrix.platform }} PHP ${{ matrix.php_version }}"
-      - name: Functional acceptance of permitted CAS CRUD and allowlisted processors
-        env:
-          MODXMCP_DISPOSABLE_CI: '1'
-        run: |
-          set -euo pipefail
-          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
-          php _build/test.ci-functional-acceptance.php
       - name: Ordinary HTTP API functional acceptance without Ed25519
         env:
           MODXMCP_DISPOSABLE_CI: '1'
@@ -296,3 +294,10 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-mutation-gates.php
+      - name: Functional acceptance of permitted CAS CRUD and allowlisted processors
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-functional-acceptance.php

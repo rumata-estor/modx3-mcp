@@ -47,7 +47,10 @@ foreach ($lexicons as $language => $entries) {
 
 $template = file_get_contents($root . '/core/components/modxmcp/templates/graph.tpl');
 $graphJs = file_get_contents($root . '/assets/components/modxmcp/js/graph.js');
-checkLocalization(!preg_match('/[А-Яа-яЁё]/u', $template), 'Russian text embedded in graph template');
+// RU: Двуязычные Smarty-комментарии не являются текстом интерфейса.
+// EN: Bilingual Smarty comments are not rendered interface text.
+$renderedTemplate = preg_replace('/\{\*.*?\*\}/s', '', $template);
+checkLocalization(!preg_match('/[А-Яа-яЁё]/u', $renderedTemplate), 'Russian text embedded in graph template');
 
 preg_match_all('/\{\$g\.([a-z_]+)\}/', $template, $templateMatches);
 preg_match_all('/\bTXT\.([a-z_]+)\b/', $graphJs, $jsMatches);
