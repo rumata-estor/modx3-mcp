@@ -30,6 +30,7 @@ $defs = array(
     array('modxmcp.permit_site_id', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.permit_contour', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.permit_public_key', '', 'textfield', 'modxmcp:security'),
+    array('modxmcp.permit_allowed_actions', '', 'textfield', 'modxmcp:security'),
 
     array('modxmcp.core_path', '{core_path}components/modxmcp/', 'textfield', 'modxmcp:paths'),
 );

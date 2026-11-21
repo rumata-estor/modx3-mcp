@@ -102,6 +102,8 @@ try {
     securitySetting('modxmcp.permit_audience','ci-protected');
     securitySetting('modxmcp.permit_site_id',$site);
     securitySetting('modxmcp.permit_contour','test');
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting');
     // Security mode is enabled by the disposable Manager test fixture.
     // No MCP instruction is allowed to change modxmcp.* security settings.
     securitySetting('modxmcp.external_authorization_required','1');
@@ -115,6 +117,19 @@ try {
         'published'=>0,'hidemenu'=>1,'_runtime_preconditions'=>guardNow(),
     );
     mustDeny('create_element','',$data,null);
+    // Even a correctly signed permit is insufficient if the site has not
+    // independently approved the specific mutation operation.
+    $unapproved=array('_runtime_preconditions'=>guardNow());
+    $beforePolicy=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+    mustDeny('clear_cache','',$unapproved,
+        signedCall('clear_cache','',$unapproved));
+    must((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$beforePolicy,'disallowed action did not consume site revision');
+    securitySetting('modxmcp.permit_allowed_actions','');
+    mustDeny('create_element','',$data,
+        signedCall('create_element','',$data));
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting');
     $badRaw=signedCall('create_element','',$data);
     $badRaw['raw_body'].=' ';
     mustDeny('create_element','',$data,$badRaw);

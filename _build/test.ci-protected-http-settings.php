@@ -37,6 +37,8 @@ if($operation==='enable'){
     setting('modxmcp.permit_audience','ci-protected');
     setting('modxmcp.permit_site_id','ci-http-'.($is2?'modx2':'modx3'));
     setting('modxmcp.permit_contour','test');
+    setting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element');
     setting('modxmcp.enabled','1');
     setting('modxmcp.external_authorization_required','1');
     $manager=$modx->getCacheManager();

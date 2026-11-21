@@ -44,9 +44,13 @@ final class ProtectedAuthorization
         // Never trust a process-local xPDO cached setting for a security gate.
         // A broken/missing DB query must fail closed (throw), not read "false".
         $mode=self::readSetting($modx,self::MODE_SETTING);
-        if ($mode===null || $mode==='0') return false;
+        if ($mode==='0') return false;
         if ($mode==='1') return true;
-        throw new \RuntimeException('Protected authorization: invalid policy mode.');
+        // Missing/invalid configuration must not silently disable an
+        // explicitly staged protected component. New installs ship mode=0.
+        throw new \RuntimeException(
+            'Protected authorization: missing or invalid policy mode.'
+        );
     }
 
     public static function ledgerTable($modx)
@@ -173,6 +177,31 @@ final class ProtectedAuthorization
         IndependentPermitV1::verifyCryptographicClaims(
             $permit['claims'],$permit['signature'],$publicKey,$trusted,hash('sha256',$raw)
         );
+        // Two independently enforced authorizations: a signed Controller
+        // permit AND a site-owned action allowlist. Enabling protected mode
+        // with an empty/unconfigured list grants NO mutation privileges.
+        // The caller cannot supply or override this protected setting.
+        $allowedCsv=self::readSetting($modx,'modxmcp.permit_allowed_actions');
+        if (!is_string($allowedCsv) || $allowedCsv==='') {
+            throw new \RuntimeException(
+                'AUTH_DENIED: no mutating operations permitted by site policy.'
+            );
+        }
+        $allowed=array();
+        foreach (explode(',',$allowedCsv) as $item) {
+            if (!preg_match('/\A[a-z][a-z0-9_]{0,79}\z/D',$item)
+                || isset($allowed[$item])) {
+                throw new \RuntimeException(
+                    'AUTH_DENIED: malformed site permit action policy.'
+                );
+            }
+            $allowed[$item]=true;
+        }
+        if (!isset($allowed[$action])) {
+            throw new \RuntimeException(
+                'AUTH_DENIED: action disallowed by independent site policy.'
+            );
+        }
         $nonce=$permit['claims']['nonce'];
         $issued=(int)$permit['claims']['issued_at'];
         $expires=(int)$permit['claims']['expires_at'];

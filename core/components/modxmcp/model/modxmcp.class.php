@@ -247,10 +247,11 @@ class modxMCP {
                                                 'update_element','delete_element'
                                             ), true)
                                             && isset($toolData['type'])
-                                            && $toolData['type']==='resource') {
+                                            && $toolData['type']==='resource'
+                                            && isset($toolData['id'])) {
                                             \ModxMcp\Tools\StateSupport::lockResourceRowForCas(
                                                 $runtimeContext,
-                                                isset($toolData['id']) ? $toolData['id'] : null
+                                                $toolData['id']
                                             );
                                         }
                                         return $apply(true);

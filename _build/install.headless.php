@@ -372,6 +372,7 @@ $settings = array(
     'modxmcp.permit_site_id' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.permit_contour' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.permit_public_key' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_allowed_actions' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.core_path' => array('{core_path}components/modxmcp/', 'textfield', 'modxmcp:paths'),
 );
 
