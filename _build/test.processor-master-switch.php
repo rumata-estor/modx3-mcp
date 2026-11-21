@@ -10,7 +10,17 @@ namespace ModxMcp\Tools {
         public function supports($context); public function execute($context,array $data);
     }
     class AuditSupport {public static $calls=0; public static function log($ctx,$name,$type,$data){self::$calls++;}}
-    class ProcessorSupport {public static function normalize($response){return array('success'=>true);}}
+    class ProcessorSupport {
+        public static function normalize($response){return array('success'=>true);}
+        // RU: Модульный fake поддерживает новый контракт ответов MODX.
+        // EN: The offline fake implements the MODX response shape contract.
+        public static function decodedResponse($response){
+            $raw=$response->getResponse();
+            if(is_array($raw))return $raw;
+            $value=is_string($raw)?json_decode($raw,true):null;
+            return is_array($value)?$value:array();
+        }
+    }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/RunProcessorTool.php';
 }
 namespace ModxMcp\Security {

@@ -101,8 +101,12 @@ class RunProcessorTool implements ToolInterface
             'system',
             array('processor' => $auditProcessor)
         );
-        $decoded = json_decode($response->getResponse(), true);
-        return is_array($decoded)
+        // RU: Возвращаем полный статус штатного процессора; MODX 3 может
+        // RU: вернуть готовый массив вместо JSON-строки.
+        // EN: Preserve the native processor response; MODX 3 may return an
+        // EN: already decoded array instead of JSON text.
+        $decoded = ProcessorSupport::decodedResponse($response);
+        return !empty($decoded)
             ? $decoded
             : ProcessorSupport::normalize($response);
     }

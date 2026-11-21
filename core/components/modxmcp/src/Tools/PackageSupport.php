@@ -22,7 +22,9 @@ class PackageSupport
 
     public static function listResult($response)
     {
-        $decoded = json_decode($response->getResponse(), true);
+        // RU: Универсальный ответ MODX: строка JSON или готовый массив.
+        // EN: MODX processor responses may be JSON strings or arrays.
+        $decoded = ProcessorSupport::decodedResponse($response);
         return array(
             'total' => isset($decoded['total']) ? (int)$decoded['total'] : 0,
             'results' => isset($decoded['results']) ? $decoded['results'] : array(),

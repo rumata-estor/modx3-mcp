@@ -41,12 +41,25 @@ class ProcessorSupport
         return $decoded;
     }
 
-    public static function normalize($response)
+    /**
+     * RU: MODX 2/3 возвращает ответ процессора как JSON либо готовый массив.
+     * RU: Никогда не передавайте массив непосредственно в json_decode().
+     * EN: MODX 2/3 processors may return a JSON string or decoded array.
+     * EN: Never pass an array directly to json_decode().
+     */
+    public static function decodedResponse($response)
     {
         $raw = $response->getResponse();
-        if (is_array($raw)) { return self::unwrap($raw); }
-        $decoded = json_decode((string) $raw, true);
-        if (is_array($decoded)) { return self::unwrap($decoded); }
+        if (is_array($raw)) { return $raw; }
+        if (!is_string($raw)) { return array(); }
+        $decoded = json_decode($raw, true);
+        return is_array($decoded) ? $decoded : array();
+    }
+
+    public static function normalize($response)
+    {
+        $decoded = self::decodedResponse($response);
+        if (!empty($decoded)) { return self::unwrap($decoded); }
         $object = $response->getObject();
         if (!empty($object)) { return $object; }
         return array('success' => true);
@@ -70,7 +83,7 @@ class ProcessorSupport
         }
 
         if ($isList) {
-            $decoded = json_decode($response->getResponse(), true);
+            $decoded = self::decodedResponse($response);
             return array(
                 'total' => isset($decoded['total']) ? (int) $decoded['total'] : 0,
                 'results' => self::stripNoiseFields(isset($decoded['results']) ? $decoded['results'] : array()),

@@ -80,7 +80,9 @@ class PackageInstallTool implements ToolInterface
                     : 'no response')
             );
         }
-        $listData = json_decode($listResponse->getResponse(), true);
+        // RU: Поиск пакетов должен одинаково работать на MODX 2 и MODX 3.
+        // EN: Package lookup must accept both MODX 2 and MODX 3 responses.
+        $listData = ProcessorSupport::decodedResponse($listResponse);
         $rows = isset($listData['results'])
             ? $listData['results']
             : array();
