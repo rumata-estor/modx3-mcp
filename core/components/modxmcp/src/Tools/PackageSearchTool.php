@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Package Search»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Package Search»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PackageSearchTool implements ToolInterface

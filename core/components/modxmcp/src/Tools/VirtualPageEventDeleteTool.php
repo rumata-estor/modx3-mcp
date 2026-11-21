@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Event Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Event Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageEventDeleteTool implements ToolInterface

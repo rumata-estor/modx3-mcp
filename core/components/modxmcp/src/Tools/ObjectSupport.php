@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Object» для инструментов MODX MCP.
+ * EN: Shared «Object» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class ObjectSupport

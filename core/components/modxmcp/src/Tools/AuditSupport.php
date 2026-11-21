@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Audit» для инструментов MODX MCP.
+ * EN: Shared «Audit» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class AuditSupport

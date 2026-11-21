@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Role Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Role Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class RoleGetTool implements ToolInterface

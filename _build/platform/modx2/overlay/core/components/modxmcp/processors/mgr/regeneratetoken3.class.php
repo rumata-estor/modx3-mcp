@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: regeneratetoken3.class.
+ * EN: MODX Manager controller/processor: regeneratetoken3.class.
+ */
 
 
 class ModxmcpRegenerateToken3Processor extends modProcessor

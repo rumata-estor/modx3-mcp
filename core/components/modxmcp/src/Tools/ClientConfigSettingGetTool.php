@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Client Config Setting Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Client Config Setting Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ClientConfigSettingGetTool implements ToolInterface

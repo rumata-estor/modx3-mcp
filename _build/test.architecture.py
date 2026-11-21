@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «architecture»; тестовый код не запускается на production.
+# EN: «architecture» regression test; not executed in production.
 from pathlib import Path
 import sys
 import shutil

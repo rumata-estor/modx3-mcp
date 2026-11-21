@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «install.transport»; изменение только по процедуре релиза.
+ * EN: Build/install script «install.transport»; run only within the release procedure.
+ */
 
 use MODX\Revolution\modMenu;
 use MODX\Revolution\modNamespace;
@@ -201,7 +205,7 @@ $ns = $modx->getObject(modNamespace::class, array('name' => 'modxmcp'));
 $runtimeRevisionSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.site_revision'));
 $countSettingsAll = (int)$modx->getCount(modSystemSetting::class, array('key:LIKE' => 'modxmcp.%'));
 $countSettings = $countSettingsAll - ($runtimeRevisionSetting ? 1 : 0);
-$expectedSettings = 22;
+$expectedSettings = 26;
 $runtimeRevision = $runtimeRevisionSetting ? (string)$runtimeRevisionSetting->get('value') : '';
 $runtimeRevisionValid = !$runtimeRevisionSetting || preg_match('/^[0-9]+$/', $runtimeRevision);
 $tokenSetting = $modx->getObject(modSystemSetting::class, array('key' => 'modxmcp.api_token'));

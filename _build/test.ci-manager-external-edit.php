@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-manager-external-edit»; тестовый код не запускается на production.
+ * EN: «ci-manager-external-edit» regression test; not executed in production.
+ */
 /**
  * Disposable-only ADVERSARIAL MODX Manager change outside MCP.
  *

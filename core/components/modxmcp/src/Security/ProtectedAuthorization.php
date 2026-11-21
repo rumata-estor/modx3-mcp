@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Независимое разрешение мутаций: подпись, политика сайта и одноразовый nonce.
+ * EN: Independent mutation authorization: signature, site policy and one-use nonce.
+ */
 namespace ModxMcp\Security;
 
 /**
@@ -51,6 +55,17 @@ final class ProtectedAuthorization
         throw new \RuntimeException(
             'Protected authorization: missing or invalid policy mode.'
         );
+    }
+
+    /**
+     * RU: Для защищённого запуска процессора читаем галочку непосредственно
+     * RU: из БД, чтобы кеш PHP не переопределял решение администратoра.
+     * EN: Read the protected processor switch from the database so a stale
+     * EN: PHP option cache cannot override the administrator's decision.
+     */
+    public static function processorMasterEnabled($modx)
+    {
+        return self::readSetting($modx, 'modxmcp.allow_run_processor') === '1';
     }
 
     public static function ledgerTable($modx)
@@ -209,6 +224,27 @@ final class ProtectedAuthorization
         if (!isset($allowed[$action])) {
             throw new \RuntimeException(
                 'AUTH_DENIED: action disallowed by independent site policy.'
+            );
+        }
+        if ($action === 'run_processor') {
+            // RU: Галочка в Manager — главный выключатель; читаем актуальное
+            // RU: значение из БД, а не кеш PHP. Отказ — до nonce и записи.
+            // EN: The Manager checkbox is the master switch. Read persisted
+            // EN: state, not PHP's option cache; deny before nonce or writes.
+            if (!self::processorMasterEnabled($modx)) {
+                throw new \RuntimeException(
+                    'AUTH_DENIED: processor master switch is disabled.'
+                );
+            }
+            // RU: Проверяем точный процессор после подписи Ed25519 и политики
+            // RU: сайта, но до резервирования одноразового nonce.
+            // EN: Verify the exact processor AFTER Ed25519 signature and the
+            // EN: site action policy, but BEFORE reserving the nonce.
+            ProcessorAccessPolicy::authorize(
+                $data,
+                self::readSetting($modx, 'modxmcp.processor_access_mode'),
+                self::readSetting($modx, 'modxmcp.allowed_processors'),
+                self::readSetting($modx, 'modxmcp.privileged_processors')
             );
         }
         $nonce=$permit['claims']['nonce'];

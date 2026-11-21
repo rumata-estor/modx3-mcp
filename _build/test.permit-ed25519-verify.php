@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «permit-ed25519-verify»; тестовый код не запускается на production.
+ * EN: «permit-ed25519-verify» regression test; not executed in production.
+ */
 /**
  * Offline Ed25519 permit verifier interoperability/negative tests.
  * No MODX bootstrap; no site settings, secrets or nonce ledger.
@@ -75,5 +79,7 @@ permitMustReject(function()use($mutation,$sig,$pub,$trusted,$digest,$now){
     V::verifyCryptographicClaims($mutation,$sig,$pub,$trusted,$digest,$now);
 },'downgraded/unknown permit version');
 if ($checks !== 14) throw new RuntimeException('Negative test count mismatch');
+// RU: Этот автономный тест проверяет подпись, но НЕ проверяет nonce и API.
+// EN: This offline fixture checks signatures, NOT the nonce ledger or API.
 echo 'ED25519_INDEPENDENT_PERMIT_CRYPTO_OK checks='.$checks
-    .' (REPLAY_LEDGER_NOT_YET_WIRED_TO_API)' . PHP_EOL;
+    .' (CRYPTO_ONLY_NONCE_AND_DISPATCH_TESTED_SEPARATELY)' . PHP_EOL;

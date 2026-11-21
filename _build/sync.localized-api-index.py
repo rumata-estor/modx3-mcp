@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Служебный сценарий сборки/проверки MODX MCP: sync.localized-api-index.
+# EN: MODX MCP build/verification helper: sync.localized-api-index.
 """Create accurate localized 198-tool API directories from translated capabilities.
 
 Source of truth for field types and JSON-schema details remains docs/API.md.

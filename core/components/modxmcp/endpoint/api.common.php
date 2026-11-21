@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Общий HTTP endpoint: проверка HTTPS, IP, токена и входного JSON.
+ * EN: Shared HTTP endpoint: HTTPS, IP, token and input JSON validation.
+ */
 /**
  * Platform-neutral HTTP endpoint body.
  *
@@ -30,7 +34,23 @@ if ((bool) $modx->getOption('modxmcp.require_https', null, true)) {
     $directHttps = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
         || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
     $trustProxyHttps = (bool) $modx->getOption('modxmcp.trust_proxy_https', null, false);
-    $forwardedHttps = $trustProxyHttps
+    // A bare X-Forwarded-Proto is client-controlled. Accept it ONLY from an
+    // explicitly configured socket peer; empty proxy allowlist denies all.
+    // Use exact numeric IPv4/IPv6 addresses, not Host/DNS/CIDR guesses.
+    $peer = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+    $trustedProxyCsv = (string) $modx->getOption('modxmcp.trusted_proxy_ips', null, '');
+    $trustedPeer = false;
+    if ($trustProxyHttps && $peer !== '' && filter_var($peer, FILTER_VALIDATE_IP)) {
+        foreach (explode(',', $trustedProxyCsv) as $rule) {
+            $rule = trim($rule);
+            if ($rule !== '' && filter_var($rule, FILTER_VALIDATE_IP)
+                && hash_equals($rule, $peer)) {
+                $trustedPeer = true;
+                break;
+            }
+        }
+    }
+    $forwardedHttps = $trustProxyHttps && $trustedPeer
         && isset($_SERVER['HTTP_X_FORWARDED_PROTO'])
         && strtolower(trim((string) $_SERVER['HTTP_X_FORWARDED_PROTO'])) === 'https';
     $isHttps = $directHttps || $forwardedHttps;
@@ -93,11 +113,14 @@ if ($allowedIps !== '') {
             if ($clientIp !== '' && $clientIp === $rule) { $ipAllowed = true; break; }
             continue;
         }
-        list($subnet, $bits) = array_pad(explode('/', $rule, 2), 2, '');
-        $bits = (int) $bits;
+        list($subnet, $bitsText) = array_pad(explode('/', $rule, 2), 2, '');
+        // Never coerce malformed masks to zero (which would match all IPv4 peers).
+        if (!preg_match('/\\A(?:0|[1-9][0-9]?)\\z/D', $bitsText)) { continue; }
+        $bits = (int) $bitsText;
+        if ($bits > 32) { continue; }
         $ipLong = ip2long($clientIp);
         $subLong = ip2long($subnet);
-        if ($ipLong === false || $subLong === false || $bits < 0 || $bits > 32) { continue; }
+        if ($ipLong === false || $subLong === false) { continue; }
         $mask = ($bits === 0) ? 0 : (~0 << (32 - $bits));
         if (($ipLong & $mask) === ($subLong & $mask)) { $ipAllowed = true; break; }
     }

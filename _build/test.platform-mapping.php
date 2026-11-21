@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «platform-mapping»; тестовый код не запускается на production.
+ * EN: «platform-mapping» regression test; not executed in production.
+ */
 namespace MODX\Revolution\Processors\Resource { class Update {} }
 namespace {
     $root = dirname(__DIR__) . '/core/components/modxmcp/src';

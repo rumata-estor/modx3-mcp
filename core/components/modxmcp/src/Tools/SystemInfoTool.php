@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «System Info»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «System Info»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class SystemInfoTool implements ToolInterface

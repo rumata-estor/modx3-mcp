@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Version X Version Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Version X Version Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VersionXVersionGetTool implements ToolInterface

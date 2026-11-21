@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Маршрутизирует изменения к процессорам MODX через защищённый диспетчер.
+ * EN: Routes mutations to MODX processors through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ProcessorMutationTool implements ToolInterface

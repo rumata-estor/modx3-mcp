@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «manager-dashboard»; тестовый код не запускается на production.
+# EN: «manager-dashboard» regression test; not executed in production.
 """Static regression checks for the MODX manager dashboard (no credentials)."""
 from pathlib import Path
 import re

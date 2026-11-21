@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Namespace List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Namespace List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class NamespaceListTool implements ToolInterface

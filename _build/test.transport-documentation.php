@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «transport-documentation»; тестовый код не запускается на production.
+ * EN: «transport-documentation» regression test; not executed in production.
+ */
 /** Validate transport README/CHANGELOG links without bootstrapping MODX. */
 define('PKG_VERSION', '1.2.7');
 require_once __DIR__ . '/transport.documentation.php';

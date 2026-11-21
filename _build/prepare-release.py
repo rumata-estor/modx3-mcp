@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Скрипт сборки или установки «prepare-release»; изменение только по процедуре релиза.
+# EN: Build/install script «prepare-release»; run only within the release procedure.
 from __future__ import annotations
 import argparse
 from pathlib import Path

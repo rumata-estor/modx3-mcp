@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Служебный сценарий сборки/проверки MODX MCP: transport.documentation.
+ * EN: MODX MCP build/verification helper: transport.documentation.
+ */
 /**
  * Convert repository-relative Markdown links to absolute GitHub URLs ONLY when
  * embedding README/CHANGELOG in MODX transport package metadata.

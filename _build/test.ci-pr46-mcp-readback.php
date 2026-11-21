@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-pr46-mcp-readback»; тестовый код не запускается на production.
+ * EN: «ci-pr46-mcp-readback» regression test; not executed in production.
+ */
 /**
  * Independent readback using a fresh PHP process and the real MODX MCP
  * dispatcher. No direct database calls; only gets TV and site_revision.

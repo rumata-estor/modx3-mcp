@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Version X Version Revert»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Version X Version Revert»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VersionXVersionRevertTool implements ToolInterface

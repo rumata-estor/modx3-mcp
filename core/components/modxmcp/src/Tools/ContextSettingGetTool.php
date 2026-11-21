@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Context Setting Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Context Setting Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ContextSettingGetTool implements ToolInterface

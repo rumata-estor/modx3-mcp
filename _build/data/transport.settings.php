@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Служебный сценарий сборки/проверки MODX MCP: transport.settings.
+ * EN: MODX MCP build/verification helper: transport.settings.
+ */
 /**
  * System settings shipped with modxMCP.
  *
@@ -16,11 +20,15 @@ $defs = array(
     array('modxmcp.auto_static', 0, 'combo-boolean', 'modxmcp:main'),
     array('modxmcp.disabled_groups', 'versionx,virtualpage,minishop2,migx,access,property_sets,contexts,package_management,namespaces,lexicon', 'textfield', 'modxmcp:main'),
     array('modxmcp.allow_run_processor', 0, 'combo-boolean', 'modxmcp:security'),
+    array('modxmcp.processor_access_mode', 'disabled', 'textfield', 'modxmcp:security'),
+    array('modxmcp.allowed_processors', '', 'textfield', 'modxmcp:security'),
+    array('modxmcp.privileged_processors', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.max_payload_bytes', 1048576, 'textfield', 'modxmcp:limits'),
     array('modxmcp.max_read_bytes', 262144, 'textfield', 'modxmcp:limits'),
     array('modxmcp.allow_root_filesystem_read', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.require_https', 1, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.trust_proxy_https', 0, 'combo-boolean', 'modxmcp:security'),
+    array('modxmcp.trusted_proxy_ips', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.allowed_ips', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.component_code_roots', 'core/components,assets/components', 'textfield', 'modxmcp:security'),
     // Independent Ed25519 external authorization. OFF on ordinary installs.

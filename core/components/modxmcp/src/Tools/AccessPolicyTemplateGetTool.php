@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Access Policy Template Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Access Policy Template Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class AccessPolicyTemplateGetTool implements ToolInterface

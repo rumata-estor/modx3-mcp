@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «System Setting List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «System Setting List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class SystemSettingListTool implements ToolInterface

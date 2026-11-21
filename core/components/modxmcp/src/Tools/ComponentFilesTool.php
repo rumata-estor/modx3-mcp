@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Component Files»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Component Files»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ComponentFilesTool implements ToolInterface

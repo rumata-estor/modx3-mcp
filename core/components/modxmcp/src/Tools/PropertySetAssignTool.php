@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Property Set Assign»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Property Set Assign»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetAssignTool implements ToolInterface

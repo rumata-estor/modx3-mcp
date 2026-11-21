@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «docs-localization»; тестовый код не запускается на production.
+# EN: «docs-localization» regression test; not executed in production.
 """Check nine-language MODX MCP documentation without network dependencies."""
 from pathlib import Path
 from urllib.parse import unquote

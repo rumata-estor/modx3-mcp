@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Component» для инструментов MODX MCP.
+ * EN: Shared «Component» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class ComponentSupport

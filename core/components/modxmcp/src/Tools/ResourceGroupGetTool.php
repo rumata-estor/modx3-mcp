@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Resource Group Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Resource Group Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ResourceGroupGetTool implements ToolInterface

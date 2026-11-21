@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Регистрирует инструменты и зависимости модульного ядра MODX MCP.
+ * EN: Registers tools and dependencies of the modular MODX MCP runtime.
+ */
 namespace ModxMcp\Core;
 
 use ModxMcp\Platform\PlatformFactory;

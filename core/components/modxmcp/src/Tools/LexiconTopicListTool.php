@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Lexicon Topic List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Lexicon Topic List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class LexiconTopicListTool implements ToolInterface

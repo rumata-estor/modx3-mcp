@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Option Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Option Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2OptionUpdateTool implements ToolInterface

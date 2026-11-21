@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Испытательный сценарий установки и отката пакета MODX MCP.
+# EN: MODX MCP package installation and rollback test script.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: MCP-клиент: схемы инструментов и маршрутизация запросов к серверу.
+// EN: MCP client: tool schemas and transport request routing.
 
 const { Server } = require("@modelcontextprotocol/sdk/server/index.js");
 const {

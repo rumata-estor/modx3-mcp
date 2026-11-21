@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «ci-protected-http»; тестовый код не запускается на production.
+# EN: «ci-protected-http» regression test; not executed in production.
 """Full HTTP boundary test, disposable MODX2/3 CI ONLY.
 
 A localhost HTTP PHP server exercises the shipped api.php wrapper, JSON

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Property Set List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Property Set List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetListTool implements ToolInterface

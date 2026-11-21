@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Search» для инструментов MODX MCP.
+ * EN: Shared «Search» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class SearchSupport

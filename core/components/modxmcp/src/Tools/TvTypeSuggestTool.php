@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Tv Type Suggest»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Tv Type Suggest»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class TvTypeSuggestTool implements ToolInterface

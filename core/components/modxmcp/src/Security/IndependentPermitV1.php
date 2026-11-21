@@ -1,16 +1,22 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Канонизация и проверка Ed25519-разрешения без хранения закрытого ключа.
+ * EN: Canonicalizes and verifies Ed25519 permits without holding the private key.
+ */
 namespace ModxMcp\Security;
 
 /**
- * OFFLINE PRIMITIVE ONLY. NOT an authorization decision.
+ * RU: Криптографическая проверка Ed25519 — НЕ самостоятельная авторизация.
+ * Контроллер хранит закрытый ключ; в MODX MCP хранится только открытый.
+ * ProtectedAuthorization вызывает этот метод из защищённого диспетчера.
+ * Дополнительно обязательны точная привязка запроса, политика сайта,
+ * однократный nonce и CAS под общей блокировкой изменений.
  *
- * The external Controller holds the private Ed25519 key. MODX MCP keeps
- * only the public verification key and NEVER signs permits.
- *
- * WARNING: valid signature alone does not authorize a mutation! The caller
- * still must bind the digest to the exact request and CAS, consume a nonce
- * durably, enforce site policy, and check all scopes under the mutation lock.
- * Until those components are present, this class is NOT wired to the API.
+ * EN: Ed25519 cryptographic verification is NOT authorization by itself.
+ * The Controller holds the private key; MODX MCP retains only the public key.
+ * ProtectedAuthorization calls this verifier from the guarded dispatcher.
+ * Exact request binding, independent site policy, one-use nonce and CAS
+ * under the shared mutation lock remain mandatory.
  */
 final class IndependentPermitV1
 {

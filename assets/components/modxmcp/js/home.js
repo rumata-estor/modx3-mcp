@@ -1,3 +1,6 @@
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Клиентский скрипт интерфейса MODX MCP: home.
+// EN: MODX MCP Manager UI script: home.
 Ext.onReady(function () {
     'use strict';
     if (typeof MODx === 'undefined' || !MODx.Ajax) { return; }

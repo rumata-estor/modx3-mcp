@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «release-portability»; тестовый код не запускается на production.
+# EN: «release-portability» regression test; not executed in production.
 from pathlib import Path
 import json
 import re
@@ -193,6 +196,9 @@ expected_defaults = {
     "modxmcp.service_user_id": "0",
     "modxmcp.auto_static": "0",
     "modxmcp.allow_run_processor": "0",
+    "modxmcp.processor_access_mode": "disabled",
+    "modxmcp.allowed_processors": "",
+    "modxmcp.privileged_processors": "",
     "modxmcp.allow_root_filesystem_read": "0",
     "modxmcp.require_https": "1",
     "modxmcp.trust_proxy_https": "0",
@@ -270,7 +276,7 @@ if build_platform == "modx2":
         "getObject('modMenu'": "transport verifier: leftover menu check missing",
         "getObject('modNamespace'": "transport verifier: leftover namespace check missing",
         "components/modxmcp": "transport verifier: component file verification missing",
-        "===21": "transport verifier: exact 21-setting install check missing",
+        "===26": "transport verifier: exact 26-setting install check missing",
         "modxmcp_graph": "transport verifier: graph menu install check missing",
         "Model version mismatch": "transport verifier: deployed code version check missing",
         "exit(7)": "transport verifier: leftover artifacts must fail the uninstall test",
@@ -282,7 +288,7 @@ else:
         "getObject(modMenu::class": "transport verifier: leftover menu check missing",
         "getObject(modNamespace::class": "transport verifier: leftover namespace check missing",
         "components' . DIRECTORY_SEPARATOR . 'modxmcp": "transport verifier: leftover component-directory check missing",
-        "$expectedSettings = 22": "transport verifier: exact 22-setting install check missing",
+        "$expectedSettings = 26": "transport verifier: exact 26-setting install check missing",
         "$rootMenu": "transport verifier: root menu install check missing",
         "$graphMenu": "transport verifier: graph menu install check missing",
         "$deployedVersion !== PKG_VERSION": "transport verifier: deployed code version check missing",

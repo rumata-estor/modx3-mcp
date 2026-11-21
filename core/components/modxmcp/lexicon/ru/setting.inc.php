@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Локализация интерфейса MODX MCP (ru): только текстовые строки.
+ * EN: MODX MCP interface localization (ru): text strings only.
+ */
 $_lang['setting_modxmcp.enabled'] = 'Включить MODX MCP';
 $_lang['setting_modxmcp.enabled_desc'] = 'Глобально включает или отключает API-компонент MODX MCP. Если настройка выключена, все запросы к API будут отклоняться.';
 
@@ -43,4 +47,13 @@ $_lang['setting_modxmcp.auto_static_desc'] = 'Если включено, соз�
 
 
 $_lang['setting_modxmcp.allow_run_processor'] = 'Разрешить run_processor';
-$_lang['setting_modxmcp.allow_run_processor_desc'] = 'Если включено, действие run_processor может выполнить ЛЮБОЙ процессор MODX напрямую. Мощный универсальный механизм — по умолчанию выключен. Предпочитайте специализированные действия, если они есть.';
+$_lang['setting_modxmcp.allow_run_processor_desc'] = 'Главный выключатель run_processor. Дополнительно нужны режим доступа и точный список процессоров. В защищённом контуре обязательны CAS, одноразовое подписанное разрешение и политика сайта.';
+
+$_lang['setting_modxmcp.processor_access_mode'] = 'Режим доступа к процессорам';
+$_lang['setting_modxmcp.processor_access_mode_desc'] = 'disabled (по умолчанию), allowlist или privileged. Ни один режим не разрешает произвольные процессоры; одной галочки недостаточно.';
+$_lang['setting_modxmcp.allowed_processors'] = 'Разрешённые процессоры';
+$_lang['setting_modxmcp.allowed_processors_desc'] = 'Список точных имён процессоров через запятую, например system/clearcache. Маски, обход путей и пользовательские каталоги запрещены. Процессоры безопасности, пакетов и пространств имён требуют режима privileged и отдельного подписанного разрешения.';
+$_lang['setting_modxmcp.privileged_processors'] = 'Административные процессоры';
+$_lang['setting_modxmcp.privileged_processors_desc'] = 'Дополнительный список точных имён, доступный только в режиме privileged. Не отменяет CAS, авторизацию и ограничения защищённых настроек.';
+$_lang['setting_modxmcp.trusted_proxy_ips'] = 'Доверенные IP HTTPS-прокси';
+$_lang['setting_modxmcp.trusted_proxy_ips_desc'] = 'Точные адреса IPv4/IPv6 через запятую. Только эти соединения могут передавать X-Forwarded-Proto при включённом доверии к прокси.';

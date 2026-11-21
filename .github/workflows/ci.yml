@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: CI-процедура MODX MCP; проверки и сборка не должны менять production.
+# EN: MODX MCP CI workflow; testing and packaging must not modify production.
 name: CI
 
 on:
@@ -22,6 +25,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Bilingual source comments (Russian and English)
+        run: python3 _build/test.bilingual-comments.py
 
       - name: Client syntax check
         run: node --check client/index.js
@@ -56,7 +62,24 @@ jobs:
         run: bash -n _build/release.smoke.sh
 
       - name: Release portability / secure defaults
-        run: python3 _build/test.release-portability.py
+        run: |
+          set -euo pipefail
+          python3 _build/test.release-portability.py
+          for platform in modx2 modx3; do
+            stage="$RUNNER_TEMP/modxmcp-security-$platform"
+            python3 _build/prepare-release.py --platform "$platform" --output "$stage"
+            (cd "$stage" && python3 _build/test.release-portability.py)
+          done
+
+      - name: Fail-closed proxy HTTPS and IPv4 allowlist negative tests
+        run: |
+          python3 _build/test.proxy-https.py
+          python3 _build/test.ip-allowlist.py
+
+      - name: Registry dispatcher must fail closed on both MODX platforms
+        run: |
+          python3 _build/test.registry-fail-closed.py
+          python3 _build/test.security-source-wiring.py
 
       - name: Client/server action contract
         run: python3 _build/test.client-server-actions.py
@@ -72,6 +95,17 @@ jobs:
         run: python3 _build/test.cas-client-contract.py
       - name: Strict CAS precondition schema regression
         run: php _build/test.cas-required-contract.php
+      - name: Revision transaction failure and after-commit isolation
+        run: php _build/test.revision-transaction-faults.php
+      - name: ACL, token rotation and protected settings fault isolation
+        run: |
+          php _build/test.acl-processor-faults.php
+          php _build/test.token-rotation-faults.php
+          php _build/test.security-settings-immutability.php
+      - name: Exact processor allowlists and privileged mode must fail closed
+        run: |
+          php _build/test.protected-processor-denial.php
+          php _build/test.processor-master-switch.php
       - name: Independent Ed25519 permit interoperability (no site writes)
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-cas-mutation-gates»; тестовый код не запускается на production.
+ * EN: «ci-cas-mutation-gates» regression test; not executed in production.
+ */
 /**
  * Fail-safe CAS revision reservation matrix.
  *

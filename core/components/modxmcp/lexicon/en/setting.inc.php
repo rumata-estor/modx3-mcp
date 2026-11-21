@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Локализация интерфейса MODX MCP (en): только текстовые строки.
+ * EN: MODX MCP interface localization (en): text strings only.
+ */
 $_lang['setting_modxmcp.enabled'] = 'Enable MODX MCP';
 $_lang['setting_modxmcp.enabled_desc'] = 'Globally enables or disables the MODX MCP API component. When disabled, all API requests are rejected.';
 
@@ -43,4 +47,13 @@ $_lang['setting_modxmcp.auto_static_desc'] = 'When enabled, MCP create/update of
 
 
 $_lang['setting_modxmcp.allow_run_processor'] = 'Allow run_processor';
-$_lang['setting_modxmcp.allow_run_processor_desc'] = 'When enabled, the run_processor MCP action may execute ANY MODX processor directly. Powerful escape hatch — off by default. Prefer dedicated actions when they exist.';
+$_lang['setting_modxmcp.allow_run_processor_desc'] = 'Master switch for run_processor. Also requires processor_access_mode and an exact processor allowlist. In protected mode, a signed one-use permit and site action policy are mandatory.';
+
+$_lang['setting_modxmcp.processor_access_mode'] = 'Processor access mode';
+$_lang['setting_modxmcp.processor_access_mode_desc'] = 'disabled (default), allowlist or privileged. No mode allows arbitrary processors. Enabling the master switch alone is insufficient.';
+$_lang['setting_modxmcp.allowed_processors'] = 'Allowed processors';
+$_lang['setting_modxmcp.allowed_processors_desc'] = 'Comma-separated exact processor names (e.g. system/clearcache). No wildcards, relative paths or custom processor directories. Security/user, package and namespace processors require privileged mode and a separate signed permit.';
+$_lang['setting_modxmcp.privileged_processors'] = 'Privileged processors';
+$_lang['setting_modxmcp.privileged_processors_desc'] = 'Additional exact processor names available only in privileged mode. Requires all other CAS/authorization checks; never bypasses protected settings restrictions.';
+$_lang['setting_modxmcp.trusted_proxy_ips'] = 'Trusted HTTPS reverse proxy IPs';
+$_lang['setting_modxmcp.trusted_proxy_ips_desc'] = 'Comma-separated exact IPv4/IPv6 socket peer addresses. Only these peers may supply X-Forwarded-Proto when proxy HTTPS trust is enabled.';

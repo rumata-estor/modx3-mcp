@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: CI-процедура MODX MCP; проверки и сборка не должны менять production.
+# EN: MODX MCP CI workflow; testing and packaging must not modify production.
 name: Build validated MODX MCP 1.2.7 transport packages
 
 on:

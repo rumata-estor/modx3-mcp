@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «build-architecture»; тестовый код не запускается на production.
+# EN: «build-architecture» regression test; not executed in production.
 from pathlib import Path
 import sys
 root=Path(__file__).resolve().parents[1]

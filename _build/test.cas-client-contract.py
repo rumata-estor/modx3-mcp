@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «cas-client-contract»; тестовый код не запускается на production.
+# EN: «cas-client-contract» regression test; not executed in production.
 """Ensure MCP tool-list schemas include strict CAS on all mutable actions."""
 import json
 from pathlib import Path

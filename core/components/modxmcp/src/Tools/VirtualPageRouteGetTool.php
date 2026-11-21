@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Route Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Route Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageRouteGetTool implements ToolInterface

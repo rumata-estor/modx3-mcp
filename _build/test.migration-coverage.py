@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «migration-coverage»; тестовый код не запускается на production.
+# EN: «migration-coverage» regression test; not executed in production.
 from pathlib import Path
 import re
 import sys

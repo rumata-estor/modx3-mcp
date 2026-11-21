@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Package» для инструментов MODX MCP.
+ * EN: Shared «Package» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class PackageSupport

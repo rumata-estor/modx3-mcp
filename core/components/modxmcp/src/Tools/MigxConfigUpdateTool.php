@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Migx Config Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Migx Config Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MigxConfigUpdateTool implements ToolInterface

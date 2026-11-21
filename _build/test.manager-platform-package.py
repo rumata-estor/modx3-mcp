@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «manager-platform-package»; тестовый код не запускается на production.
+# EN: «manager-platform-package» regression test; not executed in production.
 """Verify that both platform-staged transport inputs contain functional manager UI."""
 from pathlib import Path
 import tempfile,subprocess,sys

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Bulk Resources»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Bulk Resources»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class BulkResourcesTool implements ToolInterface

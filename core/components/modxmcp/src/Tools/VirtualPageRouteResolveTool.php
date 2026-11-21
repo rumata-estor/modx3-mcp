@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Route Resolve»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Route Resolve»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageRouteResolveTool implements ToolInterface

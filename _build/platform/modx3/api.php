@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: HTTP-точка входа MODX MCP; не обходите проверки общего endpoint.
+ * EN: MODX MCP HTTP entry point; do not bypass the shared endpoint checks.
+ */
 require_once dirname(dirname(dirname(dirname(__FILE__)))) . '/config.core.php';
 $autoload = rtrim(MODX_CORE_PATH, '/\\') . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 if (!is_file($autoload)) {

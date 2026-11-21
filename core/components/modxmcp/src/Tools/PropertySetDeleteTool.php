@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Property Set Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Property Set Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetDeleteTool implements ToolInterface

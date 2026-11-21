@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Исходный модуль MODX MCP: Autoloader.
+ * EN: MODX MCP source module: Autoloader.
+ */
 namespace ModxMcp;
 
 class Autoloader

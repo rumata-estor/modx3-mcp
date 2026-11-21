@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Find Usages»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Find Usages»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class FindUsagesTool implements ToolInterface

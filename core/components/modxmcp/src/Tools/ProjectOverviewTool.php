@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Project Overview»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Project Overview»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ProjectOverviewTool implements ToolInterface

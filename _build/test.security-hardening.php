@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «security-hardening»; тестовый код не запускается на production.
+ * EN: «security-hardening» regression test; not executed in production.
+ */
 // Run without bootstrapping MODX: exercise the modular static_file boundary with fake paths.
 class ModxMCPClientException extends Exception {}
 

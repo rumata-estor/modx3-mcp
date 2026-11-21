@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Category List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Category List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 class CategoryListTool implements ToolInterface
 {

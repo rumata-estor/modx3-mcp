@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «resolve.token»; изменение только по процедуре релиза.
+ * EN: Build/install script «resolve.token»; run only within the release procedure.
+ */
 /**
  * Generate modxmcp.api_token on install/upgrade when empty.
  * Shared by MODX 2 and MODX 3; never rotates an existing token.

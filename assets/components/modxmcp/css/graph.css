@@ -1,3 +1,7 @@
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Стили графа зависимостей MODX MCP; не меняют правила авторизации.
+ * EN: MODX MCP dependency graph styling; does not change authorization policy.
+ */
 /* Height is measured in JS (see fitShell) — hard-coding calc(100vh - <guess>) clipped the
    bottom of the panel whenever the manager chrome was taller than the guess, with no scroll
    to reach it. This is only the pre-measure fallback. */

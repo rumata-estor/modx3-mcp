@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Clear Cache»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Clear Cache»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ClearCacheTool implements ToolInterface

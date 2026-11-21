@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «build.config»; изменение только по процедуре релиза.
+ * EN: Build/install script «build.config»; run only within the release procedure.
+ */
 /**
  * modxMCP — transport package meta.
  * Edit PKG_VERSION/PKG_RELEASE per release.

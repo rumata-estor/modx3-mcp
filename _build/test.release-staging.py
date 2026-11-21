@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «release-staging»; тестовый код не запускается на production.
+# EN: «release-staging» regression test; not executed in production.
 from pathlib import Path
 import re
 import json

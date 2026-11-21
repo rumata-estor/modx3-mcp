@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: CAS: ревизии, блокировки, транзакции и проверка состояния перед записью.
+ * EN: CAS revisions, locks, transactions and pre-mutation state checks.
+ */
 namespace ModxMcp\Tools;
 
 class StateSupport

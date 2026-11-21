@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Resource Reorder»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Resource Reorder»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ResourceReorderTool implements ToolInterface

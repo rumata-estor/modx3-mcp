@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «modx2-php-compat»; тестовый код не запускается на production.
+# EN: «modx2-php-compat» regression test; not executed in production.
 from pathlib import Path
 import re
 import sys

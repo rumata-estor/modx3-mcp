@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «media-path-boundaries»; тестовый код не запускается на production.
+ * EN: «media-path-boundaries» regression test; not executed in production.
+ */
 /**
  * Pure PHP path-validation regression, no MODX installation and no I/O.
  */

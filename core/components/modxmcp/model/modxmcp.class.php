@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Основной диспетчер MODX MCP: все операции записи должны пройти CAS и авторизацию.
+ * EN: MODX MCP dispatcher: every mutation must pass CAS and authorization.
+ */
 
 use MODX\Revolution\modX;
 use MODX\Revolution\modSystemSetting;

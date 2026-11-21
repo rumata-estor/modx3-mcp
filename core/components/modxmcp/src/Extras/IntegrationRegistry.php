@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Исходный модуль MODX MCP: IntegrationRegistry.
+ * EN: MODX MCP source module: IntegrationRegistry.
+ */
 namespace ModxMcp\Extras;
 
 class IntegrationRegistry

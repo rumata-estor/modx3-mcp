@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Служебный сценарий сборки/проверки MODX MCP: compare-regression.
+# EN: MODX MCP build/verification helper: compare-regression.
 from __future__ import annotations
 import argparse
 from pathlib import Path

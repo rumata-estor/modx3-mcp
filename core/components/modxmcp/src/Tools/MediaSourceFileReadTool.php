@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Media Source File Read»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Media Source File Read»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MediaSourceFileReadTool implements ToolInterface

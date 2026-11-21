@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Category Assign Element»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Category Assign Element»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 class CategoryAssignElementTool implements ToolInterface
 {

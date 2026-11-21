@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Category Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Category Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2CategoryUpdateTool implements ToolInterface

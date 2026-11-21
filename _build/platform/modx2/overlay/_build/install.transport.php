@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «install.transport»; изменение только по процедуре релиза.
+ * EN: Build/install script «install.transport»; run only within the release procedure.
+ */
 if (PHP_SAPI !== 'cli') { http_response_code(403); die("CLI only.\n"); }
 set_time_limit(0);
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
@@ -93,7 +97,7 @@ $runtimeRevision=$runtimeRevisionSetting?(string)$runtimeRevisionSetting->get('v
 $runtimeRevisionValid=!$runtimeRevisionSetting||preg_match('/^[0-9]+$/',$runtimeRevision);
 $checks=array(
     (bool)$modx->getObject('modNamespace',array('name'=>'modxmcp')),
-    $countSettings===22,
+    $countSettings===26,
     (bool)$runtimeRevisionValid,
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp')),
     (bool)$modx->getObject('modMenu',array('text'=>'modxmcp_graph')),

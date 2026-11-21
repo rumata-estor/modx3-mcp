@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «element-property-contract»; тестовый код не запускается на production.
+# EN: «element-property-contract» regression test; not executed in production.
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]

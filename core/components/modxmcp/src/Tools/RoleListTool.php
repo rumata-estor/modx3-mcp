@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Role List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Role List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class RoleListTool implements ToolInterface

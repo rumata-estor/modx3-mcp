@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementGetTool implements ToolInterface

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «category-management»; тестовый код не запускается на production.
+ * EN: «category-management» regression test; not executed in production.
+ */
 /* In-memory regression for category lifecycle on MODX 2 and 3 adapters. */
 $src = dirname(__DIR__) . '/core/components/modxmcp/src';
 require_once $src . '/Autoloader.php';

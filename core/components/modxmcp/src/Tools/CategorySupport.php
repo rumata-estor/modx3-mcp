@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Category» для инструментов MODX MCP.
+ * EN: Shared «Category» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 /** Shared MODX 2/3 modCategory operations; never confuses element categories with resources. */

@@ -1,4 +1,7 @@
 "use strict";
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Проверка «permit-ed25519-interop»; тестовый код не запускается на production.
+// EN: «permit-ed25519-interop» regression test; not executed in production.
 /*
  * Test-only external signer. No signing key is stored in the MODX connector.
  * The PHP verifier receives ONLY the detached signature and public key.

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element View»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element View»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementViewTool implements ToolInterface

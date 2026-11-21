@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Provider Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Provider Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ProviderDeleteTool implements ToolInterface

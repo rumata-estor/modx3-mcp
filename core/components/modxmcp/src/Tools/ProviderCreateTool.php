@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Provider Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Provider Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ProviderCreateTool implements ToolInterface

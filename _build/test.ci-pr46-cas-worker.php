@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-pr46-cas-worker»; тестовый код не запускается на production.
+ * EN: «ci-pr46-cas-worker» regression test; not executed in production.
+ */
 /**
  * Isolated CAS race worker for temporary MODX 2/3 CI database fixtures.
  * No credentials/production sites; both writers use the same observed CAS.

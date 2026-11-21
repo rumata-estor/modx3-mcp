@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Edit Lines»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Edit Lines»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementEditLinesTool implements ToolInterface

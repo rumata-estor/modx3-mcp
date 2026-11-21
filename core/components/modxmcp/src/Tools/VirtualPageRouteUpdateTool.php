@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Route Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Route Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageRouteUpdateTool implements ToolInterface

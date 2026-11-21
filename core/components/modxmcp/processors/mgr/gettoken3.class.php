@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: gettoken3.class.
+ * EN: MODX Manager controller/processor: gettoken3.class.
+ */
 
 use MODX\Revolution\Processors\Processor;
 

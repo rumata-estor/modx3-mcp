@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: getstatus.class.
+ * EN: MODX Manager controller/processor: getstatus.class.
+ */
 
 use MODX\Revolution\Processors\Processor;
 /**

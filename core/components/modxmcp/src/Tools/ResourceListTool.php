@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Resource List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Resource List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ResourceListTool implements ToolInterface

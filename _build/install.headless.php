@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «install.headless»; изменение только по процедуре релиза.
+ * EN: Build/install script «install.headless»; run only within the release procedure.
+ */
 
 use MODX\Revolution\modMenu;
 use MODX\Revolution\modNamespace;
@@ -359,11 +363,15 @@ $settings = array(
         'modxmcp:main'
     ),
     'modxmcp.allow_run_processor' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.processor_access_mode' => array('disabled', 'textfield', 'modxmcp:security'),
+    'modxmcp.allowed_processors' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.privileged_processors' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.max_payload_bytes' => array(1048576, 'textfield', 'modxmcp:limits'),
     'modxmcp.max_read_bytes' => array(262144, 'textfield', 'modxmcp:limits'),
     'modxmcp.allow_root_filesystem_read' => array(0, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.require_https' => array(1, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.trust_proxy_https' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.trusted_proxy_ips' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.allowed_ips' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.component_code_roots' => array('core/components,assets/components', 'textfield', 'modxmcp:security'),
     // Optional independent authorization remains OFF by default.

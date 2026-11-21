@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Product Link Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Product Link Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2ProductLinkCreateTool implements ToolInterface

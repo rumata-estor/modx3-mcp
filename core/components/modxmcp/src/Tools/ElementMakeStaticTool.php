@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Make Static»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Make Static»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementMakeStaticTool implements ToolInterface

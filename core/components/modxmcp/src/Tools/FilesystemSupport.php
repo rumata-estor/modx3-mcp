@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Filesystem» для инструментов MODX MCP.
+ * EN: Shared «Filesystem» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class FilesystemSupport

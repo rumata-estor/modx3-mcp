@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «modx3-processors»; тестовый код не запускается на production.
+ * EN: «modx3-processors» regression test; not executed in production.
+ */
 
 /**
  * Verify that every MODX core processor referenced by modxMCP resolves to a real

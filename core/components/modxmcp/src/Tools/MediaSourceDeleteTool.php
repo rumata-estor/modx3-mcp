@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Media Source Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Media Source Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MediaSourceDeleteTool implements ToolInterface

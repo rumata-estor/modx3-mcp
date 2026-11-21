@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «live-final-mutations»; тестовый код не запускается на production.
+ * EN: «live-final-mutations» regression test; not executed in production.
+ */
 if (PHP_SAPI !== 'cli') { exit(2); }
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 

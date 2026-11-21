@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Основной диспетчер MODX MCP: все операции записи должны пройти CAS и авторизацию.
+ * EN: MODX MCP dispatcher: every mutation must pass CAS and authorization.
+ */
 if (!class_exists("ModxMCPClientException")) {
     /** Expected/validation error whose message is safe to return to the client. */
     class ModxMCPClientException extends Exception {}

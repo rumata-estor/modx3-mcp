@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «cas-mutation-inventory»; тестовый код не запускается на production.
+# EN: «cas-mutation-inventory» regression test; not executed in production.
 """Fail closed when MODX MCP mutation registry changes without CAS review.
 
 This is an INVENTORY contract, not a claim that untested actions are safe.

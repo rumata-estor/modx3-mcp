@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-protected-http-router»; тестовый код не запускается на production.
+ * EN: «ci-protected-http-router» regression test; not executed in production.
+ */
 /**
  * Disposable-only PHP built-in-server router.
  * Simulates TLS termination by marking the trusted local test request HTTPS.

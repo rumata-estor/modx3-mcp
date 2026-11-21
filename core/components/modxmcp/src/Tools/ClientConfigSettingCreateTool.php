@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Client Config Setting Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Client Config Setting Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ClientConfigSettingCreateTool implements ToolInterface

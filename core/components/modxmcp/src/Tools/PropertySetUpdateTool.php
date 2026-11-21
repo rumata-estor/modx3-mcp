@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Property Set Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Property Set Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetUpdateTool implements ToolInterface

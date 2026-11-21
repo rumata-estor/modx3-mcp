@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Event List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Event List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageEventListTool implements ToolInterface

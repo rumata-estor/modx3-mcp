@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «cas-required-contract»; тестовый код не запускается на production.
+ * EN: «cas-required-contract» regression test; not executed in production.
+ */
 /**
  * Mandatory, strict CAS precondition contract before ANY mutation.
  * No MODX, database or production access. Standalone PHP 7.4+.

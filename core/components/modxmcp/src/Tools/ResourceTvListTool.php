@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Resource Tv List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Resource Tv List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ResourceTvListTool implements ToolInterface

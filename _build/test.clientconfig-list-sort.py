@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «clientconfig-list-sort»; тестовый код не запускается на production.
+# EN: «clientconfig-list-sort» regression test; not executed in production.
 from pathlib import Path
 import sys
 

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Version X» для инструментов MODX MCP.
+ * EN: Shared «Version X» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class VersionXSupport

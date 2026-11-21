@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «capabilities-cas-metadata»; тестовый код не запускается на production.
+# EN: «capabilities-cas-metadata» regression test; not executed in production.
 """CAS metadata contract for MODX 2 and 3: legacy fallback v1, modular v2.
 
 This static test intentionally complements the PHP and live integration tests:

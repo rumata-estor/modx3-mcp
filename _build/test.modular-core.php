@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «modular-core»; тестовый код не запускается на production.
+ * EN: «modular-core» regression test; not executed in production.
+ */
 $root = dirname(__DIR__) . '/core/components/modxmcp/src';
 require_once $root . '/Autoloader.php';
 \ModxMcp\Autoloader::register($root);

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Link Type Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Link Type Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2LinkTypeDeleteTool implements ToolInterface

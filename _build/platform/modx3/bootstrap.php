@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Служебный сценарий сборки/проверки MODX MCP: bootstrap.
+ * EN: MODX MCP build/verification helper: bootstrap.
+ */
 /** MODX 3 bootstrap used by build/install entrypoints. */
 function modxmcp_bootstrap_modx3($configCore)
 {

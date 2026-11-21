@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Локализация интерфейса MODX MCP (uk): только текстовые строки.
+ * EN: MODX MCP interface localization (uk): text strings only.
+ */
 $_lang['modxmcp'] = 'MODX MCP';
 $_lang['area_modxmcp_main'] = 'Загальні';
 $_lang['area_modxmcp_security'] = 'Безпека';

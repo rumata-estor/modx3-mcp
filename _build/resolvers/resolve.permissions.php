@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «resolve.permissions»; изменение только по процедуре релиза.
+ * EN: Build/install script «resolve.permissions»; run only within the release procedure.
+ */
 /**
  * Make an existing modxMCP component tree owner-writable before upgrade.
  * Shared by MODX 2 and MODX 3.

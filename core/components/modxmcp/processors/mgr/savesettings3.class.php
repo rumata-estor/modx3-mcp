@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: savesettings3.class.
+ * EN: MODX Manager controller/processor: savesettings3.class.
+ */
 
 use MODX\Revolution\Processors\Processor;
 use MODX\Revolution\modSystemSetting;

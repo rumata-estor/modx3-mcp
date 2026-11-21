@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Dependency Graph»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Dependency Graph»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class DependencyGraphTool implements ToolInterface

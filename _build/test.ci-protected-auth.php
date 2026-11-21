@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-protected-auth»; тестовый код не запускается на production.
+ * EN: «ci-protected-auth» regression test; not executed in production.
+ */
 /**
  * End-to-end dispatcher-bound Ed25519 permit test in disposable MODX2/3.
  * Regular resource mutations, readback and soft delete all use MODX MCP.
@@ -110,6 +114,43 @@ try {
     $enabled=true;
     must(\ModxMcp\Security\ProtectedAuthorization::required($modx),'DB policy really enabled');
 
+    // RU: Проверяем критическое создание пользователя с устаревшей CAS-ревизией.
+    // RU: Реальный процессор не должен запуститься; тест только для disposable CI.
+    // EN: Stale signed user creation must be rejected BEFORE the MODX processor.
+    // EN: This adversarial test runs only on the disposable CI installation.
+    $modx->setOption('modxmcp.disabled_groups','');
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,create_user');
+    $blockedUsername='CAS_DENIED_USER_'.bin2hex(random_bytes(8));
+    $beforeUser=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+    $blockedUser=array('username'=>$blockedUsername,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>$beforeUser+10000,
+            'strict_site_revision'=>true,'read_set'=>array()
+        ));
+    $blocked=false;
+    try {
+        rpc('create_user','',$blockedUser,signedCall('create_user','',$blockedUser));
+    } catch (\ModxMCPClientException $e) {
+        $blocked=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    must($blocked,'critical signed create_user rejected stale CAS');
+    must((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$beforeUser,'denied create_user did not change connector revision');
+    // RU: Повторно читаем список пользователей только через MODX MCP.
+    // EN: Verify absence through the MODX MCP read tool, never direct SQL.
+    $users=$api->processRequest('list_users','',array('query'=>$blockedUsername));
+    must(is_array($users) && isset($users['results'])
+        && is_array($users['results']),'denied-user readback available');
+    foreach ($users['results'] as $userRow) {
+        must(!is_array($userRow)
+            || !isset($userRow['username'])
+            || $userRow['username']!==$blockedUsername,
+            'denied critical user was not created');
+    }
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting');
+
     $name='Ed25519 protected CI '.bin2hex(random_bytes(5));
     $data=array(
         'type'=>'resource','name'=>$name,'alias'=>'ed25519-ci-'.bin2hex(random_bytes(5)),
@@ -125,6 +166,42 @@ try {
         signedCall('clear_cache','',$unapproved));
     must((int)$api->processRequest('get_site_state','',array())['site_revision']
         ===$beforePolicy,'disallowed action did not consume site revision');
+    // Even an explicitly allowlisted signed generic processor must be
+    // blocked: it could mutate trust anchors or grant unauthorized sudo.
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,run_processor');
+    $generic=array('processor'=>'security/user/create',
+        'properties'=>array('username'=>'FORBIDDEN_GENERIC_'.bin2hex(random_bytes(4))),
+        '_runtime_preconditions'=>guardNow());
+    $beforeGeneric=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+    mustDeny('run_processor','',$generic,
+        signedCall('run_processor','',$generic));
+    must((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$beforeGeneric,'forbidden generic processor consumed no revision');
+    // The Manager switch alone must not bypass the exact processor policy.
+    // Modify only disposable CI configuration, never a real MODX site.
+    securitySetting('modxmcp.allow_run_processor','1');
+    securitySetting('modxmcp.processor_access_mode','allowlist');
+    securitySetting('modxmcp.allowed_processors','system/clearcache');
+    mustDeny('run_processor','',$generic,
+        signedCall('run_processor','',$generic));
+    // RU: Положительный сценарий: разрешённый процессор работает с Ed25519,
+    // RU: даже когда кеш MODX ещё хранит старое значение галочки.
+    // EN: A signed, allowlisted processor must work despite stale option cache.
+    $approvedRead=array('processor'=>'resource/getlist',
+        'properties'=>array('limit'=>1),'_runtime_preconditions'=>guardNow());
+    securitySetting('modxmcp.allowed_processors','resource/getlist');
+    $revisionBeforeApproved=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+    $approvedPermit=signedCall('run_processor','',$approvedRead);
+    $approvedResult=rpc('run_processor','',$approvedRead,$approvedPermit);
+    must(is_array($approvedResult),'signed allowlisted processor executes');
+    must((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$revisionBeforeApproved+1,'approved processor increments CAS revision');
+    mustDeny('run_processor','',$approvedRead,$approvedPermit);
+    securitySetting('modxmcp.processor_access_mode','disabled');
+    mustDeny('run_processor','',$generic,
+        signedCall('run_processor','',$generic));
+    securitySetting('modxmcp.allow_run_processor','0');
     securitySetting('modxmcp.permit_allowed_actions','');
     mustDeny('create_element','',$data,
         signedCall('create_element','',$data));

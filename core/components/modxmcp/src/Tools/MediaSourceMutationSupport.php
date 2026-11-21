@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Media Source Mutation» для инструментов MODX MCP.
+ * EN: Shared «Media Source Mutation» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class MediaSourceMutationSupport

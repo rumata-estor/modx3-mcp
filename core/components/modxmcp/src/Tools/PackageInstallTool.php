@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Package Install»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Package Install»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PackageInstallTool implements ToolInterface

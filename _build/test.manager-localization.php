@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «manager-localization»; тестовый код не запускается на production.
+ * EN: «manager-localization» regression test; not executed in production.
+ */
 /**
  * Dependency graph / capability manager localization regression test.
  * Run: php _build/test.manager-localization.php

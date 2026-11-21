@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: graph.class.
+ * EN: MODX Manager controller/processor: graph.class.
+ */
 
 use MODX\Revolution\modExtraManagerController;
 /**

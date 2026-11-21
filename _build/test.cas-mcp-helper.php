@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «cas-mcp-helper»; тестовый код не запускается на production.
+ * EN: «cas-mcp-helper» regression test; not executed in production.
+ */
 /**
  * Disposable CI fixture helper. Prepares a CAS snapshot from the MCP read
  * interface for existing positive and fault-injection integration tests.

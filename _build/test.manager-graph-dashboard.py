@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «manager-graph-dashboard»; тестовый код не запускается на production.
+# EN: «manager-graph-dashboard» regression test; not executed in production.
 """Guard contract and responsive manager graph shell without touching MODX data."""
 from pathlib import Path
 import re

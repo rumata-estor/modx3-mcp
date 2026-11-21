@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Property Set Mutation» для инструментов MODX MCP.
+ * EN: Shared «Property Set Mutation» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetMutationSupport

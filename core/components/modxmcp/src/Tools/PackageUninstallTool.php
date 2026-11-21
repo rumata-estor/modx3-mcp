@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Package Uninstall»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Package Uninstall»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PackageUninstallTool implements ToolInterface

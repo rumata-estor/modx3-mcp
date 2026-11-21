@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Реестр/маршрутизация модульных операций: ToolRegistry.
+ * EN: Modular operation registry/routing: ToolRegistry.
+ */
 namespace ModxMcp\Registry;
 
 use ModxMcp\Tools\ToolInterface;

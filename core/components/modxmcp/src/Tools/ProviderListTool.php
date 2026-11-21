@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Provider List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Provider List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ProviderListTool implements ToolInterface

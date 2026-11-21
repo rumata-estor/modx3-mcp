@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-cas-required»; тестовый код не запускается на production.
+ * EN: «ci-cas-required» regression test; not executed in production.
+ */
 /**
  * Mandatory CAS negative-test matrix, MODX2/3 disposable installations only.
  * All client/server requests use modxMCP::processRequest. No direct SQL or

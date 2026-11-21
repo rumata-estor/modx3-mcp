@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Client Config» для инструментов MODX MCP.
+ * EN: Shared «Client Config» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class ClientConfigSupport

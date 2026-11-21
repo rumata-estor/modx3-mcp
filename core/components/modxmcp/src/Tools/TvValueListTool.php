@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Tv Value List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Tv Value List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class TvValueListTool implements ToolInterface

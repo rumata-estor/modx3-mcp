@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementDeleteTool implements ToolInterface

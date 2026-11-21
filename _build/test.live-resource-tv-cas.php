@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «live-resource-tv-cas»; тестовый код не запускается на production.
+ * EN: «live-resource-tv-cas» regression test; not executed in production.
+ */
 // Opt-in LIVE regression: temporary unpublished TV + resource fixture.
 // Calls the site's HTTP MCP endpoint with its existing API token (never printed).
 // Requires: php _build/test.live-resource-tv-cas.php SITE_DOCUMENT_ROOT SITE_API_URL

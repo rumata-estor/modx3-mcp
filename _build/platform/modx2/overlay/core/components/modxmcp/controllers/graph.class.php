@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: graph.class.
+ * EN: MODX Manager controller/processor: graph.class.
+ */
 
 /**
  * modxMCP — dependency graph screen (Components > modxMCP > Граф связей).

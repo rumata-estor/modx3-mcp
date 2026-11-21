@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Каталог соответствий действий MCP штатным процессорам MODX.
+ * EN: Maps MCP mutation actions to native MODX processors.
+ */
 namespace ModxMcp\Registry;
 
 class MutationProcessorCatalog

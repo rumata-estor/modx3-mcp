@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-external-cas-effects»; тестовый код не запускается на production.
+ * EN: «ci-external-cas-effects» regression test; not executed in production.
+ */
 /**
  * CAS v2 failure injection for NON-transactional operations.
  * ALL site data, files and packages are accessed through modxMCP::processRequest.

@@ -59,7 +59,6 @@
 - `Platform/Modx2Platform.php`
 - `Platform/Modx3Platform.php`
 - `Registry/ToolRegistry.php`
-- `Legacy/LegacyActionAdapter.php`
 - модульные `Tools/`
 - общая точка входа `endpoint/api.common.php`
 

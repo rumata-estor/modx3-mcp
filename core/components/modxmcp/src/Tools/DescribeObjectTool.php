@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Describe Object»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Describe Object»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class DescribeObjectTool implements ToolInterface

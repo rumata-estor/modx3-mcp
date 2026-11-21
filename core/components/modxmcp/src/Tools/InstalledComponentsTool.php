@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Installed Components»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Installed Components»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class InstalledComponentsTool implements ToolInterface

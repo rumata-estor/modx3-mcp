@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Clear Cache»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Clear Cache»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageClearCacheTool implements ToolInterface

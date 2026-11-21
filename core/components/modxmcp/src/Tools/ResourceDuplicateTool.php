@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Resource Duplicate»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Resource Duplicate»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ResourceDuplicateTool implements ToolInterface

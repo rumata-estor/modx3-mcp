@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-permit-nonce-ledger»; тестовый код не запускается на production.
+ * EN: «ci-permit-nonce-ledger» regression test; not executed in production.
+ */
 /**
  * Offline DB durability/replay test on disposable GitHub Actions MariaDB.
  * Creates/drops one random auth-ledger table, NEVER touches MODX data.

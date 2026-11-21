@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Служебный сценарий сборки/проверки MODX MCP: smoke.endpoint.
+ * EN: MODX MCP build/verification helper: smoke.endpoint.
+ */
 
 
 if (PHP_SAPI !== 'cli') {
@@ -108,7 +112,7 @@ if (isset($runtimeSettings['modxmcp.site_revision'])
 }
 
 if ($settingsExport !== '') {
-    if (count($settings) > 22) {
+    if (count($settings) > 26) {
         fwrite(STDERR, "Refusing settings snapshot with unexpected extra modxmcp settings: found " . count($settings) . ".\n");
         exit(3);
     }
@@ -143,7 +147,7 @@ if ($settingsRestore !== '') {
         echo "SETTINGS_RESTORE_SKIP empty-snapshot\n";
         exit(0);
     }
-    if (count($restore) > 22) {
+    if (count($restore) > 26) {
         fwrite(STDERR, "Invalid settings snapshot count: " . count($restore) . ".\n");
         exit(3);
     }
@@ -200,7 +204,7 @@ if ($settingsCompare !== '') {
 }
 
 if ($settingsHashOnly) {
-    if (count($settings) > 22) {
+    if (count($settings) > 26) {
         fwrite(STDERR, "Unexpected modxmcp settings count: " . count($settings) . ".\n");
         exit(3);
     }
@@ -208,8 +212,8 @@ if ($settingsHashOnly) {
     exit(0);
 }
 
-if (count($settings) !== 22) {
-    fwrite(STDERR, "Expected 22 modxmcp settings, found " . count($settings) . ".\n");
+if (count($settings) !== 26) {
+    fwrite(STDERR, "Expected 26 modxmcp settings, found " . count($settings) . ".\n");
     exit(3);
 }
 

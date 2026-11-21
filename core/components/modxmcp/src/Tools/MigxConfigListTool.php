@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Migx Config List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Migx Config List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MigxConfigListTool implements ToolInterface

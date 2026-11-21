@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Migx» для инструментов MODX MCP.
+ * EN: Shared «Migx» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class MigxSupport

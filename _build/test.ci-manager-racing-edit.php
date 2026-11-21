@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-manager-racing-edit»; тестовый код не запускается на production.
+ * EN: «ci-manager-racing-edit» regression test; not executed in production.
+ */
 /**
  * One-use adversarial MODX Manager process racing a signed MCP write.
  *

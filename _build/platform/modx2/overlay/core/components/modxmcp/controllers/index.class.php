@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: index.class.
+ * EN: MODX Manager controller/processor: index.class.
+ */
 
 /**
  * modxMCP — manager CMP controller (Components > modxMCP).

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Element» для инструментов MODX MCP.
+ * EN: Shared «Element» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class ElementSupport

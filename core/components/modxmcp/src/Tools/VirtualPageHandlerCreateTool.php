@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Virtual Page Handler Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Virtual Page Handler Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class VirtualPageHandlerCreateTool implements ToolInterface

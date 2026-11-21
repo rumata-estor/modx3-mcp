@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Media File Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Media File Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MediaFileDeleteTool implements ToolInterface

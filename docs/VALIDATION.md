@@ -59,7 +59,6 @@ One source tree contains a shared modular core plus platform adapters:
 - `Platform/Modx2Platform.php`
 - `Platform/Modx3Platform.php`
 - `Registry/ToolRegistry.php`
-- `Legacy/LegacyActionAdapter.php`
 - modular `Tools/`
 - shared endpoint `endpoint/api.common.php`
 

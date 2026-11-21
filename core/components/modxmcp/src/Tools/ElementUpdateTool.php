@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Update»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Update»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementUpdateTool implements ToolInterface

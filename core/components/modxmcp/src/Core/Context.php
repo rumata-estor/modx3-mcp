@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Внутренняя инфраструктура модульного ядра: Context.
+ * EN: Modular runtime infrastructure: Context.
+ */
 namespace ModxMcp\Core;
 
 class Context

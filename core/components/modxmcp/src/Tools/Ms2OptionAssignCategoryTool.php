@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Option Assign Category»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Option Assign Category»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2OptionAssignCategoryTool implements ToolInterface

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Acl Processor» для инструментов MODX MCP.
+ * EN: Shared «Acl Processor» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class AclProcessorSupport

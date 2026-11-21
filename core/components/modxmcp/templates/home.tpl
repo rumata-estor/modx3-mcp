@@ -1,3 +1,6 @@
+{* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+   RU: Smarty-шаблон панели управления MODX MCP.
+   EN: MODX MCP Manager dashboard Smarty template. *}
 <div class="modxmcp-ui" tabindex="0">
     <header class="mcp-head">
         <div>

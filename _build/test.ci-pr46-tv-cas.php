@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-pr46-tv-cas»; тестовый код не запускается на production.
+ * EN: «ci-pr46-tv-cas» regression test; not executed in production.
+ */
 /**
  * PR #46 real-MODX CAS integration regression, MODX 2 and 3.
  * Runs exclusively on disposable GitHub Actions MODX/MariaDB installations.

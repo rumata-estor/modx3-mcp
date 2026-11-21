@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Вспомогательная логика «Mini Shop2 Mutation» для инструментов MODX MCP.
+ * EN: Shared «Mini Shop2 Mutation» implementation used by MODX MCP tools.
+ */
 namespace ModxMcp\Tools;
 
 class MiniShop2MutationSupport

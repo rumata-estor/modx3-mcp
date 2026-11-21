@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Access Permission List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Access Permission List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class AccessPermissionListTool implements ToolInterface

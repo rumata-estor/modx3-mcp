@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «build.transport»; изменение только по процедуре релиза.
+ * EN: Build/install script «build.transport»; run only within the release procedure.
+ */
 
 use MODX\Revolution\modMenu;
 use MODX\Revolution\modX;

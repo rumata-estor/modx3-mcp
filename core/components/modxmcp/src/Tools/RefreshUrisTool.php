@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Refresh Uris»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Refresh Uris»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class RefreshUrisTool implements ToolInterface

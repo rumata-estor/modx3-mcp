@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Remove Locks»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Remove Locks»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class RemoveLocksTool implements ToolInterface

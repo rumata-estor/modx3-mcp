@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: CI-процедура MODX MCP; проверки и сборка не должны менять production.
+# EN: MODX MCP CI workflow; testing and packaging must not modify production.
 name: CAS PR46 isolated real MODX 2-3 checks (test only)
 
 # Test-only CI: builds are never uploaded, tagged, or published.
@@ -163,6 +166,38 @@ jobs:
           echo "INSTALLED_CAS_V2_CONSISTENCY_OK\n";
           '
           echo "MODXMCP_127_UPGRADE_PASS ${{ matrix.platform }} PHP ${{ matrix.php_version }}"
+      - name: Functional acceptance of permitted CAS CRUD and allowlisted processors
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-functional-acceptance.php
+      - name: Ordinary HTTP API functional acceptance without Ed25519
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          TOK="$RUNNER_TEMP/normal-http-api-token"
+          PORT=18653
+          SERVER_PID=""
+          cleanup() {
+            php _build/test.ci-normal-http-settings.php disable "$TOK" || true
+            if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null || true; fi
+            rm -f "$TOK"
+          }
+          trap cleanup EXIT
+          php _build/test.ci-normal-http-settings.php enable "$TOK"
+          php -S "127.0.0.1:$PORT" -t "$RUNNER_TEMP/modx-site" \
+            "$GITHUB_WORKSPACE/_build/test.ci-protected-http-router.php" \
+            > "$RUNNER_TEMP/normal-http-server.log" 2>&1 &
+          SERVER_PID=$!
+          if ! node _build/test.ci-normal-http.cjs "$TOK" "$PORT"; then
+            tail -60 "$RUNNER_TEMP/normal-http-server.log" || true
+            exit 1
+          fi
       - name: Detached Ed25519 permits verify on MODX2 and MODX3 PHP runtimes
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Context Access List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Context Access List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ContextAccessListTool implements ToolInterface

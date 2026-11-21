@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «User Group Member List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «User Group Member List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class UserGroupMemberListTool implements ToolInterface

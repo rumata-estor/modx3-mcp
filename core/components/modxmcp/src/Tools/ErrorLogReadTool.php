@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Error Log Read»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Error Log Read»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ErrorLogReadTool implements ToolInterface

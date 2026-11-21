@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Access Policy List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Access Policy List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class AccessPolicyListTool implements ToolInterface

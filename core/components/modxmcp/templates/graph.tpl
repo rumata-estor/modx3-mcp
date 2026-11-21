@@ -1,3 +1,6 @@
+{* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+   RU: Smarty-шаблон графа зависимостей MODX MCP.
+   EN: MODX MCP dependency graph Smarty template. *}
 
 <div id="mcpg" tabindex="0">
     <header class="g-page-header">

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Property Set Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Property Set Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class PropertySetCreateTool implements ToolInterface

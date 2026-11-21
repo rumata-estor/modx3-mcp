@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Ms2 Link Type Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Ms2 Link Type Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class Ms2LinkTypeCreateTool implements ToolInterface

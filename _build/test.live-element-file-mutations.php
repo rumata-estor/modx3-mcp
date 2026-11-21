@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «live-element-file-mutations»; тестовый код не запускается на production.
+ * EN: «live-element-file-mutations» regression test; not executed in production.
+ */
 if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only.\n"); exit(2); }
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
 

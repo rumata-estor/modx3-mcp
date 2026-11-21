@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Совместимость платформ MODX для компонента Modx2Platform.
+ * EN: MODX platform compatibility adapter: Modx2Platform.
+ */
 namespace ModxMcp\Platform;
 
 class Modx2Platform extends AbstractPlatform

@@ -1,3 +1,6 @@
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Клиентский скрипт интерфейса MODX MCP: graph.
+// EN: MODX MCP Manager UI script: graph.
 /**
  * modxMCP — dependency graph screen.
  *

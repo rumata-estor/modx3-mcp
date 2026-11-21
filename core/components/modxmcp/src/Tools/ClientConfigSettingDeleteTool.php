@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Client Config Setting Delete»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Client Config Setting Delete»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ClientConfigSettingDeleteTool implements ToolInterface

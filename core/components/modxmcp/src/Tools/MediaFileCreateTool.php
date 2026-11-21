@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Media File Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Media File Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MediaFileCreateTool implements ToolInterface

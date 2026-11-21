@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Исходный модуль MODX MCP: DependencyGraphService.
+ * EN: MODX MCP source module: DependencyGraphService.
+ */
 namespace ModxMcp\Tools;
 
 class DependencyGraphService

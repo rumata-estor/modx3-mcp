@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Запуск разрешённого MODX-процессора; главный выключатель и политика обязательны.
+ * EN: Executes an approved MODX processor; master switch and policy are mandatory.
+ */
 namespace ModxMcp\Tools;
 
 class RunProcessorTool implements ToolInterface
@@ -11,16 +15,36 @@ class RunProcessorTool implements ToolInterface
     public function execute($context, array $data)
     {
         $modx = $context->modx();
-        if (!$modx->getOption(
-            'modxmcp.allow_run_processor',
-            null,
-            false
-        )) {
+        // RU: В защищённом режиме галочка читается из БД, а не кеша PHP.
+        // EN: Protected mode reads the master switch from DB, not PHP cache.
+        $protected = \ModxMcp\Security\ProtectedAuthorization::required($modx);
+        $masterEnabled = $protected
+            ? \ModxMcp\Security\ProtectedAuthorization::processorMasterEnabled($modx)
+            : (bool)$modx->getOption('modxmcp.allow_run_processor', null, false);
+        if (!$masterEnabled) {
             throw new \ModxMCPClientException(
                 'run_processor is disabled. Set modxmcp.allow_run_processor = Yes to enable it.'
             );
         }
 
+        if (!$protected) {
+            $mode = (string)$modx->getOption('modxmcp.processor_access_mode', null, 'disabled');
+            // RU: Административный режим требует отдельного разрешения Ed25519.
+            // RU: Галочка и API-токен сами по себе его не открывают.
+            // EN: Privileged mode requires independent Ed25519 authorization.
+            // EN: The checkbox and API token never grant it on their own.
+            if ($mode === 'privileged') {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: privileged processor mode requires independent authorization.'
+                );
+            }
+            \ModxMcp\Security\ProcessorAccessPolicy::authorize(
+                $data,
+                $mode,
+                (string)$modx->getOption('modxmcp.allowed_processors', null, ''),
+                (string)$modx->getOption('modxmcp.privileged_processors', null, '')
+            );
+        }
         $processor = isset($data['processor'])
             ? (string)$data['processor']
             : '';

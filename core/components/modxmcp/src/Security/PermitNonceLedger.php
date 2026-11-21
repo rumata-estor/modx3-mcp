@@ -1,16 +1,24 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Учёт одноразовых разрешений; повторное использование должно отклоняться.
+ * EN: Tracks one-use permits; replay attempts must be rejected.
+ */
 namespace ModxMcp\Security;
 
 /**
- * Standalone nonce-consumption primitive. Not wired to the MCP endpoint.
+ * RU: Учёт одноразовых разрешений подключён через ProtectedAuthorization.
+ * Требуется отдельно созданная таблица InnoDB: nonce_hash CHAR(64)
+ * PRIMARY KEY, issued_at BIGINT NOT NULL, expires_at BIGINT NOT NULL.
+ * Резервирование производится после проверки подписи и привязки запроса,
+ * до исполнения операции, через отдельное PDO-соединение с autocommit.
+ * Неуспех или неопределённый результат операции НЕ освобождает nonce.
  *
+ * EN: One-use nonce ledger is wired through ProtectedAuthorization.
  * Requires a separately provisioned InnoDB table with nonce_hash CHAR(64)
  * PRIMARY KEY, issued_at BIGINT NOT NULL, expires_at BIGINT NOT NULL.
- *
- * Must be invoked after signature + request binding checks, and BEFORE
- * executing a mutation. The supplied PDO must be a DEDICATED connection,
- * in autocommit mode and outside any transaction used for the mutation.
- * A rejected, failed or unknown mutation NEVER releases a nonce.
+ * Reserve after signature/request binding and BEFORE executing a mutation,
+ * using dedicated autocommit PDO outside the mutation transaction.
+ * Failure or uncertain outcome NEVER releases a nonce.
  */
 final class PermitNonceLedger
 {

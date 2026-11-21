@@ -1,3 +1,7 @@
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Стили панели управления MODX MCP; не меняют правила авторизации.
+ * EN: MODX MCP Manager dashboard styling; does not change authorization policy.
+ */
 .modxmcp-ui{max-width:1460px;margin:0 auto;padding:22px 24px 36px;box-sizing:border-box;color:#273441;font-size:15px;line-height:1.5;max-height:calc(100vh - 24px);overflow-x:hidden;overflow-y:scroll;overscroll-behavior-y:contain;scrollbar-gutter:stable}
 .modxmcp-ui *{box-sizing:border-box}
 .modxmcp-ui .mcp-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:24px}

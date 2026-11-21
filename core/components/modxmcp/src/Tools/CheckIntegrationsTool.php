@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Check Integrations»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Check Integrations»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class CheckIntegrationsTool implements ToolInterface

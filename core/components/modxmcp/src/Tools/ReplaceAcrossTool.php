@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Replace Across»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Replace Across»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ReplaceAcrossTool implements ToolInterface

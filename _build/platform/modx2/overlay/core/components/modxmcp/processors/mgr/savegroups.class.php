@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Обработчик административной панели MODX: savegroups.class.
+ * EN: MODX Manager controller/processor: savegroups.class.
+ */
 
 /**
  * Manager processor: save the modxmcp.disabled_groups setting from the CMP capability toggles.

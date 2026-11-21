@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «List Actions»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «List Actions»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ListActionsTool implements ToolInterface

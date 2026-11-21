@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Category Get»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Category Get»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 class CategoryGetTool implements ToolInterface
 {

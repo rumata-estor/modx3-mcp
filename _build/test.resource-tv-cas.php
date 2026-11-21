@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «resource-tv-cas»; тестовый код не запускается на production.
+ * EN: «resource-tv-cas» regression test; not executed in production.
+ */
 // Isolated cross-platform contract test for ResourceTvUpdateTool.
 // Uses platform-neutral MODX doubles; live MODX 2/3 testing is still required.
 namespace { class ModxMCPClientException extends \RuntimeException {} }

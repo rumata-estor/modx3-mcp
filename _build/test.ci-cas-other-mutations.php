@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-cas-other-mutations»; тестовый код не запускается на production.
+ * EN: «ci-cas-other-mutations» regression test; not executed in production.
+ */
 /**
  * Disposable CI failure injection through the real modxMCP dispatcher.
  *

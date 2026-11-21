@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Ротация API-токена; отказ сохранения не должен сообщать об успехе.
+ * EN: Rotates API tokens; failed persistence must never report success.
+ */
 namespace ModxMcp\Tools;
 
 class RegenerateTokenTool implements ToolInterface

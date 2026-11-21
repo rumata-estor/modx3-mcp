@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Capabilities»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Capabilities»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class CapabilitiesTool implements ToolInterface

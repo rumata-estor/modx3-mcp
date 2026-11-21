@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Flush Permissions»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Flush Permissions»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class FlushPermissionsTool implements ToolInterface

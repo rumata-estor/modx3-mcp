@@ -1,4 +1,7 @@
 "use strict";
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Проверка «ci-ed25519-controller»; тестовый код не запускается на production.
+// EN: «ci-ed25519-controller» regression test; not executed in production.
 /**
  * Disposable CI-only signing fixture. Private Ed25519 key lives in RUNNER_TEMP
  * outside the MODX webroot. Actual MODX MCP receives only signed permits.

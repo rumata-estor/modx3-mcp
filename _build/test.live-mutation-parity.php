@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «live-mutation-parity»; тестовый код не запускается на production.
+ * EN: «live-mutation-parity» regression test; not executed in production.
+ */
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "CLI only.\n");
     exit(2);

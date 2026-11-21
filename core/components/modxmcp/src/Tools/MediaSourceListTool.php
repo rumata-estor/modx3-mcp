@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Media Source List»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Media Source List»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class MediaSourceListTool implements ToolInterface

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «resolve.integrations»; изменение только по процедуре релиза.
+ * EN: Build/install script «resolve.integrations»; run only within the release procedure.
+ */
 /**
  * Log which supported MODX add-ons are present. Shared by MODX 2 and MODX 3.
  */

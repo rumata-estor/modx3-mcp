@@ -1,4 +1,7 @@
 "use strict";
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Проверка «ci-protected-http»; тестовый код не запускается на production.
+// EN: «ci-protected-http» regression test; not executed in production.
 /**
  * Real HTTP request/response proof on disposable MODX2/3 PHP server. The
  * test router simulates HTTPS termination locally, not transport TLS.

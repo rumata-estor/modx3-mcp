@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «essential-localization»; тестовый код не запускается на production.
+# EN: «essential-localization» regression test; not executed in production.
 """Check that localized essential guides retain English functional coverage."""
 from pathlib import Path
 import re

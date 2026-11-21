@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-permit-nonce-worker»; тестовый код не запускается на production.
+ * EN: «ci-permit-nonce-worker» regression test; not executed in production.
+ */
 /**
  * Disposable-only nonce race worker: each independent PHP process uses its
  * own PDO connection. No site mutation and no MODX model objects.

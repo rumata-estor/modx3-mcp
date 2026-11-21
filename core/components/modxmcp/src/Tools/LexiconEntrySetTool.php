@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Lexicon Entry Set»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Lexicon Entry Set»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 /**

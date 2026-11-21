@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «client-server-actions»; тестовый код не запускается на production.
+# EN: «client-server-actions» regression test; not executed in production.
 from pathlib import Path
 import re
 import sys

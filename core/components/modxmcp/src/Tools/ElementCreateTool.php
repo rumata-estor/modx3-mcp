@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Element Create»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Element Create»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class ElementCreateTool implements ToolInterface

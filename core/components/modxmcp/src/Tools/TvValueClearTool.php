@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Инструмент MCP «Tv Value Clear»: выполняется через защищённый диспетчер.
+ * EN: MCP tool «Tv Value Clear»: invoked through the guarded dispatcher.
+ */
 namespace ModxMcp\Tools;
 
 class TvValueClearTool implements ToolInterface

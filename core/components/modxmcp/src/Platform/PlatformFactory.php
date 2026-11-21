@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Совместимость платформ MODX для компонента PlatformFactory.
+ * EN: MODX platform compatibility adapter: PlatformFactory.
+ */
 namespace ModxMcp\Platform;
 
 class PlatformFactory

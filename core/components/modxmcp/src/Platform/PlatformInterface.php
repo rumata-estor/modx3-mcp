@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Исходный модуль MODX MCP: PlatformInterface.
+ * EN: MODX MCP source module: PlatformInterface.
+ */
 namespace ModxMcp\Platform;
 
 interface PlatformInterface

@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-protected-http-settings»; тестовый код не запускается на production.
+ * EN: «ci-protected-http-settings» regression test; not executed in production.
+ */
 /**
  * Disposable CI setup ONLY. Configures the protected mode via the MODX
  * administrative setting model, never from an MCP business mutation.

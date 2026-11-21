@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Исходный модуль MODX MCP: connector.
+ * EN: MODX MCP source module: connector.
+ */
 /**
  * modxMCP — manager connector. Routes manager-only AJAX (CMP buttons) to the
  * component's mgr processors. Requires a valid manager session (HTTP_MODAUTH),

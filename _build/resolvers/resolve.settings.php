@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Скрипт сборки или установки «resolve.settings»; изменение только по процедуре релиза.
+ * EN: Build/install script «resolve.settings»; run only within the release procedure.
+ */
 /**
  * Preserve administrator-edited settings on install/upgrade and remove all
  * modxMCP-owned settings/menu/namespace records on explicit uninstall.

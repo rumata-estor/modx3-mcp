@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка «endpoint-architecture»; тестовый код не запускается на production.
+# EN: «endpoint-architecture» regression test; not executed in production.
 from pathlib import Path
 import sys
 root=Path(__file__).resolve().parents[1]
@@ -7,7 +10,13 @@ text=common.read_text(encoding='utf-8')
 for bad in ('MODX\\Revolution', "model/modx/modx.class.php", 'vendor/autoload.php', 'new modX()', '::getInstance()'):
     if bad in text:
         errors.append(f'common endpoint contains platform bootstrap detail: {bad}')
-for required in ('modxmcp.require_https','modxmcp.trust_proxy_https','modxmcp.allowed_ips','modxmcp.api_token','modxmcp.max_payload_bytes'):
+for removed in (
+    'core/components/modxmcp/legacy/modx2/api.php',
+    'core/components/modxmcp/src/Legacy/LegacyActionAdapter.php',
+):
+    if (root / removed).exists():
+        errors.append(f'obsolete executable bridge reintroduced: {removed}')
+for required in ('modxmcp.require_https','modxmcp.trust_proxy_https','modxmcp.trusted_proxy_ips','modxmcp.allowed_ips','modxmcp.api_token','modxmcp.max_payload_bytes'):
     if required not in text:
         errors.append(f'common endpoint missing security control: {required}')
 for platform in ('modx2','modx3'):

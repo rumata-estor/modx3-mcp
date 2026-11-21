@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Проверка «ci-external-cas-worker»; тестовый код не запускается на production.
+ * EN: «ci-external-cas-worker» regression test; not executed in production.
+ */
 /**
  * Independent writer for a disposable external CAS race.
  * Only website change is through modxMCP::processRequest().

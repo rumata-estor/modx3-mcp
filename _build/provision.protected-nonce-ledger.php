@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Служебный сценарий сборки/проверки MODX MCP: provision.protected-nonce-ledger.
+ * EN: MODX MCP build/verification helper: provision.protected-nonce-ledger.
+ */
 /**
  * Explicit opt-in CLI migration for connector-owned single-use permit ledger.
  *
