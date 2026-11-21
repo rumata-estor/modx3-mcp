@@ -24,6 +24,12 @@ if ($is2) {
 }
 $modx->initialize('mgr');
 $modx->setOption('modxmcp.allow_root_filesystem_read', true);
+// The disposable 1.2.3 -> 1.2.7 upgrade has optional package management
+// disabled by default. Enable its capability only for this CI *process* so
+// we can prove the CAS revision guard rejects the request before the
+// package installer is invoked. Do not persist site settings or install any
+// package.
+$modx->setOption('modxmcp.disabled_groups', '');
 require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $api = new modxMCP($modx);
 function rpc($action, array $data=array()) {
