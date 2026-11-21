@@ -228,6 +228,11 @@ try {
     $legacy=array('raw_body'=>'{}','permit'=>array('claims'=>array(),'mac'=>str_repeat('a',64)));
     mustDeny('create_element','',$data,$legacy);
 
+    // RU: Успешный signed run_processor увеличил ревизию сайта.
+    // RU: Для следующей операции требуется новый снимок CAS.
+    // EN: A successful signed processor call advanced the site revision.
+    // EN: Refresh CAS observations before signing the next mutation.
+    $data['_runtime_preconditions']=guardNow();
     $valid=signedCall('create_element','',$data);
     $result=rpc('create_element','',$data,$valid);
     $id=(int)$result['id'];

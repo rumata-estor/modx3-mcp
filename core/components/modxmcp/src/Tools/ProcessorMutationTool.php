@@ -56,6 +56,18 @@ class ProcessorMutationTool implements ToolInterface
             throw new \ModxMCPClientException($this->noResponseMessage());
         }
         if ($response->isError()) {
+            // RU: Некоторые версии MODX возвращают сообщение о созданном
+            // RU: пользователе вместе с временным паролем и флагом ошибки.
+            // RU: Не раскрываем пароль и НЕ считаем операцию безопасно отменённой.
+            // EN: Some MODX user processors may return a creation message
+            // EN: containing a temporary password while reporting an error.
+            // EN: Never expose the password or assume the mutation was undone.
+            if ($this->toolName === 'create_user') {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: create_user returned an error status; '
+                    . 'check the user via MCP before any retry.'
+                );
+            }
             throw new \ModxMCPClientException(ProcessorSupport::error($response));
         }
 
@@ -69,7 +81,23 @@ class ProcessorMutationTool implements ToolInterface
             $route === '' ? $this->group() : $route,
             $this->auditPayload($props)
         );
-        return ProcessorSupport::normalize($response);
+        $result = ProcessorSupport::normalize($response);
+        if ($this->toolName === 'create_user') {
+            // RU: Никогда не отдаём объект пользователя или сообщение
+            // RU: процессора целиком: там могут содержаться пароль и соль.
+            // EN: Never return the raw user processor payload: it may
+            // EN: contain a generated password, hash or other credentials.
+            $id = is_array($result) && isset($result['id'])
+                ? (int)$result['id'] : 0;
+            if ($id <= 0) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: create_user did not return '
+                    . 'a confirmed user ID; verify via MCP before retry.'
+                );
+            }
+            return array('id' => $id);
+        }
+        return $result;
     }
 
     private function prepareContext(array &$props)

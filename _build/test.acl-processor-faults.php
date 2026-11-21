@@ -69,7 +69,10 @@ foreach($specs as $name=>$spec){
         $tool->execute($ctx,array('id'=>9,'name'=>'fixture','resource'=>9,'resourceGroup'=>4));
         throw new \RuntimeException('ACL_FAULT_FAIL: did not reject '.$name);
     } catch (ModxMCPClientException $e) {
-        if (strpos($e->getMessage(),'injected processor failure')===false)throw $e;
+        $expected = $name === 'create_user'
+            ? 'MUTATION_OUTCOME_UNCERTAIN'
+            : 'injected processor failure';
+        if (strpos($e->getMessage(),$expected)===false)throw $e;
     }
     if ($ctx->platform->calls!==1 || $ctx->modx->cache->flushes!==0
         || \ModxMcp\Tools\AuditSupport::$calls!==$auditBefore) {
@@ -78,5 +81,20 @@ foreach($specs as $name=>$spec){
     $checks++;
 }
 if ($checks!==29)throw new \RuntimeException('ACL_FAULT_FAIL: unexpected ACL catalog size '.$checks);
-echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks.PHP_EOL;
+// RU: Ошибка create_user не должна раскрывать пароль, даже если
+// RU: штатный MODX-процессор включил его в текст ошибки.
+// EN: A create_user error must not expose a generated password even if
+// EN: the MODX processor includes that secret in its message.
+$ctx=new AclFakeContext();
+$tool=new \ModxMcp\Tools\ProcessorMutationTool('create_user',$specs['create_user']);
+try {
+    $tool->execute($ctx,array('username'=>'ci_user'));
+    throw new \RuntimeException('ACL_SECRET_LEAK_TEST_FAILED: accepted error');
+} catch (ModxMCPClientException $e) {
+    if (strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN')!==0
+        || strpos($e->getMessage(),'injected processor failure')!==false) {
+        throw new \RuntimeException('ACL_SECRET_LEAK_TEST_FAILED: unsafe error');
+    }
+}
+echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks.' secret_checks=1'.PHP_EOL;
 }

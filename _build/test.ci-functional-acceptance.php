@@ -158,14 +158,37 @@ try {
     $groupRead=acceptanceRpc('get_user_group',array('id'=>$groupId));
     acceptanceCheck(is_array($groupRead) && (int)$groupRead['id']===$groupId,
         'user group readback');
-    $user=acceptanceRpc('create_user',array(
-        'username'=>'mcp_acceptance_'.$fixture,
-        'fullname'=>'MODX MCP disposable acceptance',
-        'email'=>'mcp-acceptance-'.$fixture.'@example.invalid',
-        'password'=>'CI-Temp-'.bin2hex(random_bytes(12)).'9Q!',
-        'passwordnotifymethod'=>'s',
-        'active'=>0,
-    ));
+    try {
+        $user=acceptanceRpc('create_user',array(
+            'username'=>'mcp_acceptance_'.$fixture,
+            'fullname'=>'MODX MCP disposable acceptance',
+            'email'=>'mcp-acceptance-'.$fixture.'@example.invalid',
+            'password'=>'CI-Temp-'.bin2hex(random_bytes(12)).'9Q!',
+            'passwordnotifymethod'=>'s',
+            'active'=>0,
+        ));
+    } catch (ModxMCPClientException $e) {
+        // RU: При неопределённом результате ищем созданного пользователя
+        // RU: только через MCP, сохраняем ID для безопасной очистки.
+        // EN: On uncertain outcome, locate the created user through MCP
+        // EN: and retain the ID for safe fixture cleanup; do not retry.
+        if (strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN')!==0)throw $e;
+        $list=acceptanceRpc('list_users',array('query'=>'mcp_acceptance_'.$fixture));
+        if (is_array($list) && isset($list['results']) && is_array($list['results'])) {
+            foreach ($list['results'] as $row) {
+                if (is_array($row) && isset($row['username'], $row['id'])
+                    && $row['username']==='mcp_acceptance_'.$fixture) {
+                    $userId=(int)$row['id'];
+                    break;
+                }
+            }
+        }
+        throw new RuntimeException(
+            'FUNCTIONAL_ACCEPTANCE_FAILED: create_user reported an uncertain outcome; '
+            . 'MCP readback indicates '.($userId>0?'user exists':'user not found')
+            . '. Operation must not be repeated blindly.'
+        );
+    }
     acceptanceCheck(is_array($user) && isset($user['id']) && (int)$user['id']>0,
         'inactive disposable user creation via guarded MCP');
     $userId=(int)$user['id'];

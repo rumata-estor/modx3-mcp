@@ -43,9 +43,18 @@ final class ProcessorAccessPolicy
             || !preg_match('#\A[a-z][a-z0-9_-]*(?:/[a-z][a-z0-9_-]*){1,7}\z#D', $processor)) {
             throw new \RuntimeException('AUTH_DENIED: invalid processor name.');
         }
-        // These can reconfigure protected trust anchors, never via MCP.
+        // RU: Системные, контекстные и пользовательские настройки способны
+        // RU: изменить доверенные modxmcp.* ключи, включая вложенные settings
+        // RU: у context/update. Запрещаем их даже в privileged режиме.
+        // EN: System/context/user/group settings can modify modxmcp.* trust
+        // EN: anchors, including nested settings in context/update.
+        // EN: Deny these generic routes even under privileged authorization.
         if (strpos($processor, 'system/settings/') === 0
-            || strpos($processor, 'system/setting/') === 0) {
+            || strpos($processor, 'system/setting/') === 0
+            || strpos($processor, 'context/setting/') === 0
+            || $processor === 'context/update'
+            || strpos($processor, 'security/user/setting/') === 0
+            || strpos($processor, 'security/group/setting/') === 0) {
             throw new \RuntimeException('AUTH_DENIED: settings processors are admin-only.');
         }
         $allowed = self::parseList($allowedCsv);

@@ -46,6 +46,18 @@ accepts('resource/getlist','privileged',$allowed,$privileged);
 rejects('security/user/delete','privileged',$allowed,$privileged);
 rejects('system/settings/update','privileged','system/settings/update',$privileged);
 rejects('system/setting/update','privileged','system/setting/update',$privileged);
+// RU: Все обходные пути изменения защищённых настроек запрещены даже
+// RU: при наличии привилегированной подписи и явного имени процессора.
+// EN: Indirect security-setting mutation routes remain forbidden, even
+// EN: with a signed privileged permit and an exact processor allowlist.
+foreach (array(
+    'context/setting/create','context/setting/update','context/setting/remove',
+    'context/update','security/user/setting/update',
+    'security/group/setting/create','security/group/setting/remove'
+) as $settingProcessor) {
+    rejects($settingProcessor,'privileged','',$settingProcessor);
+    rejects($settingProcessor,'allowlist',$settingProcessor,'');
+}
 rejects('../system/clearcache','allowlist',$allowed,$privileged);
 rejects('SYSTEM/clearcache','allowlist',$allowed,$privileged);
 rejects('resource/getlist','allowlist',$allowed,$privileged,array('processors_path'=>'/tmp/unsafe'));
