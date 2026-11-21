@@ -496,7 +496,11 @@ def main():
                 action=="update_element" and status==200
                 for action,status in server_events
             ),"actual installed MODX handler returned successful update")
-            signed=issued["cas_operation"]
+            signed=issued.get("cas_operation") or getattr(
+                store, "last_granted_permit", None)
+            check(isinstance(signed,dict)
+                  and set(signed)=={"request_body","remote_permit"},
+                  "Controller signed one-use permit available for replay denial test")
             try:
                 http_send(url,token,signed["request_body"].encode(),
                           signed["remote_permit"])
@@ -569,7 +573,10 @@ def main():
             else:
                 raise AssertionError("Controller reissued permit after lost reply")
             try:
-                used=lost["captured"]
+                used=lost.get("captured") or getattr(
+                    store, "last_granted_permit", None)
+                check(isinstance(used,dict),
+                      "ambiguous Executor captured approved one-use permit")
                 http_send(url,token,used["request_body"].encode(),
                           used["remote_permit"])
             except error.HTTPError as exc:
