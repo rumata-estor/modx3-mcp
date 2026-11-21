@@ -14,6 +14,16 @@ class MediaFolderCreateTool implements ToolInterface
 
     public function execute($context, array $data)
     {
+        // RU: Раньше path игнорировался и папка создавалась в корне.
+        // RU: Отклоняем неоднозначный запрос до любого файлового изменения.
+        // EN: Previously path was ignored and folders could be created at root.
+        // EN: Reject ambiguous requests before any filesystem side effect.
+        if (array_key_exists('path', $data)) {
+            throw new \ModxMCPClientException(
+                'create_media_folder: unsupported path field; '
+                . 'use parent for the destination directory and name for the new folder.'
+            );
+        }
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
         $parentDir = MediaSourceMutationSupport::relativePath(
             isset($data['parent']) ? $data['parent'] : '/',
