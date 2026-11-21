@@ -282,7 +282,7 @@ else:
         "getObject(modMenu::class": "transport verifier: leftover menu check missing",
         "getObject(modNamespace::class": "transport verifier: leftover namespace check missing",
         "components' . DIRECTORY_SEPARATOR . 'modxmcp": "transport verifier: leftover component-directory check missing",
-        "$expectedSettings = 21": "transport verifier: exact 21-setting install check missing",
+        "$expectedSettings = 22": "transport verifier: exact 22-setting install check missing",
         "$rootMenu": "transport verifier: root menu install check missing",
         "$graphMenu": "transport verifier: graph menu install check missing",
         "$deployedVersion !== PKG_VERSION": "transport verifier: deployed code version check missing",
