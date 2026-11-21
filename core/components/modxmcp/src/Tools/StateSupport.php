@@ -207,11 +207,43 @@ class StateSupport
     }
 
     /**
-     * Database-only atomic mutation boundary for CAS-protected resource TVs.
-     * The caller must hold the shared mutation lock first. Both TV rows and
-     * site_revision must use the same MODX/xPDO connection.
+     * Lock the existing resource row BEFORE taking the CAS snapshot in an
+     * outer InnoDB transaction. MODX Manager does not honor MCP's flock;
+     * FOR UPDATE forces a racing Manager write to finish first. The actual
+     * business mutation remains delegated to MODX processors via MCP.
      *
-     * Do not apply this blindly to processors with filesystem side effects.
+     * Must be called from withRevisionTransaction(); never independently.
+     */
+    public static function lockResourceRowForCas($context, $id)
+    {
+        if ((!is_int($id) && !(is_string($id)
+                && preg_match('/\A[1-9][0-9]*\z/D',$id)))
+            || (int)$id < 1
+            || (string)(int)$id !== (string)$id) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: resource row lock requires numeric ID.'
+            );
+        }
+        $modx=$context->modx();
+        $table=$modx->getTableName(
+            $context->platform()->className('resource')
+        );
+        $statement=$modx->prepare(
+            'SELECT `id` FROM '.$table.' WHERE `id`=? FOR UPDATE'
+        );
+        if (!$statement || !$statement->execute(array((int)$id))
+            || $statement->fetchColumn()===false) {
+            throw new \ModxMCPClientException(
+                'STALE_STATE: target resource disappeared before write.'
+            );
+        }
+        return true;
+    }
+
+    /**
+     * Database-only atomic mutation boundary for guarded writes. The caller
+     * must hold the shared mutation lock. Never use this for operations with
+     * external effects that cannot be rolled back by MariaDB.
      */
     public static function withRevisionTransaction($context, $callback)
     {

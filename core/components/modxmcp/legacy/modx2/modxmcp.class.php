@@ -212,7 +212,17 @@ class modxMCP {
                             if ($atomicDatabase && !$isDryRun) {
                                 $result = \ModxMcp\Tools\StateSupport::withRevisionTransaction(
                                     $runtimeContext,
-                                    function () use ($apply) {
+                                    function () use ($apply, $runtimeContext, $action, $toolData) {
+                                        if (in_array($action, array(
+                                                'update_element','delete_element'
+                                            ), true)
+                                            && isset($toolData['type'])
+                                            && $toolData['type']==='resource') {
+                                            \ModxMcp\Tools\StateSupport::lockResourceRowForCas(
+                                                $runtimeContext,
+                                                isset($toolData['id']) ? $toolData['id'] : null
+                                            );
+                                        }
                                         return $apply(true);
                                     }
                                 );
