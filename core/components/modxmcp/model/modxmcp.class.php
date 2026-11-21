@@ -34,8 +34,8 @@ class modxMCP {
         );
         $this->config = array_merge(['corePath' => $corePath], $config);
 
-        // Staged modular core. Fail-open by design: the proven legacy dispatcher
-        // remains authoritative if the new layer is unavailable for any reason.
+        // Staged modular core. In CAS-required 1.2.8, processRequest()
+        // fails closed if modular initialization fails; no legacy bypass.
         $autoload = rtrim($corePath, '/\\') . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Autoloader.php';
         if (is_file($autoload)) {
             try {
@@ -92,8 +92,25 @@ class modxMCP {
 
         $this->assertCapabilityEnabled($action);
 
-        // New registry gets first refusal only for explicitly migrated tools.
-        // Everything else falls through to the legacy dispatcher unchanged.
+        // Mandatory CAS requires the central modular dispatcher. In 1.2.8
+        // there is NO silent fallback to the legacy mutation processor:
+        // such a fallback would bypass the lock and strict CAS check.
+        if ($this->modularRuntime === null) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: modular MODX MCP runtime is unavailable.'
+            );
+        }
+        $registeredTool = $this->modularRuntime->registry()->get($action);
+        if ($registeredTool === null
+            || !$registeredTool->supports($this->modularRuntime->context())) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: action is not available in the guarded tool registry: '
+                . (string)$action
+            );
+        }
+
+        // The modular registry is now authoritative for every request.
+        // Unregistered routes are rejected before reaching legacy code.
         if ($this->modularRuntime !== null) {
             $tool = $this->modularRuntime->registry()->get($action);
             if ($tool !== null && $tool->supports($this->modularRuntime->context())) {
@@ -128,6 +145,9 @@ class modxMCP {
                     $toolData['_runtime_preconditions'] = $runtimePreconditions;
                 }
                 if ($tool->isMutation()) {
+                    $runtimePreconditions = \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
+                        $action, $runtimePreconditions
+                    );
                     $runtimeContext = $this->modularRuntime->context();
                     $dryRunActions = array(
                         'delete_element',
@@ -3708,6 +3728,7 @@ class modxMCP {
             ),
             'atomic_preconditions' => ($this->modularRuntime !== null),
             'precondition_version' => ($this->modularRuntime !== null ? 2 : 1),
+            'cas_required' => true,
         );
     }
 
@@ -3730,6 +3751,7 @@ class modxMCP {
                 'atomic_preconditions' => $siteState['atomic_preconditions'],
                 'site_revision' => $siteState['atomic_preconditions'],
                 'precondition_version' => $siteState['precondition_version'],
+                'cas_required' => $siteState['cas_required'],
             ),
             'fingerprint'       => $this->capabilitiesFingerprint(),
         );

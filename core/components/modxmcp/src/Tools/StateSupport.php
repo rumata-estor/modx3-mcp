@@ -54,6 +54,7 @@ class StateSupport
             'site_revision' => self::revision($context),
             'atomic_preconditions' => true,
             'precondition_version' => 2,
+            'cas_required' => true,
         );
     }
 
@@ -385,6 +386,64 @@ class StateSupport
             }
         }
         return $out;
+    }
+
+    /**
+     * Require explicit, strict CAS preconditions for every mutating call.
+     * This validates the contract only: assertPreconditions() must still
+     * execute UNDER the site mutation lock immediately before writes.
+     *
+     * Deliberately no legacy/default/opt-out mode: installing this staged
+     * 1.2.8 version is an explicit opt-in to mandatory CAS.
+     */
+    public static function requireMutationPreconditions($action, $raw)
+    {
+        if (!is_array($raw)
+            || !array_key_exists('observed_site_revision', $raw)
+            || !array_key_exists('strict_site_revision', $raw)
+            || $raw['strict_site_revision'] !== true
+            || !array_key_exists('read_set', $raw)
+            || !is_array($raw['read_set'])) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: mutation ' . $action
+                . ' requires observed_site_revision, strict_site_revision=true'
+                . ' and read_set from a prior MCP state read.'
+            );
+        }
+        $observed = $raw['observed_site_revision'];
+        if ((!is_int($observed)
+                && !(is_string($observed) && preg_match('/^(0|[1-9][0-9]*)$/D', $observed)))
+            || (string)$observed !== (string)(int)$observed
+            || (int)$observed < 0) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: observed_site_revision must be a valid nonnegative integer.'
+            );
+        }
+        foreach ($raw['read_set'] as $item) {
+            if (!is_array($item)
+                || !isset($item['type'])
+                || !in_array($item['type'], array(
+                    'resource','template','chunk','snippet','plugin','tv',
+                    'category','system_setting'
+                ), true)
+                || !isset($item['fingerprint'])
+                || !is_string($item['fingerprint'])
+                || !preg_match('/^[a-fA-F0-9]{64}$/D', $item['fingerprint'])
+                || (empty($item['id']) && empty($item['name']) && empty($item['key']))) {
+                throw new \ModxMCPClientException(
+                    'CAS_REQUIRED: malformed read_set entry.'
+                );
+            }
+        }
+        if ($action === 'update_resource_tvs') {
+            if (!array_key_exists('expected_tvs', $raw)
+                || !is_array($raw['expected_tvs'])) {
+                throw new \ModxMCPClientException(
+                    'CAS_REQUIRED: update_resource_tvs requires raw expected_tvs.'
+                );
+            }
+        }
+        return $raw;
     }
 
     public static function assertPreconditions($context, array $preconditions)

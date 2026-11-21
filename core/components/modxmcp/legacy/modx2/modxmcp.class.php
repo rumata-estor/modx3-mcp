@@ -65,6 +65,22 @@ class modxMCP {
 
         $this->assertCapabilityEnabled($action);
 
+        // CAS v2 is enforced centrally: a failed modular boot, unavailable
+        // tool, or legacy fallthrough must never bypass strict CAS checks.
+        if ($this->modularRuntime === null) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: modular MODX MCP runtime is unavailable.'
+            );
+        }
+        $registeredTool = $this->modularRuntime->registry()->get($action);
+        if ($registeredTool === null
+            || !$registeredTool->supports($this->modularRuntime->context())) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: action is not available in the guarded tool registry: '
+                . (string)$action
+            );
+        }
+
         if ($this->modularRuntime !== null) {
             $tool = $this->modularRuntime->registry()->get($action);
             if ($tool !== null && $tool->supports($this->modularRuntime->context())) {
@@ -99,6 +115,9 @@ class modxMCP {
                     $toolData['_runtime_preconditions'] = $runtimePreconditions;
                 }
                 if ($tool->isMutation()) {
+                    $runtimePreconditions = \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
+                        $action, $runtimePreconditions
+                    );
                     $runtimeContext = $this->modularRuntime->context();
                     $dryRunActions = array(
                         'delete_element',
@@ -3594,6 +3613,7 @@ class modxMCP {
             ),
             'atomic_preconditions' => ($this->modularRuntime !== null),
             'precondition_version' => ($this->modularRuntime !== null ? 2 : 1),
+            'cas_required' => true,
         );
     }
 
@@ -3616,6 +3636,7 @@ class modxMCP {
                 'atomic_preconditions' => $siteState['atomic_preconditions'],
                 'site_revision' => $siteState['atomic_preconditions'],
                 'precondition_version' => $siteState['precondition_version'],
+                'cas_required' => $siteState['cas_required'],
             ),
             'fingerprint'       => $this->capabilitiesFingerprint(),
         );
