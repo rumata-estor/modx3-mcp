@@ -76,4 +76,4 @@ permitMustReject(function()use($mutation,$sig,$pub,$trusted,$digest,$now){
 },'downgraded/unknown permit version');
 if ($checks !== 14) throw new RuntimeException('Negative test count mismatch');
 echo 'ED25519_INDEPENDENT_PERMIT_CRYPTO_OK checks='.$checks
-    .' (REPLAY_LEDGER_NOT_YET_IMPLEMENTED)' . PHP_EOL;
+    .' (REPLAY_LEDGER_NOT_YET_WIRED_TO_API)' . PHP_EOL;

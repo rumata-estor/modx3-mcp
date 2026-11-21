@@ -167,6 +167,13 @@ jobs:
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'
           node _build/test.permit-ed25519-interop.cjs
+      - name: Ed25519 one-use nonce ledger isolated concurrency and replay
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-permit-nonce-ledger.php
       - name: All 116 mutations require strict CAS; legacy fallback is closed
         env:
           MODXMCP_DISPOSABLE_CI: '1'
