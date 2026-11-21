@@ -304,6 +304,52 @@ try {
         'concurrent winning value can be restored via CAS');
     echo 'CAS_CONCURRENT_WRITERS_ONE_WINNER_OK' . PHP_EOL;
 
+    // RU: Многозначный TV принимает массив и сохраняет разделитель ||.
+    // RU: Обычный TV и все несвязанные значения не меняются.
+    // EN: Multi-select TV accepts arrays serialized as ||; unrelated TVs
+    // EN: and CAS protection must remain unchanged.
+    $multiName = 'multi_' . $fixture;
+    $multi = rpc('create_element', array(
+        'type'=>'tv','name'=>$multiName,'field_type'=>'listbox-multiple',
+        'elements'=>'Item18==18||Item19==19','templates'=>array($templateId),
+    ));
+    requireTrue(isset($multi['id']) && (int)$multi['id']>0,
+        'create disposable listbox-multiple TV');
+    $tvs[] = (int)$multi['id'];
+    $beforeMulti = rpc('get_resource_tvs',array('resource_id'=>$rid));
+    $oldMulti = findTV($beforeMulti,$multiName);
+    $beforeUnrelated = findTV($beforeMulti,$raceName);
+    $multiUpdate = rpc('update_resource_tvs',array(
+        'resource_id'=>$rid,'tvs'=>array($multiName=>array('18','19')),
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)rpc('get_site_state')['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+            'expected_tvs'=>array($multiName=>$oldMulti),
+        ),
+    ));
+    requireTrue(findTV($multiUpdate,$multiName)==='18||19',
+        'multi-select array persisted as raw 18||19');
+    requireTrue(findTV($multiUpdate,$raceName)===$beforeUnrelated,
+        'unrelated TV preserved after multi-select update');
+    $freshMulti=rpc('get_resource_tvs',array('resource_id'=>$rid));
+    requireTrue(findTV($freshMulti,$multiName)==='18||19',
+        'multi-select raw readback');
+    $staleMulti=false;
+    try {
+        rpc('update_resource_tvs',array(
+            'resource_id'=>$rid,'tvs'=>array($multiName=>array('19')),
+            '_runtime_preconditions'=>array(
+                'observed_site_revision'=>(int)rpc('get_site_state')['site_revision'],
+                'strict_site_revision'=>true,'read_set'=>array(),
+                'expected_tvs'=>array($multiName=>$oldMulti),
+            ),
+        ));
+    } catch (ModxMCPClientException $e) {
+        $staleMulti=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    requireTrue($staleMulti,'multi-select stale raw CAS blocked');
+    echo 'MULTI_VALUE_TV_CAS_OK'.PHP_EOL;
+
     $success = true;
     echo 'PR46_LIVE_CAS_OK platform=' . ($is2 ? 'modx2' : 'modx3')
         . ' revision=' . $r0 . '->' . ($r0 + 1) . '->' . ($r0 + 2)

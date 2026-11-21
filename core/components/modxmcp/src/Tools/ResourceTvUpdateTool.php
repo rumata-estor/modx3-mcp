@@ -41,6 +41,34 @@ class ResourceTvUpdateTool implements ToolInterface
         );
     }
 
+    /**
+     * RU: Строки уже содержат сырое значение TV. Массив допустим только
+     * RU: для listbox-multiple; нельзя допускать вложения и разделитель ||.
+     * EN: Strings are already raw TV values. Arrays are accepted only for
+     * EN: listbox-multiple, without nested values or embedded || delimiters.
+     */
+    public static function normalizeMultiValue($tv, $value)
+    {
+        if (is_string($value)) { return $value; }
+        if (!is_array($value) || (string)$tv->get('type') !== 'listbox-multiple') {
+            throw new \ModxMCPClientException(
+                'TV array values are only supported for listbox-multiple.'
+            );
+        }
+        $parts = array();
+        foreach ($value as $item) {
+            if (!is_string($item) && !is_int($item)) {
+                throw new \ModxMCPClientException('Invalid listbox-multiple TV entry.');
+            }
+            $item = (string)$item;
+            if ($item === '' || strpos($item, '||') !== false) {
+                throw new \ModxMCPClientException('Invalid listbox-multiple TV separator.');
+            }
+            $parts[] = $item;
+        }
+        return implode('||', $parts);
+    }
+
     private function applyUpdate($context, array $data, $outerTransaction)
     {
         $resourceId = !empty($data['resource_id'])
@@ -72,9 +100,11 @@ class ResourceTvUpdateTool implements ToolInterface
         $templateId = (int)$resource->get('template');
         $tvObjects = array();
         foreach ($data['tvs'] as $name => $value) {
-            if (!is_string($name) || $name === '' || !is_string($value)) {
+            if (!is_string($name) || $name === ''
+                || (!is_string($value) && !is_array($value))) {
                 throw new \ModxMCPClientException(
-                    'TV updates require non-empty TV names and string values.'
+                    'TV updates require non-empty TV names and string values '
+                    . '(arrays only for listbox-multiple).'
                 );
             }
             $tv = $modx->getObject(
@@ -93,6 +123,11 @@ class ResourceTvUpdateTool implements ToolInterface
                     'TV is not assigned to the resource template: ' . $name
                 );
             }
+            // RU: Массивы разрешены только для listbox-multiple. Сохраняем
+            // RU: стандартный MODX-разделитель, не меняя другие TV.
+            // EN: Arrays are valid only for listbox-multiple; serialize via
+            // EN: MODX's || delimiter without touching unrelated TV values.
+            $data['tvs'][$name] = self::normalizeMultiValue($tv, $value);
             $tvObjects[$name] = $tv;
         }
         // Execute the field-level compare under the same connector-wide
