@@ -38,6 +38,25 @@ class ProcessorMutationTool implements ToolInterface
                 array('core:default', 'core:user', 'core:access', 'core:policy', 'core:role')
             );
         } elseif ($route === 'context') {
+            // RU: Не пропускаем защищённые ключи через контекстные процессоры.
+            // EN: Deny protected keys in context-setting processor mutations.
+            if (in_array($this->toolName, array(
+                'create_context_setting', 'update_context_setting',
+                'delete_context_setting'
+            ), true)) {
+                foreach (array('key', 'name') as $settingField) {
+                    if (isset($props[$settingField])) {
+                        \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey(
+                            (string)$props[$settingField]
+                        );
+                    }
+                }
+            }
+            if ($this->toolName === 'update_context') {
+                \ModxMcp\Security\ProtectedSettingsGuard::assertNoOpaqueContextSettings(
+                    $props
+                );
+            }
             $this->prepareContext($props);
             $this->loadLexicons(
                 $context,

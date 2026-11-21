@@ -19,6 +19,7 @@ namespace ModxMcp\Tools {
     class SystemSettingListTool {
         public static function normalize($setting){return array('key'=>$setting->get('key'));}
     }
+    require_once __DIR__.'/../core/components/modxmcp/src/Security/ProtectedSettingsGuard.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SystemSettingCreateTool.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SystemSettingUpdateTool.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SystemSettingDeleteTool.php';
@@ -82,5 +83,16 @@ denial('delete_by_key',$delete,array('key'=>'modxmcp.permit_public_key'),
     new SettingsFakeSetting('modxmcp.permit_public_key'));
 denial('delete_by_id',$delete,array('id'=>102),
     new SettingsFakeSetting('modxmcp.api_token'));
-echo 'SECURITY_SETTINGS_UNMUTABLE_VIA_MCP_OK checks=6'.PHP_EOL;
+// RU: Проверяем пробелы и регистр, которые нормализует MODX.
+// EN: Verify MODX key normalization cannot bypass protected settings.
+denial('create_spaced_uppercase',$create,
+    array('key'=>'  ModxMCP.enabled  ','value'=>'1'),null);
+denial('update_renamed_spaced',$update,
+    array('id'=>104,'key'=>' MODXMCP.permit_public_key ','value'=>'unsafe'),
+    new SettingsFakeSetting('other_key'));
+denial('update_stored_uppercase',$update,array('id'=>105,'value'=>'1'),
+    new SettingsFakeSetting('ModxMCP.enabled'));
+denial('delete_stored_spaced',$delete,array('id'=>106),
+    new SettingsFakeSetting('  modxmcp.api_token  '));
+echo 'SECURITY_SETTINGS_UNMUTABLE_VIA_MCP_OK checks=10'.PHP_EOL;
 }

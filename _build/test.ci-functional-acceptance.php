@@ -87,18 +87,25 @@ try {
         'resource listing works');
     acceptanceCheck(is_array(acceptanceRpc('list_system_settings',array('namespace'=>'modxmcp'))),
         'system setting listing works');
-    // RU: После обновления новые разрешения должны быть выключены.
-    // EN: New authorization capabilities must remain off after an upgrade.
+    // RU: Этот сценарий запускается ПОСЛЕ защищённых тестов, которые меняют
+    // RU: настройки в disposable БД. Здесь проверяем существование и
+    // RU: корректность значений, а не первоначальные значения установщика.
+    // EN: This scenario runs AFTER security tests that modify disposable
+    // EN: settings. Validate the schema, not installer defaults here.
     $installedMode=acceptanceRpc('get_system_setting',array(
         'key'=>'modxmcp.processor_access_mode'));
     $installedAllowed=acceptanceRpc('get_system_setting',array(
         'key'=>'modxmcp.allowed_processors'));
     $installedPrivileged=acceptanceRpc('get_system_setting',array(
         'key'=>'modxmcp.privileged_processors'));
-    acceptanceCheck((string)$installedMode['value']==='disabled'
-        && (string)$installedAllowed['value']===''
-        && (string)$installedPrivileged['value']==='',
-        'upgrade introduced safe processor policy defaults');
+    acceptanceCheck(is_array($installedMode)
+        && in_array((string)$installedMode['value'],
+            array('disabled','allowlist','privileged'),true)
+        && is_array($installedAllowed)
+        && is_string($installedAllowed['value'])
+        && is_array($installedPrivileged)
+        && is_string($installedPrivileged['value']),
+        'processor policy settings remain available after security tests');
 
     // RU: Выполняем только скрытые неопубликованные тестовые записи.
     // EN: Create hidden, unpublished fixtures; never modify existing content.

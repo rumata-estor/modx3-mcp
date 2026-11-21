@@ -20,6 +20,7 @@ namespace ModxMcp\Tools {
         public static function error($response){return 'injected processor failure';}
         public static function normalize($response){return array('success'=>true);}
     }
+    require_once __DIR__.'/../core/components/modxmcp/src/Security/ProtectedSettingsGuard.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ProcessorMutationTool.php';
 }
 namespace {
@@ -96,5 +97,33 @@ try {
         throw new \RuntimeException('ACL_SECRET_LEAK_TEST_FAILED: unsafe error');
     }
 }
-echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks.' secret_checks=1'.PHP_EOL;
+// RU: Проверка до запуска процессора; контекст не должен обойти защиту
+// RU: настроек modxmcp.* через регистр, пробелы и вложенные поля.
+// EN: Reject protected context setting mutations before processor dispatch,
+// EN: including case/whitespace variations and nested settings payloads.
+$contextChecks=0;
+foreach (array(
+    array('create_context_setting',array('key'=>' MODXMCP.enabled ', 'context_key'=>'web')),
+    array('update_context_setting',array('key'=>'ModxMCP.api_token', 'context_key'=>'web')),
+    array('delete_context_setting',array('key'=>' modxmcp.permit_public_key ')),
+    array('update_context',array('key'=>'web','settings'=>array('modxmcp.enabled'=>'1'))),
+    array('update_context',array('key'=>'web','settings'=>'{"modxmcp.enabled":"1"}')),
+) as $case) {
+    $context=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool(
+        $case[0],$specs[$case[0]]
+    );
+    try {
+        $tool->execute($context,$case[1]);
+        throw new \RuntimeException('PROTECTED_CONTEXT_ALLOWED: '.$case[0]);
+    } catch (ModxMCPClientException $e) {
+        if (strpos($e->getMessage(),'settings')===false)throw $e;
+    }
+    if ($context->platform->calls!==0) {
+        throw new \RuntimeException('PROTECTED_CONTEXT_PROCESSOR_EXECUTED');
+    }
+    $contextChecks++;
+}
+echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks
+    .' secret_checks=1 context_denials='.$contextChecks.PHP_EOL;
 }

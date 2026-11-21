@@ -20,9 +20,12 @@ class SystemSettingUpdateTool implements ToolInterface
         }
 
         $key = (string) $setting->get('key');
-        if (strpos($key, 'modxmcp.') === 0 || (isset($data['key']) && strpos((string) $data['key'], 'modxmcp.') === 0)) {
-            throw new \ModxMCPClientException(
-                'Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.'
+        // RU: Проверяем исходный и новый ключ, в том числе при обновлении по ID.
+        // EN: Validate existing and replacement keys, including ID-based updates.
+        \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey($key);
+        if (isset($data['key'])) {
+            \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey(
+                (string)$data['key']
             );
         }
 

@@ -17,9 +17,11 @@ class SystemSettingCreateTool implements ToolInterface
         if (empty($data['key'])) {
             throw new \ModxMCPClientException('System setting key is required.');
         }
-        if (strpos((string)$data['key'], 'modxmcp.') === 0) {
-            throw new \ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed.');
-        }
+        // RU: Нормализуем регистр и пробелы до выполнения записи.
+        // EN: Normalize case and whitespace before persisting the setting.
+        \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey(
+            (string)$data['key']
+        );
         $modx = $context->modx();
         $class = $context->platform()->className('system_setting');
         if ($modx->getObject($class, array('key' => $data['key']))) {
