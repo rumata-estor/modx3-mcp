@@ -84,6 +84,17 @@ async function main(){
     const bad=await http("POST",{action:"get_site_state",type:"",data:{}},null);
     assert(bad.status===401,"missing API token blocked");
     const initial=await state();
+    // RU: Даже авторизованный API-токен не даёт прочитать секрет из настроек.
+    // EN: Even an authenticated API client must not read stored credentials.
+    const singleToken=await api("get_system_setting",{key:"modxmcp.api_token"});
+    assert(singleToken.key==="modxmcp.api_token"
+      && singleToken.value==="[REDACTED]",
+      "single-setting MCP read redacts API token");
+    const allSettings=await api("list_system_settings",{namespace:"modxmcp"});
+    assert(Array.isArray(allSettings)
+      && allSettings.some(setting=>setting.key==="modxmcp.api_token"
+        && setting.value==="[REDACTED]"),
+      "list-settings MCP read redacts API token");
     const supported=await api("list_actions");
     assert(supported && typeof supported==="object"
       && !Array.isArray(supported),"list_actions available");

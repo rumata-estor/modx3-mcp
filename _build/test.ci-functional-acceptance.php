@@ -202,6 +202,12 @@ try {
     $userRead=acceptanceRpc('get_user',array('id'=>$userId));
     acceptanceCheck(is_array($userRead) && (string)$userRead['username']==='mcp_acceptance_'.$fixture,
         'inactive user readback');
+    // RU: В штатном чтении профиля не должны появляться хеши и соли.
+    // EN: Normal user reads must never include password hashes or salts.
+    foreach (array('password','cachepwd','salt','remote_key','sudo') as $secretField) {
+        acceptanceCheck(!array_key_exists($secretField,$userRead),
+            'sensitive user field hidden: '.$secretField);
+    }
 
     $settingKey='mcp_acceptance_'.$fixture;
     acceptanceRpc('create_system_setting',array('key'=>$settingKey,'value'=>'ONE'));
