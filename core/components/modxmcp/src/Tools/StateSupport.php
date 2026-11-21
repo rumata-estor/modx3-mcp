@@ -58,43 +58,63 @@ class StateSupport
         );
     }
 
+    /**
+     * Read the actual persisted CAS ledger, bypassing any xPDO object cache.
+     * A single PHP process may perform many mutations; cached setting models
+     * must not report stale revisions after a successful write.
+     */
     public static function revision($context)
     {
         $modx = $context->modx();
-        $class = $context->platform()->className('system_setting');
-        $setting = $modx->getObject($class, array('key' => self::REVISION_KEY));
-        if (!$setting) {
-            return 0;
+        $table = $modx->getTableName(
+            $context->platform()->className('system_setting')
+        );
+        $statement = $modx->prepare(
+            'SELECT `value` FROM ' . $table
+            . ' WHERE `key` = ? LIMIT 1'
+        );
+        if (!$statement || !$statement->execute(array(self::REVISION_KEY))) {
+            throw new \RuntimeException('Unable to read MODX MCP site revision.');
         }
-        return max(0, (int)$setting->get('value'));
+        $value = $statement->fetchColumn();
+        return $value === false ? 0 : max(0, (int)$value);
     }
 
+    /**
+     * Atomically increment the internal CAS ledger using the SAME xPDO
+     * connection as any outer revision transaction. Unlike loading and
+     * saving a cached modSystemSetting, this also works for repeated writes
+     * inside a long-lived PHP process and keeps the first increment atomic.
+     *
+     * No site content or MODX business data is manipulated by this query:
+     * it changes only the connector's own modxmcp.site_revision setting.
+     */
     public static function incrementRevision($context)
     {
         $modx = $context->modx();
-        $class = $context->platform()->className('system_setting');
-        $setting = $modx->getObject($class, array('key' => self::REVISION_KEY));
-        if (!$setting) {
-            $setting = $modx->newObject($class);
-            $setting->fromArray(
-                array(
-                    'key' => self::REVISION_KEY,
-                    'value' => 0,
-                    'xtype' => 'textfield',
-                    'namespace' => 'modxmcp',
-                    'area' => 'modxmcp:runtime',
-                ),
-                '',
-                true,
-                true
+        $table = $modx->getTableName(
+            $context->platform()->className('system_setting')
+        );
+        $sql = 'INSERT INTO ' . $table
+            . ' (`key`, `value`, `xtype`, `namespace`, `area`)'
+            . ' VALUES (?, ?, ?, ?, ?)'
+            . ' ON DUPLICATE KEY UPDATE'
+            . ' `value` = CAST(GREATEST(0, CAST(`value` AS SIGNED)) + 1 AS CHAR)';
+        try {
+            $statement = $modx->prepare($sql);
+            if (!$statement || !$statement->execute(array(
+                self::REVISION_KEY, '1', 'textfield', 'modxmcp', 'modxmcp:runtime'
+            ))) {
+                throw new \RuntimeException('Revision ledger write did not complete.');
+            }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException(
+                'Failed to persist MODX MCP site revision.',
+                0,
+                $e
             );
         }
-        $next = max(0, (int)$setting->get('value')) + 1;
-        $setting->set('value', (string)$next);
-        if (!$setting->save()) {
-            throw new \RuntimeException('Failed to persist MODX MCP site revision.');
-        }
-        return $next;
+        return self::revision($context);
     }
 
     public static function withMutationLock($context, $callback)

@@ -91,6 +91,57 @@ if((int)$api->processRequest('get_site_state','',array())['site_revision']!==$re
     throw new RuntimeException('Stale rejected mutation incremented site revision');
 $checks++;
 
+// A real positive create -> update -> soft-delete sequence must advance the
+// same persisted CAS revision after EVERY operation in one PHP process.
+// This catches negative-cached xPDO modSystemSetting objects that could
+// otherwise make get_site_state return an outdated revision.
+$positiveName='CAS mandatory positive '.bin2hex(random_bytes(6));
+$guard=function($observed) {
+    return array(
+        'observed_site_revision'=>$observed,
+        'strict_site_revision'=>true,
+        'read_set'=>array()
+    );
+};
+$create=$api->processRequest('create_element','',array(
+    'type'=>'resource','name'=>$positiveName,
+    'alias'=>'cas-mandatory-'.bin2hex(random_bytes(5)),
+    'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
+    '_runtime_preconditions'=>$guard($revision)
+));
+$rid=(int)$create['id'];
+$afterCreate=(int)$create['_site_revision'];
+if($rid<=0 || $afterCreate!==$revision+1)
+    throw new RuntimeException('First guarded creation has wrong CAS revision');
+if((int)$api->processRequest('get_site_state','',array())['site_revision']!==$afterCreate)
+    throw new RuntimeException('CAS ledger stale after first mutation in PHP process');
+$checks++;
+
+$update=$api->processRequest('update_element','',array(
+    'type'=>'resource','id'=>$rid,'content'=>'POSITIVE_CAS_SEQUENCE',
+    '_runtime_preconditions'=>$guard($afterCreate)
+));
+$afterUpdate=(int)$update['_site_revision'];
+if($afterUpdate!==$afterCreate+1 ||
+   (int)$api->processRequest('get_site_state','',array())['site_revision']!==$afterUpdate)
+    throw new RuntimeException('CAS ledger stale after second mutation in PHP process');
+$checks++;
+
+$delete=$api->processRequest('delete_element','',array(
+    'type'=>'resource','id'=>$rid,'dry_run'=>false,
+    '_runtime_preconditions'=>$guard($afterUpdate)
+));
+$afterDelete=(int)$delete['_site_revision'];
+if($afterDelete!==$afterUpdate+1 ||
+   (int)$api->processRequest('get_site_state','',array())['site_revision']!==$afterDelete)
+    throw new RuntimeException('CAS ledger stale after third mutation in PHP process');
+$check=$api->processRequest('get_element','',array('type'=>'resource','id'=>$rid));
+if(empty($check['deleted']))
+    throw new RuntimeException('MCP soft-delete did not mark disposable resource');
+$checks++;
+echo 'CAS_STRICT_POSITIVE_SEQUENCE_OK revisions='.$revision
+    .'->'.$afterCreate.'->'.$afterUpdate.'->'.$afterDelete.PHP_EOL;
+
 // A broken modular runtime must not silently switch to the old unguarded
 // processor dispatcher. This is the specific bypass we are removing.
 $ref = new ReflectionProperty('modxMCP','modularRuntime');
