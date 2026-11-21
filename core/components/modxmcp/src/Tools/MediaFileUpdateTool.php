@@ -11,12 +11,9 @@ class MediaFileUpdateTool implements ToolInterface
     public function execute($context, array $data)
     {
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
-        $path = isset($data['path']) ? (string)$data['path'] : '';
-        if ($path === '') {
-            throw new \ModxMCPClientException(
-                'update_media_file: "path" (file) is required.'
-            );
-        }
+        $path = MediaSourceMutationSupport::relativePath(
+            isset($data['path']) ? $data['path'] : ''
+        );
         if (!array_key_exists('content', $data)) {
             throw new \ModxMCPClientException(
                 'update_media_file: "content" is required.'

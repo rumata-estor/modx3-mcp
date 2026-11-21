@@ -258,6 +258,39 @@ try {
         'post-reservation tool failure consumes revision conservatively');
     requireCas(getFile($renamed)==='beta-'.$key,'error did not touch unrelated file');
     echo 'CAS_EXTERNAL_SUCCESS_AND_FAILURE_PATHS_OK'.PHP_EOL;
+
+    // Path traversal and malicious names must be denied by the MCP endpoint,
+    // not left to individual MODX media-source implementations. Every call
+    // is real MCP; no test fixture escapes its disposable media folder.
+    $unsafe=array(
+        array('create_media_file',array(
+            'source'=>1,'path'=>'../','name'=>'escape-'.$key.'.txt','content'=>'no')),
+        array('update_media_file',array(
+            'source'=>1,'path'=>$dir.'/../'.$dir.'/renamed.txt','content'=>'no')),
+        array('rename_media_file',array(
+            'source'=>1,'path'=>$renamed,'new_name'=>'../escape.txt')),
+        array('delete_media_file',array(
+            'source'=>1,'path'=>$dir.'/../'.$dir.'/renamed.txt')),
+        array('create_media_folder',array(
+            'source'=>1,'parent'=>'/','name'=>'../escape')),
+        array('delete_media_folder',array(
+            'source'=>1,'path'=>'../'.$dir)),
+    );
+    foreach($unsafe as $case) {
+        $revision=rev();
+        $failure=null;
+        try {rpc($case[0],$case[1]);}
+        catch(\Throwable $e) {$failure=$e->getMessage();}
+        requireCas(is_string($failure)
+            && (strpos($failure,'Path traversal')!==false
+                || strpos($failure,'Unsafe media')!==false),
+            'MCP must reject unsafe '.$case[0].': '.(string)$failure);
+        requireCas(rev()===$revision+1,
+            'invalid external request consumes one conservative revision');
+        requireCas(getFile($renamed)==='beta-'.$key,
+            'unsafe '.$case[0].' did not modify valid media file');
+    }
+    echo 'CAS_MEDIA_TRAVERSAL_DENIED_VIA_MCP=6'.PHP_EOL;
     $ready=true;
 } finally {
     if ($injected && $pdo) {

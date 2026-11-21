@@ -28,6 +28,41 @@ class MediaSourceMutationSupport
         return $source;
     }
 
+    /**
+     * Reject traversal and absolute OS paths before passing them to MODX
+     * media-source methods. A leading slash alone means the media-source
+     * root, not a host filesystem root.
+     */
+    public static function relativePath($path, $allowSourceRoot = false)
+    {
+        $raw = (string)$path;
+        if (preg_match('/[\\x00-\\x1F]/', $raw)
+            || preg_match('#^[A-Za-z]:[\\\\/]#', $raw)
+            || strpos($raw, '\\\\') === 0) {
+            throw new \ModxMCPClientException('Unsafe media path.');
+        }
+        $normalized = FilesystemSupport::normalizeRelativePath($raw);
+        if (!$allowSourceRoot && $normalized === '') {
+            throw new \ModxMCPClientException('Media path must identify a file or folder.');
+        }
+        return $normalized;
+    }
+
+    public static function leafName($name)
+    {
+        $raw = (string)$name;
+        if ($raw === '' || $raw === '.' || $raw === '..'
+            || strpos($raw, '/') !== false
+            || strpos($raw, '\\') !== false
+            || strpos($raw, "\0") !== false
+            || preg_match('/[\\x00-\\x1F]/', $raw)) {
+            throw new \ModxMCPClientException(
+                'Unsafe media name: expected one file or folder name.'
+            );
+        }
+        return $raw;
+    }
+
     public static function error($source, $fallback)
     {
         $errors = method_exists($source, 'getErrors')

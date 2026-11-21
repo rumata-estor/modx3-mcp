@@ -11,13 +11,12 @@ class MediaFileRenameTool implements ToolInterface
     public function execute($context, array $data)
     {
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
-        $path = isset($data['path']) ? (string)$data['path'] : '';
-        $newName = isset($data['new_name']) ? (string)$data['new_name'] : '';
-        if ($path === '' || $newName === '') {
-            throw new \ModxMCPClientException(
-                'rename_media_file: "path" and "new_name" are required.'
-            );
-        }
+        $path = MediaSourceMutationSupport::relativePath(
+            isset($data['path']) ? $data['path'] : ''
+        );
+        $newName = MediaSourceMutationSupport::leafName(
+            isset($data['new_name']) ? $data['new_name'] : ''
+        );
         $result = $source->renameObject($path, $newName);
         if ($result === false) {
             throw new \ModxMCPClientException(

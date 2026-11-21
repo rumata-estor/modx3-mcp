@@ -11,13 +11,14 @@ class MediaFolderCreateTool implements ToolInterface
     public function execute($context, array $data)
     {
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
-        $parent = isset($data['parent']) ? (string)$data['parent'] : '/';
-        $name = isset($data['name']) ? (string)$data['name'] : '';
-        if ($name === '') {
-            throw new \ModxMCPClientException(
-                'create_media_folder: "name" is required.'
-            );
-        }
+        $parentDir = MediaSourceMutationSupport::relativePath(
+            isset($data['parent']) ? $data['parent'] : '/',
+            true
+        );
+        $parent = $parentDir === '' ? '/' : $parentDir . '/';
+        $name = MediaSourceMutationSupport::leafName(
+            isset($data['name']) ? $data['name'] : ''
+        );
         $result = $source->createContainer($name, $parent);
         if ($result === false) {
             throw new \ModxMCPClientException(

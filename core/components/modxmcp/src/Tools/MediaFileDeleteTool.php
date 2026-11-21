@@ -11,12 +11,9 @@ class MediaFileDeleteTool implements ToolInterface
     public function execute($context, array $data)
     {
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
-        $path = isset($data['path']) ? (string)$data['path'] : '';
-        if ($path === '') {
-            throw new \ModxMCPClientException(
-                'delete_media_file: "path" is required.'
-            );
-        }
+        $path = MediaSourceMutationSupport::relativePath(
+            isset($data['path']) ? $data['path'] : ''
+        );
         $result = $source->removeObject($path);
         if ($result === false) {
             throw new \ModxMCPClientException(

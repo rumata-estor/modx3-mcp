@@ -11,14 +11,13 @@ class MediaFileCreateTool implements ToolInterface
     public function execute($context, array $data)
     {
         $source = MediaSourceMutationSupport::resolveForFileOperation($context, $data);
-        $dir = isset($data['path']) ? trim((string)$data['path'], '/') : '';
-        $dir = $dir === '' ? '/' : $dir . '/';
+        $relativeDir = MediaSourceMutationSupport::relativePath(
+            isset($data['path']) ? $data['path'] : '',
+            true
+        );
+        $dir = $relativeDir === '' ? '/' : $relativeDir . '/';
         $name = isset($data['name']) ? (string)$data['name'] : '';
-        if ($name === '') {
-            throw new \ModxMCPClientException(
-                'create_media_file: "name" is required.'
-            );
-        }
+        $name = MediaSourceMutationSupport::leafName($name);
         $result = $source->createObject(
             $dir,
             $name,
