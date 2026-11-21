@@ -175,8 +175,15 @@ try {
     // MariaDB AFTER the TV mutations have been issued. In the old connector
     // the TV transaction had already committed; with the repaired boundary
     // both the raw TV values and the revision must roll back together.
-    $pdo = $modx->getConnection();
-    requireTrue($pdo instanceof \PDO, 'PDO connection for fault injection');
+    // Use an independent SQL observer to detect persisted values, not
+    // MODX/xPDO's connection wrapper or its in-memory object cache.
+    // Credentials are GitHub Actions disposable service credentials only.
+    $pdo = new \PDO(
+        'mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
+        'modx_ci', 'ci-throwaway-only-user',
+        array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION)
+    );
+    requireTrue($pdo instanceof \PDO, 'isolated CI SQL observer');
     $revisionTrigger = 'cas_pr46_rev_fail_' . $fixture;
     $sql = 'CREATE TRIGGER `' . $revisionTrigger . '`'
         . ' BEFORE UPDATE ON `modx_system_settings` FOR EACH ROW'
