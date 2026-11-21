@@ -39,10 +39,14 @@ if($operation==='enable'){
     setting('modxmcp.permit_contour','test');
     setting('modxmcp.enabled','1');
     setting('modxmcp.external_authorization_required','1');
+    $manager=$modx->getCacheManager();
+    if($manager)$manager->refresh();
     echo 'PROTECTED_HTTP_DISPOSABLE_POLICY_ENABLED'.PHP_EOL;
 }else{
     setting('modxmcp.external_authorization_required','0');
     setting('modxmcp.enabled','0');
     if (is_file($tokenFile))@unlink($tokenFile);
+    $manager=$modx->getCacheManager();
+    if($manager)$manager->refresh();
     echo 'PROTECTED_HTTP_DISPOSABLE_POLICY_DISABLED'.PHP_EOL;
 }
