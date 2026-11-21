@@ -55,7 +55,12 @@ for action, value in actual.items():
     ), f'Missing CAS boundary classification: {action}'
     assert row['risk'] in ('critical', 'high', 'review'), action
     assert isinstance(row['verified_scenarios'], list), action
-
+    expected_test = ('full_catalog_trigger_gate_ci'
+                     if row['cas_boundary'] == 'revision_reserved_before_action'
+                     else 'per_action_rollback_ci' if row['verified_scenarios']
+                     else 'not_individually_exercised')
+    assert row.get('revision_denial_test') == expected_test, (
+        f'CAS test evidence classification mismatched for {action}')
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

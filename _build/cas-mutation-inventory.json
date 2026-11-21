@@ -10,7 +10,8 @@
       "processor": "security/group/user/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "assign_element_category": {
       "tool": "CategoryAssignElementTool",
@@ -19,14 +20,16 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "assign_property_set": {
       "tool": "PropertySetAssignTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "assign_resource_to_group": {
       "tool": "ProcessorMutationTool",
@@ -35,49 +38,56 @@
       "processor": "security/resourcegroup/updateresourcesin",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "bulk_resources": {
       "tool": "BulkResourcesTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clear_cache": {
       "tool": "ClearCacheTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clear_tv_values": {
       "tool": "TvValueClearTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clientconfig_create_setting": {
       "tool": "ClientConfigSettingCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clientconfig_delete_setting": {
       "tool": "ClientConfigSettingDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clientconfig_update_setting": {
       "tool": "ClientConfigSettingUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_access_policy": {
       "tool": "ProcessorMutationTool",
@@ -86,7 +96,8 @@
       "processor": "security/access/policy/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_access_policy_template": {
       "tool": "ProcessorMutationTool",
@@ -95,7 +106,8 @@
       "processor": "security/access/policy/template/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_category": {
       "tool": "CategoryCreateTool",
@@ -104,7 +116,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "create_context": {
       "tool": "ProcessorMutationTool",
@@ -113,7 +126,8 @@
       "processor": "context/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_context_setting": {
       "tool": "ProcessorMutationTool",
@@ -122,7 +136,8 @@
       "processor": "context/setting/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_element": {
       "tool": "ElementCreateTool",
@@ -131,7 +146,8 @@
       "risk": "review",
       "verified_scenarios": [
         "regular_resource_revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "create_media_file": {
       "tool": "MediaFileCreateTool",
@@ -140,8 +156,10 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_media_folder": {
       "tool": "MediaFolderCreateTool",
@@ -150,15 +168,18 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_media_source": {
       "tool": "MediaSourceCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_namespace": {
       "tool": "ProcessorMutationTool",
@@ -167,21 +188,24 @@
       "processor": "workspace/namespace/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_property_set": {
       "tool": "PropertySetCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_provider": {
       "tool": "ProviderCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_resource_group": {
       "tool": "ProcessorMutationTool",
@@ -190,7 +214,8 @@
       "processor": "security/resourcegroup/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_role": {
       "tool": "ProcessorMutationTool",
@@ -199,7 +224,8 @@
       "processor": "security/role/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_system_setting": {
       "tool": "SystemSettingCreateTool",
@@ -208,7 +234,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "create_user": {
       "tool": "ProcessorMutationTool",
@@ -217,7 +244,8 @@
       "processor": "security/user/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_user_group": {
       "tool": "ProcessorMutationTool",
@@ -226,7 +254,8 @@
       "processor": "security/group/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_access_policy": {
       "tool": "ProcessorMutationTool",
@@ -235,7 +264,8 @@
       "processor": "security/access/policy/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_access_policy_template": {
       "tool": "ProcessorMutationTool",
@@ -244,7 +274,8 @@
       "processor": "security/access/policy/template/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_category": {
       "tool": "CategoryDeleteTool",
@@ -253,7 +284,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "delete_context": {
       "tool": "ProcessorMutationTool",
@@ -262,7 +294,8 @@
       "processor": "context/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_context_setting": {
       "tool": "ProcessorMutationTool",
@@ -271,7 +304,8 @@
       "processor": "context/setting/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_element": {
       "tool": "ElementDeleteTool",
@@ -280,7 +314,8 @@
       "risk": "review",
       "verified_scenarios": [
         "regular_resource_soft_delete_revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "delete_media_file": {
       "tool": "MediaFileDeleteTool",
@@ -289,8 +324,10 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_media_folder": {
       "tool": "MediaFolderDeleteTool",
@@ -299,15 +336,18 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_media_source": {
       "tool": "MediaSourceDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_namespace": {
       "tool": "ProcessorMutationTool",
@@ -316,21 +356,24 @@
       "processor": "workspace/namespace/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_property_set": {
       "tool": "PropertySetDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_provider": {
       "tool": "ProviderDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_resource_group": {
       "tool": "ProcessorMutationTool",
@@ -339,7 +382,8 @@
       "processor": "security/resourcegroup/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_role": {
       "tool": "ProcessorMutationTool",
@@ -348,7 +392,8 @@
       "processor": "security/role/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_system_setting": {
       "tool": "SystemSettingDeleteTool",
@@ -357,7 +402,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "delete_user": {
       "tool": "ProcessorMutationTool",
@@ -366,7 +412,8 @@
       "processor": "security/user/delete",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_user_group": {
       "tool": "ProcessorMutationTool",
@@ -375,28 +422,32 @@
       "processor": "security/group/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "duplicate_element": {
       "tool": "ElementDuplicateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "duplicate_resource": {
       "tool": "ResourceDuplicateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "edit_element_lines": {
       "tool": "ElementEditLinesTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "empty_recycle_bin": {
       "tool": "ResourceRecycleBinEmptyTool",
@@ -405,14 +456,16 @@
       "risk": "critical",
       "verified_scenarios": [
         "revision_reservation_refusal_only"
-      ]
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "flush_permissions": {
       "tool": "FlushPermissionsTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "grant_context_access": {
       "tool": "ProcessorMutationTool",
@@ -421,7 +474,8 @@
       "processor": "security/access/usergroup/context/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "grant_resourcegroup_access": {
       "tool": "ProcessorMutationTool",
@@ -430,7 +484,8 @@
       "processor": "security/access/usergroup/resourcegroup/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "install_package": {
       "tool": "PackageInstallTool",
@@ -439,126 +494,144 @@
       "risk": "critical",
       "verified_scenarios": [
         "revision_reservation_refusal_only"
-      ]
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "make_static": {
       "tool": "ElementMakeStaticTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "migx_create_config": {
       "tool": "MigxConfigCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "migx_delete_config": {
       "tool": "MigxConfigDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "migx_update_config": {
       "tool": "MigxConfigUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_assign_option_to_category": {
       "tool": "Ms2OptionAssignCategoryTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_create_category": {
       "tool": "Ms2CategoryCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_create_link_type": {
       "tool": "Ms2LinkTypeCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_create_option": {
       "tool": "Ms2OptionCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_create_product_link": {
       "tool": "Ms2ProductLinkCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_delete_link_type": {
       "tool": "Ms2LinkTypeDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_delete_product_link": {
       "tool": "Ms2ProductLinkDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_category": {
       "tool": "Ms2CategoryUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_link_type": {
       "tool": "Ms2LinkTypeUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_option": {
       "tool": "Ms2OptionUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_order": {
       "tool": "Ms2OrderUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_product_options": {
       "tool": "Ms2ProductOptionsUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "refresh_uris": {
       "tool": "RefreshUrisTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "regenerate_token": {
       "tool": "RegenerateTokenTool",
@@ -567,14 +640,16 @@
       "risk": "critical",
       "verified_scenarios": [
         "revision_reservation_refusal_only"
-      ]
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "remove_locks": {
       "tool": "RemoveLocksTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "remove_resource_from_group": {
       "tool": "ProcessorMutationTool",
@@ -583,7 +658,8 @@
       "processor": "security/resourcegroup/removeresource",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "remove_user_from_group": {
       "tool": "ProcessorMutationTool",
@@ -592,7 +668,8 @@
       "processor": "security/group/user/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "rename_media_file": {
       "tool": "MediaFileRenameTool",
@@ -601,22 +678,26 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "reorder_resources": {
       "tool": "ResourceReorderTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "replace_across": {
       "tool": "ReplaceAcrossTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "revert_lexicon_entry": {
       "tool": "ProcessorMutationTool",
@@ -625,7 +706,8 @@
       "processor": "workspace/lexicon/revert",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "revoke_context_access": {
       "tool": "ProcessorMutationTool",
@@ -634,7 +716,8 @@
       "processor": "security/access/usergroup/context/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "revoke_resourcegroup_access": {
       "tool": "ProcessorMutationTool",
@@ -643,7 +726,8 @@
       "processor": "security/access/usergroup/resourcegroup/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "run_processor": {
       "tool": "RunProcessorTool",
@@ -652,28 +736,32 @@
       "risk": "critical",
       "verified_scenarios": [
         "revision_reservation_refusal_only"
-      ]
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "set_lexicon_entry": {
       "tool": "LexiconEntrySetTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "unassign_property_set": {
       "tool": "PropertySetUnassignTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "undelete_resource": {
       "tool": "ResourceUndeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "uninstall_package": {
       "tool": "PackageUninstallTool",
@@ -682,7 +770,8 @@
       "risk": "critical",
       "verified_scenarios": [
         "revision_reservation_refusal_only"
-      ]
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_access_policy": {
       "tool": "ProcessorMutationTool",
@@ -691,7 +780,8 @@
       "processor": "security/access/policy/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_access_policy_template": {
       "tool": "ProcessorMutationTool",
@@ -700,7 +790,8 @@
       "processor": "security/access/policy/template/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_category": {
       "tool": "CategoryUpdateTool",
@@ -709,7 +800,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "update_context": {
       "tool": "ProcessorMutationTool",
@@ -718,7 +810,8 @@
       "processor": "context/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_context_access": {
       "tool": "ProcessorMutationTool",
@@ -727,7 +820,8 @@
       "processor": "security/access/usergroup/context/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_context_setting": {
       "tool": "ProcessorMutationTool",
@@ -736,7 +830,8 @@
       "processor": "context/setting/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_element": {
       "tool": "ElementUpdateTool",
@@ -745,14 +840,16 @@
       "risk": "review",
       "verified_scenarios": [
         "regular_resource_revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "update_element_property": {
       "tool": "ElementPropertyUpdateTool",
       "origin": "static",
       "cas_boundary": "database_transaction",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "not_individually_exercised"
     },
     "update_group_member": {
       "tool": "ProcessorMutationTool",
@@ -761,7 +858,8 @@
       "processor": "security/group/user/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_media_file": {
       "tool": "MediaFileUpdateTool",
@@ -770,15 +868,19 @@
       "risk": "high",
       "verified_scenarios": [
         "revision_reservation_refusal",
-        "positive_file_readback"
-      ]
+        "positive_file_readback",
+        "path_traversal_denied",
+        "concurrent_media_cas"
+      ],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_media_source": {
       "tool": "MediaSourceUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_namespace": {
       "tool": "ProcessorMutationTool",
@@ -787,21 +889,24 @@
       "processor": "workspace/namespace/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_property_set": {
       "tool": "PropertySetUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_provider": {
       "tool": "ProviderUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_resource_group": {
       "tool": "ProcessorMutationTool",
@@ -810,7 +915,8 @@
       "processor": "security/resourcegroup/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_resource_tvs": {
       "tool": "ResourceTvUpdateTool",
@@ -821,7 +927,8 @@
         "revision_write_failure_rollback",
         "concurrent_cas_conflict",
         "raw_tv_and_inherit"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "update_resourcegroup_access": {
       "tool": "ProcessorMutationTool",
@@ -830,7 +937,8 @@
       "processor": "security/access/usergroup/resourcegroup/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_role": {
       "tool": "ProcessorMutationTool",
@@ -839,7 +947,8 @@
       "processor": "security/role/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_system_setting": {
       "tool": "SystemSettingUpdateTool",
@@ -848,7 +957,8 @@
       "risk": "review",
       "verified_scenarios": [
         "revision_write_failure_rollback"
-      ]
+      ],
+      "revision_denial_test": "per_action_rollback_ci"
     },
     "update_user": {
       "tool": "ProcessorMutationTool",
@@ -857,7 +967,8 @@
       "processor": "security/user/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_user_group": {
       "tool": "ProcessorMutationTool",
@@ -866,84 +977,96 @@
       "processor": "security/group/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "versionx_revert_version": {
       "tool": "VersionXVersionRevertTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_clear_cache": {
       "tool": "VirtualPageClearCacheTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_event": {
       "tool": "VirtualPageEventCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_handler": {
       "tool": "VirtualPageHandlerCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_route": {
       "tool": "VirtualPageRouteCreateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_event": {
       "tool": "VirtualPageEventDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_handler": {
       "tool": "VirtualPageHandlerDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_route": {
       "tool": "VirtualPageRouteDeleteTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_event": {
       "tool": "VirtualPageEventUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_handler": {
       "tool": "VirtualPageHandlerUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_route": {
       "tool": "VirtualPageRouteUpdateTool",
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": []
+      "verified_scenarios": [],
+      "revision_denial_test": "full_catalog_trigger_gate_ci"
     }
   }
 }
