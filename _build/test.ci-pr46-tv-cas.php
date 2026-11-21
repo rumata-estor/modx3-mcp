@@ -314,22 +314,33 @@ try {
         }
     }
     $cleanupFailed = array();
+    // Unassign all TVs BEFORE deleting any of them: MODX TV processors may
+    // rely on the template relations while resolving each TV.
     foreach (array_reverse($tvs) as $tvId) {
         try {
             rpc('update_element', array(
                 'type'=>'tv','id'=>$tvId,'templates'=>array(),
             ));
-            rpc('delete_element', array('type'=>'tv','id'=>$tvId));
-            // Verify the deletion through the public MCP read surface.
-            try {
-                rpc('get_element', array('type'=>'tv','id'=>$tvId));
-                throw new \RuntimeException('TV is still readable after delete');
-            } catch (\ModxMCPClientException $missing) {
-                // Expected after deletion.
-            }
         } catch (\Throwable $e) {
-            $cleanupFailed[] = (string)$tvId;
-            fwrite(STDERR, 'PR46_MCP_CLEANUP_TV_ERROR '.$e->getMessage().PHP_EOL);
+            $cleanupFailed[] = 'detach:'.(string)$tvId;
+            fwrite(STDERR, 'PR46_MCP_TV_DETACH_ERROR '.$e->getMessage().PHP_EOL);
+        }
+    }
+    if (!$cleanupFailed) {
+        foreach (array_reverse($tvs) as $tvId) {
+            try {
+                rpc('delete_element', array('type'=>'tv','id'=>$tvId));
+                // Verify the deletion through the public MCP read surface.
+                try {
+                    rpc('get_element', array('type'=>'tv','id'=>$tvId));
+                    throw new \RuntimeException('TV is still readable after delete');
+                } catch (\ModxMCPClientException $missing) {
+                    // Expected after deletion.
+                }
+            } catch (\Throwable $e) {
+                $cleanupFailed[] = 'delete:'.(string)$tvId;
+                fwrite(STDERR, 'PR46_MCP_CLEANUP_TV_ERROR '.$e->getMessage().PHP_EOL);
+            }
         }
     }
     if ($cleanupFailed) {
