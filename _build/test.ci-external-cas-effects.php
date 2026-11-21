@@ -32,9 +32,10 @@ $modx->setOption('modxmcp.allow_root_filesystem_read', true);
 $modx->setOption('modxmcp.disabled_groups', '');
 require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $api = new modxMCP($modx);
-function rpc($action, array $data=array()) {
+require_once __DIR__ . '/test.cas-mcp-helper.php';
+function rpc($action, array $data = array()) {
     global $api;
-    return $api->processRequest($action, '', $data);
+    return disposableCasRpc($api, $action, $data);
 }
 function rev() {
     $state = rpc('get_site_state');

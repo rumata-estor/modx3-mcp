@@ -71,7 +71,13 @@ try {
     foreach($expected as $action){
         $message=null;
         try {
-            $api->processRequest($action,'',array());
+            $api->processRequest($action,'',array(
+                '_runtime_preconditions'=>array(
+                    'observed_site_revision'=>$initial,
+                    'strict_site_revision'=>true,
+                    'read_set'=>array()
+                )
+            ));
             $failed[$action]='ACTION EXECUTED WITHOUT REVISION';
             continue;
         } catch(\Throwable $e){

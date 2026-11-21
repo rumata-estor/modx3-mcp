@@ -35,9 +35,10 @@ function requireTrue($ok, $label) {
     if (!$ok) throw new RuntimeException('PR46_LIVE_FAILED: ' . $label);
     $checks++;
 }
+require_once __DIR__ . '/test.cas-mcp-helper.php';
 function rpc($action, array $data = array()) {
     global $api;
-    return $api->processRequest($action, '', $data);
+    return disposableCasRpc($api, $action, $data);
 }
 function findTV(array $data, $name) {
     foreach ($data['tvs'] as $row) {

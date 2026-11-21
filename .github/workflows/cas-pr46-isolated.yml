@@ -163,6 +163,13 @@ jobs:
           echo "INSTALLED_CAS_V2_CONSISTENCY_OK\n";
           '
           echo "MODXMCP_127_UPGRADE_PASS ${{ matrix.platform }} PHP ${{ matrix.php_version }}"
+      - name: All 116 mutations require strict CAS; legacy fallback is closed
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-required.php
       - name: PR46 raw TV/CAS integration on disposable MODX and MariaDB
         env:
           MODXMCP_DISPOSABLE_CI: '1'

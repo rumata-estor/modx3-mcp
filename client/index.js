@@ -2515,6 +2515,159 @@ const toolDefinitions = [
   },
 ];
 
+// Generated from _build/cas-mutation-inventory.json. The inventory CI
+// checks parity with all mutating server tools and the MCP tool schemas.
+// The client does NOT invent a CAS snapshot immediately before writing.
+const CAS_MUTATION_ACTIONS = new Set([
+  "add_user_to_group",
+  "assign_element_category",
+  "assign_property_set",
+  "assign_resource_to_group",
+  "bulk_resources",
+  "clear_cache",
+  "clear_tv_values",
+  "clientconfig_create_setting",
+  "clientconfig_delete_setting",
+  "clientconfig_update_setting",
+  "create_access_policy",
+  "create_access_policy_template",
+  "create_category",
+  "create_context",
+  "create_context_setting",
+  "create_element",
+  "create_media_file",
+  "create_media_folder",
+  "create_media_source",
+  "create_namespace",
+  "create_property_set",
+  "create_provider",
+  "create_resource_group",
+  "create_role",
+  "create_system_setting",
+  "create_user",
+  "create_user_group",
+  "delete_access_policy",
+  "delete_access_policy_template",
+  "delete_category",
+  "delete_context",
+  "delete_context_setting",
+  "delete_element",
+  "delete_media_file",
+  "delete_media_folder",
+  "delete_media_source",
+  "delete_namespace",
+  "delete_property_set",
+  "delete_provider",
+  "delete_resource_group",
+  "delete_role",
+  "delete_system_setting",
+  "delete_user",
+  "delete_user_group",
+  "duplicate_element",
+  "duplicate_resource",
+  "edit_element_lines",
+  "empty_recycle_bin",
+  "flush_permissions",
+  "grant_context_access",
+  "grant_resourcegroup_access",
+  "install_package",
+  "make_static",
+  "migx_create_config",
+  "migx_delete_config",
+  "migx_update_config",
+  "ms2_assign_option_to_category",
+  "ms2_create_category",
+  "ms2_create_link_type",
+  "ms2_create_option",
+  "ms2_create_product_link",
+  "ms2_delete_link_type",
+  "ms2_delete_product_link",
+  "ms2_update_category",
+  "ms2_update_link_type",
+  "ms2_update_option",
+  "ms2_update_order",
+  "ms2_update_product_options",
+  "refresh_uris",
+  "regenerate_token",
+  "remove_locks",
+  "remove_resource_from_group",
+  "remove_user_from_group",
+  "rename_media_file",
+  "reorder_resources",
+  "replace_across",
+  "revert_lexicon_entry",
+  "revoke_context_access",
+  "revoke_resourcegroup_access",
+  "run_processor",
+  "set_lexicon_entry",
+  "unassign_property_set",
+  "undelete_resource",
+  "uninstall_package",
+  "update_access_policy",
+  "update_access_policy_template",
+  "update_category",
+  "update_context",
+  "update_context_access",
+  "update_context_setting",
+  "update_element",
+  "update_element_property",
+  "update_group_member",
+  "update_media_file",
+  "update_media_source",
+  "update_namespace",
+  "update_property_set",
+  "update_provider",
+  "update_resource_group",
+  "update_resource_tvs",
+  "update_resourcegroup_access",
+  "update_role",
+  "update_system_setting",
+  "update_user",
+  "update_user_group",
+  "versionx_revert_version",
+  "virtualpage_clear_cache",
+  "virtualpage_create_event",
+  "virtualpage_create_handler",
+  "virtualpage_create_route",
+  "virtualpage_delete_event",
+  "virtualpage_delete_handler",
+  "virtualpage_delete_route",
+  "virtualpage_update_event",
+  "virtualpage_update_handler",
+  "virtualpage_update_route",
+]);
+
+const CAS_PRECONDITIONS_SCHEMA = {
+  type: "object",
+  description: "Required for every mutation in MODX MCP 1.2.8. Use the observed site revision obtained before preparing the change. strict_site_revision must be true; read_set holds verified object fingerprints. Never guess an expected value.",
+  properties: {
+    observed_site_revision: { type: "integer", minimum: 0 },
+    strict_site_revision: { type: "boolean", const: true },
+    read_set: { type: "array", items: { type: "object" } },
+    expected_tvs: { type: "object", description: "For TV mutations: raw original value for EVERY TV name being changed." },
+    target_absent: { type: "object", description: "Optional for creation: verified absence of an element of a given type/name." },
+  },
+  required: ["observed_site_revision", "strict_site_revision", "read_set"],
+};
+
+// Every mutating tool must advertise the same mandatory guard; no schema
+// exceptions for less common processors, packages, ACL, or media tools.
+for (const tool of toolDefinitions) {
+  const action = tool.name.replace(/^modx_/, "");
+  if (!CAS_MUTATION_ACTIONS.has(action)) continue;
+  const schema = tool.inputSchema;
+  schema.properties = {
+    ...(schema.properties || {}),
+    _runtime_preconditions: action === "update_resource_tvs"
+      ? {
+          ...CAS_PRECONDITIONS_SCHEMA,
+          required: [...CAS_PRECONDITIONS_SCHEMA.required, "expected_tvs"],
+        }
+      : CAS_PRECONDITIONS_SCHEMA,
+  };
+  schema.required = [...new Set([...(schema.required || []), "_runtime_preconditions"])];
+}
+
 async function fetchCapabilities() {
   try {
     const r = await modxApiRequest({ action: "get_capabilities", data: {} });
@@ -2580,6 +2733,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   let safetyBackups = [];
 
   try {
+    if (CAS_MUTATION_ACTIONS.has(name.replace(/^modx_/, ""))) {
+      const guard = args && args._runtime_preconditions;
+      if (!guard || typeof guard !== "object"
+          || !Number.isSafeInteger(guard.observed_site_revision)
+          || guard.observed_site_revision < 0
+          || guard.strict_site_revision !== true
+          || !Array.isArray(guard.read_set)) {
+        throw new Error("CAS_REQUIRED: mutating MCP tools require observed_site_revision, strict_site_revision=true and read_set from the observed snapshot.");
+      }
+    }
     projectLock = acquireProjectLockForTool(name);
     safetyBackups = await autoBackupForMutation(name, args || {});
 

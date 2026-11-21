@@ -68,6 +68,10 @@ jobs:
         run: php _build/test.resource-tv-cas.php
       - name: CAS inventory must classify all 116 mutating API actions
         run: python3 _build/test.cas-mutation-inventory.py
+      - name: MCP client schemas must advertise mandatory CAS for all 116 actions
+        run: python3 _build/test.cas-client-contract.py
+      - name: Strict CAS precondition schema regression
+        run: php _build/test.cas-required-contract.php
       - name: Reject traversal and unsafe media names
         run: php _build/test.media-path-boundaries.php
 

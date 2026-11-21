@@ -26,9 +26,10 @@ $modx->initialize('mgr');
 require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $api = new modxMCP($modx);
 
+require_once __DIR__ . '/test.cas-mcp-helper.php';
 function rpc($action, array $data = array()) {
     global $api;
-    return $api->processRequest($action, '', $data);
+    return disposableCasRpc($api, $action, $data);
 }
 function checked($action, array $data) {
     $result = rpc($action, $data);
