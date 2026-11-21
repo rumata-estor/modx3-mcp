@@ -86,7 +86,7 @@ class modxMCP {
         return $user;
     }
 
-    public function processRequest($action, $elementType, $data =[]) {
+    public function processRequest($action, $elementType, $data =[], $externalAuthorization = null) {
         $serviceUser = $this->resolveServiceUser();
         $this->modx->user = $serviceUser;
 
@@ -149,6 +149,7 @@ class modxMCP {
                         $action, $runtimePreconditions
                     );
                     $runtimeContext = $this->modularRuntime->context();
+                    $originalRequestData = is_array($data) ? $data : array();
                     $dryRunActions = array(
                         'delete_element',
                         'delete_category',
@@ -166,8 +167,34 @@ class modxMCP {
                             $runtimeContext,
                             $toolData,
                             $runtimePreconditions,
-                            $isDryRun
+                            $isDryRun,
+                            $action,
+                            $elementType,
+                            $originalRequestData,
+                            $externalAuthorization
                         ) {
+                            // Independently signed authorization is enforced
+                            // INSIDE the common site mutation lock for every
+                            // mutating tool on both MODX 2 and 3. It is not
+                            // possible to bypass this gate via direct PHP
+                            // processRequest() or a legacy dispatcher route.
+                            try {
+                                if (\ModxMcp\Security\ProtectedAuthorization::required(
+                                    $runtimeContext->modx()
+                                )) {
+                                    \ModxMcp\Security\ProtectedAuthorization::authorizeMutation(
+                                        $runtimeContext->modx(),
+                                        $action,
+                                        $elementType,
+                                        $originalRequestData,
+                                        $externalAuthorization
+                                    );
+                                }
+                            } catch (\Throwable $e) {
+                                throw new \ModxMCPClientException(
+                                    'AUTH_DENIED: independent authorization refused.'
+                                );
+                            }
                             // The TV rows and their site revision share one
                             // database commit; before this CAS update they
                             // were committed separately, allowing a false

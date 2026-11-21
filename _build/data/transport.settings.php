@@ -23,6 +23,14 @@ $defs = array(
     array('modxmcp.trust_proxy_https', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.allowed_ips', '', 'textfield', 'modxmcp:security'),
     array('modxmcp.component_code_roots', 'core/components,assets/components', 'textfield', 'modxmcp:security'),
+    // Independent Ed25519 external authorization. OFF on ordinary installs.
+    // Public key is not a shared signing secret; private key never enters MODX.
+    array('modxmcp.external_authorization_required', 0, 'combo-boolean', 'modxmcp:security'),
+    array('modxmcp.permit_audience', '', 'textfield', 'modxmcp:security'),
+    array('modxmcp.permit_site_id', '', 'textfield', 'modxmcp:security'),
+    array('modxmcp.permit_contour', '', 'textfield', 'modxmcp:security'),
+    array('modxmcp.permit_public_key', '', 'textfield', 'modxmcp:security'),
+
     array('modxmcp.core_path', '{core_path}components/modxmcp/', 'textfield', 'modxmcp:paths'),
 );
 

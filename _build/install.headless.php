@@ -366,6 +366,12 @@ $settings = array(
     'modxmcp.trust_proxy_https' => array(0, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.allowed_ips' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.component_code_roots' => array('core/components,assets/components', 'textfield', 'modxmcp:security'),
+    // Optional independent authorization remains OFF by default.
+    'modxmcp.external_authorization_required' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.permit_audience' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_site_id' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_contour' => array('', 'textfield', 'modxmcp:security'),
+    'modxmcp.permit_public_key' => array('', 'textfield', 'modxmcp:security'),
     'modxmcp.core_path' => array('{core_path}components/modxmcp/', 'textfield', 'modxmcp:paths'),
 );
 

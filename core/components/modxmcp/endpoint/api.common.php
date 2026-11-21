@@ -186,7 +186,29 @@ try {
     require_once $corePath . 'model/modxmcp.class.php';
 
     $mcp = new modxMCP($modx);
-    $result = $mcp->processRequest($action, $type, $data);
+    // The signed envelope is delivered in a separate HTTP header. Never
+    // accept a user-controlled public key, audience or signing secret in
+    // JSON. All writes are independently validated in processRequest().
+    $authorizationInput = null;
+    $encodedPermit = isset($headers['x-modxmcp-permit'])
+        ? $headers['x-modxmcp-permit']
+        : (isset($_SERVER['HTTP_X_MODXMCP_PERMIT'])
+            ? $_SERVER['HTTP_X_MODXMCP_PERMIT'] : null);
+    if (is_string($encodedPermit) && $encodedPermit !== '') {
+        if (strlen($encodedPermit) > 4096) {
+            throw new ModxMCPClientException('AUTH_DENIED: invalid permit header.');
+        }
+        $decodedPermit = base64_decode($encodedPermit, true);
+        $permit = $decodedPermit !== false ? json_decode($decodedPermit,true) : null;
+        if (!is_array($permit)) {
+            throw new ModxMCPClientException('AUTH_DENIED: invalid permit envelope.');
+        }
+        $authorizationInput = array(
+            'raw_body' => $rawInput,
+            'permit' => $permit,
+        );
+    }
+    $result = $mcp->processRequest($action, $type, $data, $authorizationInput);
 
     // 'caps' = capability fingerprint; the client watches it to live-refresh its tool list.
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
