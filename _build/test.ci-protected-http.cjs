@@ -78,7 +78,17 @@ async function main(){
   const rev0=await state();
   const unique=crypto.randomBytes(6).toString("hex");
   const title="Protected HTTP CAS "+unique;
-  const guard=rev=>({observed_site_revision:rev,strict_site_revision:true,read_set:[]});
+  const guard=(rev,read_set=[])=>({observed_site_revision:rev,strict_site_revision:true,read_set});
+  const targetSnapshot=async(id)=>{
+    const response=await api("get_site_state",{
+      read_set:[{role:"target",type:"resource",id}],
+    });
+    check(response.status===200 && response.data?.success===true
+       && response.data.data.read_set?.length===1
+       && /^[0-9a-f]{64}$/.test(response.data.data.read_set[0].fingerprint),
+       "server-issued full resource target fingerprint");
+    return response.data.data;
+  };
   const create={
     type:"resource",name:title,alias:"protected-http-"+unique,
     content:"BEFORE",template:0,parent:0,published:0,hidemenu:1,
@@ -113,8 +123,11 @@ async function main(){
     && Number(retrieved.data.data.published)===0
     && Number(retrieved.data.data.hidemenu)===1,
     "resource readback through HTTP API");
+  const beforeUpdate=await targetSnapshot(id);
+  check(beforeUpdate.site_revision===revAfterCreate,
+        "snapshot and revision belong to same MCP state");
   const modify={type:"resource",id,content:"AFTER",
-    _runtime_preconditions:guard(revAfterCreate)};
+    _runtime_preconditions:guard(revAfterCreate,beforeUpdate.read_set)};
   const rawModify=JSON.stringify({action:"update_element",type:"resource",data:modify});
   const signModify=sign(rawModify,"update_element","resource");
   const changed=await request("POST",rawModify,signModify);
@@ -126,8 +139,9 @@ async function main(){
   const stateAfterUpdate=await api("get_element",{type:"resource",id},"resource");
   check(stateAfterUpdate.data?.data?.content==="AFTER",
     "updated resource is visible through MCP HTTP");
+  const currentTarget=await targetSnapshot(id);
   const stale={...modify,content:"NEVER_WRITE",
-    _runtime_preconditions:guard(rev0)};
+    _runtime_preconditions:guard(rev0,currentTarget.read_set)};
   const rawStale=JSON.stringify({action:"update_element",type:"resource",data:stale});
   const responseStale=await request("POST",rawStale,sign(rawStale,"update_element","resource"));
   check(responseStale.status===400 && String(responseStale.data?.error||"").includes("STALE_STATE"),
@@ -139,8 +153,9 @@ async function main(){
   await denied(topLevelInjection,sign(topLevelInjection,"update_element","resource"),
     403,"signed top-level request alias injection rejected");
 
+  const beforeRemove=await targetSnapshot(id);
   const remove={type:"resource",id,dry_run:false,
-    _runtime_preconditions:guard(afterUpdate)};
+    _runtime_preconditions:guard(afterUpdate,beforeRemove.read_set)};
   const rawRemove=JSON.stringify({action:"delete_element",type:"resource",data:remove});
   const removed=await request("POST",rawRemove,sign(rawRemove,"delete_element","resource"));
   check(removed.status===200 && removed.data?.success===true,

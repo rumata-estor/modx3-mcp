@@ -866,10 +866,27 @@ const toolDefinitions = [
   {
     name: "modx_get_site_state",
     description:
-      "Read the connector-authoritative site revision and atomic-precondition capability used by Site Agent Runtime.",
+      "Read connector-authoritative site revision and optional target/dependency CAS fingerprints. Read BEFORE preparing an edit; supply the observed site_revision and returned read_set unchanged when submitting the mutation. Changes in MODX Manager are detected by target fingerprints even when site_revision is unchanged.",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        read_set: {
+          type: "array", maxItems: 32,
+          description: "Selectors to snapshot using MODX MCP, e.g. [{role:'target', type:'resource', id:25}]. No client-calculated fingerprint.",
+          items: {
+            type: "object",
+            properties: {
+              role: {type:"string",enum:["target","dependency"]},
+              type: {type:"string",enum:["resource","template","chunk","snippet","plugin","tv","category","system_setting"]},
+              id: {type:"integer",minimum:1},
+              name: {type:"string"},
+              key: {type:"string"},
+              fields: {type:"array",items:{type:"string"}},
+            },
+            required:["type"]
+          }
+        }
+      },
     },
   },
   {

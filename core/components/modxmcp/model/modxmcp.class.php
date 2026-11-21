@@ -182,6 +182,11 @@ class modxMCP {
                                 if (\ModxMcp\Security\ProtectedAuthorization::required(
                                     $runtimeContext->modx()
                                 )) {
+                                    \ModxMcp\Tools\StateSupport::requireProtectedTargetReadSet(
+                                        $action,
+                                        $toolData,
+                                        $runtimePreconditions
+                                    );
                                     \ModxMcp\Security\ProtectedAuthorization::authorizeMutation(
                                         $runtimeContext->modx(),
                                         $action,

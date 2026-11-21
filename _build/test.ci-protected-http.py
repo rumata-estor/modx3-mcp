@@ -231,14 +231,29 @@ try:
     row = read(url, "get_element", {"type": "resource", "id": rid})
     expect(int(row["published"]) == 0 and int(row["hidemenu"]) == 1,
            "MCP HTTP readback of hidden resource")
-    revision = int(read(url, "get_site_state")["site_revision"])
+    observed = read(url, "get_site_state", {
+        "read_set": [{"role": "target", "type": "resource", "id": rid}]
+    })
+    expect(len(observed.get("read_set", []))==1
+           and len(observed["read_set"][0].get("fingerprint", ""))==64,
+           "MCP supplied complete target snapshot")
+    revision = int(observed["site_revision"])
     update = {
         "type": "resource", "id": rid, "content": "AFTER",
+        "_runtime_preconditions": {
+            "observed_site_revision": revision,
+            "strict_site_revision": True, "read_set": observed["read_set"]
+        }
+    }
+    missingTarget = {
+        **update,
         "_runtime_preconditions": {
             "observed_site_revision": revision,
             "strict_site_revision": True, "read_set": []
         }
     }
+    missing_body, missing_permit = protected_call("update_element",missingTarget)
+    deny(url,missing_body,missing_permit,"missing resource target fingerprint")
     update_body, update_signed = protected_call("update_element", update)
     status, reply = post(url, update_body, update_signed)
     expect(status == 200 and reply.get("success") is True,
@@ -248,12 +263,15 @@ try:
     stale_body, stale_signed = protected_call("update_element", update)
     deny(url, stale_body, stale_signed, "stale CAS with valid permit",code=400)
 
-    revision = int(read(url, "get_site_state")["site_revision"])
+    observed = read(url, "get_site_state", {
+        "read_set": [{"role": "target", "type": "resource", "id": rid}]
+    })
+    revision = int(observed["site_revision"])
     deleting = {
         "type": "resource", "id": rid, "dry_run": False,
         "_runtime_preconditions": {
             "observed_site_revision": revision,
-            "strict_site_revision": True, "read_set": []
+            "strict_site_revision": True, "read_set": observed["read_set"]
         }
     }
     delete_body, delete_signed = protected_call("delete_element", deleting)

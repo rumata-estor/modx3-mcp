@@ -63,6 +63,65 @@ class StateSupport
      * A single PHP process may perform many mutations; cached setting models
      * must not report stale revisions after a successful write.
      */
+    /**
+     * Read a consistent observed revision and target/dependency fingerprints
+     * through MODX MCP. This is the only authoritative source for a CAS
+     * read_set; clients must not guess or reconstruct hashes.
+     */
+    public static function observedState($context, array $arguments)
+    {
+        if (!array_key_exists('read_set', $arguments)) {
+            return self::siteState($context);
+        }
+        $requested = $arguments['read_set'];
+        if (!is_array($requested) || count($requested) > 32) {
+            throw new \ModxMCPClientException(
+                'Invalid CAS read_set snapshot request (max 32).'
+            );
+        }
+        return self::withMutationLock($context, function () use ($context, $requested) {
+            $state = self::siteState($context);
+            $items = array();
+            foreach ($requested as $item) {
+                if (!is_array($item)
+                    || !isset($item['type'])
+                    || !in_array($item['type'], array(
+                        'resource','template','chunk','snippet','plugin','tv',
+                        'category','system_setting'
+                    ), true)
+                    || (empty($item['id']) && empty($item['name']) && empty($item['key']))) {
+                    throw new \ModxMCPClientException(
+                        'Invalid CAS fingerprint request selector.'
+                    );
+                }
+                $role = isset($item['role']) && $item['role'] === 'dependency'
+                    ? 'dependency' : 'target';
+                // Field-scoped fingerprints are optional for dependency
+                // tracking but NEVER valid for a write target.
+                if ($role === 'target' && !empty($item['fields'])) {
+                    throw new \ModxMCPClientException(
+                        'CAS target fingerprint must cover complete state.'
+                    );
+                }
+                $selector = array(
+                    'role' => $role,
+                    'type' => $item['type'],
+                );
+                foreach (array('id','name','key','fields') as $key) {
+                    if (array_key_exists($key,$item)) {
+                        $selector[$key] = $item[$key];
+                    }
+                }
+                $selector['fingerprint'] = self::fingerprintReadItem(
+                    $context, $selector
+                );
+                $items[] = $selector;
+            }
+            $state['read_set'] = $items;
+            return $state;
+        });
+    }
+
     public static function revision($context)
     {
         $modx = $context->modx();
@@ -276,6 +335,9 @@ class StateSupport
                 'longtitle', 'description', 'alias', 'parent', 'template',
                 'published', 'context_key', 'class_key', 'isfolder',
                 'hidemenu', 'introtext', 'menutitle', 'menuindex',
+                'searchable', 'deleted', 'richtext', 'cacheable',
+                'pub_date', 'unpub_date', 'content_type', 'content_dispo',
+                'uri', 'uri_override', 'properties', 'publishedon',
             ),
             'tv' => array(
                 'caption', 'description', 'category', 'type', 'elements',
@@ -464,6 +526,48 @@ class StateSupport
             }
         }
         return $raw;
+    }
+
+    /**
+     * Protected-mode element updates/deletes cannot rely only on MCP site
+     * revision: an administrator in MODX Manager may have edited the target
+     * without incrementing that revision. Require a full server-issued
+     * fingerprint of the EXACT element by numeric id, not a different
+     * resource or an attacker-chosen subset of fields.
+     */
+    public static function requireProtectedTargetReadSet(
+        $action, array $data, array $preconditions
+    ) {
+        if (!in_array($action, array('update_element','delete_element'), true)) {
+            return $preconditions;
+        }
+        $type = isset($data['type']) ? (string)$data['type'] : '';
+        $id = isset($data['id']) ? $data['id'] : null;
+        if (!in_array($type, array(
+                'resource','template','chunk','snippet','plugin','tv','category'
+            ), true)
+            || !is_int($id) || $id < 1) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: protected element write requires numeric id and type.'
+            );
+        }
+        $readSet = isset($preconditions['read_set'])
+            && is_array($preconditions['read_set'])
+            ? $preconditions['read_set'] : array();
+        foreach ($readSet as $item) {
+            if (!is_array($item))continue;
+            if (isset($item['role']) && $item['role']==='target'
+                && isset($item['type'],$item['id'],$item['fingerprint'])
+                && $item['type']===$type && $item['id']===$id
+                && (!isset($item['fields']) || $item['fields']===array())
+                && preg_match('/^[a-fA-F0-9]{64}$/D',(string)$item['fingerprint'])) {
+                return $preconditions;
+            }
+        }
+        throw new \ModxMCPClientException(
+            'CAS_REQUIRED: protected element write requires complete target '
+            . 'fingerprint from get_site_state.read_set for this id.'
+        );
     }
 
     public static function assertPreconditions($context, array $preconditions)

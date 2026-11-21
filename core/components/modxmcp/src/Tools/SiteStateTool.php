@@ -10,6 +10,6 @@ class SiteStateTool implements ToolInterface
 
     public function execute($context, array $arguments)
     {
-        return StateSupport::siteState($context);
+        return StateSupport::observedState($context, $arguments);
     }
 }

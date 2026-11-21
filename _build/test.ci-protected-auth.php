@@ -65,6 +65,21 @@ function guardNow() {
     return array('observed_site_revision'=>(int)$state['site_revision'],
         'strict_site_revision'=>true,'read_set'=>array());
 }
+function guardTarget($type,$id) {
+    global $api;
+    $state=$api->processRequest('get_site_state','',array(
+        'read_set'=>array(array('role'=>'target','type'=>$type,'id'=>$id))
+    ));
+    if (!isset($state['read_set'][0]['fingerprint'])
+        || strlen($state['read_set'][0]['fingerprint'])!==64) {
+        throw new RuntimeException('MCP fingerprint observation was not available');
+    }
+    return array(
+        'observed_site_revision'=>(int)$state['site_revision'],
+        'strict_site_revision'=>true,
+        'read_set'=>$state['read_set'],
+    );
+}
 function signedCall($action,$type,array $data) {
     global $private,$site;
     $request=array('action'=>$action,'type'=>$type,'data'=>$data);
@@ -126,15 +141,60 @@ try {
     $read=$api->processRequest('get_element','',array('type'=>'resource','id'=>$id));
     must((int)$read['published']===0 && (int)$read['hidemenu']===1,'MCP-only readback');
 
+    // Controlled adversarial operation: a MODX Manager processor edits the
+    // disposable resource OUTSIDE MCP. This intentionally simulates the
+    // very concurrent human edit that site_revision cannot see; all business
+    // changes under test still travel through the protected MCP dispatcher.
+    $observedBeforeManager=guardTarget('resource',$id);
+    $managerRevision=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+    $platform=\ModxMcp\Platform\PlatformFactory::detect($modx);
+    $manager=$platform->runProcessor($modx,'resource/update',array(
+        'id'=>$id,'pagetitle'=>$name,'content'=>'MANAGER_CHANGED',
+        'template'=>0,'published'=>0,'hidemenu'=>1,
+    ));
+    if ($manager->isError()) {
+        throw new RuntimeException(
+            'Cannot simulate outside-MCP Manager edit: '.$manager->getMessage()
+        );
+    }
+    $managerRead=$api->processRequest('get_element','',array(
+        'type'=>'resource','id'=>$id
+    ));
+    must((string)$managerRead['content']==='MANAGER_CHANGED',
+        'disposable MODX Manager processor changed the target');
+    must(
+        (int)$api->processRequest('get_site_state','',array())['site_revision']
+            ===$managerRevision,
+        'MODX Manager change did not advance connector site revision'
+    );
+    $conflicting=array('type'=>'resource','id'=>$id,
+        'content'=>'WOULD_OVERWRITE_MANAGER',
+        '_runtime_preconditions'=>$observedBeforeManager);
+    try {
+        rpc('update_element','',$conflicting,
+            signedCall('update_element','',$conflicting));
+        throw new RuntimeException('Manager edit was silently overwritten');
+    } catch(\ModxMCPClientException $e) {
+        must(strpos($e->getMessage(),'STALE_STATE')!==false,
+            'resource fingerprint rejects unseen Manager edit');
+    }
+    $afterConflict=$api->processRequest('get_element','',array(
+        'type'=>'resource','id'=>$id
+    ));
+    must((string)$afterConflict['content']==='MANAGER_CHANGED',
+        'stale signed mutation did not overwrite Manager content');
+    echo 'PROTECTED_CAS_MANAGER_EDIT_CONFLICT_DENIED_OK'.PHP_EOL;
+
     $update=array('type'=>'resource','id'=>$id,'content'=>'AFTER',
-        '_runtime_preconditions'=>guardNow());
+        '_runtime_preconditions'=>guardTarget('resource',$id));
     $updated=rpc('update_element','',$update,signedCall('update_element','',$update));
     $read=$api->processRequest('get_element','',array('type'=>'resource','id'=>$id));
     must(is_array($read) && $read['content']==='AFTER','protected update via MCP');
 
     $stale=array('type'=>'resource','id'=>$id,'content'=>'BAD',
         '_runtime_preconditions'=>array(
-            'observed_site_revision'=>0,'strict_site_revision'=>true,'read_set'=>array()
+            'observed_site_revision'=>0,'strict_site_revision'=>true,
+            'read_set'=>guardTarget('resource',$id)['read_set']
         ));
     try{rpc('update_element','',$stale,signedCall('update_element','',$stale));
         throw new RuntimeException('STALE_STATE unexpectedly permitted');}
@@ -150,7 +210,7 @@ try {
         signedCall('update_system_setting','',$unsafe));
 
     $delete=array('type'=>'resource','id'=>$id,'dry_run'=>false,
-        '_runtime_preconditions'=>guardNow());
+        '_runtime_preconditions'=>guardTarget('resource',$id));
     rpc('delete_element','',$delete,signedCall('delete_element','',$delete));
     $deleted=$api->processRequest('get_element','',array('type'=>'resource','id'=>$id));
     must(!empty($deleted['deleted']),'protected soft-delete via MCP');
