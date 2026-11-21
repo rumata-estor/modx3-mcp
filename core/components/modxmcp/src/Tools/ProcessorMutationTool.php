@@ -87,6 +87,16 @@ class ProcessorMutationTool implements ToolInterface
                     . 'check the user via MCP before any retry.'
                 );
             }
+            if ($route === 'acl') {
+                // RU: Общие ошибки ACL могут содержать пароль из предшествующей
+                // RU: операции MODX. Не выдаём текст процессора и не обещаем откат.
+                // EN: ACL processor errors may contain credentials left by a
+                // EN: previous MODX action. Hide raw text; do not promise rollback.
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: ACL processor returned an error '
+                    . 'status; verify state via MCP before retry.'
+                );
+            }
             throw new \ModxMCPClientException(ProcessorSupport::error($response));
         }
 

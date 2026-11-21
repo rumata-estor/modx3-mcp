@@ -51,7 +51,7 @@ If you write your own HTTP integration, implement your own backups, authorizatio
 
 ## Secrets and private information in tool responses
 
-`modx_list_system_settings` and `modx_get_system_setting` can return values containing **API tokens and other secrets**. Do not forward complete results into public logs, issue reports, analytics pipelines, or an external model without assessing the confidentiality risk.
+`modx_list_system_settings` and `modx_get_system_setting` redact values whose setting keys explicitly identify credentials (for example, `modxmcp.api_token`, `smtp_password`, `client_secret`). This does **not** guarantee that secrets stored under unrelated or misleading keys are detected. Do not forward unreviewed settings into public logs or external models. Only MODX Manager's explicitly authorized token controls may reveal the MCP token.
 
 File reads, error logs, user records, and ecommerce order data can also contain private or sensitive information.
 

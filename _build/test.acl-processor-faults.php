@@ -70,9 +70,9 @@ foreach($specs as $name=>$spec){
         $tool->execute($ctx,array('id'=>9,'name'=>'fixture','resource'=>9,'resourceGroup'=>4));
         throw new \RuntimeException('ACL_FAULT_FAIL: did not reject '.$name);
     } catch (ModxMCPClientException $e) {
-        $expected = $name === 'create_user'
-            ? 'MUTATION_OUTCOME_UNCERTAIN'
-            : 'injected processor failure';
+        // RU: Ошибки всех ACL-мутаций скрывают текст процессора.
+        // EN: All ACL mutation failures must suppress raw processor messages.
+        $expected = 'MUTATION_OUTCOME_UNCERTAIN';
         if (strpos($e->getMessage(),$expected)===false)throw $e;
     }
     if ($ctx->platform->calls!==1 || $ctx->modx->cache->flushes!==0

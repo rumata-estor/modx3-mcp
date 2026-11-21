@@ -9,6 +9,9 @@ class ModxMCPClientException extends Exception {}
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ToolInterface.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
+// RU: Автономный тест не запускает PSR-4 autoload, подключаем guard явно.
+// EN: The offline fixture has no PSR-4 loader; include the guard explicitly.
+require_once __DIR__ . '/../core/components/modxmcp/src/Security/ProtectedSettingsGuard.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/SystemSettingCreateTool.php';
 
 class SecurityTestModx {

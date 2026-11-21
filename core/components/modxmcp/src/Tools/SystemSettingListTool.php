@@ -31,12 +31,28 @@ class SystemSettingListTool implements ToolInterface
         return $result;
     }
 
+    /**
+     * RU: При чтении через MCP скрываем токены, пароли и другие секреты.
+     * RU: Публичные ключи и обычные настройки оставляем доступными.
+     * EN: Redact tokens, passwords and credentials in MCP read responses.
+     * EN: Public keys and ordinary setting values remain readable.
+     */
     public static function normalize($setting)
     {
+        $key = (string)$setting->get('key');
+        $value = $setting->get('value');
+        // RU: Проверяем отдельные сегменты имени, а не произвольные слова.
+        // EN: Match sensitive key segments, not arbitrary substrings.
+        $sensitive = preg_match(
+            '/(?:\\A|[._-])(?:api_token|access_token|refresh_token|'
+            . 'secret|password|passwd|client_secret|private_key|api_key|'
+            . 'credentials)(?:\\z|[._-])/iD',
+            $key
+        ) === 1;
         return array(
             'id' => $setting->get('id'),
-            'key' => $setting->get('key'),
-            'value' => $setting->get('value'),
+            'key' => $key,
+            'value' => $sensitive ? '[REDACTED]' : $value,
             'xtype' => $setting->get('xtype'),
             'namespace' => $setting->get('namespace'),
             'area' => $setting->get('area'),
