@@ -257,6 +257,22 @@ try {
         $denied=strpos($e->getMessage(),'AUTH_DENIED')!==false;
     }
     acceptanceCheck($denied,'sensitive processor denied in ordinary mode');
+    // RU: Прямой путь MODX workspace/packages/install не должен стать
+    // RU: доступным через обычный whitelist, даже при точном совпадении.
+    // EN: Real MODX workspace/packages/install must remain privileged,
+    // EN: even if the ordinary site allowlist names it exactly.
+    $modx->setOption('modxmcp.allowed_processors','workspace/packages/install');
+    $packageDenied=false;
+    try {
+        acceptanceRpc('run_processor',array(
+            'processor'=>'workspace/packages/install',
+            'properties'=>array('signature'=>'MUST_NOT_INSTALL'),
+        ));
+    } catch (\Throwable $e) {
+        $packageDenied=strpos($e->getMessage(),'AUTH_DENIED')!==false;
+    }
+    acceptanceCheck($packageDenied,
+        'real package install processor denied in ordinary mode');
 
     // RU: После испытаний возвращаем состояние переключателей текущего процесса.
     // EN: Restore in-process toggles before cleanup.
