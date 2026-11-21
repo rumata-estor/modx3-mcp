@@ -112,6 +112,18 @@ try {
     demandTail($boundedMetadata['truncated_lines'] === 1, 'Bounded oversized line was not counted once');
     demandTail($boundedMetadata['result_complete'] === false, 'Bounded oversized line was reported complete');
 
+    // Trailing newline behavior: a terminating newline never yields an empty
+    // tail entry, and a final line without a newline is still returned intact.
+    $nlFile = sys_get_temp_dir() . '/modxmcp-tail-newline-' . bin2hex(random_bytes(6)) . '.log';
+    file_put_contents($nlFile, "FIRST\nSECOND\n");
+    $nlMetadata = array();
+    $nlTail = \ModxMcp\Tools\FilesystemSupport::readTailLines($nlFile, 10, null, $nlMetadata);
+    demandTail($nlTail === array('FIRST', 'SECOND'), 'Trailing newline produced an empty tail entry');
+    demandTail($nlMetadata['result_complete'] === true, 'Trailing newline fixture was not complete');
+    file_put_contents($nlFile, "FIRST\nSECOND");
+    $nlTailOpen = \ModxMcp\Tools\FilesystemSupport::readTailLines($nlFile, 10, null, $nlMetadata);
+    demandTail($nlTailOpen === array('FIRST', 'SECOND'), 'Unterminated final line was dropped');
+
     $toolRoot = sys_get_temp_dir() . '/modxmcp-tail-tools-' . bin2hex(random_bytes(6));
     $auditDir = $toolRoot . '/components/modxmcp/logs';
     $errorDir = $toolRoot . '/cache/logs';

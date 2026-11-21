@@ -32,7 +32,10 @@ class SystemSettingListTool implements ToolInterface
         $key = (string)$setting->get('key');
         $value = $setting->get('value');
         if ($key === 'modxmcp.api_token' && is_string($value) && $value !== '') {
-            $value = substr($value, 0, 6) . '…' . substr($value, -4);
+            // Short tokens must not be restorable from a first-6/last-4 preview.
+            $value = strlen($value) > 16
+                ? substr($value, 0, 6) . '…' . substr($value, -4)
+                : '********';
         }
         return array(
             'id' => $setting->get('id'),

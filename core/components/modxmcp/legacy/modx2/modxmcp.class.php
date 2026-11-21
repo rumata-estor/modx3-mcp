@@ -2975,8 +2975,12 @@ class modxMCP {
         if ($response->isError()) { throw new ModxMCPClientException($this->formatProcessorErrors($response)); }
 
         if (in_array($action, array('create_context_setting', 'update_context_setting', 'delete_context_setting'), true)) {
-            if ($this->modx->getCacheManager()) {
-                $this->modx->getCacheManager()->refresh(array('context_settings' => array()));
+            if ($this->modx->getCacheManager() && isset($props['fk']) && is_string($props['fk']) && $props['fk'] !== '') {
+                // MODX regenerates the context_settings cache only when the provider
+                // receives an explicit `contexts` list; an empty options array is a silent no-op.
+                $this->modx->getCacheManager()->refresh(
+                    array('context_settings' => array('contexts' => array($props['fk'])))
+                );
             }
         }
 
@@ -3300,7 +3304,7 @@ class modxMCP {
         if (trim((string)$processorsPath) !== '') {
             $combined = $this->normalizeRunProcessorPath($processorsPath . '/' . $processor);
         }
-        $settingsRoute = '(?:context/setting|system/settings|security/(?:user|group)/setting)';
+        $settingsRoute = '(?:context/setting|system/settings|system/setting|security/(?:user|group)/setting)';
         $directSettingMutation = preg_match('#(?:^|/)' . $settingsRoute . '/(create|update|remove|updatefromgrid)(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
         $contextUpdate = preg_match('#(?:^|/)context/update(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
         if (!$directSettingMutation && !$contextUpdate) { return; }
@@ -5496,10 +5500,18 @@ class modxMCP {
     }
 
     private function normalizeSystemSetting(modSystemSetting $setting) {
+        $key = $setting->get('key');
+        $value = $setting->get('value');
+        if ($key === 'modxmcp.api_token' && is_string($value) && $value !== '') {
+            // Short tokens must not be restorable from a first-6/last-4 preview.
+            $value = strlen($value) > 16
+                ? substr($value, 0, 6) . '…' . substr($value, -4)
+                : '********';
+        }
         return [
             'id' => $setting->get('id'),
-            'key' => $setting->get('key'),
-            'value' => $setting->get('value'),
+            'key' => $key,
+            'value' => $value,
             'xtype' => $setting->get('xtype'),
             'namespace' => $setting->get('namespace'),
             'area' => $setting->get('area'),

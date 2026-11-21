@@ -22,6 +22,9 @@ $blocked = array(
     array('context/setting/create', array('key' => 'modxmcp.enabled')),
     array('/Context\\Setting\\Update/', array('key' => '  ModxMCP.allowed_ips  ')),
     array('system/settings/remove', array('key' => 'modxmcp.api_token')),
+    array('system/setting/update', array('key' => 'modxmcp.api_token')),
+    array('system/setting/create', array('key' => ' modxmcp.enabled')),
+    array('system/setting/remove', array('key' => 'MODXMCP.require_https')),
     array('system/settings/updatefromgrid', array(
         'data' => json_encode(array('key' => 'modxmcp.require_https', 'value' => 0)),
     )),
@@ -60,9 +63,20 @@ mustRejectProtectedSetting(
     '/core/model/modx/processors/system/settings/'
 );
 
+mustRejectProtectedSetting(
+    'processors_path override (singular MODX 2.x route)',
+    'update.class.php',
+    array('key' => 'modxmcp.enabled', 'value' => 0),
+    '/core/model/modx/processors/system/setting/'
+);
+
 \ModxMcp\Tools\ProtectedSettingsGuard::assertAllowed(
     'system/settings/update',
     array('key' => 'site_name', 'value' => 'MODX')
+);
+\ModxMcp\Tools\ProtectedSettingsGuard::assertAllowed(
+    'system/setting/update',
+    array('key' => 'site_start', 'value' => '1')
 );
 \ModxMcp\Tools\ProtectedSettingsGuard::assertAllowed(
     'custom/settings/update',

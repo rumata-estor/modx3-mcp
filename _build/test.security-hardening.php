@@ -133,6 +133,30 @@ try {
     if ($norm['value'] !== 'abcdef…cdef') {
         throw new RuntimeException('API token was not properly masked: ' . $norm['value']);
     }
+    $normShort = \ModxMcp\Tools\SystemSettingListTool::normalize(new MockSettingObject(array(
+        'id' => 2, 'key' => 'modxmcp.api_token', 'value' => 'abc123', 'xtype' => 'textfield', 'namespace' => 'modxmcp', 'area' => 'security'
+    )));
+    if ($normShort['value'] !== '********') {
+        throw new RuntimeException('Short API token must be fully masked: ' . $normShort['value']);
+    }
+    $normBoundary = \ModxMcp\Tools\SystemSettingListTool::normalize(new MockSettingObject(array(
+        'id' => 3, 'key' => 'modxmcp.api_token', 'value' => 'abcdefghijklmnopq', 'xtype' => 'textfield', 'namespace' => 'modxmcp', 'area' => 'security'
+    )));
+    if ($normBoundary['value'] !== 'abcdef…nopq') {
+        throw new RuntimeException('Long API token preview is wrong: ' . $normBoundary['value']);
+    }
+    foreach (array(
+        __DIR__ . '/../core/components/modxmcp/model/modxmcp.class.php',
+        __DIR__ . '/../core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+    ) as $monolithFile) {
+        $monolith = file_get_contents($monolithFile);
+        if ($monolith === false
+            || strpos($monolith, "if (\$key === 'modxmcp.api_token' && is_string(\$value) && \$value !== '')") === false
+            || strpos($monolith, 'strlen($value) > 16') === false
+        ) {
+            throw new RuntimeException('Monolithic normalizeSystemSetting does not mask the API token: ' . $monolithFile);
+        }
+    }
 
     echo "SECURITY_HARDENING_PHP_OK\n";
 } finally {

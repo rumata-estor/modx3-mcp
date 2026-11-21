@@ -11,7 +11,7 @@ class ProtectedSettingsGuard
             $combined = self::normalizePath($processorsPath . '/' . $processor);
         }
 
-        $settingsRoute = '(?:context/setting|system/settings|security/(?:user|group)/setting)';
+        $settingsRoute = '(?:context/setting|system/settings|system/setting|security/(?:user|group)/setting)';
         $directSettingMutation = preg_match(
             '#(?:^|/)' . $settingsRoute . '/(create|update|remove|updatefromgrid)(?:\.class)?(?:\.php)?$#',
             $combined

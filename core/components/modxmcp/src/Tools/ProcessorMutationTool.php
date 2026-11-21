@@ -59,7 +59,20 @@ class ProcessorMutationTool implements ToolInterface
             $context->modx()->getCacheManager()->flushPermissions();
         }
         if ($route === 'context' && $context->modx()->getCacheManager()) {
-            $context->modx()->getCacheManager()->refresh(array('context_settings' => array()));
+            // MODX regenerates the context_settings cache only when the provider
+            // receives an explicit `contexts` list; an empty options array is a silent no-op.
+            $contextKeys = array();
+            foreach (array('fk', 'context_key', 'key') as $contextField) {
+                if (isset($props[$contextField]) && is_string($props[$contextField]) && $props[$contextField] !== '') {
+                    $contextKeys[] = $props[$contextField];
+                    break;
+                }
+            }
+            if (!empty($contextKeys)) {
+                $context->modx()->getCacheManager()->refresh(
+                    array('context_settings' => array('contexts' => $contextKeys))
+                );
+            }
         }
 
         AuditSupport::log(
