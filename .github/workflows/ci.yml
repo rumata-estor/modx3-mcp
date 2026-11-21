@@ -80,6 +80,7 @@ jobs:
         run: |
           python3 _build/test.registry-fail-closed.py
           python3 _build/test.security-source-wiring.py
+          python3 _build/test.http-error-redaction.py
 
       - name: Client/server action contract
         run: python3 _build/test.client-server-actions.py

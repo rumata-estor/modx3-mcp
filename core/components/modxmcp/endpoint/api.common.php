@@ -271,45 +271,45 @@ try {
     $modx->log(
         $modxmcpLogLevelError,
         sprintf(
-            '[%s] MCP request failed. action=%s type=%s message=%s',
+            '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
-            $action,
-            $type,
-            $e->getMessage()
+            is_string($action) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($action, 0, 80)) : 'invalid',
+            is_string($type) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($type, 0, 80)) : 'invalid',
+            get_class($e)
         )
     );
     http_response_code(500);
-    $debug = (bool)$modx->getOption('modxmcp.debug', null, false);
+    // RU: Даже при debug=1 нельзя отдавать исходный текст исключения:
+    // RU: сторонние процессоры могут включать в него временные пароли.
+    // EN: Even in debug mode, never expose raw exception messages that
+    // EN: may contain paths, credentials or third-party processor output.
     $response = [
         'success' => false,
         'error' => 'Internal Server Error',
         'error_id' => $errorId,
     ];
-    if ($debug) {
-        $response['details'] = $e->getMessage();
-    }
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     $errorId = uniqid('modxmcp_', true);
     $modx->log(
         $modxmcpLogLevelError,
         sprintf(
-            '[%s] MCP request failed. action=%s type=%s throwable=%s',
+            '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
-            $action,
-            $type,
-            $e->getMessage()
+            is_string($action) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($action, 0, 80)) : 'invalid',
+            is_string($type) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($type, 0, 80)) : 'invalid',
+            get_class($e)
         )
     );
     http_response_code(500);
-    $debug = (bool)$modx->getOption('modxmcp.debug', null, false);
+    // RU: Даже при debug=1 нельзя отдавать исходный текст исключения:
+    // RU: сторонние процессоры могут включать в него временные пароли.
+    // EN: Even in debug mode, never expose raw exception messages that
+    // EN: may contain paths, credentials or third-party processor output.
     $response = [
         'success' => false,
         'error' => 'Internal Server Error',
         'error_id' => $errorId,
     ];
-    if ($debug) {
-        $response['details'] = $e->getMessage();
-    }
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 }
