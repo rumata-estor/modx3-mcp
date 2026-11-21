@@ -1256,7 +1256,7 @@ const toolDefinitions = [
   },
   {
     name: "modx_update_resource_tvs",
-    description: "Update a resource's template-variable (TV) values.",
+    description: "Update resource TV values with raw CAS. Strings are accepted for all TV types; listbox-multiple also accepts arrays of string/integer options (serialized as value1||value2). Supply raw original expected_tvs values via runtime preconditions; other TV values are preserved.",
     inputSchema: {
       type: "object",
       properties: {
