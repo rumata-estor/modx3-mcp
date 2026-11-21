@@ -147,15 +147,21 @@ try {
     // changes under test still travel through the protected MCP dispatcher.
     $observedBeforeManager=guardTarget('resource',$id);
     $managerRevision=(int)$api->processRequest('get_site_state','',array())['site_revision'];
-    $platform=\ModxMcp\Platform\PlatformFactory::detect($modx);
-    $manager=$platform->runProcessor($modx,'resource/update',array(
-        'id'=>$id,'pagetitle'=>$name,'content'=>'MANAGER_CHANGED',
-        'template'=>0,'published'=>0,'hidemenu'=>1,
-    ));
-    if ($manager->isError()) {
-        throw new RuntimeException(
-            'Cannot simulate outside-MCP Manager edit: '.$manager->getMessage()
-        );
+    // A genuinely separate PHP process holds its own xPDO cache, exactly
+    // like a separate MODX Manager request.
+    $worker=array(PHP_BINARY,__DIR__.'/test.ci-manager-external-edit.php',(string)$id);
+    $pipes=array();
+    $process=proc_open($worker,array(
+        0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+    ),$pipes);
+    if(!is_resource($process))throw new RuntimeException('Cannot start external Manager test');
+    fclose($pipes[0]);
+    $out=stream_get_contents($pipes[1]);
+    $err=stream_get_contents($pipes[2]);
+    fclose($pipes[1]);fclose($pipes[2]);
+    if(proc_close($process)!==0 ||
+        strpos($out,'DISPOSABLE_MANAGER_OUT_OF_BAND_EDIT_OK')===false) {
+        throw new RuntimeException('External Manager fixture failed: '.$err);
     }
     $managerRead=$api->processRequest('get_element','',array(
         'type'=>'resource','id'=>$id
