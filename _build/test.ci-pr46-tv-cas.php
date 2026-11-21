@@ -170,11 +170,134 @@ try {
         requireTrue(findTV($restored, $name) === $expected,
             'restored raw TV value ' . $name);
     }
+
+    // Fault injection: the revision write is deliberately rejected by
+    // MariaDB AFTER the TV mutations have been issued. In the old connector
+    // the TV transaction had already committed; with the repaired boundary
+    // both the raw TV values and the revision must roll back together.
+    $pdo = $modx->getConnection();
+    requireTrue($pdo instanceof \PDO, 'PDO connection for fault injection');
+    $revisionTrigger = 'cas_pr46_rev_fail_' . $fixture;
+    $sql = 'CREATE TRIGGER `' . $revisionTrigger . '`'
+        . ' BEFORE UPDATE ON `modx_system_settings` FOR EACH ROW'
+        . " SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CAS_CI_REVISION_DENIED'";
+    requireTrue($pdo->exec($sql) !== false, 'create revision fault trigger');
+    $forcedRejected = false;
+    try {
+        rpc('update_resource_tvs', array(
+            'resource_id'=>$rid,
+            'tvs'=>$after,
+            '_runtime_preconditions'=>array(
+                'observed_site_revision'=>$r0 + 2,
+                'strict_site_revision'=>true,
+                'read_set'=>array(),
+                'expected_tvs'=>$raw,
+            ),
+        ));
+    } catch (\Throwable $e) {
+        $forcedRejected = true;
+    } finally {
+        $pdo->exec('DROP TRIGGER IF EXISTS `' . $revisionTrigger . '`');
+    }
+    requireTrue($forcedRejected, 'forced revision save rejected mutation');
+    // Independent direct SQL readback avoids MODX/xPDO object-cache effects.
+    $readRows = $pdo->prepare(
+        'SELECT `value` FROM `modx_site_tmplvar_contentvalues`'
+        . ' WHERE `contentid` = ? AND `tmplvarid` = ?'
+    );
+    foreach ($tvs as $i=>$tv) {
+        $readRows->execute(array($rid, (int)$tv->get('id')));
+        requireTrue((string)$readRows->fetchColumn() === $definitions[$i]['before'],
+            'revision-failure rollback persisted TV ' . $i);
+    }
+    $revisionRow = $pdo->query(
+        "SELECT `value` FROM `modx_system_settings`"
+        . " WHERE `key`='modxmcp.site_revision'"
+    );
+    requireTrue((int)$revisionRow->fetchColumn() === $r0 + 2,
+        'revision-failure rollback persisted revision');
+    echo 'CAS_REVISION_FAULT_ATOMIC_ROLLBACK_OK' . PHP_EOL;
+
+    // Two genuine independent PHP processes race with the SAME CAS snapshot.
+    // The shared flock should serialize them; one succeeds, one sees stale.
+    $raceRevision = (int)rpc('get_site_state')['site_revision'];
+    $raceName = $definitions[0]['name'];
+    $raceBefore = $definitions[0]['before'];
+    $gate = getenv('RUNNER_TEMP') . '/cas-pr46-' . $fixture . '.gate';
+    $workers = array();
+    for ($i = 0; $i < 2; $i++) {
+        $ready = getenv('RUNNER_TEMP') . '/cas-pr46-' . $fixture
+            . '-ready-' . $i;
+        $next = 'concurrent_writer_' . $i . '_' . $fixture;
+        $command = array(
+            PHP_BINARY, __DIR__ . '/test.ci-pr46-cas-worker.php',
+            (string)$rid, $raceName, $raceBefore, $next,
+            (string)$raceRevision, $ready, $gate,
+        );
+        $descriptors = array(
+            0=>array('pipe','r'),
+            1=>array('pipe','w'),
+            2=>array('pipe','w'),
+        );
+        $pipes = array();
+        $process = proc_open($command, $descriptors, $pipes);
+        requireTrue(is_resource($process), 'start concurrent CAS writer');
+        fclose($pipes[0]);
+        $workers[] = array($process, $pipes, $ready, $next);
+    }
+    $deadline = microtime(true) + 15;
+    while ((!is_file($workers[0][2]) || !is_file($workers[1][2]))
+        && microtime(true) < $deadline) {
+        usleep(10000);
+    }
+    requireTrue(is_file($workers[0][2]) && is_file($workers[1][2]),
+        'both independent CAS writers ready');
+    file_put_contents($gate, 'go');
+    $outcomes = array();
+    foreach ($workers as $worker) {
+        $stdout = stream_get_contents($worker[1][1]);
+        $stderr = stream_get_contents($worker[1][2]);
+        fclose($worker[1][1]);
+        fclose($worker[1][2]);
+        $exit = proc_close($worker[0]);
+        requireTrue($exit === 0, 'CAS worker exit: ' . $stderr);
+        $outcomes[] = trim($stdout);
+    }
+    requireTrue(count(array_filter($outcomes, function ($x) {
+        return $x === 'CAS_WORKER_OK';
+    })) === 1, 'exactly one concurrent CAS winner');
+    requireTrue(count(array_filter($outcomes, function ($x) {
+        return $x === 'CAS_WORKER_STALE';
+    })) === 1, 'exactly one concurrent CAS stale rejection');
+    $revisionRow = $pdo->query(
+        "SELECT `value` FROM `modx_system_settings`"
+        . " WHERE `key`='modxmcp.site_revision'"
+    );
+    requireTrue((int)$revisionRow->fetchColumn() === $raceRevision + 1,
+        'racing updates increment revision only once');
+    $readRows->execute(array($rid, (int)$tvs[0]->get('id')));
+    $winnerValue = (string)$readRows->fetchColumn();
+    requireTrue(in_array($winnerValue, array($workers[0][3], $workers[1][3]), true),
+        'racing updates persisted only winner value');
+    $raceRestore = rpc('update_resource_tvs', array(
+        'resource_id'=>$rid,
+        'tvs'=>array($raceName=>$raceBefore),
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>$raceRevision + 1,
+            'strict_site_revision'=>true,
+            'read_set'=>array(),
+            'expected_tvs'=>array($raceName=>$winnerValue),
+        ),
+    ));
+    requireTrue((int)$raceRestore['_site_revision'] === $raceRevision + 2,
+        'concurrent winning value can be restored via CAS');
+    echo 'CAS_CONCURRENT_WRITERS_ONE_WINNER_OK' . PHP_EOL;
+
     $success = true;
     echo 'PR46_LIVE_CAS_OK platform=' . ($is2 ? 'modx2' : 'modx3')
         . ' revision=' . $r0 . '->' . ($r0 + 1) . '->' . ($r0 + 2)
         . ' checks=' . $checks
-        . ' raw_and_inherit=pass stale=2 rollback=pass' . PHP_EOL;
+        . ' raw_and_inherit=pass stale=2 rollback=pass revision_fault=pass concurrency=pass' . PHP_EOL;
 } finally {
     // Remove only resources created inside the CI fixture; never run on live sites.
     if ($resource && $resource->get('id')) $resource->remove();

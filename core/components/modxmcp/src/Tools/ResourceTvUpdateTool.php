@@ -10,6 +10,35 @@ class ResourceTvUpdateTool implements ToolInterface
 
     public function execute($context, array $data)
     {
+        return $this->applyUpdate($context, $data, false);
+    }
+
+    /**
+     * Used only by the modular dispatcher while a database transaction is
+     * already open. The dispatcher commits the TV values and site revision as
+     * one unit. Do not expose the transaction mode as client-supplied data.
+     */
+    public function executeWithinRevisionTransaction($context, array $data)
+    {
+        return $this->applyUpdate($context, $data, true);
+    }
+
+    public function afterCommittedRevision($context, array $data)
+    {
+        $context->modx()->cacheManager->refresh();
+        AuditSupport::log(
+            $context,
+            $this->name(),
+            'resource_tv',
+            array(
+                'resource_id' => (int)$data['resource_id'],
+                'tv_keys' => array_keys($data['tvs']),
+            )
+        );
+    }
+
+    private function applyUpdate($context, array $data, $outerTransaction)
+    {
         $resourceId = !empty($data['resource_id'])
             ? (int)$data['resource_id']
             : 0;
@@ -93,7 +122,12 @@ class ResourceTvUpdateTool implements ToolInterface
             }
         }
 
-        $modx->beginTransaction();
+        // The normal entrypoint retains its independent TV transaction for
+        // direct tool users. The dispatcher entrypoint must NOT commit here:
+        // the site_revision update is performed in its parent transaction.
+        if (!$outerTransaction && $modx->beginTransaction() === false) {
+            throw new \RuntimeException('Could not begin resource TV transaction.');
+        }
         try {
             foreach ($data['tvs'] as $name => $value) {
                 $written = ($resource->setTVValue($name, $value) !== false);
@@ -101,22 +135,21 @@ class ResourceTvUpdateTool implements ToolInterface
                     throw new \ModxMCPClientException('Failed to write TV: ' . $name);
                 }
             }
-            $modx->commit();
+            if (!$outerTransaction && $modx->commit() === false) {
+                throw new \RuntimeException('Could not commit resource TV transaction.');
+            }
         } catch (\Throwable $e) {
-            $modx->rollback();
+            if (!$outerTransaction) {
+                $modx->rollback();
+            }
             throw $e;
         }
 
-        $context->modx()->cacheManager->refresh();
-        AuditSupport::log(
-            $context,
-            $this->name(),
-            'resource_tv',
-            array(
-                'resource_id' => $resourceId,
-                'tv_keys' => array_keys($data['tvs']),
-            )
-        );
+        // Do not emit an audit entry or refresh caches until the outer
+        // transaction successfully commits. A failed revision must be silent.
+        if (!$outerTransaction) {
+            $this->afterCommittedRevision($context, $data);
+        }
         return (new ResourceTvListTool())->execute(
             $context,
             array('resource_id' => $resourceId)

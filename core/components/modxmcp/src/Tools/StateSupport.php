@@ -83,6 +83,31 @@ class StateSupport
         }
     }
 
+    /**
+     * Database-only atomic mutation boundary for CAS-protected resource TVs.
+     * The caller must hold the shared mutation lock first. Both TV rows and
+     * site_revision must use the same MODX/xPDO connection.
+     *
+     * Do not apply this blindly to processors with filesystem side effects.
+     */
+    public static function withRevisionTransaction($context, $callback)
+    {
+        $modx = $context->modx();
+        if ($modx->beginTransaction() === false) {
+            throw new \RuntimeException('Cannot start CAS revision transaction.');
+        }
+        try {
+            $result = call_user_func($callback);
+            if ($modx->commit() === false) {
+                throw new \RuntimeException('CAS revision transaction commit failed.');
+            }
+            return $result;
+        } catch (\Throwable $e) {
+            $modx->rollback();
+            throw $e;
+        }
+    }
+
     private static function isListArray(array $value)
     {
         if (empty($value)) {

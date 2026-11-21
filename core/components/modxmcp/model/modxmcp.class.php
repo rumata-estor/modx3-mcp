@@ -148,25 +148,55 @@ class modxMCP {
                             $runtimePreconditions,
                             $isDryRun
                         ) {
-                            if (is_array($runtimePreconditions)) {
-                                \ModxMcp\Tools\StateSupport::assertPreconditions(
-                                    $runtimeContext,
-                                    $runtimePreconditions
-                                );
-                            }
-                            $result = $tool->execute(
+                            // The TV rows and their site revision share one
+                            // database commit; before this CAS update they
+                            // were committed separately, allowing a false
+                            // success on revision persistence failure.
+                            $atomicTv = $tool instanceof
+                                \ModxMcp\Tools\ResourceTvUpdateTool;
+                            $apply = function ($managed) use (
+                                $tool,
                                 $runtimeContext,
-                                $toolData
-                            );
-                            $revision = $isDryRun
-                                ? \ModxMcp\Tools\StateSupport::revision($runtimeContext)
-                                : \ModxMcp\Tools\StateSupport::incrementRevision(
-                                    $runtimeContext
+                                $toolData,
+                                $runtimePreconditions,
+                                $isDryRun
+                            ) {
+                                if (is_array($runtimePreconditions)) {
+                                    \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                        $runtimeContext,
+                                        $runtimePreconditions
+                                    );
+                                }
+                                $result = $managed
+                                    ? $tool->executeWithinRevisionTransaction(
+                                        $runtimeContext,
+                                        $toolData
+                                    )
+                                    : $tool->execute($runtimeContext, $toolData);
+                                $revision = $isDryRun
+                                    ? \ModxMcp\Tools\StateSupport::revision($runtimeContext)
+                                    : \ModxMcp\Tools\StateSupport::incrementRevision(
+                                        $runtimeContext
+                                    );
+                                if (is_array($result)) {
+                                    $result['_site_revision'] = $revision;
+                                }
+                                return $result;
+                            };
+                            if ($atomicTv && !$isDryRun) {
+                                $result = \ModxMcp\Tools\StateSupport::withRevisionTransaction(
+                                    $runtimeContext,
+                                    function () use ($apply) {
+                                        return $apply(true);
+                                    }
                                 );
-                            if (is_array($result)) {
-                                $result['_site_revision'] = $revision;
+                                $tool->afterCommittedRevision(
+                                    $runtimeContext,
+                                    $toolData
+                                );
+                                return $result;
                             }
-                            return $result;
+                            return $apply(false);
                         }
                     );
                 }
