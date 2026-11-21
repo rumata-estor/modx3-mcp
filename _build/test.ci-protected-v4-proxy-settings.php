@@ -8,10 +8,14 @@ if (PHP_SAPI !== 'cli'
     || getenv('MODXMCP_DISPOSABLE_CI') !== '1'
     || strpos((string)getenv('MODX_CONFIG_CORE'),'/home/runner/') !== 0
     || !is_file((string)getenv('MODX_CONFIG_CORE'))
-    || !in_array((string)($argv[1] ?? ''),array('enable','disable'),true)
+    || !in_array((string)($argv[1] ?? ''),array(
+        'enable','disable','rotate-key','revoke-key'),true)
     || !in_array((string)($argv[2] ?? ''),array(
         'modx2-alex-palochkin','modx3-alex-palochkin'),true)
-    || $argc !== 3) {
+    || (($argv[1]==='rotate-key' && $argc!==4)
+        || ($argv[1]!=='rotate-key' && $argc!==3))
+    || ($argv[1]==='rotate-key'
+        && !preg_match('/\A[0-9a-f]{64}\z/D',(string)($argv[3] ?? '')))) {
     fwrite(STDERR,"Refusing protected v4 settings outside disposable CI.\n");
     exit(3);
 }
@@ -45,7 +49,13 @@ function ciSetting($key,$value,$create=false) {
     $obj->set('value',(string)$value);
     if(!$obj->save())throw new RuntimeException('CI protected proxy setup failed');
 }
-if($mode==='enable') {
+if($mode==='rotate-key') {
+    // Explicitly authorized disposable CI Manager setting change.
+    // Nothing about the key is supplied by a remote MCP client.
+    ciSetting('modxmcp.permit_public_key',$argv[3]);
+} elseif($mode==='revoke-key') {
+    ciSetting('modxmcp.permit_public_key','');
+} elseif($mode==='enable') {
     ciSetting('modxmcp.permit_site_id',$site);
     ciSetting('modxmcp.require_https','1');
     ciSetting('modxmcp.trust_proxy_https','1');
@@ -60,6 +70,4 @@ if($mode==='enable') {
 }
 $cache=$modx->getCacheManager();
 if($cache)$cache->refresh();
-echo $mode==='enable'
-    ? "MODXMCP_DISPOSABLE_TLS_REVERSE_PROXY_CONFIGURED\n"
-    : "MODXMCP_DISPOSABLE_TLS_REVERSE_PROXY_RESET\n";
+echo "MODXMCP_DISPOSABLE_SECURITY_POLICY_".strtoupper($mode)."_OK\n";

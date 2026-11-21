@@ -579,10 +579,117 @@ def main():
             print("CONTROLLER_ED25519_REAL_TLS_UNKNOWN_OUTCOME_FAIL_CLOSED_OK",
                   flush=True)
 
+            # Independent signer revocation: the site is the authority on
+            # which Controller public key is trusted. Rotate to a different
+            # key and prove that an otherwise-correct UNCONSUMED signature
+            # made with the old key no longer authorizes any content write.
+            rotated_dir=home/"rotated-controller-private"
+            rotated_dir.mkdir(mode=0o700)
+            rotated_dir.chmod(0o700)
+            rotated_key=rotated_dir/"issuer.pem"
+            rotated_private=Ed25519PrivateKey.generate()
+            rotated_key.write_bytes(rotated_private.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.PKCS8,
+                serialization.NoEncryption(),
+            ))
+            rotated_key.chmod(0o600)
+            rotated_public=rotated_private.public_key().public_bytes(
+                serialization.Encoding.Raw,serialization.PublicFormat.Raw
+            ).hex()
+            check(rotated_public!=public,
+                  "rotated Controller public key differs from old")
+            rotate_rid=setup_resource(
+                url,token,controller_key,PREFIX+" rotate"
+            )
+            rid_created.append(rotate_rid)
+            state_before_rotate=endpoint_state(url,token,[
+                {"role":"target","type":"resource","id":rotate_rid}
+            ])
+            intended_delete={
+                "type":"resource","id":rotate_rid,"dry_run":False,
+                "_runtime_preconditions":{
+                    "observed_site_revision":int(state_before_rotate["site_revision"]),
+                    "strict_site_revision":True,
+                    "read_set":state_before_rotate["read_set"],
+                },
+            }
+            delete_raw=json_bytes({
+                "action":"delete_element","type":"resource",
+                "data":intended_delete,
+            })
+            old_unconsumed_permit=authorize_ci_create_or_delete(
+                controller_key,"delete_element",delete_raw
+            )
+            run(["php",str(PROXY_SETTINGS),"rotate-key",SITE,rotated_public])
+            try:
+                http_send(url,token,delete_raw,old_unconsumed_permit)
+            except error.HTTPError as exc:
+                check(exc.code==403,
+                      "site rejected old but unused valid signature after key rotation")
+            else:
+                raise AssertionError("MCP accepted revoked Controller public key")
+            check(not bool(get_resource(url,token,rotate_rid)["deleted"]),
+                  "revoked signer did not delete resource")
+            check(
+                endpoint_state(url,token)["site_revision"]
+                    ==int(state_before_rotate["site_revision"]),
+                "revoked signature did not mutate connector revision"
+            )
+            new_permit=authorize_ci_create_or_delete(
+                rotated_key,"delete_element",delete_raw
+            )
+            accepted=http_send(url,token,delete_raw,new_permit)
+            check(accepted["success"] is True,
+                  "new trusted public key permitted valid signed MCP operation")
+            check(bool(get_resource(url,token,rotate_rid)["deleted"]),
+                  "rotated key mutation was independently confirmed")
+            rid_created.remove(rotate_rid)
+
+            # Revocation to NO KEY must fail closed. A signed request from
+            # even the current Controller is not sufficient while the site
+            # refuses to trust any Controller key.
+            remaining=rid_created[0]
+            before_revoke=endpoint_state(url,token,[
+                {"role":"target","type":"resource","id":remaining}
+            ])
+            pending={
+                "type":"resource","id":remaining,"dry_run":False,
+                "_runtime_preconditions":{
+                    "observed_site_revision":int(before_revoke["site_revision"]),
+                    "strict_site_revision":True,
+                    "read_set":before_revoke["read_set"],
+                },
+            }
+            raw_revoked=json_bytes({
+                "action":"delete_element","type":"resource","data":pending
+            })
+            valid_b_permit=authorize_ci_create_or_delete(
+                rotated_key,"delete_element",raw_revoked
+            )
+            run(["php",str(PROXY_SETTINGS),"revoke-key",SITE])
+            try:
+                http_send(url,token,raw_revoked,valid_b_permit)
+            except error.HTTPError as exc:
+                check(exc.code==403,"missing trusted public key denies all writes")
+            else:
+                raise AssertionError("MCP accepted signed request with revoked key")
+            check(not bool(get_resource(url,token,remaining)["deleted"]),
+                  "missing key did not alter resource")
+            check(
+                endpoint_state(url,token)["site_revision"]
+                    ==int(before_revoke["site_revision"]),
+                "missing public key did not alter revision"
+            )
+            run(["php",str(PROXY_SETTINGS),"rotate-key",SITE,rotated_public])
+            print("CONTROLLER_ED25519_REAL_TLS_KEY_ROTATION_REVOCATION_OK",
+                  flush=True)
+
             # Cleanup is also a protected, CAS-verified MCP HTTP mutation,
-            # not direct deletion from the database.
+            # not direct deletion from the database. Use the rotated current
+            # Controller key: the original key remains rejected.
             for cleanup_id in reversed(rid_created):
-                cleanup_resource(url,token,controller_key,cleanup_id)
+                cleanup_resource(url,token,rotated_key,cleanup_id)
             rid_created=[]
             print("CONTROLLER_ED25519_REAL_TLS_SOFT_DELETE_CLEANUP_OK",
                   flush=True)
@@ -591,7 +698,8 @@ def main():
                 f"platform={PLATFORM} checks={checks} "
                 "real_https=yes controller_review=yes "
                 "resource_cas=yes replay_denied=yes "
-                "lost_response_needs_review=yes cleanup_via_mcp=yes",
+                "lost_response_needs_review=yes key_rotation=yes "
+                "key_revocation=yes cleanup_via_mcp=yes",
                 flush=True,
             )
         finally:
