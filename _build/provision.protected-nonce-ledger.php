@@ -33,7 +33,9 @@ if($is2){
     $modx=\MODX\Revolution\modX::getInstance();
 }
 $modx->initialize('mgr');
-require_once MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
+// The migration is deliberately independent of the service account and
+// dispatcher: MODX 2/3 may not have initialized its modular autoloader yet.
+require_once MODX_CORE_PATH.'components/modxmcp/src/Security/ProtectedAuthorization.php';
 if(!class_exists('ModxMcp\Security\ProtectedAuthorization')){
     fwrite(STDERR,"Protected authorization support missing; nothing created.\n");exit(3);
 }
