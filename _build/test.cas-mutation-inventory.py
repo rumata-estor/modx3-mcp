@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""Fail closed when MODX MCP mutation registry changes without CAS review.
+
+This is an INVENTORY contract, not a claim that untested actions are safe.
+"""
+from pathlib import Path
+import json
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+TOOLS = ROOT / 'core/components/modxmcp/src/Tools'
+CATALOG = ROOT / 'core/components/modxmcp/src/Registry/MutationProcessorCatalog.php'
+SOURCE = ROOT / 'core/components/modxmcp/src/Tools/StateSupport.php'
+MANIFEST = ROOT / '_build/cas-mutation-inventory.json'
+catalog = json.loads(MANIFEST.read_text(encoding='utf-8'))
+assert catalog['schema_version'] == 1
+actual = {}
+for path in TOOLS.glob('*Tool.php'):
+    code = path.read_text()
+    if not re.search(r'function\s+isMutation\s*\(\s*\)\s*\{\s*return\s+true\s*;', code):
+        continue
+    if path.stem == 'ProcessorMutationTool':
+        continue
+    match = re.search(r'function\s+name\s*\(\s*\)\s*\{\s*return\s+[\x22\x27]([a-z0-9_]+)[\x22\x27]', code)
+    assert match, f'Unclassified action name in {path.name}'
+    action = match.group(1)
+    assert action not in actual, f'Duplicate action {action}'
+    actual[action] = dict(tool=path.stem, origin='static')
+
+pattern = (r'^\s*\x27([a-z0-9_]+)\x27\s*=>\s*array\(\x27group\x27\s*=>\s*\x27([^\x27]+)\x27,'
+           r'\s*\x27processor\x27\s*=>\s*\x27([^\x27]+)\x27,'
+           r'\s*\x27route\x27\s*=>\s*\x27([^\x27]+)\x27\)')
+for match in re.finditer(pattern, CATALOG.read_text(), re.M):
+    action, group, processor, route = match.groups()
+    assert action not in actual, f'Duplicate dynamic action {action}'
+    actual[action] = dict(tool='ProcessorMutationTool', origin='dynamic',
+                          route=route, processor=processor)
+
+expected = catalog['actions']
+added = sorted(actual.keys() - expected.keys())
+removed = sorted(expected.keys() - actual.keys())
+assert not added and not removed, (
+    f'CAS REVIEW REQUIRED: mutation actions added={added}; removed={removed}. '
+    'Classify each action before permitting green CI.'
+)
+for action, value in actual.items():
+    row = expected[action]
+    assert all(row.get(k) == v for k, v in value.items()), (
+        f'CAS REVIEW REQUIRED: route or implementing tool changed: {action}'
+    )
+    assert row['cas_boundary'] in (
+        'database_transaction', 'conditional_resource_transaction',
+        'revision_reserved_before_action'
+    ), f'Missing CAS boundary classification: {action}'
+    assert row['risk'] in ('critical', 'high', 'review'), action
+    assert isinstance(row['verified_scenarios'], list), action
+
+# Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
+state = SOURCE.read_text()
+chunk = state.split('public static function supportsAtomicRevision', 1)[1]
+chunk = chunk.split('return false;', 1)[0]
+supported = set(re.findall(r"'([a-z_]+)'", chunk.split('return true;', 1)[0]))
+database = {a for a,row in expected.items()
+            if row['cas_boundary']=='database_transaction'}
+assert supported == database, (
+    f'CAS atomic runtime policy does not match inventory! '
+    f'code-only={sorted(supported-database)}; '
+    f'manifest-only={sorted(database-supported)}'
+)
+conditional = {a for a,row in expected.items()
+               if row['cas_boundary']=='conditional_resource_transaction'}
+assert conditional == {'create_element','update_element','delete_element'}
+assert '&& empty($data[\'static\'])' in chunk
+assert '&& empty($data[\'static_file\'])' in chunk
+
+high_impact = {'install_package','uninstall_package','run_processor','regenerate_token',
+               'empty_recycle_bin','create_user','delete_user'}
+assert all(a in expected and expected[a]['risk']=='critical' for a in high_impact)
+assert all(expected[a]['cas_boundary']=='revision_reserved_before_action'
+           for a in high_impact)
+
+unverified = [a for a,row in expected.items() if not row['verified_scenarios']]
+print(f'CAS_INVENTORY_COVERAGE_OK total={len(expected)} '
+      f'static={sum(x["origin"]=="static" for x in expected.values())} '
+      f'dynamic={sum(x["origin"]=="dynamic" for x in expected.values())} '
+      f'atomic={len(database)} conditional={len(conditional)} '
+      f'external={sum(x["cas_boundary"]=="revision_reserved_before_action" for x in expected.values())}')
+print(f'CAS_INVENTORY_UNVERIFIED_ACTIONS={len(unverified)} '
+      f'(NOT PROVEN SAFE): {", ".join(unverified[:12])} ...')

@@ -1,0 +1,223 @@
+<?php
+/**
+ * CAS v2 failure injection for NON-transactional operations.
+ * ALL site data, files and packages are accessed through modxMCP::processRequest.
+ * The *only* direct SQL is creating/deleting a trigger in disposable CI MariaDB.
+ *
+ * Tests failure of revision reservation, successful file mutation/readback,
+ * and conservative revision consumption on a post-reservation operation error.
+ * No package downloads/installations or arbitrary processors are ever executed.
+ */
+if (PHP_SAPI !== 'cli' || getenv('MODXMCP_DISPOSABLE_CI') !== '1'
+    || strpos((string)getenv('MODX_CONFIG_CORE'), '/home/runner/') !== 0
+    || !is_file((string)getenv('MODX_CONFIG_CORE'))) {
+    fwrite(STDERR,"Refusing external fault test outside disposable CI.\n");exit(3);
+}
+require_once getenv('MODX_CONFIG_CORE');
+$is2 = !is_file(MODX_CORE_PATH . 'src/Revolution/modX.php');
+if ($is2) {
+    require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
+    $modx = new modX();
+} else {
+    require_once MODX_CORE_PATH . 'vendor/autoload.php';
+    $modx = \MODX\Revolution\modX::getInstance();
+}
+$modx->initialize('mgr');
+$modx->setOption('modxmcp.allow_root_filesystem_read', true);
+require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
+$api = new modxMCP($modx);
+function rpc($action, array $data=array()) {
+    global $api;
+    return $api->processRequest($action, '', $data);
+}
+function rev() {
+    $state = rpc('get_site_state');
+    return (int)$state['site_revision'];
+}
+function requireCas($ok,$label) {
+    global $checked;
+    if (!$ok) throw new RuntimeException('EXTERNAL_CAS_ASSERT_FAILED: '.$label);
+    $checked++;
+}
+function getFile($path) {
+    try {
+        $row = rpc('read_media_source_file',array('id'=>1,'path'=>$path));
+        $raw = $row['encoding']==='base64'
+            ? base64_decode($row['content'],true)
+            : $row['content'];
+        if (!is_string($raw)) throw new RuntimeException('Invalid MCP file data');
+        return $raw;
+    } catch (ModxMCPClientException $e) {
+        if (strpos($e->getMessage(), 'File not found')!==false) return null;
+        throw $e;
+    }
+}
+function folderPresent($name) {
+    $list=rpc('list_media_source_files',array('id'=>1,'path'=>''));
+    foreach ($list['entries'] as $row) {
+        if ($row['name']===$name) return (bool)$row['is_dir'];
+    }
+    return false;
+}
+function absentAtRevisionFault($action,array $args,$label,$read,$expected) {
+    global $checked;
+    $error=null;
+    try{ rpc($action,$args); }
+    catch (\Throwable $e){ $error=$e->getMessage(); }
+    requireCas(is_string($error)
+        && strpos($error,'Failed to persist MODX MCP site revision')!==false,
+        $label.' must fail at revision reservation before execution; actual='.(string)$error);
+    $now=$read();
+    requireCas($now===$expected,$label.' must not mutate external state');
+    echo 'CAS_EXTERNAL_DENY_OK '.$label.PHP_EOL;
+}
+$checked=0;
+$key=bin2hex(random_bytes(7));
+$dir='cas-fault-'.$key;
+$empty='cas-empty-'.$key;
+$other='cas-no-create-'.$key;
+$base=$dir.'/baseline.txt';
+$renamed=$dir.'/renamed.txt';
+$created=$dir.'/must-not-exist.txt';
+$trigger='cas_external_'.$key;
+$injected=false;
+$pdo=null;
+$hasDir=false;
+$hasEmpty=false;
+$filesCreated=array();
+$ready=false;
+try {
+    // No direct filesystem preparation. All fixtures are created through MCP.
+    rpc('create_media_folder',array('source'=>1,'parent'=>'/','name'=>$dir));
+    $hasDir=true;
+    rpc('create_media_folder',array('source'=>1,'parent'=>'/','name'=>$empty));
+    $hasEmpty=true;
+    rpc('create_media_file',array('source'=>1,'path'=>$dir,'name'=>'baseline.txt','content'=>'alpha-'.$key));
+    $filesCreated[]=$base;
+    requireCas(getFile($base)==='alpha-'.$key,'baseline MCP readback');
+    requireCas(folderPresent($dir) && folderPresent($empty),'MCP folder fixture readback');
+    $initial=rev();
+
+    $pdo=new \PDO(
+        'mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
+        'modx_ci','ci-throwaway-only-user',
+        array(\PDO::ATTR_ERRMODE=>\PDO::ERRMODE_EXCEPTION)
+    );
+    $pdo->exec(
+        'CREATE TRIGGER `'.$trigger.'` BEFORE UPDATE ON `modx_system_settings`'
+        .' FOR EACH ROW BEGIN'
+        ." IF NEW.`key`='modxmcp.site_revision' THEN"
+        ." SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='CAS_EXTERNAL_REVISION_DENIED';"
+        .' END IF; END'
+    );
+    $injected=true;
+
+    absentAtRevisionFault('create_media_file',
+        array('source'=>1,'path'=>$dir,'name'=>'must-not-exist.txt','content'=>'no'),
+        'create_media_file',function() use($created){return getFile($created);},null);
+    absentAtRevisionFault('update_media_file',
+        array('source'=>1,'path'=>$base,'content'=>'bad'),
+        'update_media_file',function() use($base){return getFile($base);},'alpha-'.$key);
+    absentAtRevisionFault('rename_media_file',
+        array('source'=>1,'path'=>$base,'new_name'=>'renamed.txt'),
+        'rename_media_file',function() use($base){return getFile($base);},'alpha-'.$key);
+    requireCas(getFile($renamed)===null,'rename destination absent');
+    absentAtRevisionFault('delete_media_file',
+        array('source'=>1,'path'=>$base),
+        'delete_media_file',function() use($base){return getFile($base);},'alpha-'.$key);
+    absentAtRevisionFault('create_media_folder',
+        array('source'=>1,'parent'=>'/','name'=>$other),
+        'create_media_folder',function() use($other){return folderPresent($other);},false);
+    absentAtRevisionFault('delete_media_folder',
+        array('source'=>1,'path'=>$empty),
+        'delete_media_folder',function() use($empty){return folderPresent($empty);},true);
+    // Package operations and arbitrary processor are ONLY invoked when the
+    // revision trigger blocks their execution before any network/process work.
+    absentAtRevisionFault('install_package',
+        array('package'=>'nonexistent-cas-ci-'.$key,'provider'=>2147483646),
+        'install_package_gate',function(){return true;},true);
+    absentAtRevisionFault('uninstall_package',
+        array('signature'=>'nonexistent-cas-ci-'.$key),
+        'uninstall_package_gate',function(){return true;},true);
+    absentAtRevisionFault('run_processor',
+        array('processor'=>'context/getlist','properties'=>array()),
+        'run_processor_gate',function(){return true;},true);
+    absentAtRevisionFault('regenerate_token',array(),
+        'regenerate_token_gate',function(){return true;},true);
+    absentAtRevisionFault('empty_recycle_bin',array(),
+        'empty_recycle_bin_gate',function(){return true;},true);
+
+    requireCas(rev()===$initial,'blocked mutations never increment revision');
+    echo 'CAS_EXTERNAL_DENIAL_MATRIX_OK=11'.PHP_EOL;
+    $pdo->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');
+    $injected=false;
+
+    // Positive controls: the same media tools DO modify the fixture after
+    // the fault injector is removed, and each increases revision once.
+    $prev=rev();
+    rpc('update_media_file',array('source'=>1,'path'=>$base,'content'=>'beta-'.$key));
+    requireCas(getFile($base)==='beta-'.$key,'MCP update success readback');
+    requireCas(rev()===$prev+1,'MCP update revision increment once');
+
+    $prev=rev();
+    rpc('rename_media_file',array('source'=>1,'path'=>$base,'new_name'=>'renamed.txt'));
+    $filesCreated=array($renamed);
+    requireCas(getFile($base)===null && getFile($renamed)==='beta-'.$key,
+        'MCP rename success readback');
+    requireCas(rev()===$prev+1,'MCP rename revision increment once');
+
+    $prev=rev();
+    rpc('create_media_file',array('source'=>1,'path'=>$dir,'name'=>'must-not-exist.txt','content'=>'fresh-'.$key));
+    $filesCreated[]=$created;
+    requireCas(getFile($created)==='fresh-'.$key,'MCP create success readback');
+    requireCas(rev()===$prev+1,'MCP create revision increment once');
+
+    $prev=rev();
+    rpc('delete_media_file',array('source'=>1,'path'=>$created));
+    $filesCreated=array($renamed);
+    requireCas(getFile($created)===null,'MCP delete success readback');
+    requireCas(rev()===$prev+1,'MCP delete revision increment once');
+
+    $prev=rev();
+    rpc('delete_media_folder',array('source'=>1,'path'=>$empty));
+    $hasEmpty=false;
+    requireCas(!folderPresent($empty),'MCP delete folder readback');
+    requireCas(rev()===$prev+1,'MCP folder delete revision increment once');
+
+    $prev=rev();
+    $failure=null;
+    try {
+        rpc('update_media_file',array(
+            'source'=>1,'path'=>$dir.'/does-not-exist.txt','content'=>'wrong'));
+    } catch (\Throwable $e){$failure=$e->getMessage();}
+    requireCas($failure!==null,'post-reservation tool error is reported');
+    requireCas(rev()===$prev+1,
+        'post-reservation tool failure consumes revision conservatively');
+    requireCas(getFile($renamed)==='beta-'.$key,'error did not touch unrelated file');
+    echo 'CAS_EXTERNAL_SUCCESS_AND_FAILURE_PATHS_OK'.PHP_EOL;
+    $ready=true;
+} finally {
+    if ($injected && $pdo) {
+        try { $pdo->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`'); }
+        catch (\Throwable $e) { fwrite(STDERR,'EXTERNAL_CI_TRIGGER_CLEANUP_FAILED '.$e->getMessage().PHP_EOL); }
+    }
+    // Only MCP mutations clean disposable files and directories.
+    foreach (array_reverse($filesCreated) as $path) {
+        try { rpc('delete_media_file',array('source'=>1,'path'=>$path)); }
+        catch (\Throwable $e) {fwrite(STDERR,'EXTERNAL_CI_FILE_CLEANUP_ERROR '.$e->getMessage().PHP_EOL);}
+    }
+    if ($hasEmpty) {
+        try {rpc('delete_media_folder',array('source'=>1,'path'=>$empty));}
+        catch (\Throwable $e) {fwrite(STDERR,'EXTERNAL_CI_EMPTY_CLEANUP_ERROR '.$e->getMessage().PHP_EOL);}
+    }
+    if ($hasDir) {
+        try {rpc('delete_media_folder',array('source'=>1,'path'=>$dir));}
+        catch (\Throwable $e) {fwrite(STDERR,'EXTERNAL_CI_DIR_CLEANUP_ERROR '.$e->getMessage().PHP_EOL);}
+    }
+    if ($ready) {
+        requireCas(!folderPresent($dir) && !folderPresent($empty)
+            && !folderPresent($other),'all disposable media paths removed via MCP');
+    }
+}
+if (!$ready) throw new RuntimeException('External CAS matrix incomplete');
+echo 'CAS_EXTERNAL_MCP_ONLY_OK checks='.$checked.PHP_EOL;

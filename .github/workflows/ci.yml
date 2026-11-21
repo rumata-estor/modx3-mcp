@@ -66,6 +66,8 @@ jobs:
 
       - name: PR #46 raw TV CAS regression (AgelxNash)
         run: php _build/test.resource-tv-cas.php
+      - name: CAS inventory must classify all 116 mutating API actions
+        run: python3 _build/test.cas-mutation-inventory.py
 
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata
         run: |
