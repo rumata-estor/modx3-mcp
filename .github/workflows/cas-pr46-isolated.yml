@@ -188,6 +188,43 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-protected-auth.php
+      - name: Protected Ed25519 HTTP endpoint token, TLS, replay, CAS and mutation lifecycle
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+          BUILD_PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          python3 _build/test.ci-protected-http.py
+      - name: Signed Ed25519 authorization through the real MODX HTTP endpoint
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          PRIV="$RUNNER_TEMP/http-ed25519-private.pem"
+          PUB="$RUNNER_TEMP/http-ed25519-public.hex"
+          TOK="$RUNNER_TEMP/http-api-token"
+          PORT=18652
+          SERVER_PID=""
+          cleanup() {
+            php _build/test.ci-protected-http-settings.php disable "$PUB" "$TOK" || true
+            if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null || true; fi
+            rm -f "$PRIV" "$PUB" "$TOK"
+          }
+          trap cleanup EXIT
+          node _build/test.ci-ed25519-controller.cjs generate "$PRIV" > "$PUB"
+          php _build/test.ci-protected-http-settings.php enable "$PUB" "$TOK"
+          php -S "127.0.0.1:$PORT" -t "$RUNNER_TEMP/modx-site" \
+            "$GITHUB_WORKSPACE/_build/test.ci-protected-http-router.php" \
+            > "$RUNNER_TEMP/protected-http-server.log" 2>&1 &
+          SERVER_PID=$!
+          if ! node _build/test.ci-protected-http.cjs "$PRIV" "$TOK" "$PORT" \
+              "ci-http-${{ matrix.platform }}"; then
+            tail -60 "$RUNNER_TEMP/protected-http-server.log" || true
+            exit 1
+          fi
       - name: All 116 mutations require strict CAS; legacy fallback is closed
         env:
           MODXMCP_DISPOSABLE_CI: '1'

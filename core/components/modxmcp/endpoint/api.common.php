@@ -214,10 +214,13 @@ try {
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
     echo json_encode(['success' => true, 'data' => $result, 'caps' => $caps], JSON_UNESCAPED_UNICODE);
 } catch (ModxMCPClientException $e) {
-    // Expected, actionable error (validation, "not installed", "disabled", "not found").
-    http_response_code(400);
+    // Authorization failures are 403, never confused with routine input errors.
+    // Do not reveal whether a signature, site, key or nonce was wrong.
+    $message = $e->getMessage();
+    $authDenied = strpos($message, 'AUTH_DENIED:') === 0;
+    http_response_code($authDenied ? 403 : 400);
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
-    echo json_encode(['success' => false, 'error' => $e->getMessage(), 'caps' => $caps], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'error' => $message, 'caps' => $caps], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     $errorId = uniqid('modxmcp_', true);
     $modx->log(
