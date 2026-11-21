@@ -113,9 +113,31 @@ class ClientConfigSupport
 
     public static function refresh($context)
     {
-        $manager = $context->modx()->getCacheManager();
-        if ($manager) {
-            $manager->refresh();
+        $modx = $context->modx();
+        $manager = $modx->getCacheManager();
+        if (!$manager) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: ClientConfig was saved but cache manager is unavailable.'
+            );
         }
+        // RU: ClientConfig хранит собственный ключ clientconfig в разделе
+        // RU: system_settings; общий refresh() не гарантирует его удаления.
+        // EN: ClientConfig uses the clientconfig key in system_settings;
+        // EN: generic refresh() is not a reliable substitute for deletion.
+        $options = array('cache_key' => 'system_settings');
+        $manager->delete('clientconfig', $options);
+        // RU: Проверяем, что устаревшая запись не осталась доступна.
+        // EN: Verify the stale cache entry is no longer readable.
+        if ($manager->get('clientconfig', $options) !== null) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: ClientConfig was saved but cache invalidation failed.'
+            );
+        }
+        // RU: Очистка ресурса соответствует настройке самого дополнения.
+        // EN: Respect ClientConfig's own resource-cache clear switch.
+        if ($modx->getOption('clientconfig.clear_cache', null, true)) {
+            $manager->delete('', array('cache_key' => 'resource'));
+        }
+        $modx->invokeEvent('ClientConfig_ConfigChange');
     }
 }
