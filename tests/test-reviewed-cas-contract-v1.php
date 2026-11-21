@@ -81,4 +81,55 @@ $deny(function() use ($parse,$encode) {
        'resource_id'=>57,'tvs'=>array('subtitle'=>'new'),
        '_cas_expected'=>array('tvs'=>array('another'=>'old')))));
 },'extra TV name');
+
+// New test-only resource lifecycle contract: searchable and exact soft delete.
+$searchableCreate=$encode('create_element','resource',array(
+    'pagetitle'=>'Тест Site Agent — contract','content'=>'safe test',
+    'published'=>false,'hidemenu'=>true,'searchable'=>false,
+    'parent'=>0,'context_key'=>'web','isfolder'=>false,
+    '_cas_expected'=>array('absent'=>true)));
+$searchableParsed=$parse->invoke(null,$searchableCreate);
+if ($searchableParsed[2]['searchable']!==false) {
+    throw new RuntimeException('Searchable false was discarded');
+}
+$deny(function() use ($parse,$encode) {
+    $parse->invoke(null,$encode('create_element','resource',array(
+        'pagetitle'=>'Тест Site Agent — invalid','content'=>'',
+        'published'=>0,'searchable'=>'false',
+        '_cas_expected'=>array('absent'=>true))));
+},'searchable string');
+$deletionBaseline=array(
+    'pagetitle'=>'Тест Site Agent — contract','parent'=>0,
+    'context_key'=>'web','published'=>false,'deleted'=>false,
+    'isfolder'=>false,'searchable'=>false,'hidemenu'=>true);
+$deleteBody=$encode('delete_element','resource',array(
+    'id'=>101,'_cas_expected'=>array('fields'=>$deletionBaseline)));
+$deleteParsed=$parse->invoke(null,$deleteBody);
+if ($deleteParsed[0]!=='delete_element' ||
+    $deleteParsed[1]!=='resource' ||
+    $deleteParsed[3]['fields']!==$deletionBaseline) {
+    throw new RuntimeException('Exact soft deletion contract failed');
+}
+$deny(function() use ($parse,$encode,$deletionBaseline) {
+    $bad=$deletionBaseline; $bad['published']=true;
+    $parse->invoke(null,$encode('delete_element','resource',array(
+        'id'=>101,'_cas_expected'=>array('fields'=>$bad))));
+},'published resource deletion');
+$deny(function() use ($parse,$encode,$deletionBaseline) {
+    $bad=$deletionBaseline; $bad['pagetitle']='Обычная страница';
+    $parse->invoke(null,$encode('delete_element','resource',array(
+        'id'=>101,'_cas_expected'=>array('fields'=>$bad))));
+},'non-test resource deletion');
+$deny(function() use ($parse,$encode,$deletionBaseline) {
+    $bad=$deletionBaseline; unset($bad['hidemenu']);
+    $parse->invoke(null,$encode('delete_element','resource',array(
+        'id'=>101,'_cas_expected'=>array('fields'=>$bad))));
+},'missing deletion baseline');
+$deny(function() use ($parse,$encode,$deletionBaseline) {
+    $parse->invoke(null,$encode('delete_element','resource',array(
+        'id'=>101,'force'=>true,
+        '_cas_expected'=>array('fields'=>$deletionBaseline))));
+},'unexpected destructive option');
+echo "REVIEWED_RESOURCE_LIFECYCLE_CONTRACT_PASS\\n";
+
 echo "REVIEWED_MODX_CAS_SHAPE_AND_STALE_STATE_PASS\n";

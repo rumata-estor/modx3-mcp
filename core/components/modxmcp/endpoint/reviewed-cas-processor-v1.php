@@ -76,14 +76,14 @@ final class ModxMcpReviewedCasV1
             'chunk'=>'name','snippet'=>'name','tv'=>'name');
         if (!isset($names[$kind]) ||
             !in_array($action,array('create_element','update_element',
-                                   'update_resource_tvs'),true) ||
+                                   'delete_element','update_resource_tvs'),true) ||
             !isset($data['_cas_expected']) ||
             !is_array($data['_cas_expected'])) {
             throw new RuntimeException('Unsupported CAS operation or missing baseline');
         }
         $fields=array(
             'resource'=>array('content','pagetitle','longtitle','description',
-              'introtext','menutitle','alias','published','hidemenu',
+              'introtext','menutitle','alias','published','hidemenu','searchable',
               'parent','template','context_key','isfolder','menuindex'),
             'template'=>array('content','templatename','description','category'),
             'chunk'=>array('snippet','name','description','category'),
@@ -125,6 +125,35 @@ final class ModxMcpReviewedCasV1
                  !in_array($data['published'],array(0,1,false,true),true))) {
                 throw new RuntimeException('Page published state must be explicit');
             }
+            if ($kind==='resource' && array_key_exists('searchable',$data) &&
+                !in_array($data['searchable'],array(0,1,false,true),true)) {
+                throw new RuntimeException('Page searchable flag must be explicit boolean');
+            }
+        } elseif ($action==='delete_element') {
+            // Only test-owned, unpublished, hidden, non-indexable leaf pages.
+            // The signed before-state must match the exact soft-delete target.
+            $fieldsRequired=array('pagetitle','parent','context_key','published',
+                'deleted','isfolder','searchable','hidemenu');
+            $present=isset($expected['fields']) && is_array($expected['fields'])
+                ? array_keys($expected['fields']) : array();
+            sort($present); sort($fieldsRequired);
+            $baseline=isset($expected['fields']) ? $expected['fields'] : array();
+            if ($kind!=='resource' || !isset($data['id']) ||
+                !is_int($data['id']) || $data['id']<1 ||
+                array_keys($data)!==array('id') ||
+                array_keys($expected)!==array('fields') ||
+                $present!==$fieldsRequired ||
+                !is_string($baseline['pagetitle']) ||
+                strpos($baseline['pagetitle'],'Тест Site Agent —')!==0 ||
+                $baseline['context_key']!=='web' ||
+                $baseline['parent']!==0 ||
+                !in_array($baseline['published'],array(0,false),true) ||
+                !in_array($baseline['deleted'],array(0,false),true) ||
+                !in_array($baseline['isfolder'],array(0,false),true) ||
+                !in_array($baseline['searchable'],array(0,false),true) ||
+                !in_array($baseline['hidemenu'],array(1,true),true)) {
+                throw new RuntimeException('Delete limited to exact safe test-resource state');
+            }
         } else {
             if (!isset($data['id']) || !is_int($data['id']) || $data['id']<1 ||
                 array_keys($expected)!==array('fields') ||
@@ -148,7 +177,7 @@ final class ModxMcpReviewedCasV1
             }
         }
         foreach ($data as $field=>$value) {
-            if (($field==='id' && $action==='update_element') ||
+            if (($field==='id' && in_array($action,array('update_element','delete_element'),true)) ||
                 ($action==='update_resource_tvs' &&
                  ($field==='resource_id' || $field==='tvs'))) { continue; }
             if (!in_array($field,$fields[$kind],true) || is_array($value)
@@ -376,6 +405,56 @@ final class ModxMcpReviewedCasV1
                 if (!is_array($still) || (int)$still['id']!==$newId) {
                     throw new RuntimeException('Created object identity changed');
                 }
+            } elseif ($action==='delete_element') {
+                $id=$data['id'];
+                $original=self::row($modx,$table,'id',$id,true);
+                if (!is_array($original)) {
+                    throw new RuntimeException('CAS delete target vanished');
+                }
+                self::validateBefore($original,$expected['fields']);
+                // Never delete an existing published page or a subtree:
+                // this initial pilot is strictly for a disposable test leaf.
+                if (strpos((string)$original['pagetitle'],'Тест Site Agent —')!==0 ||
+                    (int)$original['published']!==0 ||
+                    (int)$original['deleted']!==0 ||
+                    (int)$original['isfolder']!==0 ||
+                    (int)$original['searchable']!==0 ||
+                    (int)$original['hidemenu']!==1 ||
+                    (int)$original['parent']!==0 ||
+                    (string)$original['context_key']!=='web') {
+                    throw new RuntimeException('Protected delete target is no longer safe');
+                }
+                $children=self::query($modx,
+                    'SELECT `id` FROM '.$table.' WHERE `parent`=? FOR UPDATE',
+                    array($id))->fetchAll(PDO::FETCH_COLUMN,0);
+                if (count($children)!==0) {
+                    throw new RuntimeException('Protected delete refuses a resource with children');
+                }
+                // Use the standard MODX resource Delete processor so the
+                // site sees a SOFT deletion, not a hard SQL DELETE.
+                $processor=$major===3
+                    ? 'MODX\\Revolution\\Processors\\Resource\\Delete'
+                    : 'resource/delete';
+                $response=$modx->runProcessor($processor,array('id'=>$id));
+                if (!$response || $response->isError()) {
+                    throw new RuntimeException('MODX resource delete processor refused CAS');
+                }
+                $after=self::row($modx,$table,'id',$id,true);
+                if (!is_array($after)) {
+                    throw new RuntimeException('Protected delete was not a soft delete');
+                }
+                self::checkAfter($after,array('deleted'=>1,'published'=>0));
+                foreach ($original as $field=>$value) {
+                    if (in_array($field,array('deleted','deletedon','deletedby',
+                            'editedon','editedby'),true)) {
+                        continue;
+                    }
+                    if (!array_key_exists($field,$after) ||
+                        $after[$field]!==$value) {
+                        throw new RuntimeException('Delete changed an unapproved resource field');
+                    }
+                }
+                $newId=$id;
             } else {
                 $id=$data['id']; unset($data['id']);
                 $original=self::row($modx,$table,'id',$id,true);
