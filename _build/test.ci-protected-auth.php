@@ -191,6 +191,57 @@ try {
         'stale signed mutation did not overwrite Manager content');
     echo 'PROTECTED_CAS_MANAGER_EDIT_CONFLICT_DENIED_OK'.PHP_EOL;
 
+    // Real overlapping update race. The independent Manager worker starts an
+    // InnoDB transaction and saves (without commit), keeping the target row
+    // locked. The signed MCP write must wait for that commit, read the NEW
+    // target fingerprint, reject STALE_STATE, and never overwrite the human.
+    $racingBefore=guardTarget('resource',$id);
+    $revisionBeforeRace=(int)$racingBefore['observed_site_revision'];
+    $racingData=array(
+        'type'=>'resource','id'=>$id,'content'=>'MCP_MUST_NOT_OVERWRITE',
+        '_runtime_preconditions'=>$racingBefore
+    );
+    $racingEnvelope=signedCall('update_element','',$racingData);
+    $readyFile=getenv('RUNNER_TEMP').'/cas-manager-race-'.bin2hex(random_bytes(6));
+    $worker=array(PHP_BINARY,__DIR__.'/test.ci-manager-racing-edit.php',
+        (string)$id,$readyFile);
+    $pipes=array();
+    $workerProcess=proc_open($worker,array(
+        0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+    ),$pipes);
+    if(!is_resource($workerProcess))
+        throw new RuntimeException('Could not start overlapping Manager writer');
+    fclose($pipes[0]);
+    $deadline=microtime(true)+15;
+    while(!is_file($readyFile) && microtime(true)<$deadline)usleep(10000);
+    must(is_file($readyFile),'Manager writer holds uncommitted resource row');
+    $started=microtime(true);
+    $raceDenied=false;
+    try {
+        rpc('update_element','',$racingData,$racingEnvelope);
+    } catch(\ModxMCPClientException $e) {
+        $raceDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    $blockedFor=microtime(true)-$started;
+    $stdout=stream_get_contents($pipes[1]);
+    $stderr=stream_get_contents($pipes[2]);
+    fclose($pipes[1]);fclose($pipes[2]);
+    $workerExit=proc_close($workerProcess);
+    must($workerExit===0
+        && strpos($stdout,'DISPOSABLE_MANAGER_ROW_RACE_COMMITTED')!==false,
+        'independent racing Manager writer committed: '.$stderr);
+    must($blockedFor>=0.5,
+        'protected MCP write waited for real Manager row transaction');
+    must($raceDenied,'concurrent Manager edit caused stale signed MCP refusal');
+    $racingRead=$api->processRequest('get_element','',array(
+        'type'=>'resource','id'=>$id
+    ));
+    must((string)$racingRead['content']==='MANAGER_RACING',
+        'concurrent Manager content retained');
+    must((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$revisionBeforeRace,'denied racing MCP write did not increment revision');
+    echo 'PROTECTED_CAS_INNODB_ROW_RACE_DENIED_OK'.PHP_EOL;
+
     $update=array('type'=>'resource','id'=>$id,'content'=>'AFTER',
         '_runtime_preconditions'=>guardTarget('resource',$id));
     $updated=rpc('update_element','',$update,signedCall('update_element','',$update));
