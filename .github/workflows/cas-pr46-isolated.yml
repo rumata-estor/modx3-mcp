@@ -18,6 +18,9 @@ jobs:
     name: Disposable ${{ matrix.platform }} / PHP ${{ matrix.php_version }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # RU: PHP 8.4 — исследовательский тест, не блокирующий релизную матрицу.
+    # EN: PHP 8.4 is exploratory, not a declared supported release target.
+    continue-on-error: ${{ matrix.experimental == 'yes' }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,6 +42,9 @@ jobs:
           - {platform: modx3, modx_version: '3.2.4', php_version: '8.1', signature: 'modx3mcp-1.2.7-pl'}
           - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl'}
           - {platform: modx3, modx_version: '3.2.4', php_version: '8.3', signature: 'modx3mcp-1.2.7-pl'}
+          # RU: Конфигурация из отчёта пользователя — эксперимент PHP 8.4.
+          # EN: Real-world feedback environment; PHP 8.4 experimental only.
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.4', signature: 'modx3mcp-1.2.7-pl', experimental: 'yes'}
     services:
       mariadb:
         image: mariadb:10.11
