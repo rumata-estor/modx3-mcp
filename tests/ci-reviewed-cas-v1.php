@@ -163,9 +163,54 @@ try {
         if ((string)$page->getTVValue($tvName)!=='Заполнено') {
             throw new RuntimeException('Protected TV value not persisted');
         }
+        // One disposable non-searchable page: real CMS create, guarded
+        // single-use soft-delete, stale-state rejection and nonce replay.
+        $trashTitle='Тест Site Agent — '.$unique;
+        $trashCreate=$make('create_element','resource',array(
+            'pagetitle'=>$trashTitle,'content'=>'Temporary isolated CI page',
+            'published'=>false,'searchable'=>false,'hidemenu'=>true,
+            'isfolder'=>false,'parent'=>0,'context_key'=>'web',
+            'template'=>0,'_cas_expected'=>array('absent'=>true)));
+        $run($trashCreate);
+        $trash=$modx->getObject($classes['resource'],array('pagetitle'=>$trashTitle));
+        if (!$trash || (int)$trash->get('published')!==0 ||
+            (int)$trash->get('searchable')!==0 ||
+            (int)$trash->get('hidemenu')!==1 ||
+            (int)$trash->get('deleted')!==0) {
+            throw new RuntimeException('Isolated searchable=false create failed');
+        }
+        $created['delete_resource']=(int)$trash->get('id');
+        $baseline=array(
+            'pagetitle'=>$trashTitle,'parent'=>0,'context_key'=>'web',
+            'published'=>false,'deleted'=>false,'isfolder'=>false,
+            'searchable'=>false,'hidemenu'=>true);
+        $stale=$baseline; $stale['searchable']=true;
+        $wrong=$make('delete_element','resource',array(
+            'id'=>$created['delete_resource'],
+            '_cas_expected'=>array('fields'=>$stale)));
+        $deny(function() use ($run,$wrong) { $run($wrong); },
+              'stale soft-delete baseline');
+        $assertStill=$modx->getObject($classes['resource'],$created['delete_resource']);
+        if (!$assertStill || (int)$assertStill->get('deleted')!==0) {
+            throw new RuntimeException('Stale delete changed resource');
+        }
+        $approved=$make('delete_element','resource',array(
+            'id'=>$created['delete_resource'],
+            '_cas_expected'=>array('fields'=>$baseline)));
+        $run($approved);
+        $trash=$modx->getObject($classes['resource'],$created['delete_resource']);
+        if (!$trash || (int)$trash->get('deleted')!==1) {
+            throw new RuntimeException('Soft delete did not mark deleted=1');
+        }
+        $deny(function() use ($run,$approved) { $run($approved); },
+              'delete nonce replay');
+        echo "REVIEWED_CAS_REAL_MODX_SEARCHABLE_SOFT_DELETE_OK $platform\n";
         echo "REVIEWED_CAS_REAL_MODX_PAGE_TEMPLATE_TV_OK $platform\n";
     }
 } finally {
+    if (isset($created['delete_resource'])) {
+        $modx->removeObject($classes['resource'],array('id'=>$created['delete_resource']));
+    }
     if (isset($created['resource'])) {
         $modx->removeObject($classes['resource'],array('id'=>$created['resource']));
     }
