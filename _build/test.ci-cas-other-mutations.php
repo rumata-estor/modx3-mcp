@@ -87,6 +87,7 @@ $unique = bin2hex(random_bytes(5));
 $trigger = 'cas_other_fault_' . $unique;
 $resources = array();
 $categories = array();
+$chunks = array();
 $settings = array();
 $results = array();
 $triggerArmed = false;
@@ -113,8 +114,14 @@ try {
     $catDelete = checked('create_category',array('name'=>$newCatDelete));
     $categoryDeleteId = (int)$catDelete['id'];
     $categories[] = $categoryDeleteId;
-    // Settings may be unavailable in a given MODX variant. Record a
-    // setup failure explicitly; do not silently substitute direct SQL.
+    $chunk = checked('create_element', array(
+        'type'=>'chunk','name'=>'CAS boundary chunk '.$unique,
+        'content'=>'A disposable uncategorized chunk for the CAS test'
+    ));
+    $chunkId = (int)$chunk['id'];
+    if ($chunkId <= 0) throw new RuntimeException('Invalid CAS chunk fixture');
+    $chunks[] = $chunkId;
+    // Settings must also be created through MCP, never via direct MODX API.
     $keyUpdate = 'cas_test_update_'.$unique;
     $keyDelete = 'cas_test_delete_'.$unique;
     foreach (array($keyUpdate, $keyDelete) as $key) {
@@ -160,6 +167,12 @@ try {
         'type'=>'resource','id'=>$resourceId
     ), 'soft_delete_resource', function() use ($resourceId) {
         return (int)getResource($resourceId)['deleted'];
+    }, 0);
+
+    probe('assign_element_category', array(
+        'type'=>'chunk','id'=>$chunkId,'category_id'=>$categoryId
+    ), 'assign_element_category', function() use ($chunkId) {
+        return (int)rpc('get_element',array('type'=>'chunk','id'=>$chunkId))['category'];
     }, 0);
 
     $candidateCat = 'CAS boundary new category '.$unique;
@@ -233,8 +246,10 @@ try {
     echo 'CAS_MEDIA_FILE_REVISION_PRECHECK_OK' . PHP_EOL;
 
     $revisionAfter = (int)rpc('get_site_state')['site_revision'];
-    echo 'CAS_OTHER_REVISION_UNCHANGED='
-        . ($revisionAfter === $revisionBefore ? 'YES' : 'NO') . PHP_EOL;
+    if ($revisionAfter !== $revisionBefore) {
+        throw new RuntimeException('CAS revision changed despite denied writes');
+    }
+    echo 'CAS_OTHER_REVISION_UNCHANGED=YES' . PHP_EOL;
     $testRan = true;
 } finally {
     if ($triggerArmed) {
@@ -256,6 +271,12 @@ try {
             fwrite(STDERR,'MCP_CLEANUP_SETTING_FAILED '.$key.' '.$e->getMessage()."\n");
         }
     }
+    foreach (array_unique(array_reverse($chunks)) as $cid) {
+        try { rpc('delete_element',array('type'=>'chunk','id'=>$cid)); }
+        catch (\Throwable $e) {
+            fwrite(STDERR,'MCP_CLEANUP_CHUNK_FAILED '.$cid.' '.$e->getMessage()."\n");
+        }
+    }
     foreach (array_unique(array_reverse($categories)) as $cid) {
         try { rpc('delete_category',array('id'=>$cid,'dry_run'=>false)); }
         catch (\Throwable $e) {
@@ -274,4 +295,13 @@ $summary=array();
 foreach ($results as $entry) $summary[$entry['action']]=$entry['result'];
 echo 'CAS_OTHER_BOUNDARY_SUMMARY ' . json_encode($summary, JSON_UNESCAPED_SLASHES)
     . PHP_EOL;
-if (count($results)!==9) throw new RuntimeException('Expected 9 probes');
+if (count($results)!==10) throw new RuntimeException('Expected 10 probes');
+foreach ($results as $entry) {
+    if ($entry['result'] !== 'rolled-back') {
+        throw new RuntimeException(
+            'CAS boundary regression: ' . $entry['action'] . ' '
+            . $entry['result'] . ' ' . (string)$entry['exception']
+        );
+    }
+}
+echo 'CAS_ALL_OTHER_DB_BOUNDARIES_ATOMIC_OK=10' . PHP_EOL;
