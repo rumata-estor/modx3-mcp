@@ -185,3 +185,10 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-external-cas-effects.php
+      - name: Fail-closed CAS gate sweep across all registered external mutation actions
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-mutation-gates.php
