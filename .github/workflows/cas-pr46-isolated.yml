@@ -5,7 +5,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'feature/1.2.8-controller-tls-e2e-20261121']
 
 permissions:
   contents: read
@@ -225,6 +225,25 @@ jobs:
             tail -60 "$RUNNER_TEMP/protected-http-server.log" || true
             exit 1
           fi
+      - name: Checkout pinned human-reviewed Site Agent Controller/Executor v4 (source only)
+        uses: actions/checkout@v4
+        with:
+          repository: rumata-estor/site-agent-runtime
+          ref: 364289feb1f5989fb35bfda1ace4fce0afc5c35c
+          path: siteagent-v4
+          persist-credentials: false
+      - name: Controller human review to real TLS to installed MODX MCP with crash matrix
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+          BUILD_PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          test "$(git -C siteagent-v4 rev-parse HEAD)" = '364289feb1f5989fb35bfda1ace4fce0afc5c35c'
+          python3 -m pip install --only-binary=:all: 'cryptography>=44,<50'
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          export SITEAGENT_V4_ROOT="$GITHUB_WORKSPACE/siteagent-v4"
+          python3 _build/test.ci-siteagent-v4-real-tls.py
       - name: All 116 mutations require strict CAS; legacy fallback is closed
         env:
           MODXMCP_DISPOSABLE_CI: '1'
