@@ -25,14 +25,9 @@ if ($is2) {
 $modx->initialize('mgr');
 require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $api = new modxMCP($modx);
-$tvClass = $is2 ? 'modTemplateVar' : 'MODX\\Revolution\\modTemplateVar';
-$linkClass = $is2 ? 'modTemplateVarTemplate' : 'MODX\\Revolution\\modTemplateVarTemplate';
-$resClass = $is2 ? 'modResource' : 'MODX\\Revolution\\modResource';
-$tplClass = $is2 ? 'modTemplate' : 'MODX\\Revolution\\modTemplate';
 $fixture = bin2hex(random_bytes(5));
 $tvs = array();
-$links = array();
-$resource = null;
+$rid = 0;
 $success = false;
 $checks = 0;
 function requireTrue($ok, $label) {
@@ -50,58 +45,75 @@ function findTV(array $data, $name) {
     }
     throw new RuntimeException('Missing resource TV: ' . $name);
 }
-try {
-    $template = $modx->getObject($tplClass, 1);
-    if (!$template) {
-        $templates = $modx->getCollection($tplClass, array());
-        $template = $templates ? reset($templates) : null;
-    }
-    requireTrue(!!$template, 'template fixture');
-    $templateId = (int)$template->get('id');
 
-    // Two temporary, assigned TVs. The second uses the literal @INHERIT
-    // binding: CAS must not compare rendered HTML, expand bindings, or store
-    // an expanded value on retry.
+function freshMcpReadback($rid) {
+    $cmd = array(
+        PHP_BINARY,
+        __DIR__ . '/test.ci-pr46-mcp-readback.php',
+        (string)$rid,
+    );
+    $pipes = array();
+    $proc = proc_open($cmd, array(
+        0=>array('pipe','r'),
+        1=>array('pipe','w'),
+        2=>array('pipe','w')
+    ), $pipes);
+    if (!is_resource($proc)) throw new RuntimeException('MCP readback start failed');
+    fclose($pipes[0]);
+    $output = stream_get_contents($pipes[1]);
+    $error = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);fclose($pipes[2]);
+    $exit = proc_close($proc);
+    if ($exit !== 0) throw new RuntimeException('MCP readback failed: '.$error);
+    $result = json_decode(trim($output), true);
+    if (!is_array($result) || !isset($result['tvs'], $result['state'])) {
+        throw new RuntimeException('MCP readback returned invalid data');
+    }
+    return $result;
+}
+try {
+    $templates = rpc('list_elements',array('type'=>'template','limit'=>50));
+    requireTrue(is_array($templates) && count($templates)>0,
+        'MCP template listing for disposable fixture');
+    $templateId = (int)$templates[0]['id'];
+    requireTrue($templateId > 0, 'valid template ID from MCP');
+
+    // The fixture is created, written and removed exclusively via MCP.
     $definitions = array(
         array('name'=>'raw_' . $fixture, 'before'=>'original_' . $fixture,
             'after'=>'changed_' . $fixture),
         array('name'=>'inherit_' . $fixture, 'before'=>'@INHERIT 0',
             'after'=>'@INHERIT 10'),
     );
+    $raw = array();
+    $after = array();
     foreach ($definitions as $def) {
-        $tv = $modx->newObject($tvClass);
-        $tv->set('name', $def['name']);
-        $tv->set('caption', 'Temporary CAS fixture ' . $fixture);
-        $tv->set('type', 'text');
-        requireTrue($tv->save(), 'TV creation ' . $def['name']);
-        $tvs[] = $tv;
-        $link = $modx->newObject($linkClass);
-        $link->set('tmplvarid', (int)$tv->get('id'));
-        $link->set('templateid', $templateId);
-        requireTrue($link->save(), 'TV template assignment ' . $def['name']);
-        $links[] = $link;
-    }
-    $resource = $modx->newObject($resClass);
-    $resource->fromArray(array(
-        'pagetitle'=>'CAS PR46 disposable ' . $fixture,
-        'alias'=>'cas-pr46-disposable-' . $fixture,
-        'template'=>$templateId, 'context_key'=>'web',
-        'published'=>0, 'searchable'=>0, 'hidemenu'=>1, 'parent'=>0,
-    ));
-    requireTrue($resource->save(), 'resource fixture creation');
-    $rid = (int)$resource->get('id');
-    foreach ($definitions as $def) {
-        requireTrue($resource->setTVValue($def['name'], $def['before']) !== false,
-            'initial TV value ' . $def['name']);
-    }
-    // Fresh MODX model to ensure readback is from persisted values.
-    unset($resource);
-    $resource = $modx->getObject($resClass, $rid);
-    requireTrue(!!$resource, 'reload resource');
-    $raw = array(); $after = array();
-    foreach ($definitions as $def) {
+        $createdTV = rpc('create_element', array(
+            'type'=>'tv','name'=>$def['name'],
+            'field_type'=>'text',
+            'templates'=>array($templateId),
+        ));
+        requireTrue(isset($createdTV['id']) && (int)$createdTV['id']>0,
+            'MCP TV creation ' . $def['name']);
+        $tvs[] = (int)$createdTV['id'];
         $raw[$def['name']] = $def['before'];
         $after[$def['name']] = $def['after'];
+    }
+    $createdResource = rpc('create_element', array(
+        'type'=>'resource','name'=>'CAS PR46 disposable '.$fixture,
+        'alias'=>'cas-pr46-disposable-'.$fixture,
+        'template'=>$templateId,'context_key'=>'web',
+        'published'=>0,'hidemenu'=>1,'parent'=>0,
+    ));
+    requireTrue(isset($createdResource['id']) && (int)$createdResource['id']>0,
+        'MCP resource fixture creation');
+    $rid = (int)$createdResource['id'];
+    $seed = rpc('update_resource_tvs', array(
+        'resource_id'=>$rid,'tvs'=>$raw,
+    ));
+    foreach ($raw as $name=>$expected) {
+        requireTrue(findTV($seed, $name) === $expected,
+            'MCP initial TV write '.$name);
     }
 
     $first = rpc('get_resource_tvs', array('resource_id'=>$rid));
@@ -175,15 +187,14 @@ try {
     // MariaDB AFTER the TV mutations have been issued. In the old connector
     // the TV transaction had already committed; with the repaired boundary
     // both the raw TV values and the revision must roll back together.
-    // Use an independent SQL observer to detect persisted values, not
-    // MODX/xPDO's connection wrapper or its in-memory object cache.
-    // Credentials are GitHub Actions disposable service credentials only.
+    // PDO is used only to arm and remove the failure-injection trigger.
+    // All independent readbacks use a NEW PHP process and MODX MCP.
     $pdo = new \PDO(
         'mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
         'modx_ci', 'ci-throwaway-only-user',
         array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION)
     );
-    requireTrue($pdo instanceof \PDO, 'isolated CI SQL observer');
+    requireTrue($pdo instanceof \PDO, 'isolated CI fault injector');
     $revisionTrigger = 'cas_pr46_rev_fail_' . $fixture;
     $sql = 'CREATE TRIGGER `' . $revisionTrigger . '`'
         . ' BEFORE UPDATE ON `modx_system_settings` FOR EACH ROW'
@@ -207,22 +218,14 @@ try {
         $pdo->exec('DROP TRIGGER IF EXISTS `' . $revisionTrigger . '`');
     }
     requireTrue($forcedRejected, 'forced revision save rejected mutation');
-    // Independent direct SQL readback avoids MODX/xPDO object-cache effects.
-    $readRows = $pdo->prepare(
-        'SELECT `value` FROM `modx_site_tmplvar_contentvalues`'
-        . ' WHERE `contentid` = ? AND `tmplvarid` = ?'
-    );
-    foreach ($tvs as $i=>$tv) {
-        $readRows->execute(array($rid, (int)$tv->get('id')));
-        requireTrue((string)$readRows->fetchColumn() === $definitions[$i]['before'],
-            'revision-failure rollback persisted TV ' . $i);
+    // Fresh-process MCP readback bypasses the caller's object cache.
+    $verify = freshMcpReadback($rid);
+    foreach ($raw as $name=>$expected) {
+        requireTrue(findTV($verify['tvs'], $name) === $expected,
+            'MCP revision-failure rollback TV '. $name);
     }
-    $revisionRow = $pdo->query(
-        "SELECT `value` FROM `modx_system_settings`"
-        . " WHERE `key`='modxmcp.site_revision'"
-    );
-    requireTrue((int)$revisionRow->fetchColumn() === $r0 + 2,
-        'revision-failure rollback persisted revision');
+    requireTrue((int)$verify['state']['site_revision'] === $r0 + 2,
+        'MCP revision-failure rollback site_revision');
     echo 'CAS_REVISION_FAULT_ATOMIC_ROLLBACK_OK' . PHP_EOL;
 
     // Two genuine independent PHP processes race with the SAME CAS snapshot.
@@ -276,14 +279,10 @@ try {
     requireTrue(count(array_filter($outcomes, function ($x) {
         return $x === 'CAS_WORKER_STALE';
     })) === 1, 'exactly one concurrent CAS stale rejection');
-    $revisionRow = $pdo->query(
-        "SELECT `value` FROM `modx_system_settings`"
-        . " WHERE `key`='modxmcp.site_revision'"
-    );
-    requireTrue((int)$revisionRow->fetchColumn() === $raceRevision + 1,
-        'racing updates increment revision only once');
-    $readRows->execute(array($rid, (int)$tvs[0]->get('id')));
-    $winnerValue = (string)$readRows->fetchColumn();
+    $raceVerify = freshMcpReadback($rid);
+    requireTrue((int)$raceVerify['state']['site_revision'] === $raceRevision + 1,
+        'MCP racing updates increment revision only once');
+    $winnerValue = findTV($raceVerify['tvs'], $raceName);
     requireTrue(in_array($winnerValue, array($workers[0][3], $workers[1][3]), true),
         'racing updates persisted only winner value');
     $raceRestore = rpc('update_resource_tvs', array(
@@ -306,14 +305,20 @@ try {
         . ' checks=' . $checks
         . ' raw_and_inherit=pass stale=2 rollback=pass revision_fault=pass concurrency=pass' . PHP_EOL;
 } finally {
-    // Remove only resources created inside the CI fixture; never run on live sites.
-    if ($resource && $resource->get('id')) $resource->remove();
-    foreach (array_reverse($links) as $link) {
-        if ($link->get('id')) $link->remove();
+    // MCP-only cleanup of disposable fixture. It runs after SQL fault
+    // injection is removed, including if the CAS regression fails.
+    if ($rid > 0) {
+        try { rpc('delete_element',array('type'=>'resource','id'=>$rid)); }
+        catch (\Throwable $e) {
+            fwrite(STDERR, 'PR46_MCP_CLEANUP_RESOURCE_ERROR '.$e->getMessage().PHP_EOL);
+        }
     }
-    foreach (array_reverse($tvs) as $tv) {
-        if ($tv->get('id')) $tv->remove();
+    foreach (array_reverse($tvs) as $tvId) {
+        try { rpc('delete_element',array('type'=>'tv','id'=>$tvId)); }
+        catch (\Throwable $e) {
+            fwrite(STDERR, 'PR46_MCP_CLEANUP_TV_ERROR '.$e->getMessage().PHP_EOL);
+        }
     }
-    if ($modx->cacheManager) $modx->cacheManager->refresh();
-    if (!$success) fwrite(STDERR, "PR46_LIVE_FIXTURE_CLEANUP_ATTEMPTED\n");
+    if (!$success) fwrite(STDERR, "PR46_LIVE_FIXTURE_CLEANUP_ATTEMPTED
+");
 }
