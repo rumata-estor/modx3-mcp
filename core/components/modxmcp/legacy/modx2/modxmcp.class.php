@@ -173,6 +173,31 @@ class modxMCP {
                                 }
                                 return $result;
                             }
+                            if (!$isDryRun) {
+                                // An external side effect (file, cache,
+                                // package, plugin, custom processor) is not
+                                // rollback-able through the database.
+                                // Reserve the revision BEFORE starting it:
+                                // a failed revision write cannot leave an
+                                // untracked filesystem or external mutation.
+                                if (is_array($runtimePreconditions)) {
+                                    \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                        $runtimeContext,
+                                        $runtimePreconditions
+                                    );
+                                }
+                                $reservedRevision = \ModxMcp\Tools\StateSupport::incrementRevision(
+                                    $runtimeContext
+                                );
+                                $result = $tool->execute($runtimeContext, $toolData);
+                                if (is_array($result)) {
+                                    $result['_site_revision'] = $reservedRevision;
+                                }
+                                // On a later tool failure the conservative
+                                // revision increment remains: it is a
+                                // conflict marker, not proof of success.
+                                return $result;
+                            }
                             return $apply(false);
                         }
                     );

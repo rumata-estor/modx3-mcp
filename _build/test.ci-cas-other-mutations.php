@@ -91,6 +91,8 @@ $settings = array();
 $results = array();
 $triggerArmed = false;
 $testRan = false;
+$mediaName = 'cas-external-refused-' . $unique . '.txt';
+$mediaCleanup = false;
 try {
     // MCP-only fixtures: all are hidden and unpublished, with unique names.
     $newPage = 'CAS boundary page ' . $unique;
@@ -197,6 +199,39 @@ try {
             return settingValue($keyDelete);
         }, 'BEFORE');
 
+    // External filesystem effects are never rolled back by SQL. For this
+    // class of operations, the dispatcher reserves site_revision BEFORE the
+    // tool starts. The trigger must reject that reservation, and MCP must
+    // prove that no media file was created.
+    $modx->setOption('modxmcp.allow_root_filesystem_read', true);
+    $mediaFailure = null;
+    try {
+        rpc('create_media_file', array(
+            'source'=>1,'path'=>'','name'=>$mediaName,
+            'content'=>'MUST_NOT_EXIST_'.$unique,
+        ));
+    } catch (\Throwable $e) {
+        $mediaFailure = $e->getMessage();
+    }
+    if ($mediaFailure === null
+        || strpos($mediaFailure, 'Failed to persist MODX MCP site revision') === false) {
+        throw new RuntimeException(
+            'Media create did not fail at revision reservation: '.(string)$mediaFailure
+        );
+    }
+    $mediaExists = false;
+    try {
+        rpc('read_media_source_file', array('id'=>1,'path'=>$mediaName));
+        $mediaExists = true;
+        $mediaCleanup = true;
+    } catch (\ModxMCPClientException $e) {
+        if (strpos($e->getMessage(), 'File not found') === false) throw $e;
+    }
+    if ($mediaExists) {
+        throw new RuntimeException('External media file changed after revision denial');
+    }
+    echo 'CAS_MEDIA_FILE_REVISION_PRECHECK_OK' . PHP_EOL;
+
     $revisionAfter = (int)rpc('get_site_state')['site_revision'];
     echo 'CAS_OTHER_REVISION_UNCHANGED='
         . ($revisionAfter === $revisionBefore ? 'YES' : 'NO') . PHP_EOL;
@@ -209,6 +244,12 @@ try {
         }
     }
     // MCP-only cleanup; no raw MODX objects, SQL DELETE, or direct files.
+    if ($mediaCleanup) {
+        try { rpc('delete_media_file',array('source'=>1,'path'=>$mediaName)); }
+        catch (\Throwable $e) {
+            fwrite(STDERR, 'MCP_CLEANUP_MEDIA_FAILED '.$e->getMessage()."\n");
+        }
+    }
     foreach (array_unique(array_reverse($settings)) as $key) {
         try { rpc('delete_system_setting',array('key'=>$key)); }
         catch (\Throwable $e) {
