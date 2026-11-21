@@ -84,6 +84,17 @@ async function main(){
     const bad=await http("POST",{action:"get_site_state",type:"",data:{}},null);
     assert(bad.status===401,"missing API token blocked");
     const initial=await state();
+    // RU: Ошибка params вместо data должна быть явной и не менять ревизию.
+    // EN: A misplaced params object must fail before execution or revision bump.
+    const misplaced=await http("POST",{
+      action:"create_element",type:"resource",params:{name:"SHOULD_NOT_CREATE"},
+    });
+    assert(misplaced.status===400 && misplaced.body?.success===false
+      && String(misplaced.body.error||"").includes("params"),
+      "unknown top-level params rejected");
+    const afterMisplaced=await api("get_site_state");
+    assert(afterMisplaced.site_revision===initial.site_revision,
+      "invalid top-level field did not change site revision");
     // RU: Даже авторизованный API-токен не даёт прочитать секрет из настроек.
     // EN: Even an authenticated API client must not read stored credentials.
     const singleToken=await api("get_system_setting",{key:"modxmcp.api_token"});

@@ -191,6 +191,28 @@ if (!$input || !isset($input['action'])) {
     exit;
 }
 
+// RU: Неизвестные ключи верхнего уровня опасно игнорировать: клиент может
+// RU: ошибочно передать params вместо data и получить ложный успех записи.
+// EN: Reject unknown top-level keys: silently ignoring `params` instead of
+// EN: `data` can make a successful HTTP response conceal a no-op mutation.
+$allowedRootKeys = array('action', 'type', 'data', 'name', 'content', 'id');
+if (!is_array($input) || array_keys($input) === range(0, count($input) - 1)) {
+    http_response_code(400);
+    echo json_encode(array('success'=>false,'error'=>'Bad Request: expected JSON object.'), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$unknownRootKeys = array_diff(array_keys($input), $allowedRootKeys);
+if (!empty($unknownRootKeys)) {
+    http_response_code(400);
+    echo json_encode(array(
+        'success' => false,
+        'error' => 'Bad Request: unknown top-level field(s): '
+            . implode(', ', array_slice($unknownRootKeys, 0, 5))
+            . '. Send action parameters in data.',
+    ), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $action = $input['action'];
 $type   = isset($input['type']) ? $input['type'] : '';
 $data   = isset($input['data']) ? $input['data'] : [];
