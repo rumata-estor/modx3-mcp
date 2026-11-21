@@ -66,8 +66,18 @@ class ProcessorMutationTool implements ToolInterface
             $this->loadLexicons($context, array('core:default', 'core:workspaces'));
         }
 
+        // RU: MODX modError хранит ошибки и сообщения между вызовами в одном
+        // RU: PHP-процессе. Не позволяем старой ошибке влиять на новый ACL.
+        // RU: Сбрасываем перед вызовом, но НИКОГДА не после проверки результата.
+        // EN: MODX modError retains messages/errors across processor calls.
+        // EN: Clear prior call state before dispatch, never after validation.
+        $modx = $context->modx();
+        if (isset($modx->error) && is_object($modx->error)
+            && method_exists($modx->error, 'reset')) {
+            $modx->error->reset();
+        }
         $response = $context->platform()->runProcessor(
-            $context->modx(),
+            $modx,
             $this->spec['processor'],
             $props
         );

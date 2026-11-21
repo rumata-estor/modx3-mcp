@@ -33,9 +33,17 @@ class AclFakeCache {
     public $flushes=0;
     public function flushPermissions() {$this->flushes++;}
 }
+class AclFakeError {
+    public $resets=0;
+    public function reset() {$this->resets++;}
+}
 class AclFakeModx {
-    public $lexicon;public $cache;
-    public function __construct(){$this->lexicon=new AclFakeLexicon();$this->cache=new AclFakeCache();}
+    public $lexicon;public $cache;public $error;
+    public function __construct(){
+        $this->lexicon=new AclFakeLexicon();
+        $this->cache=new AclFakeCache();
+        $this->error=new AclFakeError();
+    }
     public function getCacheManager(){return $this->cache;}
 }
 class AclFakeResponse {
@@ -76,6 +84,7 @@ foreach($specs as $name=>$spec){
         if (strpos($e->getMessage(),$expected)===false)throw $e;
     }
     if ($ctx->platform->calls!==1 || $ctx->modx->cache->flushes!==0
+        || $ctx->modx->error->resets!==1
         || \ModxMcp\Tools\AuditSupport::$calls!==$auditBefore) {
         throw new \RuntimeException('ACL_FAULT_FAIL: post-error cache or audit '.$name);
     }
