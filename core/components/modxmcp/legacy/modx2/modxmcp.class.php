@@ -104,14 +104,14 @@ class modxMCP {
                     $runtimePreconditions = $toolData['_runtime_preconditions'];
                     unset($toolData['_runtime_preconditions']);
                 }
-                if (
-                    is_array($runtimePreconditions)
-                    && in_array(
-                        $action,
-                        array('create_element', 'update_element', 'update_element_property', 'update_resource_tvs'),
-                        true
-                    )
-                ) {
+                // A global CAS revision is checked by the dispatcher under
+                // the site lock BEFORE revision reservation. Never pass that
+                // guard again to resource/element tools: they would recheck
+                // it AFTER the reserved revision increased and incorrectly
+                // throw STALE_STATE. The TV tool alone needs the separate
+                // expected_tvs map for raw-value comparisons BEFORE commit.
+                if ($action === 'update_resource_tvs'
+                    && is_array($runtimePreconditions)) {
                     $toolData['_runtime_preconditions'] = $runtimePreconditions;
                 }
                 if ($tool->isMutation()) {
