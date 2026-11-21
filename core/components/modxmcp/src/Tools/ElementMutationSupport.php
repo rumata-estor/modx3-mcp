@@ -62,7 +62,11 @@ class ElementMutationSupport
             'chunk' => array('id', 'name', 'description', 'snippet', 'category', 'static', 'static_file', 'source', 'property_preprocess'),
             'snippet' => array('id', 'name', 'description', 'snippet', 'category', 'static', 'static_file', 'source', 'property_preprocess'),
             'template' => array('id', 'templatename', 'description', 'content', 'category', 'static', 'static_file', 'source'),
-            'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
+            // RU: Поля, не указанные клиентом, должны сохраняться при частичном
+            // RU: обновлении. Особенно важны richtext/searchable/cacheable.
+            // EN: Preserve existing fields on partial updates, especially
+            // EN: richtext/searchable/cacheable and editing/publishing flags.
+            'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'richtext', 'searchable', 'cacheable', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
             'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank'),
             'category' => array('id', 'category', 'parent', 'rank'),
             'plugin' => array('id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'),

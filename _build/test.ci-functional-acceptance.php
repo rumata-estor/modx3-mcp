@@ -113,6 +113,7 @@ try {
         'type'=>'resource','name'=>'MCP acceptance '.$fixture,
         'alias'=>'mcp-acceptance-'.$fixture, 'content'=>'BEFORE_'.$fixture,
         'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
+        'richtext'=>1,'searchable'=>0,'cacheable'=>0,
     ));
     acceptanceCheck(is_array($created) && isset($created['id']) && (int)$created['id']>0,
         'CAS guarded resource creation');
@@ -120,6 +121,12 @@ try {
     $read=acceptanceRpc('get_element',array('type'=>'resource','id'=>$resourceId));
     acceptanceCheck(is_array($read) && (string)$read['content']==='BEFORE_'.$fixture,
         'readback after resource creation');
+    // RU: Сохраняем значения редактора/поиска/кеша для проверки partial update.
+    // EN: Capture editing/search/cache flags before a content-only update.
+    foreach (array('richtext'=>1,'searchable'=>0,'cacheable'=>0) as $field=>$expected) {
+        acceptanceCheck(isset($read[$field]) && (int)$read[$field]===$expected,
+            'initial resource flag '.$field);
+    }
     $beforeUpdate=acceptanceSnapshot('resource',$resourceId);
     acceptanceRpc('update_element',array(
         'type'=>'resource','id'=>$resourceId,'content'=>'AFTER_'.$fixture,
@@ -128,6 +135,12 @@ try {
     $read=acceptanceRpc('get_element',array('type'=>'resource','id'=>$resourceId));
     acceptanceCheck((string)$read['content']==='AFTER_'.$fixture,
         'resource update persisted');
+    // RU: Изменение только content не должно затрагивать остальные поля.
+    // EN: Content-only updates must preserve all unrelated resource flags.
+    foreach (array('richtext'=>1,'searchable'=>0,'cacheable'=>0) as $field=>$expected) {
+        acceptanceCheck(isset($read[$field]) && (int)$read[$field]===$expected,
+            'partial resource update preserved '.$field);
+    }
     $staleDenied=false;
     try {
         acceptanceRpc('update_element',array(
