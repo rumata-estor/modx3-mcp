@@ -130,6 +130,10 @@ try {
         signedCall('create_element','',$data));
     securitySetting('modxmcp.permit_allowed_actions',
         'create_element,update_element,delete_element,update_system_setting');
+    securitySetting('modxmcp.external_authorization_required','invalid');
+    mustDeny('create_element','',$data,
+        signedCall('create_element','',$data));
+    securitySetting('modxmcp.external_authorization_required','1');
     $badRaw=signedCall('create_element','',$data);
     $badRaw['raw_body'].=' ';
     mustDeny('create_element','',$data,$badRaw);

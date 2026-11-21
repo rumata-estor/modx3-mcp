@@ -166,6 +166,15 @@ final class ProtectedAuthorization
             || (!isset($parsed['type']) && $elementType!=='')) {
             throw new \RuntimeException('AUTH_REQUIRED: signed request differs from actual mutation.');
         }
+        // Explicit top-level type and data.type must agree. Otherwise an
+        // attacker could obtain a permit scoped to a resource but execute
+        // the same signed body as a different MODX element type.
+        if ($elementType!=='' && isset($data['type'])
+            && (!is_string($data['type']) || $data['type']!==$elementType)) {
+            throw new \RuntimeException(
+                'AUTH_DENIED: conflicting element type selectors.'
+            );
+        }
         $scopeType=$elementType!=='' ? $elementType
             : (isset($data['type']) && is_string($data['type']) ? $data['type'] : 'none');
         if (!isset($permit['claims']['action'],$permit['claims']['element_type'])

@@ -129,6 +129,9 @@ async function main(){
   const modify={type:"resource",id,content:"AFTER",
     _runtime_preconditions:guard(revAfterCreate,beforeUpdate.read_set)};
   const rawModify=JSON.stringify({action:"update_element",type:"resource",data:modify});
+  const confusedType=JSON.stringify({action:"update_element",type:"chunk",data:modify});
+  await denied(confusedType,sign(confusedType,"update_element","chunk"),403,
+    "signed top-level chunk selector cannot mutate a resource");
   const signModify=sign(rawModify,"update_element","resource");
   const changed=await request("POST",rawModify,signModify);
   check(changed.status===200 && changed.data?.success===true,
