@@ -183,7 +183,8 @@ try:
         url, b'{"action":"get_site_state","type":"","data":{}}',
         authorized=False,
     )
-    expect(status == 401, "API token required")
+    expect(status == 401,
+           f"API token required (status={status}; error={result.get('error','none')})")
     state = read(url, "get_site_state")
     revision = int(state["site_revision"])
     expect(state.get("cas_required") is True, "mandatory CAS advertised")
@@ -224,7 +225,7 @@ try:
     rid = int(reply["data"]["id"])
     expect(rid > 0, "resource ID from HTTP creation")
     status, reply = post(url, body, signed)
-    expect(status == 400 and reply.get("success") is False,
+    expect(status == 403 and reply.get("success") is False,
            "nonce replay denied after success")
 
     row = read(url, "get_element", {"type": "resource", "id": rid})
