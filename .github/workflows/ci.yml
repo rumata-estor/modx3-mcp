@@ -72,6 +72,10 @@ jobs:
         run: python3 _build/test.cas-client-contract.py
       - name: Strict CAS precondition schema regression
         run: php _build/test.cas-required-contract.php
+      - name: Independent Ed25519 permit interoperability (no site writes)
+        run: |
+          php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'
+          node _build/test.permit-ed25519-interop.cjs
       - name: Reject traversal and unsafe media names
         run: php _build/test.media-path-boundaries.php
 
