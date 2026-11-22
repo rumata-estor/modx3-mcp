@@ -440,6 +440,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-package-real-uncertain.php
+      # RU: Реальный MODX plugin event пишет файл до потери ответа.
+      # EN: Actual MODX plugin event writes a file before the response is lost.
+      - name: Disposable real MODX plugin side effect before processor failure
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-processor-plugin-effects.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'

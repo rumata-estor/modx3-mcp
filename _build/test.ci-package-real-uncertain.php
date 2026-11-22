@@ -172,9 +172,13 @@ try {
         (new \ModxMcp\Tools\PackageUninstallTool())->execute($context,array(
             'signature'=>$signature));
     },'uninstall');
-    $after=$modx->getObject($settingClass,array('key'=>$settingKey));
-    transportCheck(!$after,'native uninstall side effect missing after lost response');
+    $after=$modx->getObject($settingClass,array('key'=>$settingKey),false);
     transportCheck($platform->uninstalls===1,'unexpected uninstall count');
+    transportCheck(!$package->get('installed'),
+        'package still marked installed after successful native uninstall');
+    // A transport may preserve system settings even when uninstall succeeds.
+    // Do not treat MODX uninstall() success as proof of clean rollback.
+    if($after) echo 'NATIVE_PACKAGE_UNINSTALL_RESIDUAL_SETTING_OBSERVED'.PHP_EOL;
     echo 'NATIVE_PACKAGE_INSTALL_UNINSTALL_UNCERTAIN_MODX'.($is2?'2':'3').'_OK'.PHP_EOL;
 } finally {
     // Cleanup of the uniquely named throwaway package, never modxmcp itself.
