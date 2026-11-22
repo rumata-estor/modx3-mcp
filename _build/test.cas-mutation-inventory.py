@@ -370,6 +370,15 @@ assert 'disposable_unpublished_resource_refresh_uris_readback_stale_replay' in e
 assert 'CAS_REFRESH_URIS_READBACK_STALE_REPLAY_OK' in uri_test
 assert 'stale URI refresh replay denied' in uri_test
 
+# RU: Копирование ресурсa только изолированным CI.
+# EN: Resource duplication evidence must have executable MCP readback tests.
+resource_copy_test=(ROOT / '_build/test.ci-cas-duplicate-resource.php').read_text()
+assert 'php _build/test.ci-cas-duplicate-resource.php' in ci_workflow
+assert 'disposable_unpublished_resource_copy_readback_stale_replay' in expected['duplicate_resource']['verified_scenarios']
+assert 'CAS_DUPLICATE_RESOURCE_READBACK_STALE_REPLAY_OK' in resource_copy_test
+assert 'stale duplicate replay denied' in resource_copy_test
+assert 'stale replay did not duplicate resource twice' in resource_copy_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
