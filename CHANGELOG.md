@@ -24,6 +24,8 @@
 
 - **Batch mutations:** `replace_across` and `bulk_resources` no longer turn errors after a write attempt into apparent success. They return `MUTATION_OUTCOME_UNCERTAIN`, requiring independent target reconciliation before retry, and perform best-effort cache refresh on failure. Added isolated first/second-target fault injection and dry-run compatibility tests.
 
+- **External processors and packages:** `run_processor` now treats thrown errors and missing responses after dispatch as `MUTATION_OUTCOME_UNCERTAIN`, suppressing raw exception text. Transport download, install and uninstall also fail closed on exceptions and an incomplete download response. Isolated fault tests cover these paths but do not claim filesystem or DB rollback.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
