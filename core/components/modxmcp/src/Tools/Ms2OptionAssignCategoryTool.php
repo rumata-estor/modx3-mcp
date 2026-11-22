@@ -17,6 +17,8 @@ class Ms2OptionAssignCategoryTool implements ToolInterface
         $payload = array(
             'option_id' => MiniShop2Support::positiveInt($data, 'option_id'),
             'category_id' => MiniShop2Support::positiveInt($data, 'category_id'),
+            // Native msCategoryOption.value is NOT NULL; default is empty.
+            'value' => '',
         );
         $result = MiniShop2Support::runProcessor(
             $context,
