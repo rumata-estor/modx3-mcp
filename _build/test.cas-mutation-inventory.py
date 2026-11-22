@@ -209,6 +209,21 @@ for action,scenario,marker in (
 assert 'no unexpected property set assignment' in property_test
 assert 'stale CAS replay denied' in property_test
 
+# RU: CAS-признаки namespace требуют реального disposable-теста.
+# EN: Namespace per-action evidence requires an executable lifecycle suite.
+namespace_test = (ROOT / '_build/test.ci-cas-namespace-evidence.php').read_text()
+assert 'php _build/test.ci-cas-namespace-evidence.php' in ci_workflow
+for action,scenario,verb in (
+ ('create_namespace','disposable_namespace_metadata_create_readback_stale_replay','CREATE'),
+ ('update_namespace','disposable_namespace_metadata_update_readback_stale_replay','UPDATE'),
+ ('delete_namespace','disposable_namespace_metadata_delete_readback_stale_replay','DELETE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in namespace_test
+    assert 'CAS_NAMESPACE_'+verb+'_READBACK_STALE_REPLAY_OK' in namespace_test
+assert 'stale replay did not increment revision' in namespace_test
+assert 'namespace removed' in namespace_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

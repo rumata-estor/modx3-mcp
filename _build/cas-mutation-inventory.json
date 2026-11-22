@@ -196,7 +196,9 @@
       "processor": "workspace/namespace/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_namespace_metadata_create_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_property_set": {
@@ -382,7 +384,9 @@
       "processor": "workspace/namespace/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_namespace_metadata_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_property_set": {
@@ -941,7 +945,9 @@
       "processor": "workspace/namespace/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_namespace_metadata_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_property_set": {
