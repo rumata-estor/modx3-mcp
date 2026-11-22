@@ -1,5 +1,8 @@
 <?php
-// Regression test for AgelxNash PR #54 legacy fallback wiring.
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Регрессионная проверка защитных правил в обоих монолитных обработчиках (PR #54, @AgelxNash).
+ * EN: Regression test for protected settings in both legacy dispatchers (PR #54, @AgelxNash).
+ */
 $files = [
     __DIR__ . '/../core/components/modxmcp/model/modxmcp.class.php',
     __DIR__ . '/../core/components/modxmcp/legacy/modx2/modxmcp.class.php',
