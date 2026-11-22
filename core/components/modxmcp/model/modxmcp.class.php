@@ -257,6 +257,11 @@ class modxMCP {
                                 $action, $toolData, $atomicTv, $tool,
                                 $runtimePreconditions, $apply
                             ) {
+                            // RU: Нет optional addon -> без внешних эффектов и CAS-сдвига.
+                            // EN: Missing addon must fail before reserving site revision.
+                            \ModxMcp\Tools\StateSupport::requireOptionalAddonPath(
+                                $runtimeContext, $action
+                            );
                             if ($atomicDatabase && !$isDryRun) {
                                 $result = \ModxMcp\Tools\StateSupport::withRevisionTransaction(
                                     $runtimeContext,
