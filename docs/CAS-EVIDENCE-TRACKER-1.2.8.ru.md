@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 106. **Не имеют индивидуальных сценариев:** 10.
+сценарий:** 108. **Не имеют индивидуальных сценариев:** 8.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,17 +22,15 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 10 без сценария
+## P2 — остальные операции — 8 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `ms2_assign_option_to_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_create_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_create_option` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_create_product_link` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_delete_product_link` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_update_option` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -98,8 +96,10 @@
 | `migx_delete_config` | review | `disposable_installed_migx_delete_config_readback_stale_replay` |
 | `migx_update_config` | review | `disposable_installed_migx_update_config_readback_stale_replay` |
 | `ms2_create_link_type` | review | `disposable_pinned_ms2_create_link_type_native_processor_readback_stale_replay` |
+| `ms2_create_option` | review | `disposable_pinned_ms2_create_option_native_processor_list_readback_stale_replay` |
 | `ms2_delete_link_type` | review | `disposable_pinned_ms2_delete_link_type_native_processor_readback_stale_replay` |
 | `ms2_update_link_type` | review | `disposable_pinned_ms2_update_link_type_native_processor_readback_stale_replay` |
+| `ms2_update_option` | review | `disposable_pinned_ms2_update_option_native_processor_list_readback_stale_replay` |
 | `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `remove_locks` | review | `disposable_empty_install_remove_locks_revision_stale_replay` |
