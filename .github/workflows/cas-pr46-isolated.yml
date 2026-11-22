@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122', 'test/128-ms2-modx2-scoped-evidence-20261122', 'test/128-ms2-category-assignment-rebased-20261122', 'test/128-ms2-update-category-rebased-20261122', 'test/128-ms2-order-evidence-rebased-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122', 'test/128-ms2-modx2-scoped-evidence-20261122', 'test/128-ms2-category-assignment-rebased-20261122', 'test/128-ms2-update-category-rebased-20261122', 'test/128-ms2-order-evidence-rebased-20261122', 'test/128-versionx-modx2-revert-evidence-rebased-20261122']
 
 permissions:
   contents: read
@@ -888,3 +888,27 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-order-native-modx2.php
+      # RU: Закреплённая VersionX 2.4.0 только для native processor revert на MODX2.
+      # EN: Pinned legacy VersionX supports resources/revert on disposable MODX 2.
+      - name: Stage pinned legacy VersionX for disposable MODX2
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly VX_SHA=f401c6317a22b521c8f0991bce5ef69b2d5a42f5
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/modmore/VersionX/tar.gz/$VX_SHA" \
+            -o "$RUNNER_TEMP/versionx-pinned.tar.gz"
+          mkdir -p "$RUNNER_TEMP/versionx-source"
+          tar -xzf "$RUNNER_TEMP/versionx-pinned.tar.gz" \
+            -C "$RUNNER_TEMP/versionx-source" --strip-components=1
+          test -f "$RUNNER_TEMP/versionx-source/core/components/versionx/processors/mgr/resources/revert.class.php"
+          cp -a "$RUNNER_TEMP/versionx-source/core/components/versionx" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable MODX2 VersionX native resource revert MCP CAS
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-versionx-native-revert-modx2.php
