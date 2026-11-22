@@ -8,6 +8,7 @@ namespace ModxMcp\Tools {
         public function name(); public function group(); public function isMutation();
         public function supports($context); public function execute($context,array $data);
     }
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/SettingSecretSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SystemSettingListTool.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SystemSettingGetTool.php';
 }

@@ -14,9 +14,12 @@ class ContextSettingListTool implements ToolInterface
 
     public function execute($context, array $data)
     {
-        return ProcessorSupport::run(
+        $result = ProcessorSupport::run(
             $context, 'context/setting/getlist', $data, true,
             array('core:default', 'core:context', 'core:setting')
         );
+        // RU: Штатный процессор также возвращает секреты как поле value.
+        // EN: Native context processors can expose credential values.
+        return SettingSecretSupport::contextResponse($result);
     }
 }

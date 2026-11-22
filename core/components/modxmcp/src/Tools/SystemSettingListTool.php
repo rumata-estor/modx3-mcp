@@ -41,14 +41,9 @@ class SystemSettingListTool implements ToolInterface
     {
         $key = (string)$setting->get('key');
         $value = $setting->get('value');
-        // RU: Проверяем отдельные сегменты имени, а не произвольные слова.
-        // EN: Match sensitive key segments, not arbitrary substrings.
-        $sensitive = preg_match(
-            '/(?:\\A|[._-])(?:api_token|access_token|refresh_token|'
-            . 'secret|password|passwd|client_secret|private_key|api_key|'
-            . 'credentials)(?:\\z|[._-])/iD',
-            $key
-        ) === 1;
+        // RU: Единый контракт скрытия значений системных и сторонних настроек.
+        // EN: Shared redaction policy across system and addon settings.
+        $sensitive = SettingSecretSupport::isSensitiveKey($key);
         return array(
             'id' => $setting->get('id'),
             'key' => $key,

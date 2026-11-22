@@ -110,6 +110,7 @@ jobs:
           php _build/test.token-rotation-faults.php
           php _build/test.security-settings-immutability.php
           php _build/test.settings-secret-redaction.php
+          php _build/test.setting-secret-boundaries.php
           php _build/test.system-setting-rename.php
           php _build/test.legacy-token-redaction.php modx2
           php _build/test.legacy-token-redaction.php modx3

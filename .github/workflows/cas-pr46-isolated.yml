@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122']
 
 permissions:
   contents: read
@@ -702,6 +702,15 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.media-custom-driver-boundary.php
           php _build/test.ci-custom-media-boundary.php
+      # RU: Чтение секретных системных настроек не раскрывает значения через MCP.
+      # EN: Disposable MCP system setting reads redact credentials.
+      - name: Real MODX protected setting mutation and read redaction
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-settings-read-redaction.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'
