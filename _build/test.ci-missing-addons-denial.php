@@ -39,17 +39,29 @@ foreach(array('migx','minishop2','virtualpage','versionx') as $addon){
     addonCheck(!is_dir(MODX_CORE_PATH.'components/'.$addon.'/'),
         'optional addon not installed '.$addon);
 }
-$fixture=bin2hex(random_bytes(5));
-$cases=array(
-    array('migx_create_config',array('name'=>'mcp_missing_'.$fixture),
-        'MIGX is not installed'),
-    array('ms2_create_link_type',array('name'=>'mcp_missing_'.$fixture),
-        'miniShop2'),
-    array('virtualpage_create_event',array('name'=>'mcp_missing_'.$fixture),
-        'VirtualPage'),
-    array('versionx_revert_version',array('type'=>'resource','content_id'=>99999999,
-        'version_id'=>99999999,'confirm'=>true),'VersionX'),
+// RU: Берём все 26 ещё непроверенных addon-мутаций из канонического реестра.
+// EN: Exhaustively gate all 26 optional-addon mutations in the reviewed inventory.
+$inventory=json_decode(file_get_contents(
+    __DIR__.'/cas-mutation-inventory.json'),true);
+addonCheck(isset($inventory['actions'])&&is_array($inventory['actions']),
+    'CAS mutation inventory available');
+$prefixes=array(
+    'migx_'=>'MIGX is not installed',
+    'ms2_'=>'miniShop2',
+    'versionx_'=>'VersionX',
+    'virtualpage_'=>'VirtualPage',
 );
+$cases=array();
+foreach($inventory['actions'] as $action=>$spec){
+    if(!empty($spec['verified_scenarios']))continue;
+    foreach($prefixes as $prefix=>$dependency){
+        if(strpos($action,$prefix)===0){
+            $cases[]=array($action,array(),$dependency);
+            break;
+        }
+    }
+}
+addonCheck(count($cases)===26,'all 26 unverified optional addon actions enumerated');
 foreach($cases as $case){
     $before=addonRpc('get_site_state');
     $refused=false;$message='';
