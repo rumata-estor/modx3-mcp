@@ -179,6 +179,30 @@ jobs:
           echo "MODXMCP_127_UPGRADE_PASS ${{ matrix.platform }} PHP ${{ matrix.php_version }}"
       # RU: Реальная адресная очистка кеша MODX, без установленного ClientConfig.
       # EN: Verify native MODX cache invalidation; addon integration is separate.
+      # RU: Фиксированная версия ClientConfig только в disposable MODX.
+      # EN: Fetch pinned open-source ClientConfig runtime into ephemeral MODX only.
+      - name: Stage pinned ClientConfig 2.5.0 addon for isolated E2E
+        if: matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly CLIENTCONFIG_SHA=d195b61a2059cf9723c8b92398460582fe2182fd
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/modmore/ClientConfig/tar.gz/$CLIENTCONFIG_SHA" \
+            -o "$RUNNER_TEMP/clientconfig-2.5.0.tar.gz"
+          mkdir -p "$RUNNER_TEMP/cc-addon-source"
+          tar -xzf "$RUNNER_TEMP/clientconfig-2.5.0.tar.gz" \
+            -C "$RUNNER_TEMP/cc-addon-source" --strip-components=1
+          test -f "$RUNNER_TEMP/cc-addon-source/core/components/clientconfig/model/clientconfig/clientconfig.class.php"
+          cp -a "$RUNNER_TEMP/cc-addon-source/core/components/clientconfig" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable ClientConfig 2.5.0 MCP write and multi-context readback
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-clientconfig-installed.php
       - name: Native MODX ClientConfig cache key invalidation
         env:
           MODXMCP_DISPOSABLE_CI: '1'
