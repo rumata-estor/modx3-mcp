@@ -380,6 +380,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-namespace-evidence.php
+      # RU: Только описание источника в одноразовом CI, без файловых действий.
+      # EN: Disposable media source definition lifecycle, no file writes.
+      - name: Disposable media source CAS lifecycle
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-media-source-evidence.php
       - name: Disposable property set CAS lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'
