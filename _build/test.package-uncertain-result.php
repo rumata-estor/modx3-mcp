@@ -20,9 +20,16 @@ namespace ModxMcp\Tools {
 namespace {
 class ModxMCPClientException extends \RuntimeException {}
 class PackageResponse {
+    public static $throwStatusStage='';
+    public static $successStage='';
     private $stage;
     public function __construct($stage){$this->stage=$stage;}
-    public function isError(){return $this->stage==='install'||$this->stage==='uninstall';}
+    public function isError(){
+        if(self::$throwStatusStage===$this->stage)
+            throw new \RuntimeException('SECRET_STATUS_EXCEPTION');
+        return (self::$successStage!==$this->stage)
+            && ($this->stage==='install'||$this->stage==='uninstall');
+    }
     public function getMessage(){return 'SECRET_TOKEN_SHOULD_NOT_LEAK';}
     public function getObject(){return array('signature'=>'fixture-1.0.0-pl');}
     public function getResponse(){
@@ -40,10 +47,17 @@ class PackageSearchResponse {
     public function getResponse(){return array('results'=>$this->items);}
 }
 class PackageDownloadResponse {
+    public static $throwAt='';
     private $signature;
     public function __construct($signature){$this->signature=$signature;}
-    public function isError(){return false;}
-    public function getObject(){return array('signature'=>$this->signature);}
+    public function isError(){
+        if(self::$throwAt==='isError')throw new \RuntimeException('SECRET_STATUS_EXCEPTION');
+        return false;
+    }
+    public function getObject(){
+        if(self::$throwAt==='getObject')throw new \RuntimeException('SECRET_BODY_EXCEPTION');
+        return array('signature'=>$this->signature);
+    }
 }
 class PackagePlatform {
     public $calls=array();
@@ -70,7 +84,12 @@ class PackagePlatform {
     }
 }
 class PackageModx {
+    public $cacheThrows=false;
     public function getObject($class,$criteria){return false;}
+    public function getCacheManager(){
+        if($this->cacheThrows)throw new \RuntimeException('SECRET_CACHE_EXCEPTION');
+        return null;
+    }
 }
 class PackageContext {
     public $modx;public $platform;
@@ -151,6 +170,64 @@ catch(ModxMCPClientException $e){
 if(!$uncertain || $ctx->platform->calls!==array(
     'workspace/packages/rest/getlist','workspace/packages/rest/download'))
     throw new \RuntimeException('PACKAGE_DOWNLOAD_IDENTITY_NOT_VERIFIED');
+// RU: Сбои чтения ответа ПОСЛЕ этапа скачивания/установки/удаления
+// RU: классифицируются как неопределённый исход и не раскрывают секреты.
+// EN: Post-stage response accessor faults must be uncertain and redacted.
+foreach(array('isError','getObject') as $fault) {
+    \PackageDownloadResponse::$throwAt=$fault;
+    $ctx=new PackageContext();
+    $denied=false;
+    try{(new \ModxMcp\Tools\PackageInstallTool())->execute($ctx,
+        array('package'=>'fixture','provider'=>1));}
+    catch(ModxMCPClientException $e){
+        $denied=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SECRET_')===false;
+    }
+    if(!$denied || count($ctx->platform->calls)!==2)
+        throw new \RuntimeException('DOWNLOAD_POST_STAGE_FAULT_LEAK_'.$fault);
+}
+\PackageDownloadResponse::$throwAt='';
+foreach(array('install','uninstall') as $stage) {
+    \PackageResponse::$throwStatusStage=$stage;
+    $ctx=new PackageContext();
+    $tool=$stage==='install'
+        ?new \ModxMcp\Tools\PackageInstallTool()
+        :new \ModxMcp\Tools\PackageUninstallTool();
+    $data=$stage==='install'
+        ?array('package'=>'fixture','provider'=>1)
+        :array('signature'=>'fixture-1.0.0-pl');
+    $denied=false;
+    try{$tool->execute($ctx,$data);}
+    catch(ModxMCPClientException $e){
+        $denied=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SECRET_')===false;
+    }
+    if(!$denied || count($ctx->platform->calls)!==($stage==='install'?3:1))
+        throw new \RuntimeException('PACKAGE_POST_STAGE_FAULT_LEAK_'.$stage);
+}
+\PackageResponse::$throwStatusStage='';
+// RU: Даже при ответе success сбой обновления кэша после изменения
+// RU: должен давать UNCERTAIN, а не ложно подтверждённый успех.
+// EN: Post-success cache exceptions must not suppress uncertain outcome.
+foreach(array('install','uninstall') as $stage) {
+    \PackageResponse::$successStage=$stage;
+    $ctx=new PackageContext();
+    $ctx->modx->cacheThrows=true;
+    $tool=$stage==='install'
+        ?new \ModxMcp\Tools\PackageInstallTool()
+        :new \ModxMcp\Tools\PackageUninstallTool();
+    $data=$stage==='install'
+        ?array('package'=>'fixture','provider'=>1)
+        :array('signature'=>'fixture-1.0.0-pl');
+    $denied=false;
+    try{$tool->execute($ctx,$data);}
+    catch(ModxMCPClientException $e){
+        $denied=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SECRET_')===false;
+    }
+    if(!$denied)throw new \RuntimeException('PACKAGE_CACHE_FAULT_NOT_UNCERTAIN_'.$stage);
+}
+\PackageResponse::$successStage='';
 $ctx=new PackageContext();
 $ctx->platform->noResponseStage='workspace/packages/rest/download';
 $uncertainDownload=false;
@@ -163,5 +240,5 @@ if(!$uncertainDownload || count($ctx->platform->calls)!==2)
     throw new \RuntimeException('PACKAGE_EMPTY_DOWNLOAD_RESPONSE_NOT_UNCERTAIN');
 if(\ModxMcp\Tools\AuditSupport::$count!==0)
     throw new \RuntimeException('PACKAGE_AUDITED_FAILED_MUTATION');
-echo 'PACKAGE_MUTATION_UNCERTAIN_RESULT_OK checks=9'.PHP_EOL;
+echo 'PACKAGE_MUTATION_UNCERTAIN_RESULT_OK checks=15'.PHP_EOL;
 }

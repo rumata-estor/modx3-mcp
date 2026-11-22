@@ -38,25 +38,36 @@ class PackageUninstallTool implements ToolInterface
                 . 'inspect installed package state before retry.'
             );
         }
-        if (!$response || $response->isError()) {
-            // RU: Процессор удаления способен удалить файлы и данные до
-            // RU: возврата ошибки. Результат неопределён — повтор опасен.
-            // EN: Package uninstall may remove files/data before reporting
-            // EN: an error. Do not echo processor text or allow blind retry.
+        try {
+            $uninstallOk = $response && !$response->isError();
+        } catch (\Throwable $e) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package removal response unreadable; '
+                . 'verify installed package state via MCP before retry.'
+            );
+        }
+        if (!$uninstallOk) {
             throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: package uninstall did not confirm '
                 . 'completion; verify installed package state via MCP before retry.'
             );
         }
-
-        $manager = $context->modx()->getCacheManager();
-        if ($manager) { $manager->refresh(); }
-        AuditSupport::log(
-            $context,
-            $this->name(),
-            'system',
-            array('signature' => $signature)
-        );
-        return ProcessorSupport::normalize($response);
+        try {
+            $result = ProcessorSupport::normalize($response);
+            $manager = $context->modx()->getCacheManager();
+            if ($manager) { $manager->refresh(); }
+            AuditSupport::log(
+                $context,
+                $this->name(),
+                'system',
+                array('signature' => $signature)
+            );
+            return $result;
+        } catch (\Throwable $e) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package removed but post-uninstall '
+                . 'verification failed; inspect installed state before retry.'
+            );
+        }
     }
 }

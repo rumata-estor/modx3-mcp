@@ -158,16 +158,24 @@ class PackageInstallTool implements ToolInterface
                 . 'inspect package state before retry.'
             );
         }
-        if (!$downloadResponse || $downloadResponse->isError()) {
-            // RU: Ошибка скачивания способна оставить неполный transport-файл.
-            // EN: A failed download may leave partial transport files behind.
+        try {
+            $downloadOk = $downloadResponse && !$downloadResponse->isError();
+            $downloadObject = $downloadOk ? $downloadResponse->getObject() : null;
+        } catch (\Throwable $e) {
+            // RU: Даже чтение ответа загрузчика может завершиться после записи файлов.
+            // EN: Download response inspection may fail after transport writes.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package download result unreadable; '
+                . 'inspect package state before retry.'
+            );
+        }
+        if (!$downloadOk) {
             throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: package download did not confirm '
                 . 'completion; inspect package state before retry.'
             );
         }
 
-        $downloadObject = $downloadResponse->getObject();
         $signature = is_array($downloadObject) && !empty($downloadObject['signature'])
             ? $downloadObject['signature']
             : $chosen['signature'];
@@ -197,29 +205,39 @@ class PackageInstallTool implements ToolInterface
                 . 'inspect installed package state before retry.'
             );
         }
-        if (!$installResponse || $installResponse->isError()) {
-            // RU: Во время установки транспортный пакет может изменить
-            // RU: файлы и БД до ошибки. Не обещаем откат или безопасный повтор.
-            // EN: Transport installation can affect files and database
-            // EN: before an error; outcome must be reconciled before retry.
+        try {
+            $installOk = $installResponse && !$installResponse->isError();
+        } catch (\Throwable $e) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package installation response unreadable; '
+                . 'verify installed package state via MCP before retry.'
+            );
+        }
+        if (!$installOk) {
             throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: package install did not confirm '
                 . 'completion; verify installed package state via MCP before retry.'
             );
         }
-
-        $manager = $context->modx()->getCacheManager();
-        if ($manager) { $manager->refresh(); }
-        AuditSupport::log(
-            $context,
-            $this->name(),
-            'system',
-            array(
-                'package' => $name,
-                'signature' => $signature,
-                'previous_signature' => $previousSignature,
-            )
-        );
+        try {
+            $manager = $context->modx()->getCacheManager();
+            if ($manager) { $manager->refresh(); }
+            AuditSupport::log(
+                $context,
+                $this->name(),
+                'system',
+                array(
+                    'package' => $name,
+                    'signature' => $signature,
+                    'previous_signature' => $previousSignature,
+                )
+            );
+        } catch (\Throwable $e) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package installed but post-install '
+                . 'verification failed; inspect installed state before retry.'
+            );
+        }
         return array(
             'status' => $previousSignature !== null
                 ? 'version_changed'
