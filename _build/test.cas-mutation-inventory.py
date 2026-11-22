@@ -341,6 +341,16 @@ assert 'CAS_UNDELETE_RESOURCE_READBACK_STALE_REPLAY_OK' in undelete_test
 assert 'restored resource remains unpublished' in undelete_test
 assert 'stale undelete replay denied' in undelete_test
 
+# RU: Дубликат чанка доказывает только chunk, не plugin/snippet/TV.
+# EN: Per-action duplicate proof is limited to a non-executable chunk fixture.
+duplicate_test=(ROOT / '_build/test.ci-cas-duplicate-elements.php').read_text()
+assert 'php _build/test.ci-cas-duplicate-elements.php' in ci_workflow
+assert 'disposable_chunk_duplicate_independent_readback_stale_replay' in expected['duplicate_element']['verified_scenarios']
+assert 'CAS_DUPLICATE_ELEMENT_CHUNK_READBACK_STALE_REPLAY_OK' in duplicate_test
+assert "'duplicate_element'" in duplicate_test
+assert "'type'=>'chunk'" in duplicate_test
+assert 'old CAS consumed no revision' in duplicate_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
