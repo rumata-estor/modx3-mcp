@@ -62,6 +62,7 @@ class SecretAclResponse {
     public function getObject(){return array();}
 }
 class SecretAclPlatform {
+    public function className($name){return 'modUser';}
     public function runProcessor($modx,$processor,$props){
         if($processor!=='security/user/update')throw new \RuntimeException('ACL_ROUTE_WRONG');
         return new SecretAclResponse();
@@ -70,8 +71,25 @@ class SecretAclPlatform {
 class SecretAclCache {public function flushPermissions(){}}
 class SecretAclError {public function reset(){}}
 class SecretAclLexicon {public function load(){}}
+class SecretAclUserProfile {
+    public function get($name){
+        if($name==='email')return 'test@example.invalid';
+        if($name==='blocked')return 0;
+        return null;
+    }
+}
+class SecretAclUser {
+    public function get($name){
+        if($name==='username')return 'safe';
+        if($name==='active')return 1;
+        if($name==='sudo')return 0;
+        return null;
+    }
+    public function getOne($name){return $name==='Profile'?new SecretAclUserProfile():null;}
+}
 class SecretAclModx {
     public $error;public $lexicon;
+    public function getObject($class,$id){return new SecretAclUser();}
     public function __construct(){
         $this->error=new SecretAclError();$this->lexicon=new SecretAclLexicon();
     }

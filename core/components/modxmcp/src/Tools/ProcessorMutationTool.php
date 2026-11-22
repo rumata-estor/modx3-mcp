@@ -46,6 +46,9 @@ class ProcessorMutationTool implements ToolInterface
                     }
                 }
             }
+            if ($this->toolName === 'update_user') {
+                $this->preserveUserFlags($context, $props);
+            }
             $this->prepareAcl($context, $props);
             $this->loadLexicons(
                 $context,
@@ -158,6 +161,74 @@ class ProcessorMutationTool implements ToolInterface
             return ProcessorSupport::sanitizeProcessorOutput($result);
         }
         return $result;
+    }
+
+    /**
+     * RU: security/user/update вызывает setCheckbox(active/blocked/sudo).
+     * RU: Пропущенное поле там превращается в false — значит, простое
+     * RU: изменение ФИО могло отключить пользователя или снять sudo.
+     * EN: Core user/update defaults omitted active/blocked/sudo checkboxes
+     * EN: to false. Preserve persisted flags during profile-only changes.
+     */
+    private function preserveUserFlags($context, array &$props)
+    {
+        $id = isset($props['id']) ? (int)$props['id'] : 0;
+        if ($id <= 0) {
+            throw new \ModxMCPClientException('update_user: valid id is required.');
+        }
+        $user = $context->modx()->getObject(
+            $context->platform()->className('user'), $id
+        );
+        if (!$user) {
+            throw new \ModxMCPClientException('update_user: user not found.');
+        }
+        $profile = $user->getOne('Profile');
+        // RU: Штатная валидация MODX требует username/email даже когда
+        // RU: редактируется только fullname. Берём их из текущей записи.
+        // EN: Core user/update validates username and email on every call,
+        // EN: including profile-only updates. Supply their existing values.
+        $username = $user->get('username');
+        $email = $profile ? $profile->get('email') : null;
+        if (!array_key_exists('username', $props)) {
+            if (!is_string($username) || $username === '') {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: cannot safely load existing username.'
+                );
+            }
+            $props['username'] = $username;
+        }
+        if (!array_key_exists('email', $props)) {
+            if (!is_string($email) || $email === '') {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: cannot safely load existing user email.'
+                );
+            }
+            $props['email'] = $email;
+        }
+        $active = $user->get('active');
+        $sudo = $user->get('sudo');
+        if ($active === null || $sudo === null) {
+            throw new \ModxMCPClientException(
+                'AUTH_DENIED: user flags unavailable; refusing unsafe partial update.'
+            );
+        }
+        if (!array_key_exists('active', $props)) {
+            $props['active'] = (int)(bool)$active;
+        }
+        // RU: sudo не разрешено менять через MCP, но штатный процессор
+        // RU: требует значение, иначе обнулит флаг даже при смене ФИО.
+        // EN: User input may not change sudo, but core processor needs the
+        // EN: persisted value or it would clear it on a profile update.
+        $props['sudo'] = (int)(bool)$sudo;
+        if (!array_key_exists('blocked', $props)) {
+            $blocked = $profile ? $profile->get('blocked') : 0;
+            if ($blocked === null) {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: user profile flags unavailable.'
+                );
+            }
+            $props['blocked'] = (int)(bool)$blocked;
+        }
     }
 
     private function prepareContext(array &$props)

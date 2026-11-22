@@ -40,8 +40,25 @@ class AclFakeError {
     public $resets=0;
     public function reset() {$this->resets++;}
 }
+class AclFakeUserProfile {
+    public function get($key){
+        if($key==='blocked')return 1;
+        if($key==='email')return 'fixture@example.invalid';
+        return null;
+    }
+}
+class AclFakeUser {
+    public function get($key){
+        if($key==='username')return 'fixture';
+        return in_array($key,array('active','sudo'),true)?1:null;
+    }
+    public function getOne($key){return $key==='Profile'?new AclFakeUserProfile():null;}
+}
 class AclFakeModx {
     public $lexicon;public $cache;public $error;
+    public function getObject($class,$id){
+        return $class==='modUser' && (int)$id>0?new AclFakeUser():null;
+    }
     public function __construct(){
         $this->lexicon=new AclFakeLexicon();
         $this->cache=new AclFakeCache();
@@ -56,12 +73,12 @@ class AclFakeResponse {
 }
 class AclFakePlatform {
     public $calls=0;public $fail=true;
-    public $noResponse=false;
+    public $noResponse=false;public $lastProps=array();
     public function runProcessor($modx,$name,$props) {
-        $this->calls++;
+        $this->calls++;$this->lastProps=$props;
         return $this->noResponse ? false : new AclFakeResponse($this->fail);
     }
-    public function className($name){return 'modUserGroup';}
+    public function className($name){return $name==='user'?'modUser':'modUserGroup';}
 }
 class AclFakeContext {
     public $modx;public $platform;
@@ -156,6 +173,28 @@ foreach (array('create_user','update_user') as $userAction) {
     }
 }
 if($sudoDenials!==12)throw new \RuntimeException('SUDO_DENIAL_COVERAGE_MISSING');
+// RU: Модекс устанавливает omitted checkbox-поля в 0. Проверяем, что
+// RU: MCP передаёт текущие значения, а разрешённый active=0 не теряет.
+// EN: Core MODX converts omitted checkboxes to zero. MCP must hydrate
+// EN: current flags without overriding explicitly requested active changes.
+foreach (array(
+    array(array('id'=>9,'fullname'=>'Updated'),1),
+    array(array('id'=>9,'fullname'=>'Updated','active'=>0),0)
+) as $case) {
+    $ctx=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool('update_user',$specs['update_user']);
+    try {$tool->execute($ctx,$case[0]);}
+    catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN')!==0)throw $e;
+    }
+    $props=$ctx->platform->lastProps;
+    if($ctx->platform->calls!==1 || (int)($props['active'] ?? -1)!==$case[1]
+        || (string)($props['username'] ?? '')!=='fixture'
+        || (string)($props['email'] ?? '')!=='fixture@example.invalid'
+        || (int)($props['sudo'] ?? -1)!==1
+        || (int)($props['blocked'] ?? -1)!==1)
+        throw new \RuntimeException('UPDATE_USER_FLAGS_NOT_PRESERVED');
+}
 // RU: Проверка до запуска процессора; контекст не должен обойти защиту
 // RU: настроек modxmcp.* через регистр, пробелы и вложенные поля.
 // EN: Reject protected context setting mutations before processor dispatch,
