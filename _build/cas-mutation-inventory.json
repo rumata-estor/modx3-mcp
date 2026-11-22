@@ -224,7 +224,9 @@
       "processor": "security/role/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_create_readback_revision_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_system_setting": {
@@ -254,7 +256,9 @@
       "processor": "security/group/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_create_readback_revision_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_access_policy": {
