@@ -363,7 +363,14 @@ class ElementMutationSupport
         $element->set('static_file', $relative);
         $element->set('source', 1);
         if (!$element->save()) {
-            throw new \ModxMCPClientException("make_static: save failed for {$type} {$id}");
+            // RU: Файл уже мог быть записан, а DB-транзакция откатиться.
+            // RU: Повтор без независимого MCP-readback недопустим.
+            // EN: The file may already exist even if DB metadata rolled back.
+            // EN: Mark outcome uncertain, do not invite automatic retries.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: make_static file was written '
+                . 'but element save failed; inspect file and MODX state before retry.'
+            );
         }
         return array(
             'type' => $type,

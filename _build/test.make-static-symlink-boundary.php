@@ -12,13 +12,14 @@ namespace {
 class ModxMCPClientException extends \RuntimeException {}
 class MakeStaticFixtureElement {
     public $values=array();
+    public $failSave=false;
     public function __construct() {
         $this->values=array('id'=>77,'name'=>'fixture-target','snippet'=>'SAFE',
             'static'=>0,'static_file'=>'','source'=>0);
     }
     public function get($key){return $this->values[$key]??null;}
     public function set($key,$value){$this->values[$key]=$value;}
-    public function save(){return true;}
+    public function save(){return !$this->failSave;}
 }
 class MakeStaticFixtureModx {
     public $base;
@@ -71,8 +72,24 @@ try{
         'valid conversion path changed');
     mstCheck(file_get_contents($base.'/core/elements/chunks/fixture-target.tpl')==='SAFE',
         'valid conversion wrote incorrect bytes');
-    echo 'MAKE_STATIC_SYMLINK_ESCAPE_OK checks=4'.PHP_EOL;
+    // RU: Нельзя скрывать неопределённый исход после записи файла.
+    // EN: A save failure after a successful filesystem write is uncertain.
+    $context->modx()->element->values['name']='save-failed-fixture';
+    $context->modx()->element->values['static']=0;
+    $context->modx()->element->failSave=true;
+    $uncertain=false;
+    try{\ModxMcp\Tools\ElementMutationSupport::makeStatic(
+        $context,'chunk',77
+    );}catch(ModxMCPClientException $e){
+        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+    }
+    mstCheck($uncertain,'failed save did not report uncertain external state');
+    mstCheck(file_get_contents($base.'/core/elements/chunks/save-failed-fixture.tpl')==='SAFE',
+        'injected save failure did not occur after file write');
+    echo 'MAKE_STATIC_SYMLINK_ESCAPE_OK checks=6'.PHP_EOL;
 }finally{
+    $failureFile=$base.'/core/elements/chunks/save-failed-fixture.tpl';
+    if(is_file($failureFile))unlink($failureFile);
     $target=$base.'/core/elements/chunks/fixture-target.tpl';
     if(is_file($target))unlink($target);
     if(is_dir($base.'/core/elements/chunks'))rmdir($base.'/core/elements/chunks');
