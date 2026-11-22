@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 86. **Не имеют индивидуальных сценариев:** 30.
+сценарий:** 87. **Не имеют индивидуальных сценариев:** 29.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,12 +22,11 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 30 без сценария
+## P2 — остальные операции — 29 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_delete_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_update_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -98,6 +97,7 @@
 | `delete_media_source` | review | `disposable_media_source_definition_delete_readback_stale_replay` |
 | `delete_namespace` | high | `disposable_namespace_metadata_delete_readback_stale_replay` |
 | `delete_property_set` | review | `disposable_unassigned_property_set_delete_readback_stale_replay` |
+| `delete_provider` | review | `disposable_unassigned_provider_native_seed_delete_readback_stale_replay` |
 | `delete_resource_group` | critical | `disposable_unassigned_resource_group_delete_readback_stale_replay` |
 | `delete_role` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `delete_system_setting` | review | `revision_write_failure_rollback` |

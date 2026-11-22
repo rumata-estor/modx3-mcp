@@ -459,6 +459,16 @@ assert 'CAS_ELEMENT_PROPERTY_UPDATE_READBACK_STALE_REPLAY_OK' in element_propert
 assert 'unrelated property preserved' in element_property_test
 assert 'per-property expected_value mismatch rejected' in element_property_test
 
+# RU: delete_provider через MCP; создание фикстуры только внутри CI.
+# EN: Deletion tested via MCP; fixture provider is natively seeded in CI only.
+provider_delete_test=(ROOT / '_build/test.ci-cas-delete-provider.php').read_text()
+assert 'php _build/test.ci-cas-delete-provider.php' in ci_workflow
+assert 'disposable_unassigned_provider_native_seed_delete_readback_stale_replay' in expected['delete_provider']['verified_scenarios']
+assert "'delete_provider',$request" in provider_delete_test
+assert 'CAS_DELETE_PROVIDER_DISPOSABLE_STALE_REPLAY_OK' in provider_delete_test
+assert 'provider no longer appears in MCP list' in provider_delete_test
+assert 'stale delete_provider replay rejected' in provider_delete_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
