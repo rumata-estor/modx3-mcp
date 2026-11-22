@@ -64,6 +64,25 @@ function clientConfigLiveRpc($action,array $data=array()) {
     $modx->setOption('clientconfig.clear_cache',false);
     return disposableCasRpc($api,$action,$data);
 }
+// RU: Проверяем именно повтор старой команды, а не обновлённый снимок.
+// EN: Replay preserves the original CAS snapshot, never auto-refresh it.
+function clientConfigLiveGuard(){
+    $state=clientConfigLiveRpc('get_site_state');
+    return array('observed_site_revision'=>(int)$state['site_revision'],
+        'strict_site_revision'=>true,'read_set'=>array());
+}
+function clientConfigLiveStale($action,array $request){
+    $before=clientConfigLiveRpc('get_site_state');
+    $denied=false;
+    try {clientConfigLiveRpc($action,$request);}
+    catch(ModxMCPClientException $e){
+        $denied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    clientConfigLiveCheck($denied,$action.' stale CAS replay refused');
+    $after=clientConfigLiveRpc('get_site_state');
+    clientConfigLiveCheck((int)$after['site_revision']===(int)$before['site_revision'],
+        $action.' stale replay consumed no CAS revision');
+}
 function clientConfigLiveValue($context,$key) {
     global $client,$modx;
     $modx->setOption('clientconfig.context_aware',true);
@@ -75,14 +94,17 @@ try {
         'key'=>$other,'name'=>'ClientConfig disposable '.$uid
     ));
     $createdContext=true;
-    $result=clientConfigLiveRpc('clientconfig_create_setting',array(
+    $createRequest=array(
         'key'=>$key,'label'=>'Disposable ClientConfig '.$uid,
         'xtype'=>'textfield','description'=>'','value'=>'global_old',
         'context_values'=>array(
             'web'=>'web_old','mgr'=>'mgr_old',$other=>'custom_old'
-        )
-    ));
+        ),'_runtime_preconditions'=>clientConfigLiveGuard(),
+    );
+    $result=clientConfigLiveRpc('clientconfig_create_setting',$createRequest);
     $createdSetting=true;
+    clientConfigLiveStale('clientconfig_create_setting',$createRequest);
+    echo 'CAS_CLIENTCONFIG_CREATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     clientConfigLiveCheck(isset($result['id']) && (int)$result['id']>0,
         'created setting through MCP');
     // RU: Явно переданное пустое описание не должно стать значением '0'.
@@ -98,10 +120,12 @@ try {
     $global=$client->getSettings();
     clientConfigLiveCheck(isset($global[$key]) && $global[$key]==='global_old',
         'initial global value from upstream ClientConfig');
-    $result=clientConfigLiveRpc('clientconfig_update_setting',array(
-        'key'=>$key,'value'=>'global_new',
-        'context_values'=>array('web'=>'web_new',$other=>'custom_new')
-    ));
+    $updateRequest=array('key'=>$key,'value'=>'global_new',
+        'context_values'=>array('web'=>'web_new',$other=>'custom_new'),
+        '_runtime_preconditions'=>clientConfigLiveGuard());
+    $result=clientConfigLiveRpc('clientconfig_update_setting',$updateRequest);
+    clientConfigLiveStale('clientconfig_update_setting',$updateRequest);
+    echo 'CAS_CLIENTCONFIG_UPDATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     clientConfigLiveCheck(is_array($result),'updated via MCP without Manager');
     clientConfigLiveCheck(clientConfigLiveValue('web',$key)==='web_new',
         'web context reads new value without Manager Save');
@@ -128,8 +152,12 @@ try {
         'mgr remains independent after deleting web override');
     clientConfigLiveCheck(clientConfigLiveValue($other,$key)==='custom_new',
         'custom context remains independent after deleting web override');
-    clientConfigLiveRpc('clientconfig_delete_setting',array('key'=>$key));
+    $deleteRequest=array('key'=>$key,
+        '_runtime_preconditions'=>clientConfigLiveGuard());
+    clientConfigLiveRpc('clientconfig_delete_setting',$deleteRequest);
     $createdSetting=false;
+    clientConfigLiveStale('clientconfig_delete_setting',$deleteRequest);
+    echo 'CAS_CLIENTCONFIG_DELETE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     clientConfigLiveCheck(clientConfigLiveValue('web',$key)===null,
         'addon no longer reads deleted setting after cache invalidation');
     echo 'CLIENTCONFIG_INSTALLED_ADDON_MCP_CONTEXT_E2E_OK platform='
