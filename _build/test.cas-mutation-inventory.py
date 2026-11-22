@@ -389,6 +389,16 @@ assert 'dry-run did not remove row' in tv_clear_test
 assert 'exactly one row removed' in tv_clear_test
 assert 'stale TV clear replay denied' in tv_clear_test
 
+# RU: Замена строк чанка имеет независимое CAS-доказательство.
+# EN: Editable chunk line mutation must have executable CAS and expect tests.
+line_test=(ROOT / '_build/test.ci-cas-edit-element-lines.php').read_text()
+assert 'php _build/test.ci-cas-edit-element-lines.php' in ci_workflow
+assert 'disposable_chunk_exact_line_edit_readback_expect_guard_stale_replay' in expected['edit_element_lines']['verified_scenarios']
+assert 'CAS_EDIT_ELEMENT_LINES_READBACK_STALE_REPLAY_OK' in line_test
+assert 'stale line edit replay denied' in line_test
+assert 'mismatched expected source denied' in line_test
+assert 'denied edit left content unchanged' in line_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

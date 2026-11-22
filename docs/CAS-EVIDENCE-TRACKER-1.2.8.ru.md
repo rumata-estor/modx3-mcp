@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 79. **Не имеют индивидуальных сценариев:** 37.
+сценарий:** 80. **Не имеют индивидуальных сценариев:** 36.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 37 без сценария
+## P2 — остальные операции — 36 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -30,7 +30,6 @@
 | `clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `edit_element_lines` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `flush_permissions` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `make_static` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -110,6 +109,7 @@
 | `delete_user_group` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `duplicate_element` | review | `disposable_chunk_duplicate_independent_readback_stale_replay` |
 | `duplicate_resource` | review | `disposable_unpublished_resource_copy_readback_stale_replay` |
+| `edit_element_lines` | review | `disposable_chunk_exact_line_edit_readback_expect_guard_stale_replay` |
 | `empty_recycle_bin` | critical | `revision_reservation_refusal_only` |
 | `grant_context_access` | critical | `disposable_context_acl_grant_readback_stale_replay` |
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
