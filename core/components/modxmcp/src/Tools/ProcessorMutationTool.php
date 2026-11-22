@@ -32,16 +32,31 @@ class ProcessorMutationTool implements ToolInterface
 
         if ($route === 'acl') {
             unset($props['type']);
-            // RU: Обычные операции с пользователями не должны позволять
-            // RU: выдавать superuser через необъявленные поля процессора.
-            // EN: Generic user mutations must not escalate to sudo through
-            // EN: undocumented processor properties, even if signed for update_user.
+            // RU: MODX User/Create и User/Update принимают скрытые поля:
+            // RU: groups меняет членство/роли, class_key подменяет класс
+            // RU: процессора, sudo даёт superuser, а newpassword меняет
+            // RU: пароль. Это НЕ полномочия обычного create/update_user.
+            // EN: User create/update accept hidden processor properties:
+            // EN: groups mutates role memberships, class_key selects a
+            // EN: custom processor, sudo elevates privileges, and newpassword
+            // EN: changes credentials. Keep those behind dedicated workflows.
             if (in_array($this->toolName, array('create_user', 'update_user'), true)) {
+                $deniedFields = array(
+                    'sudo', 'is_sudo', 'groups', 'primary_group', 'primarygroup',
+                    'class_key', 'classkey', 'remotedata', 'remote_data',
+                );
+                if ($this->toolName === 'update_user') {
+                    $deniedFields = array_merge($deniedFields, array(
+                        'password', 'newpassword', 'specifiedpassword',
+                        'confirmpassword', 'passwordgenmethod',
+                        'passwordnotifymethod',
+                    ));
+                }
                 foreach (array_keys($props) as $field) {
                     if (!is_string($field)) { continue; }
-                    if (in_array(strtolower(trim($field)), array('sudo', 'is_sudo'), true)) {
+                    if (in_array(strtolower(trim($field)), $deniedFields, true)) {
                         throw new \ModxMCPClientException(
-                            'AUTH_DENIED: changing sudo status requires MODX Manager.'
+                            'AUTH_DENIED: privileged user field requires a dedicated admin workflow.'
                         );
                     }
                 }

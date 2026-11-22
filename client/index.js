@@ -2181,12 +2181,12 @@ const toolDefinitions = [
   },
   {
     name: "modx_create_user",
-    description: "Create a user. Pass 'password' to set it explicitly; omit to auto-generate. Profile fields (email, fullname, phone…) are accepted alongside. Sudo is admin-only and cannot be set through MCP.",
+    description: "Create a user. Password may be supplied at creation; omitted passwords are generated. Membership groups, sudo, custom user classes and remote auth data must use separately authorized admin workflows and cannot be set here.",
     inputSchema: { type: "object", properties: { username: { type: "string" }, password: { type: "string" }, email: { type: "string" }, fullname: { type: "string" }, active: { type: "number", description: "1 or 0." } }, required: ["username"] },
   },
   {
     name: "modx_update_user",
-    description: "Update a user (profile fields, active state). Changing sudo status is admin-only and not available via MCP.",
+    description: "Update a user (profile fields, active state). User-group/role changes, sudo, password resets, custom processor classes and remote authentication data are forbidden on this route; use separately authorized workflows.",
     inputSchema: { type: "object", properties: { id: { type: "number" }, email: { type: "string" }, fullname: { type: "string" }, active: { type: "number" } }, required: ["id"] },
   },
   {

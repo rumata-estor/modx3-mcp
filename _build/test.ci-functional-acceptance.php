@@ -376,6 +376,47 @@ try {
     $userAfterDenied=acceptanceRpc('get_user',array('id'=>$userId));
     acceptanceCheck((int)($userAfterDenied['id'] ?? 0)===$userId,
         'user still available after blocked sudo update');
+    // RU: Обход ACL-политики через скрытые группы, класс процессора и
+    // RU: пароль должен быть запрещён даже при наличии update_user.
+    // EN: Hidden groups, custom processor classes and password changes
+    // EN: must not bypass the narrow update_user site policy.
+    foreach (array(
+        array('update_user',array('id'=>$userId,'groups'=>array(
+            array('usergroup'=>$groupId,'role'=>1)
+        ))),
+        array('create_user',array(
+            'username'=>'mcp_denied_'.$fixture,
+            'groups'=>array(array('usergroup'=>$groupId,'role'=>1)),
+        )),
+        array('create_user',array(
+            'username'=>'mcp_denied_'.$fixture,'class_key'=>'UntrustedUser',
+        )),
+        array('update_user',array(
+            'id'=>$userId,'newpassword'=>'MustNotRotateThisAccount',
+        )),
+    ) as $attempt) {
+        $privilegeDenied=false;
+        try {acceptanceRpc($attempt[0],$attempt[1]);}
+        catch (ModxMCPClientException $e) {
+            $privilegeDenied=strpos($e->getMessage(),'AUTH_DENIED:')===0;
+        }
+        acceptanceCheck($privilegeDenied,
+            'hidden privilege mutation blocked: '.$attempt[0]);
+    }
+    $membersAfterDenied=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
+    ));
+    acceptanceCheck(count($membersAfterDenied['results'])===count($membersBefore['results']),
+        'hidden user-group mutation did not create membership');
+    $deniedUsers=acceptanceRpc('list_users',array('query'=>'mcp_denied_'.$fixture));
+    $deniedUserFound=false;
+    if(isset($deniedUsers['results']) && is_array($deniedUsers['results'])) {
+        foreach($deniedUsers['results'] as $row) {
+            if(is_array($row) && ($row['username'] ?? '')==='mcp_denied_'.$fixture)
+                $deniedUserFound=true;
+        }
+    }
+    acceptanceCheck(!$deniedUserFound,'hidden create_user route created no user');
 
     $settingKey='mcp_acceptance_'.$fixture;
     acceptanceRpc('create_system_setting',array('key'=>$settingKey,'value'=>'ONE'));

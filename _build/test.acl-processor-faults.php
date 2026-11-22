@@ -173,6 +173,35 @@ foreach (array('create_user','update_user') as $userAction) {
     }
 }
 if($sudoDenials!==12)throw new \RuntimeException('SUDO_DENIAL_COVERAGE_MISSING');
+// RU: Непрозрачные groups/class_key и пароль нельзя менять под видом
+// RU: обычного create_user/update_user — отдельные ACL/админ-механизмы.
+// EN: Hidden groups/class_key/password properties must not bypass the
+// EN: independently authorized membership or credential workflows.
+$privilegedFieldDenials=0;
+foreach (array(
+    array('create_user','groups',array(array('usergroup'=>1,'role'=>1))),
+    array('update_user','groups',array()),
+    array('create_user','class_key','CustomEvilUser'),
+    array('update_user',' CLASS_KEY ','CustomEvilUser'),
+    array('create_user','remoteData',array('admin'=>'x')),
+    array('update_user','newpassword','MustNotChange'),
+    array('update_user','passwordgenmethod','g'),
+    array('update_user','password','MustNotChange'),
+) as $case) {
+    $context=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool($case[0],$specs[$case[0]]);
+    try {
+        $tool->execute($context,array('id'=>9,'username'=>'fixture',$case[1]=>$case[2]));
+        throw new \RuntimeException('PRIVILEGED_USER_FIELD_ALLOWED: '.$case[1]);
+    } catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'AUTH_DENIED:')!==0)throw $e;
+    }
+    if($context->platform->calls!==0)
+        throw new \RuntimeException('PRIVILEGED_USER_FIELD_REACHED_PROCESSOR');
+    $privilegedFieldDenials++;
+}
+if($privilegedFieldDenials!==8)
+    throw new \RuntimeException('PRIVILEGED_FIELD_COVERAGE_MISSING');
 // RU: Модекс устанавливает omitted checkbox-поля в 0. Проверяем, что
 // RU: MCP передаёт текущие значения, а разрешённый active=0 не теряет.
 // EN: Core MODX converts omitted checkboxes to zero. MCP must hydrate
