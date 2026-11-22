@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'security/128-ms2-productlink-strict-ids-20261122']
 
 permissions:
   contents: read
@@ -819,3 +819,11 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-options-installed.php
+      # RU: Проверка отклонения нецелочисленных ID ещё до вызова miniShop2.
+      # EN: Verify malformed identifiers are rejected before miniShop2 SQL.
+      - name: Product-link strict ID validation on disposable PHP matrix
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          php _build/test.ms2-productlink-strict-ids.php
