@@ -16,6 +16,8 @@
 
 - **Additional verification:** TV static metadata passed 12 disposable MODX 2/3 integrations with the static root provisioned via guarded MCP `make_static`. Short binary log lines are Base64-wrapped, and the aggregate 4 MiB limit now measures serialized JSON bytes to prevent control-character expansion.
 
+- **`make_static` path security:** all element types now validate their real write target under `core/elements`, rejecting symlink escapes including a replaced static root. Ordinary conversion and negative path cases were tested; MODX/PHP matrix [12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/44998218560).
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
