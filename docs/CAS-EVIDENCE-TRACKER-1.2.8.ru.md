@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 88. **Не имеют индивидуальных сценариев:** 28.
+сценарий:** 90. **Не имеют индивидуальных сценариев:** 26.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,11 +22,10 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 28 без сценария
+## P2 — остальные операции — 26 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_delete_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_update_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -42,7 +41,6 @@
 | `ms2_update_option` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `virtualpage_clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `virtualpage_create_event` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -80,6 +78,7 @@
 | `create_media_source` | review | `disposable_media_source_definition_create_readback_stale_replay` |
 | `create_namespace` | high | `disposable_namespace_metadata_create_readback_stale_replay` |
 | `create_property_set` | review | `disposable_unassigned_property_set_create_readback_stale_replay` |
+| `create_provider` | review | `disposable_loopback_provider_create_readback_stale_replay` |
 | `create_resource_group` | critical | `disposable_create_readback_revision_stale_replay` |
 | `create_role` | critical | `disposable_create_readback_revision_stale_replay` |
 | `create_system_setting` | review | `revision_write_failure_rollback` |
@@ -140,6 +139,7 @@
 | `update_media_source` | review | `disposable_media_source_definition_description_update_readback_stale_replay` |
 | `update_namespace` | high | `disposable_namespace_metadata_update_readback_stale_replay` |
 | `update_property_set` | review | `disposable_unassigned_property_set_description_update_readback_stale_replay` |
+| `update_provider` | review | `disposable_loopback_provider_description_update_readback_stale_replay` |
 | `update_resource_group` | critical | `disposable_unassigned_resource_group_rename_readback_stale_replay` |
 | `update_resource_tvs` | review | `revision_write_failure_rollback`, `concurrent_cas_conflict`, `raw_tv_and_inherit` |
 | `update_resourcegroup_access` | critical | `disposable_resourcegroup_acl_update_readback_stale_replay` |
