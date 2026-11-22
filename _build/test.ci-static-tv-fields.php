@@ -25,6 +25,7 @@ $api=new modxMCP($modx);
 $fixture=bin2hex(random_bytes(6));
 $name='MCP_StaticTV_'.$fixture;
 $id=0;
+$bootstrapChunkId=0;
 $checks=0;
 function stvRpc($action,array $data=array()){
     global $api;
@@ -44,6 +45,21 @@ try {
         'default_text'=>'X','static'=>1,'static_file'=>'../../secret.txt'
     ));}catch(ModxMCPClientException $e){$denied=true;}
     stvCheck($denied,'unsafe static TV path rejected');
+
+    // RU: Чистая установка MODX не обязана иметь core/elements.
+    // RU: Создаём каталог ТОЛЬКО через штатный make_static MCP на
+    // RU: одноразовом чанке, без прямой записи в файлы тестового сайта.
+    // EN: A fresh MODX install may lack core/elements. Bootstrap this
+    // EN: directory through guarded make_static on a disposable chunk.
+    $bootstrapChunk=stvRpc('create_element',array(
+        'type'=>'chunk','name'=>'MCPStaticBootstrap_'.$fixture,
+        'content'=>'DISPOSABLE_STATIC_BOOTSTRAP_'.$fixture,
+    ));
+    $bootstrapChunkId=(int)($bootstrapChunk['id']??0);
+    stvCheck($bootstrapChunkId>0,'static directory bootstrap chunk created');
+    stvRpc('make_static',array('type'=>'chunk','id'=>$bootstrapChunkId));
+    stvCheck(is_dir(rtrim((string)$modx->getOption('core_path'),'/').'/elements'),
+        'core/elements provisioned via guarded make_static');
 
     // RU: Обычная TV не создаёт реальный файл; тестируем только метаданные.
     // EN: Static flag remains disabled: test metadata, not filesystem creation.
@@ -78,4 +94,7 @@ try {
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
     if($id>0)stvRpc('delete_element',array('type'=>'tv','id'=>$id));
+    if($bootstrapChunkId>0)stvRpc('delete_element',array(
+        'type'=>'chunk','id'=>$bootstrapChunkId
+    ));
 }
