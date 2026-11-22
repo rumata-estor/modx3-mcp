@@ -75,3 +75,21 @@
 - **Все ACL-результаты:** безопасное маскирование вложенных credential-полей, включая успешный ответ `update_user`; автономный тест `_build/test.processor-secret-redaction.php` (коммит `95bf3e2`).
 
 **Границы доказательства:** для большинства ACL-действий нет полного индивидуального позитивного сценария, fault-injection после частичного выполнения, независимого восстановления или тестов на межузловые гонки. Число 94 в машинном реестре отражает именно неразмеченное индивидуальное покрытие; не уменьшать его автоматически на основании общего CI. Релиз и production-установку не разрешать только по факту успешной матрицы.
+
+## Дополнительный этап: скрытые ACL-эффекты и независимые сценарии (22.11.2026)
+
+**Изолированная ветка, без изменений production и main.** Источники наблюдений: `ProcessorMutationTool.php`, штатные MODX 3 User/Create, User/Update, Context/Create и ResourceGroup/Create, а также воспроизводимые интеграционные тесты на одноразовых MODX 2/3.
+
+| Предмет | Проверенная граница | CI |
+| --- | --- | --- |
+| `add_user_to_group` / `remove_user_from_group` | Создание, независимое чтение, stale-CAS отказ и отсутствие дубликата, удаление только тестовой связи | [44991078308](https://github.com/rumata-estor/modx3-mcp/actions/runs/44991078308), 12/12 |
+| `create_user` / `update_user` | Запрет прямого `sudo`, обычное частичное изменение профиля с сохранением `active/blocked/sudo`, `username/email`, stale-CAS | [44991512492](https://github.com/rumata-estor/modx3-mcp/actions/runs/44991512492), 12/12 |
+| `grant_context_access` / `update_context_access` / `revoke_context_access` | Временная группа, строгое `web`-правило с authority 999→998, независимые MCP-чтения, stale-CAS и уборка | [44991723670](https://github.com/rumata-estor/modx3-mcp/actions/runs/44991723670), 12/12 |
+| `grant_resourcegroup_access` / `update_resourcegroup_access` / `revoke_resourcegroup_access` | Временные группа пользователей и группа ресурсов, ограниченная выдача/изменение/отзыв, stale-CAS | [44991867901](https://github.com/rumata-estor/modx3-mcp/actions/runs/44991867901), 12/12 |
+| Скрытые параметры `create_user` / `update_user` | `groups`, `class_key`, `remoteData`, `sudo`, несанкционированная смена пароля — отказ до штатного процессора; после отказа нет созданного пользователя и членства | [44992065804](https://github.com/rumata-estor/modx3-mcp/actions/runs/44992065804), 12/12 |
+| `create_resource_group`: скрытая авто-выдача ACL | `access_admin`, `access_anon`, `access_parallel`, `access_contexts`, `access_usergroups`, `automatic_access` запрещены — нужен отдельный ACL grant | [44992209501](https://github.com/rumata-estor/modx3-mcp/actions/runs/44992209501), 12/12 |
+| `create_context`: неявный анонимный Load Only | `enableAnonymous=false` по умолчанию; отдельный запрет передачи `enableAnonymous=true` и непрозрачных settings. Реальная проверка отсутствия anonymous ACL, отказа и удаления тестового контекста. Первая версия теста отклонена MODX из-за недопустимого ключа с подчёркиваниями; исправленный тест прошёл все платформы | [44992515916](https://github.com/rumata-estor/modx3-mcp/actions/runs/44992515916), 12/12 |
+
+Основной CI исправленного теста: [44992521335](https://github.com/rumata-estor/modx3-mcp/actions/runs/44992521335) — success. Предварительный интеграционный запуск [44992428898](https://github.com/rumata-estor/modx3-mcp/actions/runs/44992428898) был **красным** из-за синтаксически недопустимого тестового имени контекста; не скрывать это в отчёте. Также ранее тест `update_user` обнаружил настоящую проблему partial-update (пропущенные username/email и checkbox), исправленную отдельным коммитом и повторно проверенную.
+
+**Что всё ещё нельзя обещать:** полную атомарность побочных событий MODX, защиту от внешних изменений Manager вне MCP при пустом `read_set`, сохранность между независимыми узлами, исключение всех скрытых параметров сторонних процессоров, восстановление при частично выполненной операции и абсолютное отсутствие утечек через неизвестные поля. 94 неполных индивидуальных сценария остаются в машинном реестре до отдельной инвентаризации; успешная общая матрица не равна глубоким испытаниям всех 116 мутаций. `main`, релиз и боевые сайты не трогать.
