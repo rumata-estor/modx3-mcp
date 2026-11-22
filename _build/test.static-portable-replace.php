@@ -72,8 +72,24 @@ try {
     },'parent symlink denied');
     pcheck(file_get_contents($outside)==='PRIVATE_UNCHANGED','parent symlink external intact');
     unlink($root.'/core/elements/outlink');
+    // RU: Ограниченный хостинг: каталог только для чтения, файл доступен.
+    // EN: Restricted host: existing file writable, directory not writable.
+    file_put_contents($target,'LEGACY_OLD');
+    chmod($target,0666);
+    chmod($dir,0555);
+    try {
+        pcheck(!is_writable($dir) && is_writable($target),
+            'restricted hosting fixture');
+        $updated=\ModxMcp\Tools\StaticFileWriteSupport::replace(
+            $ctx,$target,'LEGACY_NEW'
+        );
+        pcheck($updated===10 && file_get_contents($target)==='LEGACY_NEW',
+            'restricted host legacy compatibility');
+    } finally {
+        chmod($dir,0700);
+    }
     pcheck(count(glob($dir.'/.modxmcp-*.tmp'))===0,'no temp leftovers');
-    echo 'STATIC_PORTABLE_REPLACE_OK checks=12'.PHP_EOL;
+    echo 'STATIC_PORTABLE_REPLACE_OK checks=14'.PHP_EOL;
 } finally {
     if(is_link($target)||is_file($target))unlink($target);
     if(is_link($root.'/core/elements/outlink'))unlink($root.'/core/elements/outlink');

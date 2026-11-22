@@ -12,6 +12,31 @@ namespace ModxMcp\Tools;
  */
 final class StaticFileWriteSupport
 {
+    private static $compatibilityWarningLogged = false;
+
+    /**
+     * RU: Не менять прежнее поведение, если можно изменить только файл,
+     * RU: но нельзя создать временный файл рядом с ним.
+     * EN: Preserve legacy semantics on file-writable, directory-readonly hosts.
+     * EN: This preserves the preexisting TOCTOU risk and logs a warning.
+     */
+    private static function legacyCompatibleWrite($absolute, $content)
+    {
+        if (!self::$compatibilityWarningLogged) {
+            @error_log('MODX MCP: static atomic replacement unavailable; '
+                . 'using legacy in-place write; TOCTOU parent race remains.');
+            self::$compatibilityWarningLogged = true;
+        }
+        $written = @file_put_contents($absolute, $content);
+        if ($written === false || $written !== strlen($content)) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: compatibility static write incomplete; '
+                . 'inspect file before retry.'
+            );
+        }
+        return $written;
+    }
+
     private static function fingerprint($path)
     {
         clearstatcache(true, $path);
@@ -22,6 +47,7 @@ final class StaticFileWriteSupport
         return array(
             'dev' => (string)$stat['dev'],
             'ino' => (string)$stat['ino'],
+            'uid' => (string)$stat['uid'],
             'mode' => (int)$stat['mode'],
             'nlink' => (int)$stat['nlink'],
         );
@@ -58,6 +84,14 @@ final class StaticFileWriteSupport
             throw new \ModxMCPClientException(
                 'make_static: TV exclusive creation failed; target already exists.'
             );
+        }
+        // RU: Некоторые хостинги разрешают запись в файл, но запрещают
+        // RU: создание соседних файлов. До 1.2.8 этот случай работал.
+        // EN: Preserve pre-1.2.8 behavior for file-writable, dir-readonly hosts.
+        // EN: Never enable this compatibility path for new files.
+        if (!$exclusive && $target !== null && !is_writable($directory)
+            && is_writable($absolute)) {
+            return self::legacyCompatibleWrite($absolute, $content);
         }
         $temp = $directory . DIRECTORY_SEPARATOR . '.modxmcp-' . bin2hex(random_bytes(12)) . '.tmp';
         $handle = @fopen($temp, 'xb');
@@ -97,6 +131,14 @@ final class StaticFileWriteSupport
             if ($tmpInfo === null || ($tmpInfo['mode'] & 0170000) !== 0100000
                 || $tmpInfo['nlink'] !== 1) {
                 throw new \ModxMCPClientException('Static temporary file was replaced.');
+            }
+            // RU: Не менять владельца чужого файла на хостинге при rename.
+            // EN: Shared-hosting files may be owned by a different account;
+            // EN: preserve ownership and legacy behavior instead of replacing inode.
+            if ($target !== null && $target['uid'] !== $tmpInfo['uid']
+                && is_writable($absolute)) {
+                ElementContentSupport::assertSafeStaticPath($context, $absolute);
+                return self::legacyCompatibleWrite($absolute, $content);
             }
 
             // Detect parent/target substitution between our initial checks and
