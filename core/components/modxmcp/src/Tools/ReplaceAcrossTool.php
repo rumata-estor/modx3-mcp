@@ -103,6 +103,43 @@ class ReplaceAcrossTool implements ToolInterface
                 $isStatic, $absolute, $count) = $preparedTarget;
 
             if (!$dryRun) {
+                // RU: Между поиском и записью другой процесс мог изменить
+                // RU: файл или поле статического элемента. Не перезаписываем
+                // RU: данные из устаревшего снимка; после первых записей
+                // RU: внешний результат пакета уже мог стать частичным.
+                // EN: Recheck content and static target immediately before
+                // EN: writing; preflight snapshots are not durable locks.
+                $currentElement = $context->modx()->getObject(
+                    $map['class'], (int)$hit['id'], false
+                );
+                if (!$currentElement) {
+                    if ($attemptedWrites === 0) {
+                        throw new \ModxMCPClientException(
+                            'STALE_STATE: replace_across target disappeared '
+                            . 'before the first write.'
+                        );
+                    }
+                    throw new \ModxMCPClientException(
+                        'MUTATION_OUTCOME_UNCERTAIN: replace_across target '
+                        . 'disappeared during batch execution.'
+                    );
+                }
+                list($currentContent, $currentStatic, $currentPath) =
+                    ElementContentSupport::read($context, $currentElement, $map);
+                if ($currentContent !== $content
+                    || $currentStatic !== $isStatic
+                    || $currentPath !== $absolute) {
+                    if ($attemptedWrites === 0) {
+                        throw new \ModxMCPClientException(
+                            'STALE_STATE: replace_across target changed before '
+                            . 'the first write; reload and prepare a fresh request.'
+                        );
+                    }
+                    throw new \ModxMCPClientException(
+                        'MUTATION_OUTCOME_UNCERTAIN: replace_across target '
+                        . 'changed during batch execution; inspect all targets.'
+                    );
+                }
                 $newContent = $caseSensitive
                     ? str_replace($find, $replacement, $content)
                     : str_ireplace($find, $replacement, $content);
@@ -112,7 +149,7 @@ class ReplaceAcrossTool implements ToolInterface
                     $context,
                     function () use (
                         $context,
-                        $element,
+                        $currentElement,
                         $type,
                         $map,
                         $isStatic,
@@ -121,7 +158,7 @@ class ReplaceAcrossTool implements ToolInterface
                     ) {
                         ElementContentSupport::write(
                             $context,
-                            $element,
+                            $currentElement,
                             $type,
                             $map,
                             $isStatic,

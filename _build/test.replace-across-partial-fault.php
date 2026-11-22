@@ -24,13 +24,22 @@ namespace ModxMcp\Tools {
     class ElementContentSupport {
         public static $failWrite=0;
         public static $failRead=0;
+        public static $driftId=0;
+        public static $readCalls=array();
         public static $changed=array();
         public static function map($ctx,$type){return array('class'=>'FakeChunk','field'=>'snippet');}
         public static function read($ctx,$element,$map){
             if (self::$failRead === $element->id) {
                 throw new \RuntimeException('injected second read failure');
             }
-            return array($element->content,false,null);
+            self::$readCalls[$element->id]
+                =(self::$readCalls[$element->id]??0)+1;
+            $content=$element->content;
+            if (self::$driftId === $element->id
+                && self::$readCalls[$element->id] > 1) {
+                $content='CHANGED OUTSIDE needle AFTER';
+            }
+            return array($content,false,null);
         }
         public static function write($ctx,$element,$type,$map,$static,$path,$content) {
             if(self::$failWrite===$element->id) {
@@ -58,11 +67,17 @@ class ReplacementFixture {
 class BatchFaultModx {
     private $objects;
     public $missingId=0;
+    public $vanishAfterPreflightId=0;
+    public $calls=array();
     public function __construct() {
         $this->objects=array(1=>new ReplacementFixture(1),2=>new ReplacementFixture(2));
     }
     public function getObject($class,$id,$cache=null){
-        return $class==='FakeChunk' && (int)$id!==$this->missingId
+        $id=(int)$id;
+        $this->calls[$id]=($this->calls[$id]??0)+1;
+        return $class==='FakeChunk' && $id!==$this->missingId
+            && !($id===$this->vanishAfterPreflightId
+                && $this->calls[$id]>1)
             ? ($this->objects[$id]??null):null;
     }
 }
@@ -102,6 +117,52 @@ batchCheck($missingPreflight
     && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
     'missing second target allowed first-target write');
 $ctx->modx()->missingId=0;
+// RU: Внешнее изменение первой цели после preflight: ни одной записи.
+// EN: First-target drift after preflight prevents all writes.
+\ModxMcp\Tools\ElementContentSupport::$readCalls=array();
+\ModxMcp\Tools\ElementContentSupport::$driftId=1;
+$firstStale=false;
+try {$tool->execute($ctx,$arg);}
+catch(ModxMCPClientException $e){
+    $firstStale=strpos($e->getMessage(),'STALE_STATE:')===0;
+}
+batchCheck($firstStale
+    && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
+    'first-target prewrite drift overwrote newer content');
+// RU: Внешнее изменение второй цели после записи первой — неопределённо.
+// EN: Second-target drift after first write needs uncertain status.
+\ModxMcp\Tools\ElementContentSupport::$readCalls=array();
+\ModxMcp\Tools\ElementContentSupport::$driftId=2;
+$secondUncertain=false;
+try {$tool->execute($ctx,$arg);}
+catch(ModxMCPClientException $e){
+    $secondUncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+}
+batchCheck($secondUncertain
+    && (\ModxMcp\Tools\ElementContentSupport::$changed[1]??null)
+        ==='BEFORE NEW AFTER'
+    && !isset(\ModxMcp\Tools\ElementContentSupport::$changed[2]),
+    'second-target drift did not protect changed content');
+\ModxMcp\Tools\ElementContentSupport::$readCalls=array();
+\ModxMcp\Tools\ElementContentSupport::$driftId=0;
+\ModxMcp\Tools\ElementContentSupport::$changed=array();
+// RU: Вторая цель исчезает именно после preflight и первой записи.
+// EN: Second target disappears after preflight and the first write.
+$ctx->modx()->calls=array();
+$ctx->modx()->vanishAfterPreflightId=2;
+$vanishedUncertain=false;
+try{$tool->execute($ctx,$arg);}
+catch(ModxMCPClientException $e){
+    $vanishedUncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+}
+batchCheck($vanishedUncertain
+    && (\ModxMcp\Tools\ElementContentSupport::$changed[1]??null)
+        ==='BEFORE NEW AFTER'
+    && !isset(\ModxMcp\Tools\ElementContentSupport::$changed[2]),
+    'vanished second target after preflight was not guarded');
+$ctx->modx()->vanishAfterPreflightId=0;
+$ctx->modx()->calls=array();
+\ModxMcp\Tools\ElementContentSupport::$changed=array();
 \ModxMcp\Tools\ElementContentSupport::$failWrite=2;
 $uncertain=false;
 try {$tool->execute($ctx,$arg);}
@@ -114,7 +175,7 @@ batchCheck((\ModxMcp\Tools\ElementContentSupport::$changed[1]??null)==='BEFORE N
     'first element mutated before second failure');
 batchCheck(!isset(\ModxMcp\Tools\ElementContentSupport::$changed[2]),
     'second element should not report successful write');
-batchCheck(\ModxMcp\Tools\ElementMutationSupport::$refreshes===1,
+batchCheck(\ModxMcp\Tools\ElementMutationSupport::$refreshes===3,
     'partial failure must attempt to invalidate stale cache');
 \ModxMcp\Tools\ElementContentSupport::$changed=array();
 \ModxMcp\Tools\ElementContentSupport::$failWrite=1;
@@ -138,7 +199,7 @@ batchCheck(($dry['elements']??0)===2,'dry run must remain available with write f
 \ModxMcp\Tools\ElementContentSupport::$failWrite=0;
 $ok=$tool->execute($ctx,$arg);
 batchCheck(($ok['elements']??0)===2
-    && \ModxMcp\Tools\ElementMutationSupport::$refreshes===3,
+    && \ModxMcp\Tools\ElementMutationSupport::$refreshes===5,
     'successful batch must still report full result and refresh once');
-echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=9'.PHP_EOL;
+echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=12'.PHP_EOL;
 }
