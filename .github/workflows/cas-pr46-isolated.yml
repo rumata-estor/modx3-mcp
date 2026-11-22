@@ -351,6 +351,15 @@ jobs:
           php _build/test.ci-acl-manager-conflict.php
       # RU: Индивидуальные доказательства для создания роли и группы.
       # EN: Per-action create ACL CAS, replay and no-duplicate evidence.
+      # RU: Создаём только ни к кому не привязанную тестовую ACL policy.
+      # EN: Create an unassigned disposable policy and verify stale CAS replay.
+      - name: Disposable access policy create CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-policy-evidence.php
       - name: Disposable per-action ACL create CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
