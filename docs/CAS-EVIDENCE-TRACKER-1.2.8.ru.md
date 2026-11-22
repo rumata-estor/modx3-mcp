@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 90. **Не имеют индивидуальных сценариев:** 26.
+сценарий:** 93. **Не имеют индивидуальных сценариев:** 23.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,13 +22,10 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 26 без сценария
+## P2 — остальные операции — 23 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `migx_delete_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `migx_update_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_assign_option_to_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_create_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_create_link_type` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -110,6 +107,9 @@
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
 | `make_static` | review | `disposable_static_tv_file_bytes_readback_revision_stale_replay` |
+| `migx_create_config` | review | `disposable_installed_migx_create_config_readback_stale_replay` |
+| `migx_delete_config` | review | `disposable_installed_migx_delete_config_readback_stale_replay` |
+| `migx_update_config` | review | `disposable_installed_migx_update_config_readback_stale_replay` |
 | `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `remove_locks` | review | `disposable_empty_install_remove_locks_revision_stale_replay` |

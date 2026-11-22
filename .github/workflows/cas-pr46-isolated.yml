@@ -728,3 +728,27 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-legacy-settings-guard.php
+      # RU: Реальный установленный MIGX, только одноразовая среда PHP 8.2.
+      # EN: Pinned real MIGX addon only on disposable PHP 8.2 matrix.
+      - name: Stage pinned upstream MIGX model for isolated E2E
+        if: matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly MIGX_SHA=f0717d42e6b091ed4d82f009f55543482b58c83d
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/Bruno17/MIGX/tar.gz/$MIGX_SHA" \
+            -o "$RUNNER_TEMP/migx-pinned.tar.gz"
+          mkdir -p "$RUNNER_TEMP/migx-addon-source"
+          tar -xzf "$RUNNER_TEMP/migx-pinned.tar.gz" \
+            -C "$RUNNER_TEMP/migx-addon-source" --strip-components=1
+          test -f "$RUNNER_TEMP/migx-addon-source/core/components/migx/model/migx/migxconfig.class.php"
+          cp -a "$RUNNER_TEMP/migx-addon-source/core/components/migx" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable installed MIGX config MCP CAS lifecycle
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-migx-installed.php
