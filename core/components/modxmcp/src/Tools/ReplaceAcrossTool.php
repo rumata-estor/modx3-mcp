@@ -60,7 +60,15 @@ class ReplaceAcrossTool implements ToolInterface
 
         $results = array();
         $totalOccurrences = 0;
+        $attemptedWrites = 0;
 
+        // RU: Общая CAS-транзакция может откатить БД, но не статические
+        // RU: файлы и события процессоров. После начала пакетной записи
+        // RU: исключение требует независимой проверки всех объектов.
+        // EN: A shared CAS transaction may roll back database rows, not
+        // EN: static files or processor side effects. Any error after a
+        // EN: batch write begins requires independent reconciliation.
+        try {
         foreach ($hits['results'] as $hit) {
             $type = $hit['type'];
             if (!in_array($type, $allowed, true)) { continue; }
@@ -89,6 +97,7 @@ class ReplaceAcrossTool implements ToolInterface
                     ? str_replace($find, $replacement, $content)
                     : str_ireplace($find, $replacement, $content);
 
+                $attemptedWrites++;
                 ElementMutationSupport::transaction(
                     $context,
                     function () use (
@@ -159,6 +168,26 @@ class ReplaceAcrossTool implements ToolInterface
 
         if (!$dryRun && $results) {
             ElementMutationSupport::refreshCache($context);
+        }
+        } catch (\Throwable $e) {
+            if (!$dryRun && $attemptedWrites > 0) {
+                // RU: При частичной записи кэш может содержать старые данные.
+                // RU: Обновление — best effort; ошибка всё равно неопределённа.
+                // EN: Partial effects may leave stale cache. Refresh on a
+                // EN: best-effort basis, without claiming the batch succeeded.
+                try { ElementMutationSupport::refreshCache($context); }
+                catch (\Throwable $ignored) {}
+                // RU: Даже неуспешная первая попытка могла изменить файл;
+                // RU: не скрываем частичный результат пакетной операции.
+                // EN: Even the first failed attempt may have changed a file;
+                // EN: never report a clean rollback for the batch.
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: replace_across attempted '
+                    . $attemptedWrites . ' element writes before failure; '
+                    . 'inspect affected elements and static files before retry.'
+                );
+            }
+            throw $e;
         }
 
         return array(
