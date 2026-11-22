@@ -4,6 +4,7 @@
  * EN: VersionX revert must report uncertain outcome after native processor faults.
  */
 namespace ModxMcp\Tools {
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/ToolInterface.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/VersionXSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/VersionXVersionRevertTool.php';
     class AuditSupport {
