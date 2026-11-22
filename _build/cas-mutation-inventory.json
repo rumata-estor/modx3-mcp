@@ -508,7 +508,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_chunk_exact_line_edit_readback_expect_guard_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "empty_recycle_bin": {
