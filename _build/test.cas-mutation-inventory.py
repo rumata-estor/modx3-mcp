@@ -341,6 +341,17 @@ assert 'CAS_UNDELETE_RESOURCE_READBACK_STALE_REPLAY_OK' in undelete_test
 assert 'restored resource remains unpublished' in undelete_test
 assert 'stale undelete replay denied' in undelete_test
 
+# RU: Переупорядочение подтверждается чтением двух независимых ресурсов.
+# EN: Per-action reorder evidence requires executable disposable MCP tests.
+reorder_test=(ROOT / '_build/test.ci-cas-reorder-resources.php').read_text()
+assert 'php _build/test.ci-cas-reorder-resources.php' in ci_workflow
+assert 'disposable_two_resource_menuindex_reorder_readback_stale_replay' in expected['reorder_resources']['verified_scenarios']
+assert "'reorder_resources'" in reorder_test
+assert 'CAS_REORDER_RESOURCES_READBACK_STALE_REPLAY_OK' in reorder_test
+assert 'reorder per-item success' in reorder_test
+assert 'stale reorder replay rejected' in reorder_test
+assert 'reorder did not publish fixture' in reorder_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

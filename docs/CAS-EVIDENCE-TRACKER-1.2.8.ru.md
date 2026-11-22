@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 74. **Не имеют индивидуальных сценариев:** 42.
+сценарий:** 75. **Не имеют индивидуальных сценариев:** 41.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 42 без сценария
+## P2 — остальные операции — 41 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -53,7 +53,6 @@
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `refresh_uris` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `reorder_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `replace_across` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -120,6 +119,7 @@
 | `remove_resource_from_group` | critical | `disposable_unpublished_resource_group_remove_readback_stale_replay` |
 | `remove_user_from_group` | critical | `disposable_inactive_user_group_membership_remove_readback_stale_replay` |
 | `rename_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `reorder_resources` | review | `disposable_two_resource_menuindex_reorder_readback_stale_replay` |
 | `revert_lexicon_entry` | high | `disposable_namespace_lexicon_revert_readback_stale_replay` |
 | `revoke_context_access` | critical | `disposable_context_acl_revoke_readback_stale_replay` |
 | `revoke_resourcegroup_access` | critical | `disposable_resourcegroup_acl_revoke_readback_stale_replay` |
