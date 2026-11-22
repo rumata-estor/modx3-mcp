@@ -265,7 +265,7 @@ try {
     $authDenied = strpos($message, 'AUTH_DENIED:') === 0;
     http_response_code($authDenied ? 403 : 400);
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
-    echo json_encode(['success' => false, 'error' => $message, 'caps' => $caps], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'error' => \ModxMcp\Security\SecretRedactor::text($message), 'caps' => $caps], JSON_UNESCAPED_UNICODE);
 } catch (Exception $e) {
     $errorId = uniqid('modxmcp_', true);
     $modx->log(
