@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 115. **Не имеют индивидуальных сценариев:** 1.
+сценарий:** 116. **Не имеют индивидуальных сценариев:** 0.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -28,11 +28,10 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 1 без сценария
+## P2 — остальные операции — 0 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 
 ## Уже зарегистрированные индивидуальные сценарии
 
@@ -143,6 +142,7 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | `update_system_setting` | review | `revision_write_failure_rollback` |
 | `update_user` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `update_user_group` | critical | `manager_out_of_band_edit_stale_target_denied` |
+| `versionx_revert_version` | review | `disposable_modx2_pinned_versionx_revert_version_native_snapshot_mcp_readback_stale_replay` |
 | `virtualpage_clear_cache` | review | `disposable_pinned_virtualpage_cache_native_readback_stale_replay` |
 | `virtualpage_create_event` | review | `disposable_pinned_virtualpage_create_event_mcp_readback_stale_replay` |
 | `virtualpage_create_handler` | review | `disposable_pinned_virtualpage_create_handler_mcp_readback_stale_replay` |
