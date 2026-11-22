@@ -23,9 +23,13 @@ namespace ModxMcp\Tools {
     }
     class ElementContentSupport {
         public static $failWrite=0;
+        public static $failRead=0;
         public static $changed=array();
         public static function map($ctx,$type){return array('class'=>'FakeChunk','field'=>'snippet');}
         public static function read($ctx,$element,$map){
+            if (self::$failRead === $element->id) {
+                throw new \RuntimeException('injected second read failure');
+            }
             return array($element->content,false,null);
         }
         public static function write($ctx,$element,$type,$map,$static,$path,$content) {
@@ -53,11 +57,13 @@ class ReplacementFixture {
 }
 class BatchFaultModx {
     private $objects;
+    public $missingId=0;
     public function __construct() {
         $this->objects=array(1=>new ReplacementFixture(1),2=>new ReplacementFixture(2));
     }
     public function getObject($class,$id,$cache=null){
-        return $class==='FakeChunk'?($this->objects[$id]??null):null;
+        return $class==='FakeChunk' && (int)$id!==$this->missingId
+            ? ($this->objects[$id]??null):null;
     }
 }
 class BatchFaultContext {
@@ -72,6 +78,30 @@ function batchCheck($ok,$label) {
 $ctx=new BatchFaultContext();
 $tool=new \ModxMcp\Tools\ReplaceAcrossTool();
 $arg=array('find'=>'needle','replacement'=>'NEW','types'=>array('chunk'));
+// RU: Ошибка чтения второй цели должна случиться ДО записи первой.
+// EN: Second-target read errors must happen before the first write.
+\ModxMcp\Tools\ElementContentSupport::$failRead=2;
+$readFailed=false;
+try {$tool->execute($ctx,$arg);}
+catch(\RuntimeException $e) {
+    $readFailed=$e->getMessage()==='injected second read failure';
+}
+batchCheck($readFailed
+    && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
+    'second-target read failed after a first-target write');
+\ModxMcp\Tools\ElementContentSupport::$failRead=0;
+// RU: Объект, исчезнувший до записи, останавливает пакет целиком.
+// EN: Missing second target must reject the batch before mutations.
+$ctx->modx()->missingId=2;
+$missingPreflight=false;
+try {$tool->execute($ctx,$arg);}
+catch(ModxMCPClientException $e) {
+    $missingPreflight=strpos($e->getMessage(),'NOT_FOUND:')===0;
+}
+batchCheck($missingPreflight
+    && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
+    'missing second target allowed first-target write');
+$ctx->modx()->missingId=0;
 \ModxMcp\Tools\ElementContentSupport::$failWrite=2;
 $uncertain=false;
 try {$tool->execute($ctx,$arg);}
@@ -110,5 +140,5 @@ $ok=$tool->execute($ctx,$arg);
 batchCheck(($ok['elements']??0)===2
     && \ModxMcp\Tools\ElementMutationSupport::$refreshes===3,
     'successful batch must still report full result and refresh once');
-echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=7'.PHP_EOL;
+echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=9'.PHP_EOL;
 }

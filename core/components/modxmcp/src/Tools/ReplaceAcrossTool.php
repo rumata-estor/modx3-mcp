@@ -61,6 +61,35 @@ class ReplaceAcrossTool implements ToolInterface
         $results = array();
         $totalOccurrences = 0;
         $attemptedWrites = 0;
+        $prepared = array();
+
+        // RU: Сначала читаем ВСЕ найденные элементы и проверяем пути.
+        // RU: Ошибка чтения второй цели не должна оставлять первую изменённой.
+        // EN: Read and validate ALL selected targets before any write.
+        // EN: A second-target read failure must not mutate the first target.
+        foreach ($hits['results'] as $hit) {
+            $type = $hit['type'];
+            if (!in_array($type, $allowed, true)) { continue; }
+            $map = ElementContentSupport::map($context, $type);
+            $element = $context->modx()->getObject(
+                $map['class'], (int)$hit['id'], false
+            );
+            if (!$element) {
+                throw new \ModxMCPClientException(
+                    'NOT_FOUND: replace_across target ' . $type . ' '
+                    . (int)$hit['id'] . ' is unavailable; no writes attempted.'
+                );
+            }
+            list($content, $isStatic, $absolute) = ElementContentSupport::read(
+                $context, $element, $map
+            );
+            $count = $caseSensitive
+                ? substr_count($content, $find)
+                : substr_count(strtolower($content), strtolower($find));
+            if ($count === 0) { continue; }
+            $prepared[] = array($hit, $type, $map, $element,
+                $content, $isStatic, $absolute, $count);
+        }
 
         // RU: Общая CAS-транзакция может откатить БД, но не статические
         // RU: файлы и события процессоров. После начала пакетной записи
@@ -69,28 +98,9 @@ class ReplaceAcrossTool implements ToolInterface
         // EN: static files or processor side effects. Any error after a
         // EN: batch write begins requires independent reconciliation.
         try {
-        foreach ($hits['results'] as $hit) {
-            $type = $hit['type'];
-            if (!in_array($type, $allowed, true)) { continue; }
-
-            $map = ElementContentSupport::map($context, $type);
-            $element = $context->modx()->getObject(
-                $map['class'],
-                (int)$hit['id'],
-                false
-            );
-            if (!$element) { continue; }
-
-            list($content, $isStatic, $absolute) = ElementContentSupport::read(
-                $context,
-                $element,
-                $map
-            );
-
-            $count = $caseSensitive
-                ? substr_count($content, $find)
-                : substr_count(strtolower($content), strtolower($find));
-            if ($count === 0) { continue; }
+        foreach ($prepared as $preparedTarget) {
+            list($hit, $type, $map, $element, $content,
+                $isStatic, $absolute, $count) = $preparedTarget;
 
             if (!$dryRun) {
                 $newContent = $caseSensitive
