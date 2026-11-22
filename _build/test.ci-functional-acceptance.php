@@ -179,6 +179,26 @@ try {
     $groupRead=acceptanceRpc('get_user_group',array('id'=>$groupId));
     acceptanceCheck(is_array($groupRead) && (int)$groupRead['id']===$groupId,
         'user group readback');
+    // RU: Группа пользователей не должна допускать повтор со старым CAS.
+    // EN: User-group updates must reject replay of a stale CAS snapshot.
+    $groupRevision=acceptanceRpc('get_site_state');
+    $groupChange=array(
+        'id'=>$groupId,'name'=>'MCP_AcceptanceGroupUpdated_'.$fixture,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$groupRevision['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceRpc('update_user_group',$groupChange);
+    $groupRead=acceptanceRpc('get_user_group',array('id'=>$groupId));
+    acceptanceCheck((string)($groupRead['name'] ?? '')==='MCP_AcceptanceGroupUpdated_'.$fixture,
+        'ACL user group update persisted');
+    $groupStale=false;
+    try {acceptanceRpc('update_user_group',$groupChange);}
+    catch (ModxMCPClientException $e) {
+        $groupStale=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($groupStale,'ACL user group stale CAS denied');
 
     // RU: Индивидуальные интеграционные проверки ACL create/update/delete.
     // RU: Все объекты созданы в disposable MODX и имеют случайные имена.
