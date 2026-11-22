@@ -219,6 +219,10 @@ try {
     // RU: а два независимых permit с одним снимком не могут оба победить.
     // EN: Signed context setting denies before CAS; two distinct permits
     // EN: with the same observed revision cannot both commit.
+    // RU: disposable fixture включает контексты, отключённые по умолчанию.
+    // EN: Enable the context capability only in this disposable test fixture.
+    securitySetting('modxmcp.disabled_groups','');
+    $modx->setOption('modxmcp.disabled_groups','');
     securitySetting('modxmcp.permit_allowed_actions',
         'create_element,update_element,delete_element,update_system_setting,'
         .'run_processor,create_context_setting,update_context_setting,delete_context_setting');
