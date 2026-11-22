@@ -61,6 +61,17 @@ foreach($cases as $case){
     addonCheck(stripos($message,$case[2])!==false,
         'missing addon error identifies dependency: '.$case[0]);
     $after=addonRpc('get_site_state');
+    if((int)$after['site_revision']!==(int)$before['site_revision']){
+        $loaded='unavailable';
+        if(class_exists('ModxMcp\\Tools\\StateSupport')){
+            $reflect=new ReflectionClass('ModxMcp\\Tools\\StateSupport');
+            $loaded=$reflect->getFileName();
+        }
+        fwrite(STDERR,'OPTIONAL_ADDON_DIAG action='.$case[0]
+            .' before='.(int)$before['site_revision']
+            .' after='.(int)$after['site_revision']
+            .' class_path='.$loaded.PHP_EOL);
+    }
     addonCheck((int)$after['site_revision']===(int)$before['site_revision'],
         'missing addon did not consume CAS revision: '.$case[0]);
     echo 'MISSING_ADDON_DENIED_SAFE action='.$case[0].PHP_EOL;
