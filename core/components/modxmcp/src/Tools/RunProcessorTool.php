@@ -62,6 +62,7 @@ class RunProcessorTool implements ToolInterface
             $options['processors_path'] = (string)$data['processors_path'];
         }
 
+        try {
         if (
             empty($options['processors_path'])
             && preg_match(
@@ -83,10 +84,21 @@ class RunProcessorTool implements ToolInterface
             );
             $auditProcessor = $processor;
         }
+        } catch (\Throwable $e) {
+            // RU: Сторонний процессор мог частично изменить сайт прежде,
+            // RU: чем выбросить исключение. Его текст может содержать секреты.
+            // EN: External processor may mutate before throwing; never
+            // EN: expose raw exception text, and do not allow blind retry.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: processor execution failed; '
+                . 'verify actual state via MCP before any retry.'
+            );
+        }
 
         if (!$response) {
             throw new \ModxMCPClientException(
-                'run_processor: no response (processor not found?).'
+                'MUTATION_OUTCOME_UNCERTAIN: processor returned no response; '
+                . 'verify actual state via MCP before any retry.'
             );
         }
         if ($response->isError()) {

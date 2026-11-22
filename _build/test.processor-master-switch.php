@@ -61,8 +61,11 @@ class ProcessorGateFakePlatform {
     public $called=0;
     public $respond=false;
     public $fail=false;
+    public $throw=false;
     public function runProcessor($modx,$path,$props) {
-        $this->called++;return $this->respond
+        $this->called++;
+        if($this->throw)throw new \RuntimeException('SECRET: fake-auth-token');
+        return $this->respond
             ? new ProcessorGateFakeResponse($this->fail):false;
     }
     public function processorTarget($path) {return $path;}
@@ -127,6 +130,29 @@ try {
         || strpos($e->getMessage(),'secret-should-not-appear')!==false)
         throw new \RuntimeException('PROCESSOR_ERROR_SECRET_LEAK');
 }
+// RU: Нет ответа или исключение после dispatch — исход неопределённый,
+// RU: секреты из текста исключения нельзя возвращать клиенту.
+// EN: Missing response or a thrown processor exception is uncertain;
+// EN: raw exception text may contain credentials and must be suppressed.
+$ctx->p->fail=false;
+$ctx->p->respond=false;
+$noResponseUncertain=false;
+try {(new \ModxMcp\Tools\RunProcessorTool())->execute(
+    $ctx,array('processor'=>'system/clearcache')
+);} catch(ModxMCPClientException $e) {
+    $noResponseUncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+}
+if(!$noResponseUncertain)throw new \RuntimeException('PROCESSOR_EMPTY_RESPONSE_NOT_UNCERTAIN');
+$ctx->p->throw=true;
+$thrownUncertain=false;
+try {(new \ModxMcp\Tools\RunProcessorTool())->execute(
+    $ctx,array('processor'=>'system/clearcache')
+);} catch(ModxMCPClientException $e) {
+    $thrownUncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+        && strpos($e->getMessage(),'fake-auth-token')===false;
+}
+if(!$thrownUncertain)throw new \RuntimeException('PROCESSOR_THROW_SECRET_OR_STATUS');
+$ctx->p->throw=false;
 // RU: В защищённом режиме фактическая политика БД важнее кеша PHP.
 // EN: Protected mode must use persisted policy even when PHP cache disagrees.
 \ModxMcp\Security\ProtectedAuthorization::$protected=true;
