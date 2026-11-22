@@ -49,6 +49,20 @@ $setting=null;
 function transportCheck($truth,$message) {
     if (!$truth) throw new \RuntimeException('REAL_PACKAGE_FAULT_FAIL '.$message);
 }
+function removeDisposableStaging($staging,$packagesDir) {
+    if(!is_dir($staging)) return;
+    transportCheck(realpath(dirname($staging))===realpath($packagesDir),
+        'staging must be immediate child of packages directory');
+    $entries=new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($staging,\FilesystemIterator::SKIP_DOTS),
+        \RecursiveIteratorIterator::CHILD_FIRST);
+    foreach($entries as $entry) {
+        $path=$entry->getPathname();
+        if($entry->isDir() && !$entry->isLink()) rmdir($path);
+        else unlink($path);
+    }
+    rmdir($staging);
+}
 function transportUncertain($invoke,$label) {
     try {call_user_func($invoke);}
     catch(\ModxMCPClientException $e) {
@@ -130,12 +144,7 @@ try {
     transportCheck($builder->pack()!==false,'pack');
     transportCheck(is_file($archive),'real package ZIP not built');
     // Remove builder's unpacked tree so the native installer can extract ZIP.
-    if (is_dir($staging)) {
-        $cache=$modx->getCacheManager();
-        transportCheck($cache && $cache->deleteTree($staging,array(
-            'deleteTop'=>true,'skipDirs'=>false
-        )),'cleanup builder staging');
-    }
+    removeDisposableStaging($staging,$packagesDir);
     // Real MODX transport objects, same construction as installed MCP release.
     $package=$modx->newObject($packageClass);
     $package->set('signature',$signature);
@@ -176,8 +185,5 @@ try {
     $still=$modx->getObject($settingClass,array('key'=>$settingKey));
     if($still) $still->remove();
     if(is_file($archive)) unlink($archive);
-    if(is_dir($staging)) {
-        $cache=$modx->getCacheManager();
-        if($cache) $cache->deleteTree($staging,array('deleteTop'=>true,'skipDirs'=>false));
-    }
+    removeDisposableStaging($staging,$packagesDir);
 }
