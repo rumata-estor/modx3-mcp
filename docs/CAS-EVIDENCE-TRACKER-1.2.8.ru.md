@@ -50,7 +50,6 @@
 | `ms2_update_option` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `refresh_uris` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `replace_across` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
@@ -115,6 +114,7 @@
 | `grant_context_access` | critical | `disposable_context_acl_grant_readback_stale_replay` |
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
+| `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `remove_resource_from_group` | critical | `disposable_unpublished_resource_group_remove_readback_stale_replay` |
 | `remove_user_from_group` | critical | `disposable_inactive_user_group_membership_remove_readback_stale_replay` |

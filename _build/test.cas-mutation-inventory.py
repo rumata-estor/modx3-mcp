@@ -362,6 +362,14 @@ assert 'reorder per-item success' in reorder_test
 assert 'stale reorder replay rejected' in reorder_test
 assert 'reorder did not publish fixture' in reorder_test
 
+# RU: URI CAS подтверждён на одноразовом MODX.
+# EN: Require executable URI refresh evidence in the CI matrix.
+uri_test=(ROOT / '_build/test.ci-cas-refresh-uris.php').read_text()
+assert 'php _build/test.ci-cas-refresh-uris.php' in ci_workflow
+assert 'disposable_unpublished_resource_refresh_uris_readback_stale_replay' in expected['refresh_uris']['verified_scenarios']
+assert 'CAS_REFRESH_URIS_READBACK_STALE_REPLAY_OK' in uri_test
+assert 'stale URI refresh replay denied' in uri_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

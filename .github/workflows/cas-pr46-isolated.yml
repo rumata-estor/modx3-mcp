@@ -436,6 +436,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-reorder-resources.php
+      # RU: URI пересчитываются только на одноразовой установке MODX.
+      # EN: URI refresh in disposable MODX with strict CAS replay denial.
+      - name: Disposable refresh URIs CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-refresh-uris.php
       - name: Disposable undelete resource CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
