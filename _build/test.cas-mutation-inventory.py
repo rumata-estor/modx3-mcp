@@ -315,6 +315,22 @@ assert 'list_resource_group_resources' in resource_link_test
 assert 'stale replay did not consume site revision' in resource_link_test
 assert "'published'=>0" in resource_link_test
 
+# RU: ClientConfig подтверждён только на установке addon при PHP 8.2.
+# EN: Do not imply all 12 jobs exercised real ClientConfig 2.5.0 addon.
+clientconfig_addon_test=(ROOT / '_build/test.ci-clientconfig-installed.php').read_text()
+assert 'php _build/test.ci-clientconfig-installed.php' in ci_workflow
+assert "if: matrix.php_version == '8.2'" in ci_workflow
+for action,scenario,marker in (
+ ('clientconfig_create_setting','pinned_clientconfig25_php82_create_readback_stale_replay','CREATE'),
+ ('clientconfig_update_setting','pinned_clientconfig25_php82_update_readback_stale_replay','UPDATE'),
+ ('clientconfig_delete_setting','pinned_clientconfig25_php82_delete_readback_stale_replay','DELETE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in clientconfig_addon_test
+    assert 'CAS_CLIENTCONFIG_'+marker+'_READBACK_STALE_REPLAY_OK' in clientconfig_addon_test
+assert 'stale replay consumed no CAS revision' in clientconfig_addon_test
+assert 'clientconfig.context_aware' in clientconfig_addon_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
