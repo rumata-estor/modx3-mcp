@@ -351,6 +351,18 @@ assert "'duplicate_element'" in duplicate_test
 assert "'type'=>'chunk'" in duplicate_test
 assert 'old CAS consumed no revision' in duplicate_test
 
+# RU: Переупорядочение подтверждается чтением двух независимых ресурсов.
+# EN: Per-action reorder evidence requires executable disposable MCP tests.
+reorder_test=(ROOT / '_build/test.ci-cas-reorder-resources.php').read_text()
+assert 'php _build/test.ci-cas-reorder-resources.php' in ci_workflow
+assert 'disposable_two_resource_menuindex_reorder_readback_stale_replay' in expected['reorder_resources']['verified_scenarios']
+assert "'reorder_resources'" in reorder_test
+assert 'CAS_REORDER_RESOURCES_READBACK_STALE_REPLAY_OK' in reorder_test
+assert 'reorder per-item success' in reorder_test
+assert 'stale reorder replay rejected' in reorder_test
+assert 'reorder did not publish fixture' in reorder_test
+>>>>>>> 1ceea94d6406e628e3dc125994cc9aa6f2b1eba3
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
