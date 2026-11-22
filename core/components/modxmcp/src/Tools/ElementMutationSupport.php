@@ -23,7 +23,10 @@ class ElementMutationSupport
 
         if (in_array($action, array('create_element', 'update_element'), true)
             && isset($data['static_file'])
-            && in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)) {
+            // RU: По предложению @AgelxNash, PR #55, проверяем static_file TV.
+            // EN: Validate TV static_file using the existing safe-path guard
+            // EN: (reported by @AgelxNash in PR #55).
+            && in_array($type, array('chunk', 'snippet', 'template', 'plugin', 'tv'), true)) {
             $data['static_file'] = self::validateStaticFile($context, $data['static_file']);
         }
 
@@ -67,7 +70,7 @@ class ElementMutationSupport
             // EN: Preserve existing fields on partial updates, especially
             // EN: richtext/searchable/cacheable and editing/publishing flags.
             'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'richtext', 'searchable', 'cacheable', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
-            'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank'),
+            'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank', 'static', 'static_file', 'source'),
             'category' => array('id', 'category', 'parent', 'rank'),
             'plugin' => array('id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'),
         );
