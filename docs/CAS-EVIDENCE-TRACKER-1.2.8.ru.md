@@ -5,12 +5,18 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 108. **Не имеют индивидуальных сценариев:** 8.
+сценарий:** 111. **Не имеют индивидуальных сценариев:** 5.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
+
+**Поддержка платформы учитывается по дополнению:** miniShop2 проверяется и
+засчитывается на **MODX 2**; MODX 3 не является целевой платформой miniShop2.
+MiniShop3 на MODX 3 — отдельный компонент и отдельное API, не считается
+проверенным этими сценариями. Маркер `disposable_modx2_*` однозначно
+ограничивает доказательство MODX 2.
 
 ## P0 — критические операции — 0 без сценария
 
@@ -22,17 +28,14 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 8 без сценария
+## P2 — остальные операции — 5 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `ms2_assign_option_to_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_create_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_create_product_link` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_delete_product_link` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 
 ## Уже зарегистрированные индивидуальные сценарии
@@ -97,9 +100,12 @@
 | `migx_update_config` | review | `disposable_installed_migx_update_config_readback_stale_replay` |
 | `ms2_create_link_type` | review | `disposable_pinned_ms2_create_link_type_native_processor_readback_stale_replay` |
 | `ms2_create_option` | review | `disposable_pinned_ms2_create_option_native_processor_list_readback_stale_replay` |
+| `ms2_create_product_link` | review | `disposable_modx2_pinned_ms2_create_product_link_native_mcp_readback_stale_replay` |
 | `ms2_delete_link_type` | review | `disposable_pinned_ms2_delete_link_type_native_processor_readback_stale_replay` |
+| `ms2_delete_product_link` | review | `disposable_modx2_pinned_ms2_delete_product_link_native_mcp_readback_stale_replay` |
 | `ms2_update_link_type` | review | `disposable_pinned_ms2_update_link_type_native_processor_readback_stale_replay` |
 | `ms2_update_option` | review | `disposable_pinned_ms2_update_option_native_processor_list_readback_stale_replay` |
+| `ms2_update_product_options` | review | `disposable_modx2_pinned_ms2_update_product_options_native_mcp_readback_stale_replay` |
 | `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `remove_locks` | review | `disposable_empty_install_remove_locks_revision_stale_replay` |
@@ -151,7 +157,8 @@
 ## Правило учёта
 
 Нельзя добавлять сценарий в `verified_scenarios` без реального
-исполняемого теста на одноразовых MODX 2/3, читаемого маркера
+исполняемого теста на одноразовой **поддерживаемой платформе** (MODX 2
+для miniShop2; MODX 2/3 для универсальных инструментов), читаемого маркера
 и успешного GitHub Actions. Если подтверждён только ранний
 отказ по ревизии, это не отдельный бизнес-сценарий.
 
