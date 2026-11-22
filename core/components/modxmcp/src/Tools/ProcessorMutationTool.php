@@ -32,6 +32,20 @@ class ProcessorMutationTool implements ToolInterface
 
         if ($route === 'acl') {
             unset($props['type']);
+            // RU: Обычные операции с пользователями не должны позволять
+            // RU: выдавать superuser через необъявленные поля процессора.
+            // EN: Generic user mutations must not escalate to sudo through
+            // EN: undocumented processor properties, even if signed for update_user.
+            if (in_array($this->toolName, array('create_user', 'update_user'), true)) {
+                foreach (array_keys($props) as $field) {
+                    if (!is_string($field)) { continue; }
+                    if (in_array(strtolower(trim($field)), array('sudo', 'is_sudo'), true)) {
+                        throw new \ModxMCPClientException(
+                            'AUTH_DENIED: changing sudo status requires MODX Manager.'
+                        );
+                    }
+                }
+            }
             $this->prepareAcl($context, $props);
             $this->loadLexicons(
                 $context,

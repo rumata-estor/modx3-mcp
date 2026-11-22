@@ -133,6 +133,29 @@ try {
         throw new \RuntimeException('ACL_SECRET_LEAK_TEST_FAILED: unsafe error');
     }
 }
+// RU: Ни одна обычная операция create_user/update_user не должна
+// RU: назначать или менять sudo через произвольные поля процессора.
+// EN: User create/update must reject sudo-like processor parameters
+// EN: before dispatch, regardless of capitalization or input value.
+$sudoDenials=0;
+foreach (array('create_user','update_user') as $userAction) {
+    foreach (array('sudo', ' SuDo ', 'is_sudo') as $field) {
+        foreach (array(1, 0) as $value) {
+            $context=new AclFakeContext();
+            $tool=new \ModxMcp\Tools\ProcessorMutationTool($userAction,$specs[$userAction]);
+            try {
+                $tool->execute($context,array('id'=>8,'username'=>'fixture',$field=>$value));
+                throw new \RuntimeException('SUDO_MUTATION_ALLOWED: '.$userAction);
+            } catch(ModxMCPClientException $e) {
+                if(strpos($e->getMessage(),'AUTH_DENIED:')!==0)throw $e;
+            }
+            if($context->platform->calls!==0 || $context->modx->cache->flushes!==0)
+                throw new \RuntimeException('SUDO_MUTATION_REACHED_PROCESSOR');
+            $sudoDenials++;
+        }
+    }
+}
+if($sudoDenials!==12)throw new \RuntimeException('SUDO_DENIAL_COVERAGE_MISSING');
 // RU: Проверка до запуска процессора; контекст не должен обойти защиту
 // RU: настроек modxmcp.* через регистр, пробелы и вложенные поля.
 // EN: Reject protected context setting mutations before processor dispatch,

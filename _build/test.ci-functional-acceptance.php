@@ -340,6 +340,19 @@ try {
     acceptanceClean('delete_role',array('id'=>$roleId));
     $roleId=0;
 
+    // RU: Даже подписанная update_user не вправе назначить superuser.
+    // EN: Even an authorized update_user may not modify sudo status.
+    $sudoDenied=false;
+    try {
+        acceptanceRpc('update_user',array('id'=>$userId,'sudo'=>1));
+    } catch (ModxMCPClientException $e) {
+        $sudoDenied=strpos($e->getMessage(),'AUTH_DENIED:')===0;
+    }
+    acceptanceCheck($sudoDenied,'ACL update_user cannot change sudo flag');
+    $userAfterDenied=acceptanceRpc('get_user',array('id'=>$userId));
+    acceptanceCheck((int)($userAfterDenied['id'] ?? 0)===$userId,
+        'user still available after blocked sudo update');
+
     $settingKey='mcp_acceptance_'.$fixture;
     acceptanceRpc('create_system_setting',array('key'=>$settingKey,'value'=>'ONE'));
     $setting=acceptanceRpc('get_system_setting',array('key'=>$settingKey));
