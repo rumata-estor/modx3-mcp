@@ -67,6 +67,14 @@ foreach($cases as $case){
             $reflect=new ReflectionClass('ModxMcp\\Tools\\StateSupport');
             $loaded=$reflect->getFileName();
         }
+        $dispatcherFile=MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
+        $dispatcherHasCall=is_file($dispatcherFile)
+            && strpos(file_get_contents($dispatcherFile),'requireOptionalAddonPath')!==false;
+        $stateSupportHasCall=class_exists('ModxMcp\\Tools\\StateSupport')
+            && method_exists('ModxMcp\\Tools\\StateSupport','requireOptionalAddonPath');
+        fwrite(STDERR,'OPTIONAL_ADDON_DIAG installed_dispatcher_call='.
+            ($dispatcherHasCall?'yes':'no').' installed_state_method='.
+            ($stateSupportHasCall?'yes':'no').PHP_EOL);
         fwrite(STDERR,'OPTIONAL_ADDON_DIAG action='.$case[0]
             .' before='.(int)$before['site_revision']
             .' after='.(int)$after['site_revision']
