@@ -109,6 +109,34 @@ try{
         if(is_array($context)&&($context['key']??'')===$key)$found=true;
     }
     acdCheck($found,'new context exists without anonymous access');
+    // RU: Отказ изменения служебных настроек и вложенных параметров.
+    // EN: Reject protected keys, redirected fk and opaque nested settings.
+    $rejectedCases=array(
+        array('create_context_setting',array('context_key'=>$key,
+            'key'=>' MODXMCP.allow_run_processor ','value'=>'1')),
+        array('update_context_setting',array('context_key'=>$key,
+            'key'=>' MODXMCP.api_token ','value'=>'secret-placeholder')),
+        array('delete_context_setting',array('context_key'=>$key,
+            'key'=>' MODXMCP.permit_site_id ')),
+        array('create_context_setting',array('context_key'=>$key,
+            'fk'=>'web','key'=>'mcp_unexpected_'.$fixture,'value'=>'blocked')),
+        array('update_context',array('key'=>$key,
+            'settings'=>array('modxmcp.allow_run_processor'=>'1'))),
+    );
+    foreach($rejectedCases as $case) {
+        $denied=false;
+        try{acdRpc($case[0],$case[1]);}
+        catch(ModxMCPClientException $e){$denied=true;}
+        acdCheck($denied,'protected/redirected context mutation denied '.$case[0]);
+    }
+    $wrongSetting=false;
+    try{acdRpc('get_context_setting',array(
+        'context_key'=>'web','key'=>'mcp_unexpected_'.$fixture));
+        $wrongSetting=true;
+    }catch(ModxMCPClientException $e){}
+    acdCheck(!$wrongSetting,'context redirection created no setting in web');
+    acdCheck(count(acdContextRules($key))===0,
+        'denied context mutations did not create anonymous access');
     $contextRead=acdRpc('get_context',array('key'=>$key));
     acdCheck(is_array($contextRead),'created context read through MCP');
     echo 'CAS_CONTEXT_CREATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
