@@ -20,13 +20,14 @@ class ClientConfigSettingUpdateTool implements ToolInterface
                 'ClientConfig setting not found.'
             );
         }
+        ClientConfigSupport::validateContextValues($data);
         ClientConfigSupport::applyFields($setting, $data);
         if (!$setting->save()) {
             throw new \ModxMCPClientException(
                 'Failed to update ClientConfig setting.'
             );
         }
-        ClientConfigSupport::applyContextValues($context, $setting, $data);
+        ClientConfigSupport::applyContextValuesAfterSave($context, $setting, $data);
         ClientConfigSupport::refresh($context);
         AuditSupport::log(
             $context,
