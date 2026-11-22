@@ -35,9 +35,15 @@ class PackageResponse {
 }
 class PackagePlatform {
     public $calls=array();
+    public $throwStage='';
+    public $noResponseStage='';
     public function className($name){return $name;}
     public function runProcessor($modx,$processor,$data){
         $this->calls[]=$processor;
+        if($this->throwStage!=='' && $processor===$this->throwStage)
+            throw new \RuntimeException('SECRET_TOKEN_FROM_PACKAGE_EXCEPTION');
+        if($this->noResponseStage!=='' && $processor===$this->noResponseStage)
+            return false;
         if(strpos($processor,'rest/getlist')!==false)return new PackageResponse('list');
         if(strpos($processor,'rest/download')!==false)return new PackageResponse('download');
         if($processor==='workspace/packages/install')return new PackageResponse('install');
@@ -72,7 +78,40 @@ foreach(array(
     if(count($ctx->platform->calls)!==$case[2])
         throw new \RuntimeException('PACKAGE_WRONG_FAULT_STAGE');
 }
+// RU: Исключение после скачивания / во время установки или удаления не
+// RU: должно выглядеть как чистый отказ или раскрывать секреты процессора.
+// EN: Exceptions during transport download/install/uninstall may occur
+// EN: after external effects and must never expose raw error credentials.
+foreach(array(
+    array('workspace/packages/rest/download',
+        new \ModxMcp\Tools\PackageInstallTool(),array('package'=>'fixture','provider'=>1),2),
+    array('workspace/packages/install',
+        new \ModxMcp\Tools\PackageInstallTool(),array('package'=>'fixture','provider'=>1),3),
+    array('workspace/packages/uninstall',
+        new \ModxMcp\Tools\PackageUninstallTool(),array('signature'=>'fixture-1.0.0-pl'),1),
+) as $case){
+    $ctx=new PackageContext();
+    $ctx->platform->throwStage=$case[0];
+    $uncertain=false;
+    try{$case[1]->execute($ctx,$case[2]);}
+    catch(ModxMCPClientException $e){
+        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SECRET_TOKEN')===false;
+    }
+    if(!$uncertain || count($ctx->platform->calls)!==$case[3])
+        throw new \RuntimeException('PACKAGE_THROW_NOT_UNCERTAIN_OR_REDACTED');
+}
+$ctx=new PackageContext();
+$ctx->platform->noResponseStage='workspace/packages/rest/download';
+$uncertainDownload=false;
+try {(new \ModxMcp\Tools\PackageInstallTool())->execute(
+    $ctx,array('package'=>'fixture','provider'=>1)
+);}catch(ModxMCPClientException $e){
+    $uncertainDownload=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+}
+if(!$uncertainDownload || count($ctx->platform->calls)!==2)
+    throw new \RuntimeException('PACKAGE_EMPTY_DOWNLOAD_RESPONSE_NOT_UNCERTAIN');
 if(\ModxMcp\Tools\AuditSupport::$count!==0)
     throw new \RuntimeException('PACKAGE_AUDITED_FAILED_MUTATION');
-echo 'PACKAGE_MUTATION_UNCERTAIN_RESULT_OK checks=2'.PHP_EOL;
+echo 'PACKAGE_MUTATION_UNCERTAIN_RESULT_OK checks=6'.PHP_EOL;
 }

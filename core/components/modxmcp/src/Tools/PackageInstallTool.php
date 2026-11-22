@@ -122,18 +122,29 @@ class PackageInstallTool implements ToolInterface
             );
         }
 
-        $downloadResponse = $context->platform()->runProcessor(
-            $context->modx(),
-            'workspace/packages/rest/download',
-            array(
-                'info' => $chosen['location'] . '::' . $chosen['signature'],
-                'provider' => $providerId,
-            )
-        );
-        if (!$downloadResponse || $downloadResponse->isError()) {
+        try {
+            $downloadResponse = $context->platform()->runProcessor(
+                $context->modx(),
+                'workspace/packages/rest/download',
+                array(
+                    'info' => $chosen['location'] . '::' . $chosen['signature'],
+                    'provider' => $providerId,
+                )
+            );
+        } catch (\Throwable $e) {
+            // RU: Загрузка могла оставить неполный файл в transport-кэше.
+            // EN: Download may leave partial transport bytes after throwing.
             throw new \ModxMCPClientException(
-                'install_package: download failed: '
-                . 'download processor did not return a usable response'
+                'MUTATION_OUTCOME_UNCERTAIN: package download interrupted; '
+                . 'inspect package state before retry.'
+            );
+        }
+        if (!$downloadResponse || $downloadResponse->isError()) {
+            // RU: Ошибка скачивания способна оставить неполный transport-файл.
+            // EN: A failed download may leave partial transport files behind.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package download did not confirm '
+                . 'completion; inspect package state before retry.'
             );
         }
 
@@ -142,11 +153,20 @@ class PackageInstallTool implements ToolInterface
             ? $downloadObject['signature']
             : $chosen['signature'];
 
-        $installResponse = $context->platform()->runProcessor(
-            $context->modx(),
-            'workspace/packages/install',
-            array('signature' => $signature)
-        );
+        try {
+            $installResponse = $context->platform()->runProcessor(
+                $context->modx(),
+                'workspace/packages/install',
+                array('signature' => $signature)
+            );
+        } catch (\Throwable $e) {
+            // RU: Исключение при установке не отменяет записанные файлы.
+            // EN: Thrown install errors do not roll back transport files.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package install interrupted; '
+                . 'inspect installed package state before retry.'
+            );
+        }
         if (!$installResponse || $installResponse->isError()) {
             // RU: Во время установки транспортный пакет может изменить
             // RU: файлы и БД до ошибки. Не обещаем откат или безопасный повтор.

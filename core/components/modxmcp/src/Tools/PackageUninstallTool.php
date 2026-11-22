@@ -24,11 +24,20 @@ class PackageUninstallTool implements ToolInterface
             );
         }
 
-        $response = $context->platform()->runProcessor(
-            $context->modx(),
-            'workspace/packages/uninstall',
-            array('signature' => $signature)
-        );
+        try {
+            $response = $context->platform()->runProcessor(
+                $context->modx(),
+                'workspace/packages/uninstall',
+                array('signature' => $signature)
+            );
+        } catch (\Throwable $e) {
+            // RU: Удаление могло частично изменить файлы и БД.
+            // EN: Uninstall may have modified files and DB before throwing.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: package uninstall interrupted; '
+                . 'inspect installed package state before retry.'
+            );
+        }
         if (!$response || $response->isError()) {
             // RU: Процессор удаления способен удалить файлы и данные до
             // RU: возврата ошибки. Результат неопределён — повтор опасен.
