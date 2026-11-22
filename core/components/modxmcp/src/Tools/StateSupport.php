@@ -40,6 +40,7 @@ class StateSupport
             'assign_element_category',
             'create_system_setting', 'update_system_setting',
             'delete_system_setting', 'update_element_property',
+            'update_user_group',
         ), true)) {
             return true;
         }
@@ -242,6 +243,68 @@ class StateSupport
             );
         }
         return true;
+    }
+
+    /**
+     * RU: Защита от внешней вставки членства (phantom) в границе InnoDB.
+     * EN: Lock the group parent and its indexed membership range BEFORE
+     * EN: CAS evaluation, under the same REPEATABLE READ transaction.
+     * EN: This must run in withRevisionTransaction(), never standalone.
+     */
+    public static function lockGroupMembershipForCas($context, $id)
+    {
+        if (!self::inRevisionTransaction($context) || !is_int($id) || $id < 1) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: group membership lock requires active transaction and numeric group id.'
+            );
+        }
+        $modx = $context->modx();
+        // MariaDB CI uses tx_isolation; do not claim next-key protection
+        // at READ COMMITTED where locking reads allow phantom inserts.
+        $isolation = $modx->query('SELECT @@tx_isolation');
+        $level = $isolation ? strtoupper(str_replace('-', ' ', (string)$isolation->fetchColumn())) : '';
+        if (str_replace(' ', '', $level) !== 'REPEATABLEREAD') {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: membership range locking needs REPEATABLE READ.'
+            );
+        }
+        $groupTable = $modx->getTableName(
+            $context->platform()->className('user_group')
+        );
+        $memberTable = $modx->getTableName(
+            $context->platform()->className('user_group_member')
+        );
+        // A predictable indexed range is essential when no member exists.
+        $indexStatement = $modx->query('SHOW INDEX FROM '.$memberTable);
+        if (!$indexStatement) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: cannot validate member index.');
+        }
+        $hasIndex = false;
+        foreach ($indexStatement->fetchAll(\PDO::FETCH_ASSOC) as $index) {
+            if (isset($index['Column_name'],$index['Seq_in_index'])
+                && $index['Column_name']==='user_group'
+                && (int)$index['Seq_in_index']===1) {
+                $hasIndex=true;
+            }
+        }
+        if (!$hasIndex) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: user_group_member needs leading user_group index.'
+            );
+        }
+        $parent = $modx->prepare(
+            'SELECT `id` FROM '.$groupTable.' WHERE `id`=? FOR UPDATE'
+        );
+        if (!$parent || !$parent->execute(array($id)) || $parent->fetchColumn()===false) {
+            throw new \ModxMCPClientException('STALE_STATE group disappeared.');
+        }
+        $members = $modx->prepare(
+            'SELECT `id` FROM '.$memberTable.' WHERE `user_group`=? FOR UPDATE'
+        );
+        if (!$members || !$members->execute(array($id))) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: membership range lock failed.');
+        }
+        $members->fetchAll(\PDO::FETCH_COLUMN);
     }
 
     /**

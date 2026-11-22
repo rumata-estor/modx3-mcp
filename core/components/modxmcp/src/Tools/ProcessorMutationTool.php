@@ -196,7 +196,11 @@ class ProcessorMutationTool implements ToolInterface
         }
 
         if ($route === 'acl' && $context->modx()->getCacheManager()) {
-            $context->modx()->getCacheManager()->flushPermissions();
+            // RU: При транзакционном CAS очищаем ACL только после коммита.
+            // EN: Defer permission-cache effects until DB commit.
+            StateSupport::afterRevisionCommit($context, function () use ($context) {
+                $context->modx()->getCacheManager()->flushPermissions();
+            });
         }
         if ($route === 'context' && in_array($this->toolName, array(
             'create_context_setting', 'update_context_setting', 'delete_context_setting'
