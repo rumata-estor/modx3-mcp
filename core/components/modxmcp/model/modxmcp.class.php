@@ -149,6 +149,11 @@ class modxMCP {
                     $toolData['_runtime_preconditions'] = $runtimePreconditions;
                 }
                 if ($tool->isMutation()) {
+                    // RU: Отдельный подписанный ID нужен только добровольному журналу.
+                    // EN: Opt-in signed ID is never passed to MODX processors.
+                    $operationId = array_key_exists('_operation_id', $toolData)
+                        ? $toolData['_operation_id'] : null;
+                    unset($toolData['_operation_id']);
                     $runtimePreconditions = \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
                         $action, $runtimePreconditions
                     );
@@ -175,7 +180,8 @@ class modxMCP {
                             $action,
                             $elementType,
                             $originalRequestData,
-                            $externalAuthorization
+                            $externalAuthorization,
+                            $operationId
                         ) {
                             // Independently signed authorization is enforced
                             // INSIDE the common site mutation lock for every
@@ -183,9 +189,10 @@ class modxMCP {
                             // possible to bypass this gate via direct PHP
                             // processRequest() or a legacy dispatcher route.
                             try {
-                                if (\ModxMcp\Security\ProtectedAuthorization::required(
+                                $protected = \ModxMcp\Security\ProtectedAuthorization::required(
                                     $runtimeContext->modx()
-                                )) {
+                                );
+                                if ($protected) {
                                     \ModxMcp\Tools\StateSupport::requireProtectedTargetReadSet(
                                         $action,
                                         $toolData,
@@ -243,6 +250,13 @@ class modxMCP {
                                 }
                                 return $result;
                             };
+                            // Journal gate runs AFTER independent Ed25519 authorization
+                            // but BEFORE CAS reservation and every side effect.
+                            $executeMutation = function () use (
+                                $atomicDatabase, $isDryRun, $runtimeContext,
+                                $action, $toolData, $atomicTv, $tool,
+                                $runtimePreconditions, $apply
+                            ) {
                             if ($atomicDatabase && !$isDryRun) {
                                 $result = \ModxMcp\Tools\StateSupport::withRevisionTransaction(
                                     $runtimeContext,
@@ -295,6 +309,12 @@ class modxMCP {
                                 return $result;
                             }
                             return $apply(false);
+                            };
+                            return \ModxMcp\Security\MutationOperationGate::dispatch(
+                                $runtimeContext->modx(), $action, $elementType,
+                                $originalRequestData, $operationId, $protected,
+                                $executeMutation
+                            );
                         }
                     );
                 }
