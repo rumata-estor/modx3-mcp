@@ -62,6 +62,9 @@ namespace {
         }
         public function getObject() { return array('id'=>42,'status'=>2); }
     }
+    class FakeMs2ManagerContext {
+        public function get($key) { return $key === 'key' ? 'mgr' : null; }
+    }
     class FakeMs2Modx {
         public $context;
         public $service;
@@ -71,8 +74,7 @@ namespace {
         public $lastProps = array();
         public $addonAvailable = true;
         public function __construct() {
-            $this->context = new \stdClass();
-            $this->context->key = 'mgr';
+            $this->context = new FakeMs2ManagerContext();
             $this->service = new FakeMiniShop2();
         }
         public function getOption($key, $options = null, $fallback = null) {
