@@ -297,6 +297,9 @@ class StateSupport
             }
         }
         if (!$hasIndex) {
+            if (getenv('MODXMCP_DISPOSABLE_CI')==='1') {
+                fwrite(STDERR,'ACL_LOCK_DIAG no leading user_group index'.PHP_EOL);
+            }
             throw new \ModxMCPClientException(
                 'CAS_REQUIRED: user_group_member needs leading user_group index.'
             );

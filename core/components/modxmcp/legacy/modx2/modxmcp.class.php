@@ -228,6 +228,11 @@ class modxMCP {
                                                 $toolData['id']
                                             );
                                         }
+                                        if ($action === 'update_user_group' && isset($toolData['id'])) {
+                                            \ModxMcp\Tools\StateSupport::lockGroupMembershipForCas(
+                                                $runtimeContext, $toolData['id']
+                                            );
+                                        }
                                         return $apply(true);
                                     }
                                 );
