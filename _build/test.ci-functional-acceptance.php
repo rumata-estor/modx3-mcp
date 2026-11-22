@@ -157,6 +157,25 @@ try {
         $modx->setOption('manager_date_format','d/m/Y');
         $modx->setOption('manager_time_format','g:i A');
         $formattedSnapshot=acceptanceSnapshot('resource',$dateResourceId);
+        if ($dateSnapshot['read_set'][0]['fingerprint']
+            !==$formattedSnapshot['read_set'][0]['fingerprint']) {
+            // RU: Печатаем только отличающиеся поля своей disposable-записи.
+            // EN: Diagnose only differing fields of the disposable fixture.
+            $afterDateRead=acceptanceRpc('get_element',array(
+                'type'=>'resource','id'=>$dateResourceId
+            ));
+            $differences=array();
+            foreach($dateRead as $field=>$value) {
+                if(!array_key_exists($field,$afterDateRead)
+                    || $value !== $afterDateRead[$field]) {
+                    $differences[$field]=array(
+                        'before'=>$value,'after'=>$afterDateRead[$field]??null
+                    );
+                }
+            }
+            fwrite(STDERR,'RESOURCE_DATE_CAS_DIFF '
+                .json_encode($differences).PHP_EOL);
+        }
         acceptanceCheck(
             $dateSnapshot['read_set'][0]['fingerprint']
                 ===$formattedSnapshot['read_set'][0]['fingerprint'],
