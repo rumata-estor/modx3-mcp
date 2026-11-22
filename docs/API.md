@@ -138,14 +138,14 @@ List MODX elements of a type (id + name). Supports an optional name filter and p
 
 ### `modx_make_static`
 
-Convert a chunk/snippet/template/plugin to a static file under core/elements/ (writes the file, sets static=1 + source=Filesystem). One element via {type,id}, or a batch via {items:[{type,id}]}. Edit the resulting files directly afterwards. (See also the modxmcp.auto_static setting to do this automatically on every create/update.)
+Convert a chunk/snippet/template/plugin/TV to a static file under core/elements/ (writes the file, sets static=1 + source=Filesystem). One element via {type,id}, or a batch via {items:[{type,id}]}. Use guarded view_element/edit_element_lines for subsequent changes. TV conversion never overwrites an existing target file. (See also the modxmcp.auto_static setting to do this automatically on every create/update.)
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
-| `type` | string | no | Allowed: chunk, snippet, template, plugin |
+| `type` | string | no | Allowed: chunk, snippet, template, plugin, tv |
 | `id` | number | no | — |
 | `items` | array of object | no | Batch: list of {type,id} to convert. |
-| `items[].type` | string | no | Allowed: chunk, snippet, template, plugin |
+| `items[].type` | string | no | Allowed: chunk, snippet, template, plugin, tv |
 | `items[].id` | number | no | — |
 
 ### `modx_get_element`
@@ -268,11 +268,11 @@ Delete a MODX element. Run with dry_run:true FIRST — it returns what would be 
 
 ### `modx_view_element`
 
-View a chunk/snippet/template/plugin as NUMBERED lines (like `cat -n`), optionally windowed by start_line/end_line. Use this to find the exact line numbers to edit with modx_edit_element_lines — cheaper than pulling the whole element. Returns total_lines and the numbered window.
+View a chunk/snippet/template/plugin/TV as NUMBERED lines (like `cat -n`), optionally windowed by start_line/end_line. Use this to find the exact line numbers to edit with modx_edit_element_lines — cheaper than pulling the whole element. Returns total_lines and the numbered window.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
-| `type` | string | yes | Allowed: chunk, snippet, template, plugin |
+| `type` | string | yes | Allowed: chunk, snippet, template, plugin, tv |
 | `id` | number | no | — |
 | `name` | string | no | — |
 | `start_line` | number | no | 1-based first line of the window (default 1). |
@@ -280,11 +280,11 @@ View a chunk/snippet/template/plugin as NUMBERED lines (like `cat -n`), optional
 
 ### `modx_edit_element_lines`
 
-Edit a chunk/snippet/template/plugin BY LINE, sending only the changed lines (no need to resend the whole element). Each edit replaces the inclusive range [start_line..end_line] with `replacement`. Conventions: delete = replacement ""; insert before a line = set end_line to start_line-1. Strongly recommended: pass `expect` (the current text of those lines) as a safety anchor — it is verified, and relocated to its unique match if the line numbers drifted; any mismatch aborts the WHOLE call (atomic, nothing is written). MULTI-EDIT RULES: all line numbers refer to the file exactly as you last saw it in modx_view_element (the original) — do NOT adjust them for the effect of your other edits; the server applies edits together (bottom-up) so earlier inserts/deletes never shift later ones. Ranges must not overlap. So to change several spots in one big file, send them all in ONE call with original line numbers. Read first with modx_view_element to get line numbers.
+Edit a chunk/snippet/template/plugin/TV BY LINE, sending only the changed lines (no need to resend the whole element). Each edit replaces the inclusive range [start_line..end_line] with `replacement`. Conventions: delete = replacement ""; insert before a line = set end_line to start_line-1. Strongly recommended: pass `expect` (the current text of those lines) as a safety anchor — it is verified, and relocated to its unique match if the line numbers drifted; any mismatch aborts the WHOLE call (atomic, nothing is written). MULTI-EDIT RULES: all line numbers refer to the file exactly as you last saw it in modx_view_element (the original) — do NOT adjust them for the effect of your other edits; the server applies edits together (bottom-up) so earlier inserts/deletes never shift later ones. Ranges must not overlap. So to change several spots in one big file, send them all in ONE call with original line numbers. Read first with modx_view_element to get line numbers.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
-| `type` | string | yes | Allowed: chunk, snippet, template, plugin |
+| `type` | string | yes | Allowed: chunk, snippet, template, plugin, tv |
 | `id` | number | no | — |
 | `name` | string | no | — |
 | `edits` | array of object | yes | List of line edits applied atomically. |
