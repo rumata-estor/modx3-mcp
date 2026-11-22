@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 78. **Не имеют индивидуальных сценариев:** 38.
+сценарий:** 79. **Не имеют индивидуальных сценариев:** 37.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,13 +22,12 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 38 без сценария
+## P2 — остальные операции — 37 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `bulk_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `clear_tv_values` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `edit_element_lines` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -73,6 +72,7 @@
 | `assign_element_category` | review | `revision_write_failure_rollback` |
 | `assign_property_set` | review | `disposable_chunk_property_set_assign_readback_stale_replay` |
 | `assign_resource_to_group` | critical | `disposable_unpublished_resource_group_assign_readback_stale_replay` |
+| `clear_tv_values` | review | `disposable_single_tv_value_preview_confirm_readback_stale_replay` |
 | `clientconfig_create_setting` | review | `pinned_clientconfig25_php82_create_readback_stale_replay` |
 | `clientconfig_delete_setting` | review | `pinned_clientconfig25_php82_delete_readback_stale_replay` |
 | `clientconfig_update_setting` | review | `pinned_clientconfig25_php82_update_readback_stale_replay` |

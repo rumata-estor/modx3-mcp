@@ -379,6 +379,16 @@ assert 'CAS_DUPLICATE_RESOURCE_READBACK_STALE_REPLAY_OK' in resource_copy_test
 assert 'stale duplicate replay denied' in resource_copy_test
 assert 'stale replay did not duplicate resource twice' in resource_copy_test
 
+# RU: Очистка TV допускает только одну изолированную фикстуру.
+# EN: Require disposable clear-value test with dry-run and stale CAS check.
+tv_clear_test=(ROOT / '_build/test.ci-cas-clear-tv-values.php').read_text()
+assert 'php _build/test.ci-cas-clear-tv-values.php' in ci_workflow
+assert 'disposable_single_tv_value_preview_confirm_readback_stale_replay' in expected['clear_tv_values']['verified_scenarios']
+assert 'CAS_CLEAR_TV_VALUES_READBACK_STALE_REPLAY_OK' in tv_clear_test
+assert 'dry-run did not remove row' in tv_clear_test
+assert 'exactly one row removed' in tv_clear_test
+assert 'stale TV clear replay denied' in tv_clear_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
