@@ -83,6 +83,7 @@ class AclFakePlatform {
         return $this->noResponse ? false : new AclFakeResponse($this->fail);
     }
     public function className($name){return $name==='user'?'modUser':'modUserGroup';}
+    public function majorVersion(){return 2;}
 }
 class AclFakeContext {
     public $modx;public $platform;

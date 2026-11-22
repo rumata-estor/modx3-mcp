@@ -79,7 +79,15 @@ try{
 
     $assign=array('resource'=>$resourceId,'resourceGroup'=>$groupId,
         '_runtime_preconditions'=>rgGuard());
-    rgRpc('assign_resource_to_group',$assign);
+    try {
+        rgRpc('assign_resource_to_group',$assign);
+    } catch (ModxMCPClientException $e) {
+        $observed=count(rgMatch(rgLinks($groupId),$resourceId));
+        $linked=$observed>0;
+        fwrite(STDERR,'RESOURCE_GROUP_ASSIGN_DIAG platform='.
+            ($is2?'modx2':'modx3').' links_after_error='.$observed.PHP_EOL);
+        throw $e;
+    }
     $linked=true;
     rgCheck(count(rgMatch(rgLinks($groupId),$resourceId))===1,
         'resource assignment independently read via MCP');
