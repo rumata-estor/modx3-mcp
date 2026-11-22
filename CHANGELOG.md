@@ -18,6 +18,8 @@
 
 - **`make_static` path security:** all element types now validate their real write target under `core/elements`, rejecting symlink escapes including a replaced static root. Ordinary conversion and negative path cases were tested; MODX/PHP matrix [12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/44998218560).
 
+- **`make_static` failure semantics:** if the file write succeeds but element metadata save fails, the tool reports `MUTATION_OUTCOME_UNCERTAIN` rather than suggesting a clean rollback; a fault-injection test reproduces that state.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
