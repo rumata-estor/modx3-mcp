@@ -67,6 +67,30 @@ try {
         }
     }
     aclCheck($policyId>0,'default Resource policy exists');
+    // RU: create_resource_group не должен выдавать анонимные права через
+    // RU: скрытые access_anon/access_contexts без grant_resourcegroup_access.
+    // EN: A generic resource-group creation cannot bypass the independently
+    // EN: authorized resourcegroup access grant with hidden access_* fields.
+    $deniedName='MCP_Denied_AutoGrant_'.$fixture;
+    $autoGrantDenied=false;
+    try {
+        aclRpc('create_resource_group',array(
+            'name'=>$deniedName,'access_anon'=>1,'access_contexts'=>array('web')
+        ));
+    } catch(ModxMCPClientException $e) {
+        $autoGrantDenied=strpos($e->getMessage(),'AUTH_DENIED:')===0;
+    }
+    aclCheck($autoGrantDenied,'hidden resourcegroup auto-access denied');
+    $groupsAfterDenied=aclRpc('list_resource_groups',array(
+        'query'=>$deniedName,'limit'=>50
+    ));
+    aclCheck(isset($groupsAfterDenied['results'])
+        && is_array($groupsAfterDenied['results']),
+        'resource-group readback after denied auto-grant');
+    foreach($groupsAfterDenied['results'] as $row) {
+        aclCheck(!is_array($row) || ($row['name'] ?? '')!==$deniedName,
+            'denied auto-grant created no resource group');
+    }
     $group=aclRpc('create_user_group',array(
         'name'=>'MCP_Disposable_ResourceACL_'.$fixture
     ));

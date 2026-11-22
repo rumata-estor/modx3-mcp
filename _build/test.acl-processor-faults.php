@@ -202,6 +202,26 @@ foreach (array(
 }
 if($privilegedFieldDenials!==8)
     throw new \RuntimeException('PRIVILEGED_FIELD_COVERAGE_MISSING');
+// RU: create_resource_group может автоматически выдать доступ посторонним.
+// RU: Все скрытые access_* поля должны быть запрещены до процессора.
+// EN: Creating resource groups must not silently grant access or create
+// EN: user groups via MODX's hidden automatic-access properties.
+$autoGrantDenials=0;
+foreach(array('automatic_access','access_admin','access_anon',
+    'access_parallel','access_contexts','access_usergroups',' ACCESS_ANON ') as $field) {
+    $ctx=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool(
+        'create_resource_group',$specs['create_resource_group']);
+    try {$tool->execute($ctx,array('name'=>'fixture',$field=>1));
+        throw new \RuntimeException('RESOURCE_GROUP_AUTO_ACCESS_ALLOWED: '.$field);
+    } catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'AUTH_DENIED:')!==0)throw $e;
+    }
+    if($ctx->platform->calls!==0 || $ctx->modx->cache->flushes!==0)
+        throw new \RuntimeException('RESOURCE_GROUP_AUTO_GRANT_DISPATCHED');
+    $autoGrantDenials++;
+}
+if($autoGrantDenials!==7)throw new \RuntimeException('AUTO_GRANT_COVERAGE_MISSING');
 // RU: Модекс устанавливает omitted checkbox-поля в 0. Проверяем, что
 // RU: MCP передаёт текущие значения, а разрешённый active=0 не теряет.
 // EN: Core MODX converts omitted checkboxes to zero. MCP must hydrate

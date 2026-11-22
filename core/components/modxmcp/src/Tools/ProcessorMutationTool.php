@@ -61,6 +61,26 @@ class ProcessorMutationTool implements ToolInterface
                     }
                 }
             }
+            if ($this->toolName === 'create_resource_group') {
+                // RU: MODX автоматически создаёт ACL/группы при указании
+                // RU: access_admin/access_anon/access_parallel и смежных полей.
+                // RU: Такие побочные полномочия требуют отдельных MCP-действий.
+                // EN: Core create_resource_group can auto-grant policies and
+                // EN: create user groups via hidden access_* properties.
+                // EN: Require separately authorized ACL actions instead.
+                $hiddenGrantFields = array(
+                    'automatic_access', 'access_admin', 'access_anon',
+                    'access_parallel', 'access_contexts', 'access_usergroups',
+                );
+                foreach (array_keys($props) as $field) {
+                    if (is_string($field)
+                        && in_array(strtolower(trim($field)), $hiddenGrantFields, true)) {
+                        throw new \ModxMCPClientException(
+                            'AUTH_DENIED: resource-group auto-access requires dedicated ACL actions.'
+                        );
+                    }
+                }
+            }
             if ($this->toolName === 'update_user') {
                 $this->preserveUserFlags($context, $props);
             }

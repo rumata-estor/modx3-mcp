@@ -2466,7 +2466,7 @@ const toolDefinitions = [
   { name: "modx_list_resource_group_resources", description: "List resources assigned to a resource group.", inputSchema: { type: "object", properties: { resourceGroup: { type: "number" } }, required: ["resourceGroup"] } },
   {
     name: "modx_create_resource_group",
-    description: "Create a resource group.",
+    description: "Create a resource group without modifying access permissions. Hidden access_admin/access_anon/access_parallel/access_contexts/access_usergroups fields are rejected; use separately authorized resource-group ACL actions.",
     inputSchema: { type: "object", properties: { name: { type: "string" } }, required: ["name"] },
   },
   {
