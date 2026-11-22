@@ -90,13 +90,8 @@ try {
         $read=aclManagerRpc('get_'.$type,array('id'=>$id));
         aclManagerCheck((string)($read[$case['field']]??'')===(string)$case['changed'],
             'Manager edit preserved '.$type);
-        $fresh=aclManagerSnapshot($type,$id);
-        aclManagerRpc($case['action'],array_merge(array(
-            'id'=>$id,$case['field']=>$case['after']
-        ),array('_runtime_preconditions'=>aclManagerGuard($fresh))));
-        $verify=aclManagerRpc('get_'.$type,array('id'=>$id));
-        aclManagerCheck((string)($verify[$case['field']]??'')===(string)$case['after'],
-            'fresh target fingerprint allows update '.$type);
+        // RU: Не повторяем запись после конфликта в этом негативном тесте.
+        // EN: Positive updates are tested separately; never blind-retry here.
     }
     echo 'ACL_MANAGER_EXTERNAL_EDIT_TARGET_CAS_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
