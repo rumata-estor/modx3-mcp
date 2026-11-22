@@ -64,6 +64,21 @@ for action, value in actual.items():
                      else 'not_individually_exercised')
     assert row.get('revision_denial_test') == expected_test, (
         f'CAS test evidence classification mismatched for {action}')
+# RU: Для новых индивидуальных доказательств нужно исполняемое CI-свидетельство.
+# EN: New per-action evidence must be backed by an actual CI test and marker.
+scenario = 'disposable_create_readback_revision_stale_replay'
+for action in ('create_role', 'create_user_group'):
+    assert scenario in expected[action]['verified_scenarios'], action
+fixture_file = ROOT / '_build/test.ci-cas-acl-create-evidence.php'
+fixture = fixture_file.read_text(encoding='utf-8')
+workflow = (ROOT / '.github/workflows/cas-pr46-isolated.yml').read_text(encoding='utf-8')
+assert 'php _build/test.ci-cas-acl-create-evidence.php' in workflow
+for action in ('create_role','create_user_group'):
+    assert f"'{action}'" in fixture
+    assert "'CAS_CREATE_EVIDENCE_OK action='" in fixture
+assert 'stale replay denied' in fixture
+assert 'stale replay created no duplicate' in fixture
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
