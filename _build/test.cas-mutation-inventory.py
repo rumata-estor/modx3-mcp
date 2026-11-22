@@ -64,6 +64,56 @@ for action, value in actual.items():
                      else 'not_individually_exercised')
     assert row.get('revision_denial_test') == expected_test, (
         f'CAS test evidence classification mismatched for {action}')
+# RU: Для новых индивидуальных доказательств нужно исполняемое CI-свидетельство.
+# EN: New per-action evidence must be backed by an actual CI test and marker.
+scenario = 'disposable_create_readback_revision_stale_replay'
+for action in ('create_role', 'create_user_group'):
+    assert scenario in expected[action]['verified_scenarios'], action
+fixture_file = ROOT / '_build/test.ci-cas-acl-create-evidence.php'
+fixture = fixture_file.read_text(encoding='utf-8')
+workflow = (ROOT / '.github/workflows/cas-pr46-isolated.yml').read_text(encoding='utf-8')
+assert 'php _build/test.ci-cas-acl-create-evidence.php' in workflow
+for action in ('create_role','create_user_group'):
+    assert f"'{action}'" in fixture
+    assert "'CAS_CREATE_EVIDENCE_OK action='" in fixture
+assert 'stale replay denied' in fixture
+assert 'stale replay created no duplicate' in fixture
+
+# RU: Доказываем наличие исполняемых и активированных ACL-сценариев.
+# EN: Per-action grant/update claims require active executable integration tests.
+acl_scenarios = {
+    'grant_context_access': ('context-access', 'grant_readback_stale_replay'),
+    'update_context_access': ('context-access', 'update_readback_stale_replay'),
+    'grant_resourcegroup_access': ('resourcegroup-access', 'grant_readback_stale_replay'),
+    'update_resourcegroup_access': ('resourcegroup-access', 'update_readback_stale_replay'),
+}
+ci_workflow = (ROOT / '.github/workflows/cas-pr46-isolated.yml').read_text()
+for action, (suite, suffix) in acl_scenarios.items():
+    scenario_name = 'disposable_' + ('context_acl_' if suite=='context-access'
+                                  else 'resourcegroup_acl_') + suffix
+    assert scenario_name in expected[action]['verified_scenarios'], action
+    filename = '_build/test.ci-acl-'+suite+'.php'
+    assert 'php '+filename in ci_workflow
+    content = (ROOT / filename).read_text()
+    assert "'"+action+"'" in content
+    assert 'CAS_EVIDENCE_'+action.upper()+'_READBACK_STALE_REPLAY_OK' in content
+    assert 'stale replay did not duplicate grant' in content
+    assert 'rejected update preserved final authority' in content
+
+# RU: Revoke подтверждается дополнительным отрицательным replay тестом.
+# EN: Revoke evidence must include explicit stale replay and readback checks.
+for action,suite,prefix in (
+    ('revoke_context_access','context-access','context_acl'),
+    ('revoke_resourcegroup_access','resourcegroup-access','resourcegroup_acl'),
+):
+    assert 'disposable_'+prefix+'_revoke_readback_stale_replay' in expected[action]['verified_scenarios']
+    source_name = '_build/test.ci-acl-'+suite+'.php'
+    source = (ROOT / source_name).read_text()
+    assert 'php '+source_name in ci_workflow
+    assert 'CAS_EVIDENCE_'+action.upper()+'_READBACK_STALE_REPLAY_OK' in source
+    assert 'revoke stale CAS replay denied' in source
+    assert 'rejected revoke did not advance revision' in source
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

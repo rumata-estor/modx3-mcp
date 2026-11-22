@@ -125,12 +125,40 @@ try {
     $afterStale=aclMatchingRules(aclRules($groupId),$groupId,$policyId);
     aclCheck(count($afterStale)===1 && (int)$afterStale[0]['authority']===998,
         'rejected update preserved final authority');
-    aclRpc('revoke_context_access',array('id'=>$aclId));
+    // RU: Повторный отзыв по устаревшей ревизии не запускает процессор.
+    // EN: Revoke with a fixed CAS snapshot; stale replay cannot re-dispatch.
+    $revokeBefore=aclRpc('get_site_state');
+    $revoke=array('id'=>$aclId,'_runtime_preconditions'=>array(
+        'observed_site_revision'=>(int)$revokeBefore['site_revision'],
+        'strict_site_revision'=>true,'read_set'=>array()
+    ));
+    aclRpc('revoke_context_access',$revoke);
     $aclId=0;
     aclCheck(count(aclMatchingRules(aclRules($groupId),$groupId,$policyId))===0,
         'revoked grant no longer readable');
+    $revokeAfter=aclRpc('get_site_state');
+    aclCheck((int)$revokeAfter['site_revision']
+        ===(int)$revokeBefore['site_revision']+1,
+        'revoke advanced site revision once');
+    $revokeStale=false;
+    try {aclRpc('revoke_context_access',$revoke);}
+    catch(ModxMCPClientException $e) {
+        $revokeStale=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    aclCheck($revokeStale,'revoke stale CAS replay denied');
+    $revokeFinal=aclRpc('get_site_state');
+    aclCheck((int)$revokeFinal['site_revision']
+        ===(int)$revokeAfter['site_revision'],
+        'rejected revoke did not advance revision');
+    aclCheck(count(aclMatchingRules(aclRules($groupId),$groupId,$policyId))===0,
+        'replayed revoke did not recreate ACL');
+    echo 'CAS_EVIDENCE_REVOKE_CONTEXT_ACCESS_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     aclRpc('delete_user_group',array('id'=>$groupId));
     $groupId=0;
+    // RU: Маркеры соответствуют проверенному readback и stale-CAS replay.
+    // EN: Mark only confirmed readback and stale CAS replay scenarios.
+    echo 'CAS_EVIDENCE_GRANT_CONTEXT_ACCESS_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    echo 'CAS_EVIDENCE_UPDATE_CONTEXT_ACCESS_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     echo 'ACL_CONTEXT_ACCESS_LIFECYCLE_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
