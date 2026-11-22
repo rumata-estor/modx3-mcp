@@ -399,6 +399,16 @@ assert 'stale line edit replay denied' in line_test
 assert 'mismatched expected source denied' in line_test
 assert 'denied edit left content unchanged' in line_test
 
+# RU: Массовая мутация доказана лишь для двух одноразовых ресурсов.
+# EN: Bulk publish proof requires isolated two-resource dry-run and replay.
+bulk_test=(ROOT / '_build/test.ci-cas-bulk-resources.php').read_text()
+assert 'php _build/test.ci-cas-bulk-resources.php' in ci_workflow
+assert 'disposable_two_resource_bulk_publish_preview_readback_stale_replay' in expected['bulk_resources']['verified_scenarios']
+assert 'CAS_BULK_RESOURCES_READBACK_STALE_REPLAY_OK' in bulk_test
+assert 'dry-run preserved unpublished state' in bulk_test
+assert 'published state independently confirmed' in bulk_test
+assert 'stale bulk action denied' in bulk_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
