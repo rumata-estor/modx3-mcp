@@ -564,6 +564,18 @@ assert "'context_key'=>'web'" in ms2_update
 assert "'class_key'=>'msCategory'" in ms2_update
 assert "'ms2_update_category'" in ms2_update
 
+# RU: Native update comment заказа miniShop2 на MODX2 — без смены статуса.
+# EN: Narrow real order comment evidence, not status-transition coverage.
+ms2_order_native=(ROOT / '_build/test.ci-ms2-order-native-modx2.php').read_text()
+assert expected['ms2_update_order']['verified_scenarios'] == [
+    'disposable_modx2_pinned_ms2_update_order_native_comment_readback_stale_replay'
+]
+assert 'php _build/test.ci-ms2-order-native-modx2.php' in ci_workflow
+assert 'CAS_MS2_UPDATE_ORDER_MODX2_NATIVE_READBACK_STALE_OK' in ms2_order_native
+assert "'ms2_update_order'" in ms2_order_native
+assert "'ms2_get_order'" in ms2_order_native
+assert 'status unchanged' in ms2_order_native
+
 # RU: Публикуемый отчёт не должен отставать от машинного реестра.
 # EN: Keep the human-readable evidence tracker identical to the manifest.
 import subprocess
