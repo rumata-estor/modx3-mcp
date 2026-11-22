@@ -307,6 +307,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-functional-acceptance.php
+      # RU: Реальная TV: разрешённые статические поля и сохранность partial update.
+      # EN: Disposable TV static metadata and partial update acceptance.
+      - name: Disposable static TV metadata via guarded MCP
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-static-tv-fields.php
       # RU: Разрешение доступа к web-контексту, защита от повтора и отзыв.
       # EN: Disposable web-context ACL grant, stale replay and revoke.
       - name: Disposable context ACL grant revoke and stale-CAS integration
