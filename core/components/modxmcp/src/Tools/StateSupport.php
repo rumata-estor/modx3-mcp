@@ -472,6 +472,29 @@ class StateSupport
                     'STALE_STATE element precondition could not be read.'
                 );
             }
+            if ($type === 'resource') {
+                // RU: PR #57, находка @AgelxNash: processor resource/get
+                // RU: форматирует даты по настройкам Manager (теряет секунды).
+                // RU: Для CAS перечитываем сырые даты через объект MODX,
+                // RU: но только ПОСЛЕ штатной проверки прав в get_element.
+                // EN: Reported by @AgelxNash, PR #57. The resource/get
+                // EN: processor formats dates using Manager settings. CAS
+                // EN: reads the unformatted model fields after the authorized
+                // EN: processor read, preserving the public get_element format.
+                $resourceId = isset($raw['id']) ? (int)$raw['id'] : 0;
+                $resource = $resourceId > 0
+                    ? $context->modx()->getObject(
+                        $context->platform()->className('resource'), $resourceId
+                    ) : null;
+                if (!$resource) {
+                    throw new \ModxMCPClientException(
+                        'STALE_STATE resource raw date read failed.'
+                    );
+                }
+                foreach (array('pub_date', 'unpub_date', 'publishedon') as $dateField) {
+                    $raw[$dateField] = $resource->get($dateField);
+                }
+            }
             $state = self::elementState($type, $raw);
         } else {
             throw new \ModxMCPClientException(
