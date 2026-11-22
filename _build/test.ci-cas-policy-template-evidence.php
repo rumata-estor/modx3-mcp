@@ -36,11 +36,23 @@ function casCreateCheck($test,$label) {
 $fixture=bin2hex(random_bytes(5));
 $templateId=0;
 try {
+    // RU: Штатный список MODX выводит шаблоны существующих групп.
+    // EN: Bind disposable template to a real template group for list readback.
+    $existing=casCreateRpc('list_access_policy_templates',array('limit'=>500));
+    $groupId=0;
+    foreach($existing['results'] as $row) {
+        if(is_array($row) && (int)($row['template_group']??0)>0) {
+            $groupId=(int)$row['template_group'];
+            break;
+        }
+    }
+    casCreateCheck($groupId>0,'existing template group available');
     $name='MCP_Disposable_Template_'.$fixture;
     $state=casCreateRpc('get_site_state');
     $guard=array('observed_site_revision'=>(int)$state['site_revision'],
         'strict_site_revision'=>true,'read_set'=>array());
     $request=array('name'=>$name,'description'=>'isolated CI only',
+        'template_group'=>$groupId,
         '_runtime_preconditions'=>$guard);
     $created=casCreateRpc('create_access_policy_template',$request);
     $templateId=(int)($created['id']??0);
@@ -48,7 +60,8 @@ try {
     $actual=casCreateRpc('get_access_policy_template',array('id'=>$templateId));
     casCreateCheck(is_array($actual)
         && (int)($actual['id']??0)===$templateId
-        && (string)($actual['name']??'')===$name,
+        && (string)($actual['name']??'')===$name
+        && (int)($actual['template_group']??0)===$groupId,
         'policy independent identity readback');
     $after=casCreateRpc('get_site_state');
     casCreateCheck((int)$after['site_revision']
