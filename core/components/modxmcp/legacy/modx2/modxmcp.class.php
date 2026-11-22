@@ -185,6 +185,11 @@ class modxMCP {
                             // database commit; before this CAS update they
                             // were committed separately, allowing a false
                             // success on revision persistence failure.
+                            // RU: Запрещённые запросы отклоняются ДО CAS-резерва.
+                            // EN: Deterministic security denials precede CAS reservation.
+                            \ModxMcp\Tools\MutationPreflight::assertAllowed(
+                                $runtimeContext, $action, $toolData
+                            );
                             $atomicTv = $tool instanceof
                                 \ModxMcp\Tools\ResourceTvUpdateTool;
                             $atomicDatabase = \ModxMcp\Tools\StateSupport::supportsAtomicRevision(

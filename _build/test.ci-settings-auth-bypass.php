@@ -129,8 +129,11 @@ try{
             // EN: Denial with a reserved revision is a separate CAS preflight
             // EN: finding, not a successful authorization bypass.
             $casPrecheckGaps[]=array('probe'=>$index+1,'action'=>$case[0]);
-            authBypassCheck($index>=9,
-                'early system-setting guard must not consume revision');
+            // RU: После исправления даже внешняя отказанная мутация не
+            // RU: должна менять ревизию; в CI это блокирующая регрессия.
+            // EN: Every deterministic denial must keep CAS unchanged.
+            authBypassCheck(false,
+                'probe '.($index+1).' consumed CAS on denied request');
         } else {
             authBypassCheck(true,'probe '.($index+1).' revision unchanged');
         }
