@@ -25,6 +25,7 @@ namespace ModxMcp\Tools {
             return array('id'=>123,'success'=>true);
         }
     }
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/MiniShop2Support.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/MiniShop2MutationSupport.php';
 }
 namespace {
