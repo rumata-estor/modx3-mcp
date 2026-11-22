@@ -91,7 +91,8 @@ try {
         if(strpos($message,'Failed to persist MODX MCP site revision')!==false){
             $gated[]=$action;
         } elseif ($action==='run_processor'
-            && strpos($message,'run_processor is disabled')!==false) {
+            && (strpos($message,'run_processor is disabled')!==false
+                || strpos($message,'AUTH_DENIED: processor execution disabled.')!==false)) {
             // RU: Детерминированный запрет сильнее отказа CAS-резерва.
             // EN: Independent master-switch denial precedes CAS reservation.
             $preflightDenied[$action]='disabled by administrator';
