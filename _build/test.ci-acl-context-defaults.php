@@ -45,6 +45,21 @@ function acdCheck($ok,$label){
     if (!$ok) throw new RuntimeException('ACL_CONTEXT_DEFAULTS_FAILED: '.$label);
     $checks++;
 }
+// RU: Для проверки replay используем исходную, а не новую ревизию.
+// EN: Preserve the observed snapshot across the original call and replay.
+function acdGuard(){
+    $state=acdRpc('get_site_state');
+    return array('observed_site_revision'=>(int)$state['site_revision'],
+        'strict_site_revision'=>true,'read_set'=>array());
+}
+function acdStaleReplay($action,array $request,$label){
+    $denied=false;
+    try {acdRpc($action,$request);}
+    catch(ModxMCPClientException $e){
+        $denied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acdCheck($denied,$label.' stale CAS replay denied');
+}
 function acdContextRules($key){
     $result=acdRpc('list_context_access',array(
         'usergroup'=>0,'context'=>$key,'limit'=>500
@@ -79,10 +94,12 @@ try{
 
     // RU: Обычное создание неявно не должно давать Load Only.
     // EN: Default context creation must not grant anonymous Load Only.
-    $response=acdRpc('create_context',array(
-        'key'=>$key,'name'=>'Temporary context '.$fixture
-    ));
+    $createGuard=acdGuard();
+    $createRequest=array('key'=>$key,'name'=>'Temporary context '.$fixture,
+        '_runtime_preconditions'=>$createGuard);
+    $response=acdRpc('create_context',$createRequest);
     $created=true;
+    acdStaleReplay('create_context',$createRequest,'create context');
     acdCheck(is_array($response),'MCP context create response');
     acdCheck(count(acdContextRules($key))===0,
         'no anonymous access granted by default');
@@ -92,37 +109,72 @@ try{
         if(is_array($context)&&($context['key']??'')===$key)$found=true;
     }
     acdCheck($found,'new context exists without anonymous access');
+    $contextRead=acdRpc('get_context',array('key'=>$key));
+    acdCheck(is_array($contextRead),'created context read through MCP');
+    echo 'CAS_CONTEXT_CREATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+
+    // RU: Изменение имени контекста не должно включать anonymous ACL.
+    // EN: Context description/name update must not grant anonymous access.
+    $contextUpdate=array('key'=>$key,'name'=>'Updated context '.$fixture,
+        '_runtime_preconditions'=>acdGuard());
+    acdRpc('update_context',$contextUpdate);
+    $contextAfter=acdRpc('get_context',array('key'=>$key));
+    acdCheck(is_array($contextAfter),'updated context read through MCP');
+    acdStaleReplay('update_context',$contextUpdate,'update context');
+    acdCheck(count(acdContextRules($key))===0,
+        'context update did not create anonymous ACL');
+    echo 'CAS_CONTEXT_UPDATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     // RU: PR #54, @AgelxNash: жизненный цикл настройки через MCP,
     // RU: refresh() должен получать явный список затронутых контекстов.
     // EN: PR #54, @AgelxNash: exercise context setting lifecycle and
     // EN: explicit cache invalidation on real disposable MODX 2/3.
     $settingKey='mcp_cache_'.$fixture;
-    acdRpc('create_context_setting',array(
+    $settingCreate=array(
         'context_key'=>$key,'key'=>$settingKey,'value'=>'alpha',
         'namespace'=>'core','area'=>'default',
-    ));
+        '_runtime_preconditions'=>acdGuard(),
+    );
+    acdRpc('create_context_setting',$settingCreate);
+    acdStaleReplay('create_context_setting',$settingCreate,'create context setting');
     $settingRead=acdRpc('get_context_setting',array(
         'context_key'=>$key,'key'=>$settingKey
     ));
     acdCheck(is_array($settingRead) && ($settingRead['value']??null)==='alpha',
         'context setting persisted after creation');
-    acdRpc('update_context_setting',array(
-        'context_key'=>$key,'key'=>$settingKey,'value'=>'beta'
-    ));
+    echo 'CAS_CONTEXT_SETTING_CREATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    $settingUpdate=array('context_key'=>$key,'key'=>$settingKey,
+        'value'=>'beta','_runtime_preconditions'=>acdGuard());
+    acdRpc('update_context_setting',$settingUpdate);
+    acdStaleReplay('update_context_setting',$settingUpdate,'update context setting');
     $settingRead=acdRpc('get_context_setting',array(
         'context_key'=>$key,'key'=>$settingKey
     ));
     acdCheck(is_array($settingRead) && ($settingRead['value']??null)==='beta',
         'context setting updated via MCP');
-    acdRpc('delete_context_setting',array(
-        'context_key'=>$key,'key'=>$settingKey
-    ));
+    echo 'CAS_CONTEXT_SETTING_UPDATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    $settingDelete=array('context_key'=>$key,'key'=>$settingKey,
+        '_runtime_preconditions'=>acdGuard());
+    acdRpc('delete_context_setting',$settingDelete);
+    acdStaleReplay('delete_context_setting',$settingDelete,'delete context setting');
     $removed=true;
     try {acdRpc('get_context_setting',array(
         'context_key'=>$key,'key'=>$settingKey
     ));$removed=false;}
     catch(ModxMCPClientException $e) {}
     acdCheck($removed,'context setting removed by MCP');
+    echo 'CAS_CONTEXT_SETTING_DELETE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    // RU: Удаляем контекст без анонимных ACL и проверяем stale replay.
+    // EN: Delete the isolated context and reject its stale replay.
+    $contextDelete=array('key'=>$key,'_runtime_preconditions'=>acdGuard());
+    acdRpc('delete_context',$contextDelete);
+    $created=false;
+    acdStaleReplay('delete_context',$contextDelete,'delete context');
+    $contextsAfter=acdRpc('list_contexts',array('limit'=>500));
+    foreach(($contextsAfter['results']??array()) as $row) {
+        acdCheck(!is_array($row) || ($row['key']??'')!==$key,
+            'deleted context absent from MCP context list');
+    }
+    echo 'CAS_CONTEXT_DELETE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     echo 'ACL_CONTEXT_DEFAULT_DENY_ANONYMOUS_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
