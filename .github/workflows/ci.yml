@@ -83,6 +83,9 @@ jobs:
           python3 _build/test.security-source-wiring.py
           python3 _build/test.http-error-redaction.py
 
+      - name: Private Controller v4 E2E must refuse non-disposable environments
+        run: python3 _build/test.pr50-ci-isolation.py
+
       - name: Client/server action contract
         run: python3 _build/test.client-server-actions.py
 
