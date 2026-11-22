@@ -48,6 +48,30 @@ accepts('workspace/packages/install','privileged',$allowed,'workspace/packages/i
 rejects('workspace/namespace/create','allowlist','workspace/namespace/create',$privileged);
 accepts('security/user/create','privileged',$allowed,$privileged);
 accepts('workspace/package/install','privileged',$allowed,$privileged);
+// RU: Даже явно разрешённый privileged run_processor не обходит ACL locks.
+// EN: Exact privileged allowlists cannot bypass dedicated group CAS locks.
+foreach(array(
+    'security/group/update',
+    'security/group/remove',
+    'security/group/user/create',
+    'security/group/user/update',
+    'security/group/user/remove',
+    'security/user/group/create',
+    'security/user/group/remove'
+) as $aclProcessor) {
+    rejects($aclProcessor,'privileged','',$aclProcessor);
+    rejects($aclProcessor,'allowlist',$aclProcessor,'');
+}
+// Preserve legitimate signed user creation without membership side effects.
+accepts('security/user/create','privileged',$allowed,$privileged,
+    array('properties'=>array('username'=>'disposable')));
+foreach(array('groups','primary_group','primarygroup','usergroup','user_group','role') as $key) {
+    rejects('security/user/create','privileged',$allowed,$privileged,
+        array('properties'=>array($key=>array())));
+    rejects('security/user/update','privileged',$allowed,'security/user/update',
+        array('properties'=>array($key=>1)));
+}
+
 accepts('resource/getlist','privileged',$allowed,$privileged);
 rejects('security/user/delete','privileged',$allowed,$privileged);
 rejects('system/settings/update','privileged','system/settings/update',$privileged);

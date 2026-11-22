@@ -65,6 +65,32 @@ final class ProcessorAccessPolicy
             || strpos($processor, 'security/group/setting/') === 0) {
             throw new \RuntimeException('AUTH_DENIED: settings processors are admin-only.');
         }
+        // RU: Универсальный run_processor не может обойти target-CAS и
+        // RU: транзакционную блокировку специализированных ACL-мутаторов.
+        // EN: Even signed privileged processor permits cannot bypass the
+        // EN: dedicated membership transaction and target fingerprint.
+        if (strpos($processor, 'security/group/') === 0
+            || strpos($processor, 'security/user/group/') === 0) {
+            throw new \RuntimeException(
+                'AUTH_DENIED: group membership processors require dedicated guarded MCP actions.'
+            );
+        }
+        // User create/update may carry hidden groups or primary_group values.
+        // Those membership effects must never bypass the dedicated ACL route.
+        if (in_array($processor,array('security/user/create','security/user/update'),true)
+            && isset($data['properties'])) {
+            foreach (array_keys($data['properties']) as $property) {
+                if (is_string($property)
+                    && in_array(strtolower(trim($property)),array(
+                        'groups','primary_group','primarygroup','usergroup',
+                        'user_group','role'
+                    ),true)) {
+                    throw new \RuntimeException(
+                        'AUTH_DENIED: membership properties require dedicated guarded MCP actions.'
+                    );
+                }
+            }
+        }
         $allowed = self::parseList($allowedCsv);
         $privileged = self::parseList($privilegedCsv);
         // RU: Управление пользователями, пакетами и namespace не разрешается
