@@ -1135,7 +1135,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_cache_native_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_event": {
@@ -1143,7 +1145,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_create_event_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_handler": {
@@ -1151,7 +1155,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_create_handler_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_create_route": {
@@ -1159,7 +1165,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_create_route_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_event": {
@@ -1167,7 +1175,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_delete_event_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_handler": {
@@ -1175,7 +1185,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_delete_handler_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_delete_route": {
@@ -1183,7 +1195,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_delete_route_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_event": {
@@ -1191,7 +1205,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_update_event_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_handler": {
@@ -1199,7 +1215,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_update_handler_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_update_route": {
@@ -1207,7 +1225,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_pinned_virtualpage_update_route_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     }
   }
