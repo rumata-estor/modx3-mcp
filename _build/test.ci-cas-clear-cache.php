@@ -46,7 +46,8 @@ function cacheGuard(){
 try{
     // RU: Одноразовый ключ создаём штатным cache manager MODX.
     // EN: Seed a disposable cache fixture with native MODX cache API only.
-    cacheCheck($manager->set($key,'CAS_FIXTURE_'.$fixture,300,$opts)!==false,
+    $cachePayload='CAS_FIXTURE_'.$fixture;
+    cacheCheck($manager->set($key,$cachePayload,300,$opts)!==false,
         'disposable key seeded');
     cacheCheck($manager->get($key,$opts)==='CAS_FIXTURE_'.$fixture,
         'cache seed independently readable');
