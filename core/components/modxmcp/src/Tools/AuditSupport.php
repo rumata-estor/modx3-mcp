@@ -20,6 +20,9 @@ class AuditSupport
         $modx = $context->modx();
         if (!(bool)$modx->getOption('modxmcp.audit_log', null, true)) { return; }
 
+        $payload = \ModxMcp\Security\SecretRedactor::value($payload);
+        $action = \ModxMcp\Security\SecretRedactor::text($action);
+        $type = \ModxMcp\Security\SecretRedactor::text($type);
         $userId = $modx->user ? (int)$modx->user->get('id') : null;
         $modx->log(
             defined('modX::LOG_LEVEL_INFO') ? \modX::LOG_LEVEL_INFO : 1,

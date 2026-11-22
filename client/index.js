@@ -60,6 +60,23 @@ const MANAGER_ROOT = process.env.MODX_MCP_MANAGER_ROOT || "";
 const BACKUP_KEEP_COUNT = Math.max(1, Number(process.env.MODX_MCP_BACKUP_KEEP_COUNT || 20));
 const SKIP_AUTO_BACKUP = process.env.MODX_MCP_SKIP_AUTO_BACKUP === "1";
 const AUDIT_HOOK = String(process.env.MODX_MCP_AUDIT_HOOK || "").trim();
+const SECRET_KEY = /(?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|authorization|cookie|session[_-]?id|private[_-]?key|credential|db[_-]?pass)/i;
+function redactText(value) {
+  return String(value)
+    .replace(/\b(Bearer\s+)[A-Za-z0-9._~+/-]+/gi, "$1[REDACTED]")
+    .replace(/\b(Basic\s+)[A-Za-z0-9+/=]+/gi, "$1[REDACTED]")
+    .replace(/\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[REDACTED]@")
+    .replace(/(["']?)(password|passwd|pwd|secret(?:[_-]?key)?|token|api[_-]?key|access[_-]?key|authorization|(?:set[_-]?)?cookie|client[_-]?secret|private[_-]?key|credentials?|db[_-]?pass)\1(\s*[:=]\s*["']?)[^\s,;&"'}]+/gi, "$1$2$1$3[REDACTED]");
+}
+function redactValue(value, key = "") {
+  if (SECRET_KEY.test(String(key))) return "[REDACTED]";
+  if (Array.isArray(value)) return value.map((v) => redactValue(v));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, redactValue(v, k)]));
+  }
+  return typeof value === "string" ? redactText(value) : value;
+}
+
 
 
 const PROJECT_LOCK_READ_ONLY_TOOLS = new Set([
@@ -250,8 +267,8 @@ function runMutationAuditHook(name, args, result, backupFiles) {
     site_id: SITE_ID,
     tool: name,
     at: new Date().toISOString(),
-    args: args || {},
-    result: result || null,
+    args: redactValue(args || {}),
+    result: redactValue(result || null),
     backup_files: Array.isArray(backupFiles) ? backupFiles.filter(Boolean) : [],
     actor: {
       source: process.env.AGENT_ACTOR_SOURCE || "mcp",
@@ -269,18 +286,18 @@ function runMutationAuditHook(name, args, result, backupFiles) {
       env: process.env,
     });
     if (hook.error) {
-      console.error(`modxMCP: audit hook warning: ${hook.error.message}`);
+      console.error(`modxMCP: audit hook warning: ${redactText(hook.error.message)}`);
       return;
     }
     if (hook.status !== 0) {
       const err = String(hook.stderr || "").trim();
-      console.error(`modxMCP: audit hook warning: exit ${hook.status}${err ? " — " + err : ""}`);
+      console.error(`modxMCP: audit hook warning: exit ${hook.status}${err ? " — " + redactText(err) : ""}`);
       return;
     }
     const out = String(hook.stdout || "").trim();
-    if (out) console.error(`modxMCP: audit hook: ${out}`);
+    if (out) console.error(`modxMCP: audit hook: ${redactText(out)}`);
   } catch (e) {
-    console.error(`modxMCP: audit hook warning: ${e.message}`);
+    console.error(`modxMCP: audit hook warning: ${redactText(e.message)}`);
   }
 }
 
@@ -342,7 +359,7 @@ async function modxApiRequest(payload) {
     });
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
-      throw new Error(`MODX Error: ${response.data.error || JSON.stringify(response.data)}`);
+      throw new Error(`MODX Error: ${redactText(response.data.error || JSON.stringify(redactValue(response.data)))}`);
     }
     return response.data;
   } catch (error) {
@@ -351,9 +368,9 @@ async function modxApiRequest(payload) {
     }
     if (error.response) {
       if (error.response.data && typeof error.response.data === "object") noteCaps(error.response.data.caps);
-      throw new Error(`MODX Error: ${JSON.stringify(error.response.data)}`);
+      throw new Error(`MODX Error: ${JSON.stringify(redactValue(error.response.data))}`);
     }
-    throw new Error(`Network Error: ${error.message}`);
+    throw new Error(`Network Error: ${redactText(error.message)}`);
   }
 }
 
@@ -375,7 +392,7 @@ function pruneBackupDirs(root) {
       fs.rmSync(path.join(root, name), { recursive: true, force: true });
     }
   } catch (e) {
-    console.error(`modxMCP: не удалось применить retention резервных копий: ${e.message}`);
+    console.error(`modxMCP: не удалось применить retention резервных копий: ${redactText(e.message)}`);
   }
 }
 
@@ -2836,7 +2853,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Tool ${name} not found`);
   } catch (error) {
     return {
-      content: [{ type: "text", text: `Error: ${error.message}` }],
+      content: [{ type: "text", text: `Error: ${redactText(error.message)}` }],
       isError: true,
     };
   } finally {

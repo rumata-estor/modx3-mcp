@@ -4,6 +4,7 @@
  * EN: Original log-tail tests by @AgelxNash, PR #53.
  */
 
+require_once __DIR__ . '/../core/components/modxmcp/src/Security/SecretRedactor.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ToolInterface.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ErrorLogReadTool.php';

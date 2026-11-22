@@ -28,6 +28,7 @@ class ErrorLogReadTool implements ToolInterface
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 100;
         $metadata = array();
         $tail = FilesystemSupport::readTailLines($path, $limit, null, $metadata);
+        $tail = array_map(array('ModxMcp\\Security\\SecretRedactor', 'text'), $tail);
         return array_merge(array('total' => count($tail), 'lines' => $tail), $metadata);
     }
 }

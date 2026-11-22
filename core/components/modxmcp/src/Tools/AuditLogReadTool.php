@@ -35,7 +35,7 @@ class AuditLogReadTool implements ToolInterface
             if ($filterAction !== '' && (!isset($entry['action']) || $entry['action'] !== $filterAction)) {
                 return null;
             }
-            return $entry;
+            return \ModxMcp\Security\SecretRedactor::value($entry);
         }, $metadata);
         return array_merge(array('total' => count($entries), 'entries' => $entries), $metadata);
     }

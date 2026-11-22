@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122']
 
 permissions:
   contents: read
@@ -181,6 +181,13 @@ jobs:
       # EN: Verify native MODX cache invalidation; addon integration is separate.
       # RU: Фиксированная версия ClientConfig только в disposable MODX.
       # EN: Fetch pinned open-source ClientConfig runtime into ephemeral MODX only.
+      - name: Real MODX 2/3 secret redaction integration (disposable only)
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-secret-redaction-real-modx.php
       - name: Stage pinned ClientConfig 2.5.0 addon for isolated E2E
         if: matrix.php_version == '8.2'
         run: |
