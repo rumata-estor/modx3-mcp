@@ -103,7 +103,13 @@ try {
 }finally{
     if($resourceId>0)tvRpc('delete_element',array('type'=>'resource',
         'id'=>$resourceId,'dry_run'=>false));
-    if($tvId>0)tvRpc('delete_element',array('type'=>'tv','id'=>$tvId));
+    if($tvId>0){
+        // RU: MODX запрещает удалять TV, связанную с шаблоном.
+        // EN: Detach disposable TV from template before deleting its definition.
+        tvRpc('update_element',array('type'=>'tv','id'=>$tvId,
+            'templates'=>array()));
+        tvRpc('delete_element',array('type'=>'tv','id'=>$tvId));
+    }
 }
 echo 'CAS_CLEAR_TV_VALUES_EVIDENCE_OK checks='.$checks
     .' platform='.($is2?'modx2':'modx3').PHP_EOL;
