@@ -31,7 +31,7 @@ if(!$modx->hasPermission('msproduct_save')||!$modx->hasPermission('mssetting_sav
 if(!$modx->addPackage('minishop2',$path.'model/'))
     throw new RuntimeException('Could not load pinned miniShop2 package');
 $manager=$modx->getManager();
-foreach(array('msLink','msProductLink','msProductData','msVendor') as $class){
+foreach(array('msLink','msProductLink','msProductData','msVendor','msOption','msProductOption') as $class){
     if(!$manager->createObjectContainer($class))
         throw new RuntimeException('Disposable miniShop2 table unavailable '.$class);
 }
@@ -101,6 +101,35 @@ try {
         if($which==='A')$p1=$id;else $p2=$id;
     }
     plCheck($p1!==$p2,'two independent test products');
+
+    // RU: Третий сценарий использует реальный неопубликованный msProduct.
+    // EN: Test native per-product option storage on a real unpublished msProduct.
+    $optKey='mcpdisposableproductoption'.$marker;
+    list($option,$optionCreate)=plWrite('ms2_create_option',array(
+        'key'=>$optKey,'caption'=>'Disposable product field',
+        'type'=>'textfield','category'=>0,
+    ));
+    $optionRows=plRpc('ms2_list_options',array('query'=>$optKey,'limit'=>100));
+    $found=array_filter($optionRows['results']??array(),
+        function($r)use($optKey){return ($r['key']??'')===$optKey;});
+    plCheck(count($found)===1,'native option exists for product');
+    list($optResult,$optOld)=plWrite('ms2_update_product_options',array(
+        'product_id'=>$p1,'options'=>array($optKey=>'test-value-'.$marker),
+    ));
+    $optRead=plRpc('ms2_get_product_options',array('product_id'=>$p1));
+    $stored=array_values(array_filter($optRead['options']??array(),
+        function($r)use($optKey){return ($r['key']??'')===$optKey;}));
+    plCheck(count($stored)===1
+        &&($stored[0]['value']??'')==='test-value-'.$marker,
+        'product option native write independently read through MCP');
+    plStale('ms2_update_product_options',$optOld);
+    $optAfter=plRpc('ms2_get_product_options',array('product_id'=>$p1));
+    $storedAfter=array_values(array_filter($optAfter['options']??array(),
+        function($r)use($optKey){return ($r['key']??'')===$optKey;}));
+    plCheck(count($storedAfter)===1
+        &&($storedAfter[0]['value']??'')==='test-value-'.$marker,
+        'stale product option update did not overwrite');
+    echo "CAS_MS2_UPDATE_PRODUCT_OPTIONS_NATIVE_READBACK_STALE_OK\n";
 
     list($made,$old)=plWrite('ms2_create_product_link',array(
         'link'=>$linkId,'master'=>$p1,'slave'=>$p2,
