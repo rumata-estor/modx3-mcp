@@ -469,6 +469,15 @@ assert 'CAS_DELETE_PROVIDER_DISPOSABLE_STALE_REPLAY_OK' in provider_delete_test
 assert 'provider no longer appears in MCP list' in provider_delete_test
 assert 'stale delete_provider replay rejected' in provider_delete_test
 
+# RU: CAS remove_locks проверен только на пустой одноразовой установке.
+# EN: No proof of actual lock deletion; only empty-install CAS behavior.
+remove_locks_test=(ROOT / '_build/test.ci-cas-remove-locks.php').read_text()
+assert 'php _build/test.ci-cas-remove-locks.php' in ci_workflow
+assert 'disposable_empty_install_remove_locks_revision_stale_replay' in expected['remove_locks']['verified_scenarios']
+assert "'remove_locks'" in remove_locks_test
+assert 'CAS_REMOVE_LOCKS_EMPTY_INSTALL_STALE_REPLAY_OK' in remove_locks_test
+assert 'stale remove_locks replay denied' in remove_locks_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

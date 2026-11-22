@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 87. **Не имеют индивидуальных сценариев:** 29.
+сценарий:** 88. **Не имеют индивидуальных сценариев:** 28.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 29 без сценария
+## P2 — остальные операции — 28 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -42,7 +42,6 @@
 | `ms2_update_option` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `virtualpage_clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -114,6 +113,7 @@
 | `make_static` | review | `disposable_static_tv_file_bytes_readback_revision_stale_replay` |
 | `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
+| `remove_locks` | review | `disposable_empty_install_remove_locks_revision_stale_replay` |
 | `remove_resource_from_group` | critical | `disposable_unpublished_resource_group_remove_readback_stale_replay` |
 | `remove_user_from_group` | critical | `disposable_inactive_user_group_membership_remove_readback_stale_replay` |
 | `rename_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |

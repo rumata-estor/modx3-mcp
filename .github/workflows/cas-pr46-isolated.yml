@@ -490,6 +490,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-replace-across.php
+      # RU: Очистка lock-состояния только на disposable MODX CI.
+      # EN: Empty-install remove_locks CAS success and stale replay only.
+      - name: Disposable remove locks empty-install CAS
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-remove-locks.php
       - name: Disposable undelete resource CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
