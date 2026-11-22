@@ -349,7 +349,12 @@ class ProcessorMutationTool implements ToolInterface
 
     private function prepareAcl($context, array &$props)
     {
-        if ($this->toolName === 'assign_resource_to_group') {
+        // RU: MODX 2 ожидает tree-node ID `n_123`; MODX 3 ожидает число.
+        // RU: Общий префикс ломает assign_resource_to_group в MODX 3.
+        // EN: MODX2 requires tree-node `n_123`; MODX3 expects a numeric ID.
+        // EN: Applying the prefix on MODX3 prevents resource-group grants.
+        if ($this->toolName === 'assign_resource_to_group'
+            && (int)$context->platform()->majorVersion() === 2) {
             if (isset($props['resource']) && ctype_digit((string)$props['resource'])) {
                 $props['resource'] = 'n_' . $props['resource'];
             }
