@@ -1,5 +1,5 @@
 <?php
-/* MODX MCP TEST / ТЕСТ MODX MCP
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
  * RU: Контракт чтения ресурса за CAS-отпечатком: get_element обязан передавать
  * RU: skipFormatDates=true в resource/get (свойство поддерживается процессором
  * RU: на MODX 2 и MODX 3). Без него pub_date/unpub_date/publishedon
