@@ -41,15 +41,22 @@ $cases=array(
         'list_roles','MCP_EvidenceRole_'.$fixture,array('authority'=>987)),
     array('create_resource_group','get_resource_group','delete_resource_group',
         'list_resource_groups','MCP_EvidenceResGroup_'.$fixture,array()),
+    array('create_user','get_user','delete_user',
+        'list_users','mcp_evidence_'.$fixture,array(
+            'fullname'=>'Disposable CAS evidence',
+            'email'=>'mcp-evidence-'.$fixture.'@example.invalid',
+            'password'=>'CI-'.bin2hex(random_bytes(16)).'9Q!',
+            'passwordnotifymethod'=>'s','active'=>0)),
 );
 foreach($cases as $case) {
     list($create,$read,$delete,$list,$name,$extra)=$case;
     $id=0;
+    $field=$create==='create_user'?'username':'name';
     try {
         $state=casCreateRpc('get_site_state');
         $guard=array('observed_site_revision'=>(int)$state['site_revision'],
             'strict_site_revision'=>true,'read_set'=>array());
-        $data=array_merge(array('name'=>$name),$extra);
+        $data=array_merge(array($field=>$name),$extra);
         $data['_runtime_preconditions']=$guard;
         $created=casCreateRpc($create,$data);
         $id=(int)($created['id']??0);
@@ -57,8 +64,16 @@ foreach($cases as $case) {
         $actual=casCreateRpc($read,array('id'=>$id));
         casCreateCheck(is_array($actual)
             && (int)($actual['id']??0)===$id
-            && (string)($actual['name']??'')===$name,
+            && (string)($actual[$field]??'')===$name,
             $create.' independent readback');
+        if ($create==='create_user') {
+            casCreateCheck((int)($actual['active']??-1)===0,
+                'created user remains inactive');
+            foreach(array('password','salt','cachepwd','remote_key','sudo') as $secret) {
+                casCreateCheck(!array_key_exists($secret,$actual),
+                    'create_user readback masks '.$secret);
+            }
+        }
         $revision=casCreateRpc('get_site_state');
         casCreateCheck((int)$revision['site_revision']
             ===(int)$state['site_revision']+1,
@@ -78,7 +93,7 @@ foreach($cases as $case) {
             $create.' list result available');
         $matching=0;
         foreach($rows['results'] as $row) {
-            if(is_array($row) && (string)($row['name']??'')===$name)
+            if(is_array($row) && (string)($row[$field]??'')===$name)
                 $matching++;
         }
         casCreateCheck($matching===1,$create.' stale replay created no duplicate');
