@@ -785,3 +785,27 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-virtualpage-installed.php
+      # RU: Только одноразовая установка, закреплённые upstream исходники miniShop2.
+      # EN: Pinned upstream miniShop2 source, disposable MODX2/3 only.
+      - name: Stage pinned miniShop2 for isolated link-type E2E
+        if: matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly MS2_SHA=793bbb8e7a4a2fee07197142be1be57f7e68ab8f
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/modx-pro/miniShop2/tar.gz/$MS2_SHA" \
+            -o "$RUNNER_TEMP/minishop2-pinned.tar.gz"
+          mkdir -p "$RUNNER_TEMP/minishop2-source"
+          tar -xzf "$RUNNER_TEMP/minishop2-pinned.tar.gz" \
+            -C "$RUNNER_TEMP/minishop2-source" --strip-components=1
+          test -f "$RUNNER_TEMP/minishop2-source/core/components/minishop2/processors/mgr/settings/link/create.class.php"
+          cp -a "$RUNNER_TEMP/minishop2-source/core/components/minishop2" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable miniShop2 native link-type MCP CAS lifecycle
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-link-types-installed.php
