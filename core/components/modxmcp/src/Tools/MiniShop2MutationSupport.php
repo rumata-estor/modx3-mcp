@@ -68,30 +68,38 @@ class MiniShop2MutationSupport
             if (!isset($props['published'])) { $props['published'] = 1; }
         }
 
-        $response = $context->platform()->runProcessor(
-            $context->modx(),
-            'resource/' . $action,
-            $props
-        );
-        if (!$response || $response->isError()) {
+        // RU: Штатный процессор miniShop2 может сохранить категорию до
+        // RU: ошибки обновления URI/кэша или до формирования ответа.
+        // EN: Native miniShop2 category processor may write before failure.
+        try {
+            $response = $context->platform()->runProcessor(
+                $context->modx(),
+                'resource/' . $action,
+                $props
+            );
+            if (!$response || $response->isError()) {
+                throw new \RuntimeException('Native category processor did not confirm success.');
+            }
+            ElementMutationSupport::refreshCache($context);
+            AuditSupport::log(
+                $context,
+                $action === 'create' ? 'ms2_create_category' : 'ms2_update_category',
+                'ms2',
+                array_intersect_key(
+                    $props,
+                    array_flip(array('id', 'pagetitle', 'parent'))
+                )
+            );
+            return ProcessorSupport::normalize($response);
+        } catch (\Throwable $error) {
+            // RU: Только пользователь может принять решение после независимого чтения.
+            // EN: Do not leak third-party error details, assert rollback or retry.
             throw new \ModxMCPClientException(
-                $response
-                    ? ProcessorSupport::error($response)
-                    : 'ms2 category: no response.'
+                'MUTATION_OUTCOME_UNCERTAIN: miniShop2 category ' . $action
+                . ' may have changed the resource; inspect via MCP '
+                . 'get_element before attempting another authorized mutation.'
             );
         }
-
-        ElementMutationSupport::refreshCache($context);
-        AuditSupport::log(
-            $context,
-            $action === 'create' ? 'ms2_create_category' : 'ms2_update_category',
-            'ms2',
-            array_intersect_key(
-                $props,
-                array_flip(array('id', 'pagetitle', 'parent'))
-            )
-        );
-        return ProcessorSupport::normalize($response);
     }
 
     public static function auditProcessor(
