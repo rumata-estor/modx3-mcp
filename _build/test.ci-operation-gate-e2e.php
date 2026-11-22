@@ -22,7 +22,7 @@ $api=new modxMCP($modx);
 $site='ci-idempotency-'.bin2hex(random_bytes(5));
 $private=getenv('RUNNER_TEMP').'/ci-idempotency-key-'.bin2hex(random_bytes(5));
 $node=__DIR__.'/test.ci-ed25519-controller.cjs';
-$created=false;$enabled=false;$resourceId=0;$checks=0;
+$created=false;$enabled=false;$resourceId=0;$uncertainResourceId=0;$checks=0;
 function opE2eCheck($ok,$msg){
     global $checks;
     if(!$ok)throw new RuntimeException('OPERATION_GATE_E2E_FAIL '.$msg);
@@ -152,8 +152,78 @@ try{
     opE2eCheck($pendingDenied,'pending crash cannot create duplicate');
     opE2eCheck((int)$api->processRequest('get_site_state','',array())['site_revision']===$after,
         'pending crash did not reserve revision again');
+    // RU: Реальная запись ресурса завершена, но журнал не может подтвердить
+    // RU: SUCCEEDED: никакого ложного успеха и повторной мутации.
+    // EN: The real mutation commits, yet journal SUCCEEDED fails: never
+    // EN: report success or allow duplicate dispatch on a new signed permit.
+    $failureMarker=bin2hex(random_bytes(6));
+    $failedData=array('type'=>'resource','name'=>'CI_UNCERTAIN_'.$failureMarker,
+        'alias'=>'ci-uncertain-'.$failureMarker,'content'=>'CONFIRMED_BY_READBACK',
+        'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
+        '_operation_id'=>opE2eId(), '_runtime_preconditions'=>opE2eGuard());
+    $beforeFailure=(int)$failedData['_runtime_preconditions']['observed_site_revision'];
+    $trigger='ci_operation_finish_'.bin2hex(random_bytes(5));
+    $triggerArmed=false;
+    try {
+        $quote=chr(39);
+        $sql='CREATE TRIGGER `'.$trigger.'` BEFORE UPDATE ON `'.$table.'`'
+            .' FOR EACH ROW BEGIN IF NEW.state='.$quote.'SUCCEEDED'.$quote
+            .' THEN SIGNAL SQLSTATE '.$quote.'45000'.$quote
+            .' SET MESSAGE_TEXT='.$quote.'CI_OPERATION_FINISH_UNAVAILABLE'.$quote
+            .'; END IF; END';
+        opE2eCheck($modx->exec($sql)!==false,'disposable finish rejection installed');
+        $triggerArmed=true;
+        $outcomeUncertain=false;
+        try {opE2eRequest('create_element',$failedData);}
+        catch(ModxMCPClientException $e){
+            $outcomeUncertain=strpos($e->getMessage(),
+                'MUTATION_OUTCOME_UNCERTAIN:')===0;
+        }
+        opE2eCheck($outcomeUncertain,'journal failure returns uncertain, never success');
+        $listed=$api->processRequest('list_resources','',array(
+            'query'=>$failedData['alias'],'limit'=>50));
+        $matching=array_values(array_filter($listed['results'],
+            function($row)use($failedData){
+                return ($row['alias']??'')===$failedData['alias'];
+            }));
+        opE2eCheck(count($matching)===1,'readback shows one committed mutation');
+        $uncertainResourceId=(int)$matching[0]['id'];
+        $actual=$api->processRequest('get_element','',array(
+            'type'=>'resource','id'=>$uncertainResourceId));
+        opE2eCheck(($actual['content']??'')==='CONFIRMED_BY_READBACK'
+            && (int)$actual['published']===0,
+            'MCP confirmed committed unpublished resource');
+        $failedDigest=\ModxMcp\Security\MutationOperationLedger::requestDigest(
+            $site.'|test','create_element','',$failedData);
+        opE2eCheck($ledger->get($failedData['_operation_id'],$failedDigest)['state']
+            ==='PENDING','failed finish retained durable PENDING');
+        $again=false;
+        try{opE2eRequest('create_element',$failedData);}
+        catch(ModxMCPClientException $e){
+            $again=strpos($e->getMessage(),
+                'OPERATION_REPLAY_BLOCKED: prior state=PENDING')===0;
+        }
+        opE2eCheck($again,'new signed permit cannot repeat ambiguous operation');
+        opE2eCheck((int)$api->processRequest('get_site_state','',array())['site_revision']
+            ===$beforeFailure+1,'ambiguous replay did not reserve another revision');
+        $afterReplay=$api->processRequest('list_resources','',array(
+            'query'=>$failedData['alias'],'limit'=>50));
+        opE2eCheck((int)$afterReplay['total']===1,
+            'MCP shows no duplicate after failed journal confirmation');
+    } finally {
+        if($triggerArmed)$modx->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');
+    }
+    echo 'SIGNED_OPERATION_FINISH_FAILURE_MODX'.($is2?'2':'3')
+        .'_OK state=PENDING duplicate=0'.PHP_EOL;
     echo 'SIGNED_OPERATION_REPLAY_MODX'.($is2?'2':'3').'_OK checks='.$checks.PHP_EOL;
 } finally {
+    if($uncertainResourceId>0 && $enabled){
+        try {
+            $del=array('type'=>'resource','id'=>$uncertainResourceId,
+                'dry_run'=>false,'_runtime_preconditions'=>opE2eGuard());
+            opE2eRequest('delete_element',$del);
+        }catch(Throwable $ignored){}
+    }
     if($resourceId>0 && $enabled){
         try{
             $del=array('type'=>'resource','id'=>$resourceId,
