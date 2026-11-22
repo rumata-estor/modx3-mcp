@@ -103,6 +103,15 @@ class SystemSettingUpdateTool implements ToolInterface
                 array('key' => $data['key'])
             );
         }
+        // RU: Старый id-селектор оставлен для обратной совместимости
+        // RU: и защиты legacy-путей; у штатного modSystemSetting PK — key.
+        // EN: Retain the legacy id selector for backward-compatible guards;
+        // EN: native modSystemSetting has a string key primary key, not id.
+        if (!empty($data['id'])) {
+            return $context->modx()->getObject(
+                $class, array('id' => (int)$data['id'])
+            );
+        }
         return null;
     }
 }

@@ -8,6 +8,8 @@
 - **Secrets:** MODX 2 and 3 legacy monolithic setting-read fallbacks now fully redact API tokens and other sensitive values regardless of length, matching the modular `[REDACTED]` policy. **Reported by @AgelxNash**, [PR #52](https://github.com/rumata-estor/modx3-mcp/pull/52).
 - **Build:** both transport builders now exit with status 2 if `config.core.php` is missing instead of accidentally reporting success. Previously observed in the project review and independently restated by **@AgelxNash**, [PR #51](https://github.com/rumata-estor/modx3-mcp/pull/51). Added negative CI tests.
 
+- **Settings:** `update_system_setting` now accepts optional `new_key`; rename is a single UPDATE against the original key under CAS, with conflict, protected-key and missing-readback guards. **Reported by @AgelxNash**, [PR #56](https://github.com/rumata-estor/modx3-mcp/pull/56); seven original contract tests were imported in a separate Git commit preserving the original author.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.

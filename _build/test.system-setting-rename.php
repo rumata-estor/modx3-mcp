@@ -1,5 +1,5 @@
 <?php
-/* MODX MCP TEST / ТЕСТ MODX MCP
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
  * RU: Контракт update_system_setting при переименовании настройки.
  * RU: PK-поле 'key' нельзя менять через xPDOObject::save() — UPDATE WHERE
  * RU: строится по уже изменённому значению поля и не находит строк
