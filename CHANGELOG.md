@@ -14,6 +14,8 @@
 - **Logs:** `read_error_log` and `read_audit_log` stream a bounded tail rather than loading the whole file, reporting `result_complete`, `scanned_bytes`, and `truncated_lines`. Original algorithm and regression tests **authored by @AgelxNash**, [PR #53](https://github.com/rumata-estor/modx3-mcp/pull/53), with Git authorship preserved. A separate 4 MiB aggregate response cap avoids memory exhaustion from 1000 large lines.
 - **Static files/TVs:** existing static-file reads/writes now validate persisted paths against traversal and external symlinks. TV create/update now permits validated `static`, `static_file`, and `source` fields, **reported by @AgelxNash**, [PR #55](https://github.com/rumata-estor/modx3-mcp/pull/55). TV automatic file conversion and static content editing are **not enabled yet**.
 
+- **Additional verification:** TV static metadata passed 12 disposable MODX 2/3 integrations with the static root provisioned via guarded MCP `make_static`. Short binary log lines are Base64-wrapped, and the aggregate 4 MiB limit now measures serialized JSON bytes to prevent control-character expansion.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
