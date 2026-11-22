@@ -353,17 +353,21 @@ class ProcessorMutationTool implements ToolInterface
         // RU: начиная с 3.2 процессор принимает обычный числовой ID.
         // EN: MODX2 and 3.1 require `n_123`; MODX >=3.2 expects numeric IDs.
         // EN: Core UpdateresourcesIn changed its ID parsing between 3.1/3.2.
-        $versionData = $context->modx()->getVersionData();
-        $needsLegacyTreeIds = (int)$context->platform()->majorVersion() === 2
-            || ((int)$context->platform()->majorVersion() === 3
-                && (int)(isset($versionData['major_version'])
-                    ? $versionData['major_version'] : 0) < 2);
-        if ($this->toolName === 'assign_resource_to_group' && $needsLegacyTreeIds) {
-            if (isset($props['resource']) && ctype_digit((string)$props['resource'])) {
-                $props['resource'] = 'n_' . $props['resource'];
-            }
-            if (isset($props['resourceGroup']) && ctype_digit((string)$props['resourceGroup'])) {
-                $props['resourceGroup'] = 'n_' . $props['resourceGroup'];
+        if ($this->toolName === 'assign_resource_to_group') {
+            $major = (int)$context->platform()->majorVersion();
+            $versionData = $major === 3
+                ? $context->modx()->getVersionData() : array();
+            $needsLegacyTreeIds = $major === 2
+                || ($major === 3
+                    && (int)(isset($versionData['major_version'])
+                        ? $versionData['major_version'] : 0) < 2);
+            if ($needsLegacyTreeIds) {
+                if (isset($props['resource']) && ctype_digit((string)$props['resource'])) {
+                    $props['resource'] = 'n_' . $props['resource'];
+                }
+                if (isset($props['resourceGroup']) && ctype_digit((string)$props['resourceGroup'])) {
+                    $props['resourceGroup'] = 'n_' . $props['resourceGroup'];
+                }
             }
         }
 
