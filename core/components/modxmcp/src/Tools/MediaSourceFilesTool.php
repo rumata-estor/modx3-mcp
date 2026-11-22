@@ -18,7 +18,7 @@ class MediaSourceFilesTool implements ToolInterface
         if (!$source) {
             throw new \ModxMCPClientException('Media source not found.');
         }
-        MediaSourceSupport::assertReadAllowed($context, $source);
+        MediaSourceSupport::assertLocalReadAllowed($context, $source);
 
         $rootPath = MediaSourceSupport::rootPath($context, $source);
         $relativePath = !empty($data['path'])

@@ -132,6 +132,29 @@ class MediaSourceSupport
         return $value;
     }
 
+    /**
+     * RU: Только стандартный локальный драйвер допускает прямое чтение PHP.
+     * EN: Raw PHP filesystem access is valid only for MODX's built-in local driver.
+     */
+    public static function isBuiltinLocalFileSource($source)
+    {
+        $classKey = ltrim((string)$source->get('class_key'), '\\');
+        return $classKey === 'modFileMediaSource'
+            || $classKey === 'sources.modFileMediaSource'
+            || $classKey === 'MODX\\Revolution\\Sources\\modFileMediaSource';
+    }
+
+    public static function assertLocalReadAllowed($context, $source)
+    {
+        if (!self::isBuiltinLocalFileSource($source)) {
+            throw new \ModxMCPClientException(
+                'This media source uses a custom or remote driver. '
+                . 'Direct filesystem browsing is not supported; use a supported local MODX file source.'
+            );
+        }
+        self::assertReadAllowed($context, $source);
+    }
+
     public static function assertReadAllowed($context, $source)
     {
         if (self::isFilesystem($source)) {

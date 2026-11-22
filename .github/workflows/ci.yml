@@ -135,6 +135,7 @@ jobs:
         run: |
           php _build/test.media-path-boundaries.php
           php _build/test.media-folder-path-contract.php
+          php _build/test.media-custom-driver-boundary.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
           php _build/test.make-static-symlink-boundary.php

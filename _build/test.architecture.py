@@ -82,12 +82,17 @@ for rel in element_bridge_files:
 
 # Filesystem media-source reads must remain behind the explicit security setting.
 media_support = (src / 'Tools' / 'MediaSourceSupport.php').read_text(encoding='utf-8')
-if 'modxmcp.allow_root_filesystem_read' not in media_support or 'assertReadAllowed' not in media_support:
-    errors.append('MediaSourceSupport filesystem-read security gate missing')
+if ('modxmcp.allow_root_filesystem_read' not in media_support
+        or 'assertReadAllowed' not in media_support
+        or 'assertLocalReadAllowed' not in media_support
+        or 'isBuiltinLocalFileSource' not in media_support):
+    errors.append('MediaSourceSupport local driver and root-read gates missing')
+if 'self::assertReadAllowed($context, $source)' not in media_support:
+    errors.append('Local driver guard must retain the root-filesystem opt-in gate')
 for rel in ('MediaSourceFilesTool.php', 'MediaSourceFileReadTool.php'):
     text = (src / 'Tools' / rel).read_text(encoding='utf-8')
-    if 'MediaSourceSupport::assertReadAllowed' not in text:
-        errors.append(f'{rel}: filesystem-read security gate call missing')
+    if 'MediaSourceSupport::assertLocalReadAllowed' not in text:
+        errors.append(f'{rel}: verified local-driver security gate call missing')
 
 # Migrated tools must be explicit and centrally registered.
 tools = sorted(p.name for p in (src / 'Tools').glob('*Tool.php') if p.name != 'ToolInterface.php')
