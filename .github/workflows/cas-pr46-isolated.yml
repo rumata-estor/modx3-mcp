@@ -809,3 +809,13 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-link-types-installed.php
+      # RU: Проверка двух option-мутаторов на уже подготовленном pinned miniShop2.
+      # EN: Reuse pinned disposable miniShop2 to check option create/update CAS.
+      - name: Disposable miniShop2 option create update MCP CAS
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-options-installed.php
