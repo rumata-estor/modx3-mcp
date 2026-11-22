@@ -480,6 +480,55 @@ try {
     acceptanceClean('remove_user_from_group',array(
         'user'=>$userId,'usergroup'=>$groupId));
     echo 'ACL_MANAGER_MEMBERSHIP_CONFLICT_DENIED_OK'.PHP_EOL;
+    // RU: Аварийная проверка гонки: Manager вставляет членство, удерживая
+    // RU: незавершённую транзакцию; MCP пытается обновить эту же группу.
+    // EN: Probe a concurrent uncommitted Manager membership insertion. A
+    // EN: successful MCP update here would demonstrate a CAS TOCTOU gap.
+    $raceBefore=acceptanceSnapshot('user_group',$groupId);
+    $readyFile=rtrim(getenv('RUNNER_TEMP'),'/').'/member-cas-race-'.bin2hex(random_bytes(5));
+    $raceUser=acceptanceRpc('create_user',array(
+        'username'=>'mcp_race_'.$fixture,
+        'fullname'=>'Disposable race '.$fixture,
+        'email'=>'mcp-race-'.$fixture.'@example.invalid',
+        'password'=>'CI-'.bin2hex(random_bytes(12)).'9Q!',
+        'passwordnotifymethod'=>'s','active'=>0));
+    $raceUserId=(int)$raceUser['id'];
+    $raceCommand=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
+        (string)$groupId,(string)$raceUserId,(string)$roleId,$readyFile);
+    $racePipes=array();
+    $raceProcess=proc_open($raceCommand,array(
+        0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+    ),$racePipes);
+    if(!is_resource($raceProcess))throw new RuntimeException('Cannot spawn Manager race');
+    fclose($racePipes[0]);
+    $until=microtime(true)+12;
+    while(!is_file($readyFile) && microtime(true)<$until)usleep(10000);
+    acceptanceCheck(is_file($readyFile),'Manager membership transaction holds uncommitted row');
+    $raceDenied=false;$raceUnexpected=false;
+    try {
+        acceptanceRpc('update_user_group',array(
+            'id'=>$groupId,'name'=>'MCP_RACE_UPDATE_'.$fixture,
+            '_runtime_preconditions'=>$raceBefore));
+        $raceUnexpected=true;
+    } catch (ModxMCPClientException $e) {
+        $raceDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+        if(!$raceDenied)throw $e;
+    } finally {
+        $raceOutput=stream_get_contents($racePipes[1]);
+        $raceError=stream_get_contents($racePipes[2]);
+        fclose($racePipes[1]);fclose($racePipes[2]);
+        $raceExit=proc_close($raceProcess);
+        @unlink($readyFile);
+        acceptanceCheck($raceExit===0,'external Manager race committed: '.$raceError);
+    }
+    if($raceUnexpected) {
+        echo 'ACL_MEMBERSHIP_TOCTOU_RACE_REPRODUCED'.PHP_EOL;
+    }
+    acceptanceCheck($raceDenied,
+        'MCP must reject membership edit committed during CAS critical section');
+    acceptanceClean('remove_user_from_group',array(
+        'user'=>$raceUserId,'usergroup'=>$groupId));
+    acceptanceClean('delete_user',array('id'=>$raceUserId));
     $memberName='mcp_acceptance_'.$fixture;
     $membersBefore=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
