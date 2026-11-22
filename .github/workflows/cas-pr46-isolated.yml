@@ -519,6 +519,15 @@ jobs:
           done
           grep -q '<verified>1</verified>' "$RUNNER_TEMP/mcp-provider-verify.xml"
           php _build/test.ci-cas-provider-local-verify.php
+      # RU: Необязательные MIGX/miniShop2/VersionX/VirtualPage должны отказывать.
+      # EN: Fail safely with a readable missing-dependency error on stock MODX.
+      - name: Missing optional addons fail closed
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-missing-addons-denial.php
       - name: Disposable remove locks empty-install CAS
         env:
           MODXMCP_DISPOSABLE_CI: '1'
