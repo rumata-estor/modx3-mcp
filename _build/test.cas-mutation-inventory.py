@@ -418,6 +418,16 @@ assert 'CAS_REPLACE_ACROSS_READBACK_STALE_REPLAY_OK' in replace_test
 assert 'dry-run did not modify content' in replace_test
 assert 'stale replace-across replay denied' in replace_test
 
+# RU: make_static подтверждён только на собственном TV в disposable MODX 2/3.
+# EN: The static-file CAS evidence is limited to a disposable TV conversion.
+static_tv_test=(ROOT / '_build/test.ci-static-tv-fields.php').read_text()
+assert 'php _build/test.ci-static-tv-fields.php' in ci_workflow
+assert 'disposable_static_tv_file_bytes_readback_revision_stale_replay' in expected['make_static']['verified_scenarios']
+assert "'make_static',$staticRequest" in static_tv_test
+assert 'CAS_MAKE_STATIC_TV_READBACK_STALE_REPLAY_OK' in static_tv_test
+assert 'stale make_static replay preserved static file bytes' in static_tv_test
+assert 'make_static consumes exactly one site revision' in static_tv_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
