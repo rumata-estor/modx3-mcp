@@ -10,7 +10,9 @@
       "processor": "security/group/user/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_inactive_user_group_membership_add_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "assign_element_category": {
@@ -718,7 +720,9 @@
       "processor": "security/group/user/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_inactive_user_group_membership_remove_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "rename_media_file": {
@@ -928,7 +932,9 @@
       "processor": "security/group/user/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_inactive_user_group_role_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_media_file": {

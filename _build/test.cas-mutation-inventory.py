@@ -284,6 +284,22 @@ assert 'test.ci-cas-lexicon-readback.php' in lexicon_evidence
 assert "processRequest('list_lexicon_entries'" in lexicon_reader
 assert 'stale replay consumed no revision' in lexicon_evidence
 
+# RU: Member CAS подтверждается только на временных пользователе/группе/ролях.
+# EN: Guard individual member evidence with executed disposable CRUD steps.
+member_test=(ROOT / '_build/test.ci-functional-acceptance.php').read_text()
+assert 'php _build/test.ci-functional-acceptance.php' in ci_workflow
+for action,scenario,marker in (
+ ('add_user_to_group','disposable_inactive_user_group_membership_add_readback_stale_replay','ADD'),
+ ('update_group_member','disposable_inactive_user_group_role_update_readback_stale_replay','UPDATE'),
+ ('remove_user_from_group','disposable_inactive_user_group_membership_remove_readback_stale_replay','REMOVE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in member_test
+    assert 'CAS_USER_GROUP_'+marker+'_MEMBER_READBACK_STALE_REPLAY_OK' in member_test
+assert "'active'=>0" in member_test or "'active'=>0," in member_test
+assert 'member role stale CAS denied' in member_test
+assert 'member removal stale CAS denied' in member_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
