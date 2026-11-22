@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 82. **Не имеют индивидуальных сценариев:** 34.
+сценарий:** 83. **Не имеют индивидуальных сценариев:** 33.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 34 без сценария
+## P2 — остальные операции — 33 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -30,7 +30,6 @@
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `flush_permissions` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `make_static` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_delete_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_update_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -113,6 +112,7 @@
 | `grant_context_access` | critical | `disposable_context_acl_grant_readback_stale_replay` |
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
+| `make_static` | review | `disposable_static_tv_file_bytes_readback_revision_stale_replay` |
 | `refresh_uris` | review | `disposable_unpublished_resource_refresh_uris_readback_stale_replay` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `remove_resource_from_group` | critical | `disposable_unpublished_resource_group_remove_readback_stale_replay` |
