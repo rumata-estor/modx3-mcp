@@ -454,6 +454,15 @@ jobs:
           php _build/test.ci-cas-undelete-resource.php
       # RU: Дублирование только временного чанка без внешних эффектов.
       # EN: Duplicate disposable chunk with independent readback.
+      # RU: Одноразовый скрытый ресурс, без публикации и дочерних страниц.
+      # EN: Duplicate a disposable unpublished resource without children.
+      - name: Disposable resource duplicate CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-duplicate-resource.php
       - name: Disposable chunk duplication CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
