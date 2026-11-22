@@ -67,13 +67,13 @@ for action, value in actual.items():
 # RU: Для новых индивидуальных доказательств нужно исполняемое CI-свидетельство.
 # EN: New per-action evidence must be backed by an actual CI test and marker.
 scenario = 'disposable_create_readback_revision_stale_replay'
-for action in ('create_role', 'create_user_group'):
+for action in ('create_role', 'create_user_group', 'create_resource_group'):
     assert scenario in expected[action]['verified_scenarios'], action
 fixture_file = ROOT / '_build/test.ci-cas-acl-create-evidence.php'
 fixture = fixture_file.read_text(encoding='utf-8')
 workflow = (ROOT / '.github/workflows/cas-pr46-isolated.yml').read_text(encoding='utf-8')
 assert 'php _build/test.ci-cas-acl-create-evidence.php' in workflow
-for action in ('create_role','create_user_group'):
+for action in ('create_role','create_user_group','create_resource_group'):
     assert f"'{action}'" in fixture
     assert "'CAS_CREATE_EVIDENCE_OK action='" in fixture
 assert 'stale replay denied' in fixture
