@@ -443,6 +443,33 @@ class StateSupport
                 $state[$field] = $raw[$field];
             }
         }
+        if ($type === 'user_group') {
+            // RU: Внешняя выдача членства меняет права, даже если сама группа
+            // RU: не редактировалась. Снимок включает связанные членства.
+            // EN: Include group membership rows so out-of-band Manager grants
+            // EN: invalidate a protected group target snapshot.
+            $members = $context->modx()->getCollection(
+                $context->platform()->className('user_group_member'),
+                array('user_group'=>$id)
+            );
+            if (!is_array($members)) {
+                throw new \ModxMCPClientException(
+                    'STALE_STATE unable to observe group membership.'
+                );
+            }
+            $rows = array();
+            foreach ($members as $member) {
+                $row = $member->toArray();
+                $rows[] = array(
+                    'id'=>(int)$row['id'],
+                    'member'=>(int)$row['member'],
+                    'user_group'=>(int)$row['user_group'],
+                    'role'=>(int)$row['role'],
+                );
+            }
+            usort($rows,function($a,$b){return $a['id'] <=> $b['id'];});
+            $state['membership'] = $rows;
+        }
         if ($type === 'user') {
             // User profile may be joined by processors; include relevant
             // persisted profile fields, but never return them individually.
@@ -673,6 +700,9 @@ class StateSupport
             'update_user_group' => 'user_group',
             'delete_user_group' => 'user_group',
             'update_role' => 'role', 'delete_role' => 'role',
+            'add_user_to_group' => 'user_group',
+            'update_group_member' => 'user_group',
+            'remove_user_from_group' => 'user_group',
         );
         if (isset($protectedTargets[$action])) {
             $type = $protectedTargets[$action];
@@ -682,6 +712,13 @@ class StateSupport
             return $preconditions;
         }
         $id = isset($data['id']) ? $data['id'] : null;
+        if (in_array($action,array(
+            'add_user_to_group','update_group_member','remove_user_from_group'
+        ),true)) {
+            // RU: Для записи членства нужна снимок именно целевой группы.
+            // EN: Membership mutations require their exact affected group.
+            $id = isset($data['usergroup']) ? $data['usergroup'] : null;
+        }
         if (!in_array($type, array(
                 'resource','template','chunk','snippet','plugin','tv','category',
                 'user','user_group','role'

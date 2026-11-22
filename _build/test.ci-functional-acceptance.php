@@ -454,6 +454,7 @@ try {
     acceptanceCheck(is_array($membersBefore)
         && isset($membersBefore['results']) && is_array($membersBefore['results']),
         'ACL membership baseline available through MCP');
+    $groupMembersBefore=acceptanceSnapshot('user_group',$groupId);
     $memberSnapshot=acceptanceRpc('get_site_state');
     $addMember=array(
         'user'=>$userId,'usergroup'=>$groupId,'role'=>$roleId,
@@ -477,6 +478,10 @@ try {
         }
     }
     acceptanceCheck($foundMember,'ACL member grant visible through MCP');
+    $groupMembersAfter=acceptanceSnapshot('user_group',$groupId);
+    acceptanceCheck($groupMembersBefore['read_set'][0]['fingerprint']
+        !==$groupMembersAfter['read_set'][0]['fingerprint'],
+        'group target fingerprint covers membership changes');
     $memberReplayDenied=false;
     try {acceptanceRpc('add_user_to_group',$addMember);}
     catch (ModxMCPClientException $e) {
