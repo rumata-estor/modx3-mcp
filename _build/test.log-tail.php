@@ -5,6 +5,7 @@
  */
 // Isolated memory & correctness test for readTailLines streaming.
 
+require_once __DIR__ . '/../core/components/modxmcp/src/Security/SecretRedactor.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ToolInterface.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
 require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ErrorLogReadTool.php';

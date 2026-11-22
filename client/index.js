@@ -65,8 +65,8 @@ function redactText(value) {
   return String(value)
     .replace(/\b(Bearer\s+)[A-Za-z0-9._~+/-]+/gi, "$1[REDACTED]")
     .replace(/\b(Basic\s+)[A-Za-z0-9+/=]+/gi, "$1[REDACTED]")
-    .replace(/\b(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|authorization|cookie|client[_-]?secret|private[_-]?key)\b(\s*[:=]\s*["']?)[^\s,;&"'}]+/gi, "$1$2[REDACTED]")
-    .replace(/(https?:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[REDACTED]@");
+    .replace(/\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[REDACTED]@")
+    .replace(/(["']?)(password|passwd|pwd|secret(?:[_-]?key)?|token|api[_-]?key|access[_-]?key|authorization|(?:set[_-]?)?cookie|client[_-]?secret|private[_-]?key|credentials?|db[_-]?pass)\1(\s*[:=]\s*["']?)[^\s,;&"'}]+/gi, "$1$2$1$3[REDACTED]");
 }
 function redactValue(value, key = "") {
   if (SECRET_KEY.test(String(key))) return "[REDACTED]";

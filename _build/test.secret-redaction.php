@@ -1,4 +1,8 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Защита секретов в диагностических данных и её автоматическая проверка.
+ * EN: Diagnostic secret redaction and its automated verification.
+ */
 require_once __DIR__ . '/../core/components/modxmcp/src/Security/SecretRedactor.php';
 use ModxMcp\Security\SecretRedactor;
 $input = array('password' => 'fake-value-a', 'nested' => array('api_token' => 'fake-value-b', 'message' => 'Connection rejected password=fake-value-c'), 'status' => 'failed');

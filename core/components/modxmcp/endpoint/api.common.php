@@ -24,6 +24,7 @@ $modxmcpClass = get_class($modx);
 $modxmcpLogConstant = $modxmcpClass . '::LOG_LEVEL_ERROR';
 $modxmcpLogLevelError = defined($modxmcpLogConstant) ? constant($modxmcpLogConstant) : 3;
 $modx->setLogLevel($modxmcpLogLevelError);
+require_once dirname(__DIR__) . '/src/Security/SecretRedactor.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

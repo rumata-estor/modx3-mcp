@@ -1,3 +1,6 @@
+// MODX MCP SOURCE / ИСХОДНИК MODX MCP
+// RU: Проверка защиты секретов в тестовом окружении.
+// EN: Verifies secret protection in a test environment.
 const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
