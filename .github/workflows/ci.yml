@@ -120,6 +120,8 @@ jobs:
           php _build/test.package-uncertain-result.php
           php _build/test.multi-value-tv.php
           php _build/test.clientconfig-cache.php
+          php _build/test.log-tail.php
+          php _build/test.log-tail-truncation.php
       - name: Independent Ed25519 permit interoperability (no site writes)
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'
