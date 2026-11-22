@@ -71,6 +71,14 @@ try {
     pluginCheck($link->save(),'cannot link event');
     $manager=$modx->getCacheManager();
     if($manager)$manager->refresh();
+    // CLI has already initialized mgr and its eventMap before our plugin
+    // was created. Prime this disposable process from the saved association;
+    // invokeEvent() still loads and runs the real persisted MODX plugin.
+    $eventMap=new \ReflectionProperty($modx,'eventMap');
+    $eventMap->setAccessible(true);
+    $eventMap->setValue($modx,array(
+        'OnDocFormSave'=>array((int)$plugin->get('id')=>'0:')
+    ));
     $modx->setOption('modxmcp.allow_run_processor',true);
     $modx->setOption('modxmcp.processor_access_mode','allowlist');
     $modx->setOption('modxmcp.allowed_processors','resource/getlist');
