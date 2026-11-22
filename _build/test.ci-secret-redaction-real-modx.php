@@ -22,10 +22,7 @@ if ($is2) {
 $modx->initialize('mgr');
 require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $module = new modxMCP($modx);
-require_once __DIR__ . '/../core/components/modxmcp/src/Tools/StateSupport.php';
-require_once __DIR__ . '/../core/components/modxmcp/src/Tools/AuditSupport.php';
-require_once __DIR__ . '/../core/components/modxmcp/src/Tools/AuditLogReadTool.php';
-require_once __DIR__ . '/../core/components/modxmcp/src/Tools/ErrorLogReadTool.php';
+// Use the installed MODX component autoloader, never load a second source copy.
 $runtimeContext = new \ModxMcp\Core\Context($modx, null);
 $marker = 'ci_redaction_' . bin2hex(random_bytes(5));
 $secret = 'FAKE_CI_SECRET_' . bin2hex(random_bytes(6));
