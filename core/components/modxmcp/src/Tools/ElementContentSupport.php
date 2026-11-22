@@ -57,11 +57,55 @@ class ElementContentSupport
                     ? $relative
                     : rtrim($modx->getOption('base_path'), '/\\') . '/' . ltrim($relative, '/\\');
             }
-            if ($absolute !== null && is_file($absolute)) {
-                return array((string)file_get_contents($absolute), true, $absolute);
+            if ($absolute !== null) {
+                self::assertSafeStaticPath($context, $absolute);
+                if (is_file($absolute)) {
+                    return array((string)file_get_contents($absolute), true, $absolute);
+                }
             }
         }
         return array((string)$element->get($map['field']), $isStatic, $absolute);
+    }
+
+    /**
+     * RU: Сохранённый static_file нельзя считать доверенным: он мог быть
+     * RU: изменён через Manager или другой компонент после проверки ввода.
+     * EN: Stored static_file is untrusted: Manager or plugins can modify it.
+     * EN: Require the real path or nearest existing parent inside core/elements.
+     */
+    public static function assertSafeStaticPath($context, $absolute)
+    {
+        $root = rtrim((string)$context->modx()->getOption('core_path'), '/\\')
+            . DIRECTORY_SEPARATOR . 'elements';
+        $rootReal = realpath($root);
+        if ($rootReal === false || !is_dir($rootReal)) {
+            throw new \ModxMCPClientException('Static elements directory is unavailable.');
+        }
+        $absolute = (string)$absolute;
+        if (!FilesystemSupport::isAbsolutePath($absolute)) {
+            throw new \ModxMCPClientException('static_file path must be absolute after resolution.');
+        }
+        // RU: Не принимаем traversal до поиска существующих родителей.
+        // EN: Reject traversal before checking any existing ancestor.
+        $slashPath = str_replace('\\', '/', $absolute);
+        if (preg_match('#(?:^|/)\.\.(?:/|$)#', $slashPath)) {
+            throw new \ModxMCPClientException('static_file traversal is forbidden.');
+        }
+        $candidate = $absolute;
+        while (!file_exists($candidate) && !is_link($candidate)) {
+            $parent = dirname($candidate);
+            if ($parent === $candidate) {
+                throw new \ModxMCPClientException('Cannot resolve static_file parent.');
+            }
+            $candidate = $parent;
+        }
+        $real = realpath($candidate);
+        if ($real === false || ($real !== $rootReal
+            && strpos($real, $rootReal . DIRECTORY_SEPARATOR) !== 0)) {
+            throw new \ModxMCPClientException(
+                'static_file resolves outside core/elements.'
+            );
+        }
     }
 
     public static function write(
@@ -74,6 +118,9 @@ class ElementContentSupport
         $content
     ) {
         if ($isStatic && $absolute !== null) {
+            // RU: Повторная проверка после чтения: симлинк мог измениться.
+            // EN: Revalidate before writes; a symlink may change after read.
+            self::assertSafeStaticPath($context, $absolute);
             $directory = dirname($absolute);
             if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
                 throw new \ModxMCPClientException(

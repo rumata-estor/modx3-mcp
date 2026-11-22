@@ -130,6 +130,7 @@ jobs:
         run: |
           php _build/test.media-path-boundaries.php
           php _build/test.media-folder-path-contract.php
+          php _build/test.static-element-content-boundaries.php
 
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata
         run: |
