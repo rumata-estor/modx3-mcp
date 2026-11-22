@@ -120,6 +120,15 @@ try{
     acdRpc('update_context',$contextUpdate);
     $contextAfter=acdRpc('get_context',array('key'=>$key));
     acdCheck(is_array($contextAfter),'updated context read through MCP');
+    $listed=acdRpc('list_contexts',array('limit'=>500));
+    $updatedName=false;
+    foreach(($listed['results']??array()) as $row) {
+        if(is_array($row) && ($row['key']??'')===$key
+            && ($row['name']??'')==='Updated context '.$fixture) {
+            $updatedName=true;
+        }
+    }
+    acdCheck($updatedName,'updated context name persisted through MCP list');
     acdStaleReplay('update_context',$contextUpdate,'update context');
     acdCheck(count(acdContextRules($key))===0,
         'context update did not create anonymous ACL');
