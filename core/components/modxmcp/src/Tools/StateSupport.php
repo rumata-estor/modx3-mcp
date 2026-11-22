@@ -447,8 +447,7 @@ class StateSupport
             // User profile may be joined by processors; include relevant
             // persisted profile fields, but never return them individually.
             $profile = $context->modx()->getObject(
-                $context->platform()->majorVersion() === 2
-                    ? 'modUserProfile' : 'MODX\Revolution\modUserProfile',
+                $context->platform()->className('user_profile'),
                 array('internalKey'=>$id)
             );
             if ($profile) {
