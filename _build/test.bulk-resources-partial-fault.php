@@ -153,5 +153,33 @@ catch(ModxMCPClientException $e) {
 bulkCheck($vanishedUncertain
     && \ModxMcp\Tools\ElementUpdateTool::$attempts===array(1),
     'vanished target after first write was not uncertain');
-echo 'BULK_RESOURCES_PARTIAL_OUTCOME_OK checks=10'.PHP_EOL;
+// RU: Некорректные ID не могут исчезать из пакета без предупреждения.
+// EN: Invalid IDs must fail before changing any of the valid targets.
+foreach (array('not-an-id', 0, -3, array(2), true, '1oops') as $badId) {
+    $ctx=new BulkFaultContext();
+    \ModxMcp\Tools\ElementUpdateTool::$attempts=array();
+    $rejected=false;
+    try {$tool->execute($ctx,array('operation'=>'publish',
+        'ids'=>array(1,$badId)));
+    } catch(ModxMCPClientException $e) {
+        $rejected=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;
+    }
+    bulkCheck($rejected
+        && \ModxMcp\Tools\ElementUpdateTool::$attempts===array(),
+        'invalid ID silently discarded or writes attempted');
+}
+// RU: Превышение limit не должно приводить к молчаливой записи подмножества.
+// EN: Oversized batch must not silently mutate a truncated subset.
+$ctx=new BulkFaultContext();
+\ModxMcp\Tools\ElementUpdateTool::$attempts=array();
+$limitDenied=false;
+try {$tool->execute($ctx,array('operation'=>'publish',
+    'ids'=>array(1,2),'limit'=>1));
+} catch(ModxMCPClientException $e) {
+    $limitDenied=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;
+}
+bulkCheck($limitDenied
+    && \ModxMcp\Tools\ElementUpdateTool::$attempts===array(),
+    'oversized batch was silently truncated and written');
+echo 'BULK_RESOURCES_PARTIAL_OUTCOME_OK checks=17'.PHP_EOL;
 }

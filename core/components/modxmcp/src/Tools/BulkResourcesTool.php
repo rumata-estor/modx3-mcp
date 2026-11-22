@@ -28,8 +28,20 @@ class BulkResourcesTool implements ToolInterface
 
         if (isset($data['ids']) && is_array($data['ids'])) {
             foreach ($data['ids'] as $id) {
-                $id = (int)$id;
-                if ($id > 0) { $ids[] = $id; }
+                // RU: Молчаливое отбрасывание неверного ID может изменить
+                // RU: лишь часть запрошенных ресурсов без предупреждения.
+                // EN: Silently coercing invalid IDs can mutate only a
+                // EN: subset of the caller's requested resource targets.
+                $validId = (is_int($id) || is_string($id))
+                    && filter_var($id, FILTER_VALIDATE_INT,
+                        array('options' => array('min_range' => 1))) !== false;
+                if (!$validId) {
+                    throw new \ModxMCPClientException(
+                        'VALIDATION_ERROR: bulk_resources ids must contain '
+                        . 'only positive integer resource IDs; no writes attempted.'
+                    );
+                }
+                $ids[] = (int)$id;
             }
         } elseif (
             isset($data['parent'])
@@ -57,7 +69,12 @@ class BulkResourcesTool implements ToolInterface
             );
         }
         if (count($ids) > $limit) {
-            $ids = array_slice($ids, 0, $limit);
+            // RU: Тихая обрезка списка создаёт ложный частичный успех.
+            // EN: Silent limit truncation creates apparent partial success.
+            throw new \ModxMCPClientException(
+                'VALIDATION_ERROR: bulk_resources targets exceed limit; '
+                . 'increase limit explicitly or reduce the target set.'
+            );
         }
 
         if ($operation === 'set_template') {
