@@ -49,9 +49,9 @@ if (strpos($serialized, $secret) !== false || strpos($serialized, '[REDACTED]') 
     throw new RuntimeException('Audit MCP read exposed secret');
 if ($read['entries'][0]['payload']['state'] !== 'expected')
     throw new RuntimeException('Audit MCP read changed nonsecret state');
-$modx->setLogLevel(0);
+$modx->setLogLevel(4);
 $modx->setLogTarget('FILE');
-$modx->log(3, 'CI REDACTION ' . $marker . ' password=' . $secret);
+$modx->log(1, 'CI REDACTION ' . $marker . ' password=' . $secret);
 $errors = (new \ModxMcp\Tools\ErrorLogReadTool())->execute($runtimeContext, array('limit' => 25));
 if (strpos(json_encode($errors), $secret) !== false)
     throw new RuntimeException('Error MCP read exposed secret');
