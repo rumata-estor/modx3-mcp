@@ -100,6 +100,20 @@ for action, (suite, suffix) in acl_scenarios.items():
     assert 'stale replay did not duplicate grant' in content
     assert 'rejected update preserved final authority' in content
 
+# RU: Revoke подтверждается дополнительным отрицательным replay тестом.
+# EN: Revoke evidence must include explicit stale replay and readback checks.
+for action,suite,prefix in (
+    ('revoke_context_access','context-access','context_acl'),
+    ('revoke_resourcegroup_access','resourcegroup-access','resourcegroup_acl'),
+):
+    assert 'disposable_'+prefix+'_revoke_readback_stale_replay' in expected[action]['verified_scenarios']
+    source_name = '_build/test.ci-acl-'+suite+'.php'
+    source = (ROOT / source_name).read_text()
+    assert 'php '+source_name in ci_workflow
+    assert 'CAS_EVIDENCE_'+action.upper()+'_READBACK_STALE_REPLAY_OK' in source
+    assert 'revoke stale CAS replay denied' in source
+    assert 'rejected revoke did not advance revision' in source
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
