@@ -316,3 +316,12 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-acl-context-access.php
+      # RU: Группа ресурсов: назначение/изменение/отзыв доступа и stale CAS.
+      # EN: Resource-group ACL grant/update/revoke with stale CAS.
+      - name: Disposable resource-group ACL grant update revoke and stale-CAS
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-acl-resourcegroup-access.php
