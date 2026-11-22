@@ -64,6 +64,12 @@ foreach (array(
     rejects($settingProcessor,'privileged','',$settingProcessor);
     rejects($settingProcessor,'allowlist',$settingProcessor,'');
 }
+foreach (array('false',17,'',true,null) as $badProperties) {
+    rejects('resource/getlist','allowlist',$allowed,$privileged,
+        array('properties'=>$badProperties));
+    rejects('resource/getlist','privileged',$allowed,$privileged,
+        array('properties'=>$badProperties));
+}
 rejects('../system/clearcache','allowlist',$allowed,$privileged);
 rejects('SYSTEM/clearcache','allowlist',$allowed,$privileged);
 rejects('resource/getlist','allowlist',$allowed,$privileged,array('processors_path'=>'/tmp/unsafe'));

@@ -100,6 +100,15 @@ $default=array(
     'modxmcp.privileged_processors'=>'security/user/create',
 );
 gateDeny($default,array('processor'=>'system/clearcache'),'master-disabled');
+// RU: Неявное приведение PHP строки 'false' давало опасное true.
+// EN: Nonempty string 'false' must not enable the processor master switch.
+foreach (array('false','off','yes','enabled','invalid',2) as $wrong) {
+    $mismatch=$default;
+    $mismatch['modxmcp.allow_run_processor']=$wrong;
+    $mismatch['modxmcp.processor_access_mode']='allowlist';
+    gateDeny($mismatch,array('processor'=>'system/clearcache'),
+        'noncanonical-master-'.(string)$wrong);
+}
 $enabled=$default;$enabled['modxmcp.allow_run_processor']=true;
 gateDeny($enabled,array('processor'=>'system/clearcache'),'mode-disabled');
 $enabled['modxmcp.processor_access_mode']='allowlist';
@@ -109,6 +118,10 @@ gateDeny($adminMode,array('processor'=>'security/user/create'),'privileged-requi
 gateDeny($enabled,array('processor'=>'system/clearcache','processors_path'=>'/tmp'), 'custom-loader');
 gateDeny($enabled,array('processor'=>'system/settings/update'),'trust-anchor');
 gateDeny($enabled,array('processor'=>'../system/clearcache'),'traversal');
+foreach (array('false',17,'',true,null) as $badProperties) {
+    gateDeny($enabled,array('processor'=>'system/clearcache',
+        'properties'=>$badProperties),'invalid-properties');
+}
 $m=new ProcessorGateFakeModx($enabled);
 $ctx=new ProcessorGateFakeContext($m);
 $ctx->p->respond=true;

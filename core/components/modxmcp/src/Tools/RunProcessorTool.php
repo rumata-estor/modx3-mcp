@@ -18,9 +18,14 @@ class RunProcessorTool implements ToolInterface
         // RU: В защищённом режиме галочка читается из БД, а не кеша PHP.
         // EN: Protected mode reads the master switch from DB, not PHP cache.
         $protected = \ModxMcp\Security\ProtectedAuthorization::required($modx);
+        // RU: Строгая проверка галочки: непустая строка 'false' не означает Yes.
+        // EN: PHP bool casts nonempty 'false' to true; require explicit Yes.
+        $configuredMaster = $protected ? null
+            : $modx->getOption('modxmcp.allow_run_processor', null, false);
         $masterEnabled = $protected
             ? \ModxMcp\Security\ProtectedAuthorization::processorMasterEnabled($modx)
-            : (bool)$modx->getOption('modxmcp.allow_run_processor', null, false);
+            : ($configuredMaster === '1' || $configuredMaster === 1
+                || $configuredMaster === true);
         if (!$masterEnabled) {
             throw new \ModxMCPClientException(
                 'run_processor is disabled. Set modxmcp.allow_run_processor = Yes to enable it.'
@@ -53,10 +58,16 @@ class RunProcessorTool implements ToolInterface
                 'run_processor: "processor" path is required.'
             );
         }
-        $properties = isset($data['properties'])
-            && is_array($data['properties'])
-            ? $data['properties']
-            : array();
+        // RU: Некорректные свойства нельзя молча заменять пустыми:
+        // RU: процессор с default-параметрами может произвести другую запись.
+        // EN: Never silently drop malformed processor properties before dispatch.
+        $properties = array_key_exists('properties', $data)
+            ? $data['properties'] : array();
+        if (!is_array($properties)) {
+            throw new \ModxMCPClientException(
+                'AUTH_DENIED: processor properties must be an object/map.'
+            );
+        }
         $options = array();
         if (!empty($data['processors_path'])) {
             $options['processors_path'] = (string)$data['processors_path'];

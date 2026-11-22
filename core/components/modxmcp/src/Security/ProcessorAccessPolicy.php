@@ -38,6 +38,14 @@ final class ProcessorAccessPolicy
         if (isset($data['processors_path'])) {
             throw new \RuntimeException('AUTH_DENIED: custom processor paths forbidden.');
         }
+        // RU: Проверка должна происходить до расходования подписанного nonce.
+        // EN: Validate property types before reserving a signed permit nonce.
+        if (array_key_exists('properties', $data)
+            && !is_array($data['properties'])) {
+            throw new \RuntimeException(
+                'AUTH_DENIED: processor properties must be an object/map.'
+            );
+        }
         $processor = isset($data['processor']) ? $data['processor'] : null;
         if (!is_string($processor)
             || !preg_match('#\A[a-z][a-z0-9_-]*(?:/[a-z][a-z0-9_-]*){1,7}\z#D', $processor)) {
