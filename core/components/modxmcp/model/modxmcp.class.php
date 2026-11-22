@@ -282,6 +282,22 @@ class modxMCP {
                                                 $toolData['id']
                                             );
                                         }
+                                        // One DB lock boundary for every group/membership mutation.
+                                        // Missing/unsafe group selection fails before native processor.
+                                        if (in_array($action, array(
+                                            'update_user_group', 'delete_user_group',
+                                            'add_user_to_group', 'update_group_member',
+                                            'remove_user_from_group'
+                                        ), true)) {
+                                            $groupId = in_array($action, array(
+                                                'update_user_group', 'delete_user_group'
+                                            ), true)
+                                                ? (isset($toolData['id']) ? $toolData['id'] : null)
+                                                : (isset($toolData['usergroup']) ? $toolData['usergroup'] : null);
+                                            \ModxMcp\Tools\StateSupport::lockGroupMembershipForCas(
+                                                $runtimeContext, $groupId
+                                            );
+                                        }
                                         return $apply(true);
                                     }
                                 );

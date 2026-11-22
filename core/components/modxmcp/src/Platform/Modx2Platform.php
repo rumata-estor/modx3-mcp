@@ -18,6 +18,7 @@ class Modx2Platform extends AbstractPlatform
         'user' => 'modUser',
         'user_profile' => 'modUserProfile',
         'user_group' => 'modUserGroup',
+        'user_group_member' => 'modUserGroupMember',
         'access_policy' => 'modAccessPolicy',
         'access_policy_template' => 'modAccessPolicyTemplate',
         'resource_group' => 'modResourceGroup',

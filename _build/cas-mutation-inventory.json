@@ -8,12 +8,12 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/user/create",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "disposable_inactive_user_group_membership_add_readback_stale_replay"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "assign_element_category": {
       "tool": "CategoryAssignElementTool",
@@ -484,12 +484,12 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/remove",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "manager_out_of_band_edit_stale_target_denied"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "duplicate_element": {
       "tool": "ElementDuplicateTool",
@@ -782,12 +782,12 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/user/remove",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "disposable_inactive_user_group_membership_remove_readback_stale_replay"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "rename_media_file": {
       "tool": "MediaFileRenameTool",
@@ -1002,12 +1002,12 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/user/update",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "disposable_inactive_user_group_role_update_readback_stale_replay"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "update_media_file": {
       "tool": "MediaFileUpdateTool",
@@ -1139,12 +1139,12 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/update",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "manager_out_of_band_edit_stale_target_denied"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "versionx_revert_version": {
       "tool": "VersionXVersionRevertTool",

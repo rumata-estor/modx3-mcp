@@ -453,6 +453,103 @@ try {
     // RU: по устаревшему CAS, удаление и независимое чтение результата.
     // EN: Membership lifecycle via MCP: grant, readback, stale CAS
     // EN: rejection, revoke and independent readback.
+    // RU: Независимый Manager добавляет участника, не изменяя site_revision.
+    // RU: MCP обязан отказать со старым отпечатком группы.
+    // EN: Independent Manager membership writes must invalidate a group CAS
+    // EN: snapshot without advancing the connector site revision.
+    $externalBefore=acceptanceSnapshot('user_group',$groupId);
+    $worker=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
+        (string)$groupId,(string)$userId,(string)$roleId);
+    $workerCommand=implode(' ',array_map('escapeshellarg',$worker));
+    $workerOutput=array();$workerExit=1;
+    exec($workerCommand.' 2>&1',$workerOutput,$workerExit);
+    acceptanceCheck($workerExit===0 && strpos(implode(' ',$workerOutput),
+        'DISPOSABLE_MANAGER_MEMBERSHIP_CHANGED_OK')!==false,
+        'independent Manager added group member');
+    $externalCurrent=acceptanceRpc('get_site_state');
+    acceptanceCheck((int)$externalCurrent['site_revision']
+        ===(int)$externalBefore['observed_site_revision'],
+        'independent membership does not bump MCP site revision');
+    $externalDenied=false;
+    try {
+        acceptanceRpc('update_user_group',array(
+            'id'=>$groupId,'name'=>'FORBIDDEN_STALE_'.$fixture,
+            '_runtime_preconditions'=>$externalBefore));
+    } catch (ModxMCPClientException $e) {
+        $externalDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($externalDenied,'stale group snapshot rejected Manager membership');
+    $afterExternal=acceptanceRpc('get_user_group',array('id'=>$groupId));
+    acceptanceCheck((string)($afterExternal['name']??'')
+        !=='FORBIDDEN_STALE_'.$fixture,
+        'rejected group mutation preserved Manager membership');
+    acceptanceClean('remove_user_from_group',array(
+        'user'=>$userId,'usergroup'=>$groupId));
+    echo 'ACL_MANAGER_MEMBERSHIP_CONFLICT_DENIED_OK'.PHP_EOL;
+    // RU: Аварийная проверка гонки: Manager вставляет членство, удерживая
+    // RU: незавершённую транзакцию; MCP пытается обновить эту же группу.
+    // EN: Probe a concurrent uncommitted Manager membership insertion. A
+    // EN: successful MCP update here would demonstrate a CAS TOCTOU gap.
+    // Probe every group/membership mutation against a concurrent uncommitted
+    // Manager insertion in an initially empty indexed membership range.
+    foreach (array('update_user_group','delete_user_group',
+                   'add_user_to_group','update_group_member',
+                   'remove_user_from_group') as $raceAction) {
+        $readyFile=rtrim(getenv('RUNNER_TEMP'),'/').'/member-cas-race-'.bin2hex(random_bytes(5));
+        $raceUser=acceptanceRpc('create_user',array(
+            'username'=>'mcp_race_'.bin2hex(random_bytes(6)),
+            'fullname'=>'Disposable ACL race '.$fixture,
+            'email'=>'mcp-race-'.bin2hex(random_bytes(6)).'@example.invalid',
+            'password'=>'CI-'.bin2hex(random_bytes(12)).'9Q!',
+            'passwordnotifymethod'=>'s','active'=>0));
+        $raceUserId=(int)$raceUser['id'];
+        $raceBefore=acceptanceSnapshot('user_group',$groupId);
+        $raceCommand=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
+            (string)$groupId,(string)$raceUserId,(string)$roleId,$readyFile);
+        $racePipes=array();
+        $raceProcess=proc_open($raceCommand,array(
+            0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+        ),$racePipes);
+        if(!is_resource($raceProcess))throw new RuntimeException('Cannot spawn Manager race');
+        fclose($racePipes[0]);
+        $until=microtime(true)+12;
+        while(!is_file($readyFile) && microtime(true)<$until)usleep(10000);
+        acceptanceCheck(is_file($readyFile),'Manager transaction ready for '.$raceAction);
+        $raceArgs=array('_runtime_preconditions'=>$raceBefore);
+        if ($raceAction==='update_user_group') {
+            $raceArgs['id']=$groupId;
+            $raceArgs['name']='FORBIDDEN_RACE_'.$fixture;
+        } elseif ($raceAction==='delete_user_group') {
+            $raceArgs['id']=$groupId;
+        } else {
+            $raceArgs['usergroup']=$groupId;
+            $raceArgs['user']=$userId;
+            if ($raceAction!=='remove_user_from_group') $raceArgs['role']=$roleId;
+        }
+        $raceDenied=false;
+        try {
+            acceptanceRpc($raceAction,$raceArgs);
+        } catch (ModxMCPClientException $e) {
+            $raceDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+            if(!$raceDenied)throw $e;
+        } finally {
+            $raceOutput=stream_get_contents($racePipes[1]);
+            $raceError=stream_get_contents($racePipes[2]);
+            fclose($racePipes[1]);fclose($racePipes[2]);
+            $raceExit=proc_close($raceProcess);
+            @unlink($readyFile);
+            acceptanceCheck($raceExit===0,'external Manager committed '.$raceAction.': '.$raceError);
+        }
+        if(!$raceDenied) echo 'ACL_MEMBERSHIP_TOCTOU_RACE_REPRODUCED action='.$raceAction.PHP_EOL;
+        acceptanceCheck($raceDenied,'P0 TOCTOU refused '.$raceAction);
+        $afterRaceGroup=acceptanceRpc('get_user_group',array('id'=>$groupId));
+        acceptanceCheck((int)($afterRaceGroup['id']??0)===$groupId,
+            'rejected race preserved group '.$raceAction);
+        acceptanceClean('remove_user_from_group',array(
+            'user'=>$raceUserId,'usergroup'=>$groupId));
+        acceptanceClean('delete_user',array('id'=>$raceUserId));
+        echo 'ACL_MEMBERSHIP_TOCTOU_RACE_DENIED_OK action='.$raceAction.PHP_EOL;
+    }
     $memberName='mcp_acceptance_'.$fixture;
     $membersBefore=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
@@ -460,6 +557,7 @@ try {
     acceptanceCheck(is_array($membersBefore)
         && isset($membersBefore['results']) && is_array($membersBefore['results']),
         'ACL membership baseline available through MCP');
+    $groupMembersBefore=acceptanceSnapshot('user_group',$groupId);
     $memberSnapshot=acceptanceRpc('get_site_state');
     $addMember=array(
         'user'=>$userId,'usergroup'=>$groupId,'role'=>$roleId,
@@ -483,6 +581,10 @@ try {
         }
     }
     acceptanceCheck($foundMember,'ACL member grant visible through MCP');
+    $groupMembersAfter=acceptanceSnapshot('user_group',$groupId);
+    acceptanceCheck($groupMembersBefore['read_set'][0]['fingerprint']
+        !==$groupMembersAfter['read_set'][0]['fingerprint'],
+        'group target fingerprint covers membership changes');
     $memberReplayDenied=false;
     try {acceptanceRpc('add_user_to_group',$addMember);}
     catch (ModxMCPClientException $e) {
