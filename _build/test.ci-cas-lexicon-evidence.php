@@ -52,15 +52,20 @@ function lexReplay($action,array $request){
         $action.' stale replay consumed no revision');
 }
 function lexFind($ns,$key){
-    $list=lexRpc('list_lexicon_entries',array(
-        'namespace'=>$ns,'topic'=>'default','language'=>'en',
-        'search'=>$key,'limit'=>100));
-    lexCheck(isset($list['results'])&&is_array($list['results']),
-        'lexicon list available');
-    return array_values(array_filter($list['results'],function($entry)use($key){
-        return is_array($entry) && ($entry['name']??'')===$key;
-    }));
+    // RU: MODX2 legacy getlist объявляет глобальный parseArray(), поэтому
+    // RU: каждый независимый MCP readback — новый одноразовый PHP-процесс.
+    // EN: MODX2 legacy getlist redeclares global parseArray() on repeated calls.
+    $cmd=escapeshellarg(PHP_BINARY).' '
+        .escapeshellarg(__DIR__.'/test.ci-cas-lexicon-readback.php').' '
+        .escapeshellarg($ns).' '.escapeshellarg($key).' 2>&1';
+    $output=array();$exit=0;
+    exec($cmd,$output,$exit);
+    lexCheck($exit===0,'isolated lexicon MCP readback completed');
+    $result=json_decode(trim(implode("\n",$output)),true);
+    lexCheck(is_array($result),'lexicon readback JSON valid');
+    return $result;
 }
+
 try{
     // RU: Собственное namespace, никакие встроенные переводы не меняем.
     // EN: Unique namespace; never edit core translations.
