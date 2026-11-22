@@ -94,8 +94,12 @@ class PackageInstallTool implements ToolInterface
         if ($targetSignature !== '') {
             foreach ($rows as $row) {
                 if (
-                    isset($row['signature'])
-                    && strcasecmp((string)$row['signature'], $targetSignature) === 0
+                    is_array($row)
+                    && isset($row['name'],$row['signature'])
+                    && is_string($row['name'])
+                    && is_string($row['signature'])
+                    && strcasecmp($row['name'], $name) === 0
+                    && strcasecmp($row['signature'], $targetSignature) === 0
                 ) {
                     $chosen = $row;
                     break;
@@ -109,12 +113,27 @@ class PackageInstallTool implements ToolInterface
             }
         } else {
             foreach ($rows as $row) {
-                if (isset($row['name']) && strcasecmp($row['name'], $name) === 0) {
+                if (is_array($row) && isset($row['name'])
+                    && is_string($row['name'])
+                    && strcasecmp($row['name'], $name) === 0) {
                     $chosen = $row;
                     break;
                 }
             }
-            if (!$chosen) { $chosen = $rows[0]; }
+            if (!$chosen) {
+                // RU: Частичное совпадение поиска не разрешает замену пакета.
+                // EN: Never install the first fuzzy-search result as another package.
+                throw new \ModxMCPClientException(
+                    'install_package: provider returned no exact package-name match.'
+                );
+            }
+        }
+        if (!is_array($chosen)
+            || !isset($chosen['name']) || !is_string($chosen['name'])
+            || strcasecmp($chosen['name'],$name)!==0) {
+            throw new \ModxMCPClientException(
+                'install_package: provider result does not match requested package.'
+            );
         }
         if (empty($chosen['location']) || empty($chosen['signature'])) {
             throw new \ModxMCPClientException(
@@ -152,6 +171,17 @@ class PackageInstallTool implements ToolInterface
         $signature = is_array($downloadObject) && !empty($downloadObject['signature'])
             ? $downloadObject['signature']
             : $chosen['signature'];
+        // RU: Загрузчик может сообщить другой артефакт; никогда не
+        // RU: передавать его установщику под видом выбранной версии.
+        // EN: Reject a downloaded signature differing from the exact provider
+        // EN: selection before invoking the package install processor.
+        if (!is_string($signature)
+            || strcasecmp($signature, (string)$chosen['signature']) !== 0) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: downloaded package identity differs '
+                . 'from selected package; inspect transport cache before retry.'
+            );
+        }
 
         try {
             $installResponse = $context->platform()->runProcessor(
