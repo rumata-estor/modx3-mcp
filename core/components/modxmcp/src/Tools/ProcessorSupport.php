@@ -45,13 +45,17 @@ class ProcessorSupport
         }
         foreach ($value as $key => $item) {
             $normalized = is_string($key) ? strtolower($key) : '';
-            $sensitive = in_array($normalized, array(
-                'password', 'passwd', 'cachepwd', 'salt', 'hash_class',
-                'remote_key', 'remote_data', 'session_stale', 'sudo',
-                'token', 'api_token', 'access_token', 'refresh_token',
-                'api_key', 'client_secret', 'private_key', 'secret',
-                'credentials', 'authorization', 'auth_token'
-            ), true);
+            // RU: У сторонних процессоров нет единого формата ключей:
+            // RU: dbPassword, smtp_password и access-token тоже секреты.
+            // EN: Handle snake_case, kebab-case and camelCase secret aliases.
+            $canonical = preg_replace('/[^a-z0-9]/', '', $normalized);
+            $sensitive = in_array($canonical, array(
+                'cachepwd', 'salt', 'hashclass', 'remotekey', 'remotedata',
+                'sessionstale', 'sudo', 'cookie', 'sessionid'
+            ), true) || (bool)preg_match(
+                '/(?:password(?:hash|digest)?|passwd|token|secret|apikey|privatekey|credentials|authorization(?:header)?|authheader|cookie)$/D',
+                $canonical
+            );
             // RU: Произвольные строки сообщений и ошибок могут содержать
             // RU: временный пароль; не копируем их из чужого процессора.
             // EN: Free-form messages/errors may contain generated passwords;

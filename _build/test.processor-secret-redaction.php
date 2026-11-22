@@ -25,7 +25,11 @@ $payload=array(
         'profile'=>array('private_key'=>'secret-key',
             'data'=>array(array('api_key'=>'secret-api','name'=>'visible'))),
     ),
-    'results'=>array(array('id'=>20,'salt'=>'secret-salt','title'=>'visible')),
+    'results'=>array(array('id'=>20,'salt'=>'secret-salt','title'=>'visible',
+        'dbPassword'=>'secret-db','smtp_password'=>'secret-smtp',
+        'access-token'=>'secret-access','clientSecret'=>'secret-client',
+        'authorizationHeader'=>'secret-auth','apiToken'=>'secret-api-token',
+        'password_hash'=>'secret-password-hash','cookie'=>'secret-cookie')),
 );
 $safe=\ModxMcp\Tools\ProcessorSupport::sanitizeProcessorOutput($payload);
 if ($safe['object']['username']!=='demo'
@@ -36,7 +40,9 @@ if ($safe['object']['username']!=='demo'
 }
 $encoded=json_encode($safe);
 foreach (array('secret-value','secret-hash','secret-token','secret-key',
-    'secret-api','secret-salt') as $secret) {
+    'secret-api','secret-salt','secret-db','secret-smtp','secret-access',
+    'secret-client','secret-auth','secret-api-token','secret-password-hash',
+    'secret-cookie') as $secret) {
     if (strpos($encoded,$secret)!==false)
         throw new \RuntimeException('PROCESSOR_SECRET_LEAK');
 }
@@ -44,7 +50,15 @@ foreach (array(
     $safe['message'],$safe['object']['password'],$safe['object']['token'],
     $safe['object']['profile']['private_key'],
     $safe['object']['profile']['data'][0]['api_key'],
-    $safe['results'][0]['salt']
+    $safe['results'][0]['salt'],
+    $safe['results'][0]['dbPassword'],
+    $safe['results'][0]['smtp_password'],
+    $safe['results'][0]['access-token'],
+    $safe['results'][0]['clientSecret'],
+    $safe['results'][0]['authorizationHeader'],
+    $safe['results'][0]['apiToken'],
+    $safe['results'][0]['password_hash'],
+    $safe['results'][0]['cookie']
 ) as $field) {
     if ($field!=='[REDACTED]')
         throw new \RuntimeException('PROCESSOR_REDACTION_MISSING');
