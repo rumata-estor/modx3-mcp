@@ -37,6 +37,7 @@ $chunkId = 0;
 $userId = 0;
 $groupId = 0;
 $roleId = 0;
+$memberAdded = false;
 $settingKey = '';
 $fixture = bin2hex(random_bytes(6));
 
@@ -236,8 +237,7 @@ try {
     $roleRead=acceptanceRpc('get_role',array('id'=>$roleId));
     acceptanceCheck((string)($roleRead['name'] ?? '')==='MCP_AcceptanceRoleUpdated_'.$fixture,
         'stale ACL role update has no effect');
-    acceptanceClean('delete_role',array('id'=>$roleId));
-    $roleId=0;
+    // Role remains available for membership testing below.
 
     try {
         $user=acceptanceRpc('create_user',array(
@@ -282,6 +282,63 @@ try {
         acceptanceCheck(!array_key_exists($secretField,$userRead),
             'sensitive user field hidden: '.$secretField);
     }
+
+    // RU: Жизненный цикл членства: добавление, сверка через MCP, отказ
+    // RU: по устаревшему CAS, удаление и независимое чтение результата.
+    // EN: Membership lifecycle via MCP: grant, readback, stale CAS
+    // EN: rejection, revoke and independent readback.
+    $memberName='mcp_acceptance_'.$fixture;
+    $membersBefore=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
+    ));
+    acceptanceCheck(is_array($membersBefore)
+        && isset($membersBefore['results']) && is_array($membersBefore['results']),
+        'ACL membership baseline available through MCP');
+    $memberSnapshot=acceptanceRpc('get_site_state');
+    $addMember=array(
+        'user'=>$userId,'usergroup'=>$groupId,'role'=>$roleId,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$memberSnapshot['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceRpc('add_user_to_group',$addMember);
+    $memberAdded=true;
+    $membersAdded=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
+    ));
+    $foundMember=false;
+    foreach ($membersAdded['results'] as $row) {
+        if (!is_array($row)) continue;
+        if ((int)($row['user'] ?? 0)===$userId
+            || (string)($row['username'] ?? '')===$memberName) {
+            $foundMember=true;
+            break;
+        }
+    }
+    acceptanceCheck($foundMember,'ACL member grant visible through MCP');
+    $memberReplayDenied=false;
+    try {acceptanceRpc('add_user_to_group',$addMember);}
+    catch (ModxMCPClientException $e) {
+        $memberReplayDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($memberReplayDenied,'ACL membership replay with stale CAS denied');
+    $membersAfterReplay=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
+    ));
+    acceptanceCheck(count($membersAfterReplay['results'])===count($membersAdded['results']),
+        'rejected membership replay produced no duplicate');
+    acceptanceClean('remove_user_from_group',array(
+        'user'=>$userId,'usergroup'=>$groupId,
+    ));
+    $memberAdded=false;
+    $membersRemoved=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
+    ));
+    acceptanceCheck(count($membersRemoved['results'])===count($membersBefore['results']),
+        'ACL membership removal restored original count');
+    acceptanceClean('delete_role',array('id'=>$roleId));
+    $roleId=0;
 
     $settingKey='mcp_acceptance_'.$fixture;
     acceptanceRpc('create_system_setting',array('key'=>$settingKey,'value'=>'ONE'));
@@ -358,6 +415,8 @@ try {
     // RU: Не скрываем ошибки очистки: тестовая установка одноразовая.
     // EN: Do not suppress cleanup errors; the entire installation is disposable.
     if ($settingKey!=='') acceptanceClean('delete_system_setting',array('key'=>$settingKey));
+    if ($memberAdded && $userId>0 && $groupId>0)
+        acceptanceClean('remove_user_from_group',array('user'=>$userId,'usergroup'=>$groupId));
     if ($userId>0) acceptanceClean('delete_user',array('id'=>$userId));
     if ($roleId>0) acceptanceClean('delete_role',array('id'=>$roleId));
     if ($groupId>0) acceptanceClean('delete_user_group',array('id'=>$groupId));
