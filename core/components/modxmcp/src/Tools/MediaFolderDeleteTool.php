@@ -19,7 +19,12 @@ class MediaFolderDeleteTool implements ToolInterface
             isset($data['path']) ? $data['path'] : ''
         );
         $removePath = $path;
-        if ((int)$context->platform()->majorVersion() === 2) {
+        // RU: MODX2 FileMediaSource принимает абсолютный путь, но кастомному
+        // RU: драйверу передаём только путь относительно его виртуального root.
+        // EN: MODX2 local FS needs an absolute path; custom drivers must not
+        // EN: receive host filesystem paths instead of source-relative keys.
+        if ((int)$context->platform()->majorVersion() === 2
+            && MediaSourceSupport::isBuiltinLocalFileSource($source)) {
             $removePath = FilesystemSupport::joinPath(
                 MediaSourceSupport::rootPath($context, $source),
                 $path
