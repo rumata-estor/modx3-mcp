@@ -72,12 +72,12 @@ ms2GuardAssert($normalized === array('link' => 5, 'master' => 6, 'slave' => 7),
     'valid IDs normalized and unrelated parameters removed');
 ++$checks;
 // RU: Прямой обход через run_processor с кастомным путём запрещён.
- // EN: Exact allowlisting cannot authorize user-supplied add-on processor roots.
+// EN: Exact allowlisting cannot authorize user-supplied add-on processor roots.
 require_once $base . '../Security/ProcessorAccessPolicy.php';
 foreach (array('allowlist', 'privileged') as $mode) {
     $denied = false;
     try {
-        \\ModxMcp\\Security\\ProcessorAccessPolicy::authorize(
+        \ModxMcp\Security\ProcessorAccessPolicy::authorize(
             array(
                 'processor' => 'mgr/product/productlink/create',
                 'processors_path' => '/tmp/addon/processors/',
