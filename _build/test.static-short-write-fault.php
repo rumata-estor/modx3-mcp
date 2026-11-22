@@ -4,10 +4,15 @@
  * EN: Simulate short file writes and require fail-closed uncertain outcomes.
  */
 namespace ModxMcp\Tools {
-    function file_put_contents($file,$content) {
-        // RU: В этом отдельном тестовом PHP-процессе записываем лишь 2 байта.
-        // EN: Namespace-local interception simulates a two-byte short write.
-        return \file_put_contents($file,substr((string)$content,0,2));
+    class StaticFileIoSupport {
+        public static function write($context,$file,$content,$createOnly=false) {
+            // RU: Файловый помощник записал лишь два байта и сообщил об аварии.
+            // EN: The guarded writer left two bytes before reporting failure.
+            \file_put_contents($file,substr((string)$content,0,2));
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: injected short descriptor write.'
+            );
+        }
     }
     class ElementSupport {
         public static function processorBase($type){return 'element/';}

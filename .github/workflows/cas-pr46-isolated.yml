@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'fix/128-static-toctou-20261122']
 
 permissions:
   contents: read
@@ -503,6 +503,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-processor-plugin-effects.php
+      # RU: Файловый помощник на установленном MODX 2/3 и внешний инвариант.
+      # EN: Installed MODX2/3 guarded static I/O with outside-file invariant.
+      - name: Disposable installed MODX static descriptor TOCTOU integration
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-static-toctou-installed.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'

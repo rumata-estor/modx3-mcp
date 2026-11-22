@@ -14,6 +14,7 @@ namespace ModxMcp\Tools {
         public static function error($response){return 'injected processor error';}
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileIoSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
 }
 namespace {

@@ -63,7 +63,7 @@ class ElementContentSupport
             if ($absolute !== null) {
                 self::assertSafeStaticPath($context, $absolute);
                 if (is_file($absolute)) {
-                    return array((string)file_get_contents($absolute), true, $absolute);
+                    return array(StaticFileIoSupport::read($context, $absolute), true, $absolute);
                 }
             }
         }
@@ -146,13 +146,10 @@ class ElementContentSupport
             // RU: Повторная проверка после чтения: симлинк мог измениться.
             // EN: Revalidate before writes; a symlink may change after read.
             self::assertSafeStaticPath($context, $absolute);
-            $directory = dirname($absolute);
-            if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-                throw new \ModxMCPClientException(
-                    'cannot create directory ' . $directory
-                );
-            }
-            $written = @file_put_contents($absolute, $content);
+            // RU: Подкаталоги создаются только относительно открытого
+            // RU: доверенного дескриптора, не здесь через mkdir по строке.
+            // EN: Parent creation belongs to the descriptor-anchored helper.
+            $written = StaticFileIoSupport::write($context, $absolute, $content);
             if ($written === false || $written !== strlen($content)) {
                 // RU: Частичная запись могла повредить файл; DB ещё не изменена.
                 // EN: Even a short write may corrupt existing static content.

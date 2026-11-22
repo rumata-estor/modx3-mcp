@@ -351,30 +351,14 @@ class ElementMutationSupport
                 );
             }
         }
-        $directory = dirname($absolute);
-        if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-            throw new \ModxMCPClientException("make_static: cannot create directory {$directory}");
-        }
+        // RU: Дескрипторы открываются относительно проверенного core/elements;
+        // RU: каталог может быть заменён, но симлинк не будет пройден.
+        // EN: Descriptor-relative open blocks parent-directory symlink races.
         $fileBody = (string)$element->get($item['field']);
-        if ($type === 'tv') {
-            // RU: Ранее проверенный свободный путь могли занять конкурентно.
-            // RU: Режим xb атомарно запрещает перезапись конечного файла.
-            // EN: Exclusive xb creation closes the final-file TOCTOU gap:
-            // EN: no replacement if another writer created the target.
-            $handle = @fopen($absolute, 'xb');
-            if ($handle === false) {
-                throw new \ModxMCPClientException(
-                    'make_static: TV exclusive creation failed; '
-                    . 'target may already exist, inspect before retry.'
-                );
-            }
-            $written = @fwrite($handle, $fileBody);
-            $closed = @fclose($handle);
-        } else {
-            $written = @file_put_contents($absolute, $fileBody);
-            $closed = true;
-        }
-        if ($written === false || $written !== strlen($fileBody) || !$closed) {
+        $written = StaticFileIoSupport::write(
+            $context, $absolute, $fileBody, $type === 'tv'
+        );
+        if ($written === false || $written !== strlen($fileBody)) {
             // RU: Даже при отказе записи файл мог быть создан или усечён.
             // EN: Failed or short writes may leave partial filesystem changes.
             throw new \ModxMCPClientException(
