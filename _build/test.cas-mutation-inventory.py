@@ -165,6 +165,35 @@ assert 'stale replay produced no duplicate policy' in template_test
 assert 'stale policy update replay denied' in template_test
 assert 'stale policy delete replay denied' in template_test
 
+# RU: Контекстные CAS-сценарии связаны с запущенной disposable матрицей.
+# EN: Bind context lifecycle evidence to exercised disposal-only CI steps.
+context_test_name = '_build/test.ci-acl-context-defaults.php'
+context_test = (ROOT / context_test_name).read_text()
+assert 'php '+context_test_name in ci_workflow
+context_cases = {
+ 'create_context': ('disposable_context_create_readback_stale_replay_no_anonymous',
+                    'CAS_CONTEXT_CREATE_READBACK_STALE_REPLAY_OK'),
+ 'update_context': ('disposable_context_name_update_readback_stale_replay_no_anonymous',
+                    'CAS_CONTEXT_UPDATE_READBACK_STALE_REPLAY_OK'),
+ 'delete_context': ('disposable_context_delete_readback_stale_replay',
+                    'CAS_CONTEXT_DELETE_READBACK_STALE_REPLAY_OK'),
+ 'create_context_setting': ('disposable_context_setting_create_readback_stale_replay',
+                            'CAS_CONTEXT_SETTING_CREATE_READBACK_STALE_REPLAY_OK'),
+ 'update_context_setting': ('disposable_context_setting_update_readback_stale_replay',
+                            'CAS_CONTEXT_SETTING_UPDATE_READBACK_STALE_REPLAY_OK'),
+ 'delete_context_setting': ('disposable_context_setting_delete_readback_stale_replay',
+                            'CAS_CONTEXT_SETTING_DELETE_READBACK_STALE_REPLAY_OK'),
+}
+for action,(scenario,marker) in context_cases.items():
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in context_test
+    assert marker in context_test
+assert 'stale CAS replay denied' in context_test
+assert 'no anonymous access granted by default' in context_test
+assert 'updated context name persisted through MCP list' in context_test
+assert 'context setting updated via MCP' in context_test
+assert 'deleted context absent from MCP context list' in context_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
