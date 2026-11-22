@@ -510,6 +510,15 @@ jobs:
       # EN: Disposable cache fixture, MCP clear and stale CAS replay.
       # RU: Только сброс permissions-cache на disposable MODX 2/3.
       # EN: Native permissions flush, exact revision and stale replay.
+      # RU: Создаётся и удаляется только одноразовый транспортный провайдер.
+      # EN: Native disposable fixture; deletion is exclusively via MCP.
+      - name: Disposable delete provider CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-delete-provider.php
       - name: Disposable flush permissions CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
