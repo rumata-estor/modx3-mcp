@@ -431,6 +431,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-external-partial-effects.php
+      # RU: Настоящий безвредный MODX transport с обрывом ответа после install/uninstall.
+      # EN: Actual harmless MODX transport with lost response after install/uninstall.
+      - name: Disposable real transport install uninstall uncertain outcome
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-package-real-uncertain.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'
