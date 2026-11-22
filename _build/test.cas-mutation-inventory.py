@@ -576,6 +576,20 @@ assert "'ms2_update_order'" in ms2_order_native
 assert "'ms2_get_order'" in ms2_order_native
 assert 'status unchanged' in ms2_order_native
 
+# RU: VersionX 2.x revert на реальном снимке собственной страницы в MODX 2.
+# EN: VersionX2 native resource snapshot and revert, not VersionX3 API.
+versionx_native=(ROOT / '_build/test.ci-versionx-native-revert-modx2.php').read_text()
+assert expected['versionx_revert_version']['verified_scenarios'] == [
+    'disposable_modx2_pinned_versionx_revert_version_native_snapshot_mcp_readback_stale_replay'
+]
+assert 'php _build/test.ci-versionx-native-revert-modx2.php' in ci_workflow
+assert 'f401c6317a22b521c8f0991bce5ef69b2d5a42f5' in ci_workflow
+assert 'CAS_VERSIONX_REVERT_MODX2_NATIVE_HISTORY_READBACK_STALE_OK' in versionx_native
+assert "'versionx_revert_version'" in versionx_native
+assert "'versionx_get_version'" in versionx_native
+assert "'versionx_list_versions'" in versionx_native
+assert 'newResourceVersion' in versionx_native
+
 # RU: Публикуемый отчёт не должен отставать от машинного реестра.
 # EN: Keep the human-readable evidence tracker identical to the manifest.
 import subprocess
