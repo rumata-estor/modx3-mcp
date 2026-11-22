@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 93. **Не имеют индивидуальных сценариев:** 23.
+сценарий:** 103. **Не имеют индивидуальных сценариев:** 13.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 23 без сценария
+## P2 — остальные операции — 13 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -39,16 +39,6 @@
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_create_event` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_create_handler` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_create_route` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_delete_event` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_delete_handler` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_delete_route` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_update_event` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_update_handler` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `virtualpage_update_route` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 
 ## Уже зарегистрированные индивидуальные сценарии
 
@@ -147,6 +137,16 @@
 | `update_system_setting` | review | `revision_write_failure_rollback` |
 | `update_user` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `update_user_group` | critical | `manager_out_of_band_edit_stale_target_denied` |
+| `virtualpage_clear_cache` | review | `disposable_pinned_virtualpage_cache_native_readback_stale_replay` |
+| `virtualpage_create_event` | review | `disposable_pinned_virtualpage_create_event_mcp_readback_stale_replay` |
+| `virtualpage_create_handler` | review | `disposable_pinned_virtualpage_create_handler_mcp_readback_stale_replay` |
+| `virtualpage_create_route` | review | `disposable_pinned_virtualpage_create_route_mcp_readback_stale_replay` |
+| `virtualpage_delete_event` | review | `disposable_pinned_virtualpage_delete_event_mcp_readback_stale_replay` |
+| `virtualpage_delete_handler` | review | `disposable_pinned_virtualpage_delete_handler_mcp_readback_stale_replay` |
+| `virtualpage_delete_route` | review | `disposable_pinned_virtualpage_delete_route_mcp_readback_stale_replay` |
+| `virtualpage_update_event` | review | `disposable_pinned_virtualpage_update_event_mcp_readback_stale_replay` |
+| `virtualpage_update_handler` | review | `disposable_pinned_virtualpage_update_handler_mcp_readback_stale_replay` |
+| `virtualpage_update_route` | review | `disposable_pinned_virtualpage_update_route_mcp_readback_stale_replay` |
 
 ## Правило учёта
 
