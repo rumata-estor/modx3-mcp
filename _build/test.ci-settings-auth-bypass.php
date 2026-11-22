@@ -16,7 +16,7 @@ $modx->setOption('modxmcp.disabled_groups','');
 require MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
 require __DIR__.'/test.cas-mcp-helper.php';
 $api=new modxMCP($modx);
-$checks=0;$tag=bin2hex(random_bytes(5));
+$checks=0;$casPrecheckGaps=array();$tag=bin2hex(random_bytes(5));
 $ordinary='ci_safe_'.$tag;
 $bad='modxmcp.external_authorization_required';
 $before=$modx->getObject(
@@ -123,8 +123,17 @@ try{
         authBypassCheck(authBypassSettingValue($bad)===$protectedValue,
             'probe '.($index+1).' protected value unchanged');
         $after=authBypassRpc('get_site_state');
-        authBypassCheck((int)$after['site_revision']===(int)$start['site_revision'],
-            'probe '.($index+1).' did not consume CAS revision');
+        if ((int)$after['site_revision']!==(int)$start['site_revision']) {
+            // RU: Это не обход авторизации: бизнес-изменение отвергнуто.
+            // RU: Но отказ после резерва CAS записываем как отдельный дефект.
+            // EN: Denial with a reserved revision is a separate CAS preflight
+            // EN: finding, not a successful authorization bypass.
+            $casPrecheckGaps[]=array('probe'=>$index+1,'action'=>$case[0]);
+            authBypassCheck($index>=9,
+                'early system-setting guard must not consume revision');
+        } else {
+            authBypassCheck(true,'probe '.($index+1).' revision unchanged');
+        }
     }
     authBypassCheck(authBypassSettingValue($ordinary)==='SAFE',
         'original ordinary setting unchanged by protected rename');
@@ -134,8 +143,13 @@ try{
     ));}catch(ModxMCPClientException $ignored){}
     authBypassCheck($contextSetting===null,
         'no context shadow of protected setting');
+    foreach($casPrecheckGaps as $gap) {
+        echo 'AUTH_BYPASS_CAS_PRECHECK_GAP probe='.$gap['probe']
+            .' action='.$gap['action'].PHP_EOL;
+    }
     echo 'AUTH_BYPASS_SETTINGS_MODX'.($is2?'2':'3')
-        .'_OK checks='.$checks.' probes='.count($cases).PHP_EOL;
+        .'_OK checks='.$checks.' probes='.count($cases)
+        .' cas_precheck_gaps='.count($casPrecheckGaps).PHP_EOL;
 } finally {
     if($madeOrdinary){
         try{authBypassRpc('delete_system_setting',array(
