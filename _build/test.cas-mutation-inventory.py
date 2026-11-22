@@ -147,6 +147,24 @@ assert 'stale policy update replay denied' in policy_test
 assert 'stale policy delete replay denied' in policy_test
 assert 'stale replay produced no duplicate policy' in policy_test
 
+# RU: Сценарии шаблонов policy требуют существующей группы и настоящего CI.
+# EN: Policy-template evidence must use an existing group and executable CI.
+template_test = (ROOT / '_build/test.ci-cas-policy-template-evidence.php').read_text()
+assert 'php _build/test.ci-cas-policy-template-evidence.php' in ci_workflow
+assert "'template_group'=>$groupId" in template_test
+for action,scenario in {
+    'create_access_policy_template': 'disposable_grouped_policy_template_create_readback_stale_replay',
+    'update_access_policy_template': 'disposable_grouped_policy_template_description_update_readback_stale_replay',
+    'delete_access_policy_template': 'disposable_grouped_policy_template_delete_readback_stale_replay',
+}.items():
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in template_test
+    label=action.split('_')[0].upper()
+    assert 'CAS_POLICY_TEMPLATE_'+label+'_EVIDENCE_OK' in template_test
+assert 'stale replay produced no duplicate policy' in template_test
+assert 'stale policy update replay denied' in template_test
+assert 'stale policy delete replay denied' in template_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

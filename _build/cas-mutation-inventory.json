@@ -108,7 +108,9 @@
       "processor": "security/access/policy/template/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_grouped_policy_template_create_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_category": {
@@ -286,7 +288,9 @@
       "processor": "security/access/policy/template/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_grouped_policy_template_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_category": {
@@ -818,7 +822,9 @@
       "processor": "security/access/policy/template/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_grouped_policy_template_description_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_category": {
