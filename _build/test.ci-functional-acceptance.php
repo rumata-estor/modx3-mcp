@@ -550,6 +550,72 @@ try {
         acceptanceClean('delete_user',array('id'=>$raceUserId));
         echo 'ACL_MEMBERSHIP_TOCTOU_RACE_DENIED_OK action='.$raceAction.PHP_EOL;
     }
+    // Independently committed role changes and deletions must also invalidate
+    // a group fingerprint, even if Manager never increments MCP site_revision.
+    $managerMember=acceptanceRpc('create_user',array(
+        'username'=>'mcp_manager_acl_'.bin2hex(random_bytes(5)),
+        'fullname'=>'Disposable Manager overlap',
+        'email'=>'mcp-manager-'.bin2hex(random_bytes(5)).'@example.invalid',
+        'password'=>'CI-'.bin2hex(random_bytes(12)).'9Q!',
+        'passwordnotifymethod'=>'s','active'=>0));
+    $managerMemberId=(int)$managerMember['id'];
+    acceptanceRpc('add_user_to_group',array(
+        'user'=>$managerMemberId,'usergroup'=>$groupId,'role'=>$roleId));
+    foreach(array('update_role','delete') as $managerMode) {
+        $beforeManager=acceptanceSnapshot('user_group',$groupId);
+        $readyManager=rtrim(getenv('RUNNER_TEMP'),'/').'/member-manager-overlap-'.bin2hex(random_bytes(5));
+        $cmdManager=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
+            (string)$groupId,(string)$managerMemberId,(string)$secondRoleId,
+            $readyManager,$managerMode);
+        $pipesManager=array();
+        $procManager=proc_open($cmdManager,array(
+            0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')
+        ),$pipesManager);
+        if(!is_resource($procManager))throw new RuntimeException('Cannot spawn role/remove Manager');
+        fclose($pipesManager[0]);
+        $untilManager=microtime(true)+12;
+        while(!is_file($readyManager) && microtime(true)<$untilManager)usleep(10000);
+        acceptanceCheck(is_file($readyManager),'Manager role/remove transaction ready');
+        $deniedManager=false;
+        try {
+            acceptanceRpc('update_user_group',array(
+                'id'=>$groupId,'name'=>'FORBIDDEN_OVERLAP_'.$fixture,
+                '_runtime_preconditions'=>$beforeManager));
+        } catch (ModxMCPClientException $e) {
+            $deniedManager=strpos($e->getMessage(),'STALE_STATE')!==false;
+            if(!$deniedManager)throw $e;
+        } finally {
+            $outManager=stream_get_contents($pipesManager[1]);
+            $errManager=stream_get_contents($pipesManager[2]);
+            fclose($pipesManager[1]);fclose($pipesManager[2]);
+            $rcManager=proc_close($procManager);
+            @unlink($readyManager);
+            acceptanceCheck($rcManager===0,'Manager role/remove committed: '.$errManager);
+        }
+        acceptanceCheck($deniedManager,'MCP refused concurrent Manager '.$managerMode);
+        $afterManager=acceptanceRpc('get_site_state');
+        acceptanceCheck((int)$afterManager['site_revision']
+            ===(int)$beforeManager['observed_site_revision'],
+            'Manager '.$managerMode.' did not consume MCP revision');
+        $readManager=acceptanceRpc('list_user_group_members',array(
+            'usergroup'=>$groupId,'limit'=>200));
+        $foundManager=false;
+        foreach($readManager['results'] as $memberRow) {
+            if(!is_array($memberRow))continue;
+            if((int)($memberRow['id']??0)===$managerMemberId) {
+                $foundManager=true;
+                if($managerMode==='update_role') {
+                    acceptanceCheck((int)($memberRow['role']??0)===$secondRoleId,
+                        'Manager role update survived MCP conflict');
+                }
+            }
+        }
+        acceptanceCheck($foundManager===($managerMode==='update_role'),
+            'independent Manager member readback '.$managerMode);
+        echo 'ACL_MANAGER_MEMBERSHIP_'.strtoupper($managerMode).'_RACE_DENIED_OK'.PHP_EOL;
+    }
+    acceptanceClean('delete_user',array('id'=>$managerMemberId));
+
     $memberName='mcp_acceptance_'.$fixture;
     $membersBefore=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
