@@ -39,6 +39,9 @@ class VersionXVersionRevertTool implements ToolInterface
             );
         }
 
+        // RU: С этого момента процессор мог уже изменить ресурс.
+        // EN: Once native revert starts, the outcome can be partial or unknown.
+        try {
         $response = $modx->runProcessor(
             $meta['processor'] . '/revert',
             array(
@@ -51,12 +54,9 @@ class VersionXVersionRevertTool implements ToolInterface
             )
         );
         if (!$response || $response->isError()) {
-            throw new \ModxMCPClientException(
-                'VersionX revert failed: '
-                . ($response
-                    ? ProcessorSupport::error($response)
-                    : 'No processor response.')
-            );
+            // RU: Даже ответ с isError() не доказывает отсутствие отката.
+            // EN: An error response cannot establish that revert had no effect.
+            throw new \RuntimeException('native VersionX processor response unsuccessful');
         }
 
         $after = $modx->getObject($meta['content_class'], $contentId);
@@ -84,6 +84,16 @@ class VersionXVersionRevertTool implements ToolInterface
                 'name' => $this->label($after),
             ) : null,
         );
+        } catch (\Throwable $error) {
+            // RU: Не сообщаем "отменено" и не повторяем изменяющий процессор.
+            // RU: Текст стороннего исключения не может попасть к клиенту.
+            // EN: Never infer rollback, replay automatically or leak addon errors.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: VersionX revert may have changed '
+                . 'the target; read its current state through MCP before '
+                . 'requesting another explicitly authorized mutation.'
+            );
+        }
     }
 
     private function label($object)
