@@ -87,9 +87,37 @@ class BulkResourcesTool implements ToolInterface
         $results = array();
         $resourceClass = $context->platform()->className('resource');
 
+        if (!$dryRun) {
+            // RU: Если один из ID отсутствует, не начинаем менять другие.
+            // RU: Предварительная проверка не заменяет CAS, но исключает
+            // RU: заведомо частичное выполнение запроса с ошибочным списком.
+            // EN: Reject an already-incomplete target set before the first
+            // EN: mutation. Preflight does not replace mandatory CAS checks.
+            foreach ($ids as $candidateId) {
+                if (!$context->modx()->getObject($resourceClass, $candidateId)) {
+                    throw new \ModxMCPClientException(
+                        'NOT_FOUND: bulk_resources target ' . $candidateId
+                        . ' does not exist; no batch writes attempted.'
+                    );
+                }
+            }
+        }
+        $attemptedWrites = 0;
         foreach ($ids as $id) {
             $resource = $context->modx()->getObject($resourceClass, $id);
             if (!$resource) {
+                if (!$dryRun) {
+                    // RU: Объект исчез между preflight и выполнением:
+                    // RU: предыдущие изменения уже могли произойти.
+                    // EN: A target vanished after preflight; the batch
+                    // EN: outcome is uncertain even if no write succeeded.
+                    try { ElementMutationSupport::refreshCache($context); }
+                    catch (\Throwable $ignored) {}
+                    throw new \ModxMCPClientException(
+                        'MUTATION_OUTCOME_UNCERTAIN: bulk_resources target '
+                        . $id . ' vanished during execution; inspect targets.'
+                    );
+                }
                 $results[] = array('id' => $id, 'status' => 'not_found');
                 continue;
             }

@@ -55,9 +55,18 @@ class BulkFaultResource {
     }
 }
 class BulkFaultModx {
+    public $missingIds=array();
+    public $calls=array();
+    public $vanishAfterPreflight=0;
     public function getObject($class,$id) {
-        return $class==='FakeResource' && in_array((int)$id,array(1,2),true)
-            ? new BulkFaultResource((int)$id):null;
+        $id=(int)$id;
+        $this->calls[$id]=($this->calls[$id]??0)+1;
+        if(in_array($id,$this->missingIds,true)
+            || ($id===$this->vanishAfterPreflight && $this->calls[$id]>1)){
+            return null;
+        }
+        return $class==='FakeResource' && in_array($id,array(1,2),true)
+            ? new BulkFaultResource($id):null;
     }
 }
 class BulkFaultPlatform {
@@ -113,5 +122,36 @@ catch(ModxMCPClientException $e){
     $deleteError=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
 }
 bulkCheck($deleteError,'delete second failure returned apparent success');
-echo 'BULK_RESOURCES_PARTIAL_OUTCOME_OK checks=7'.PHP_EOL;
+// RU: Заведомо отсутствующая цель блокирует весь пакет до первой записи.
+// EN: Pre-existing missing target must fail before the first mutation.
+$ctx=new BulkFaultContext();
+$ctx->modx()->missingIds=array(2);
+\ModxMcp\Tools\ElementUpdateTool::$attempts=array();
+$missingDenied=false;
+try {$tool->execute($ctx,$data);}
+catch(ModxMCPClientException $e) {
+    $missingDenied=strpos($e->getMessage(),'NOT_FOUND:')===0;
+}
+bulkCheck($missingDenied
+    && \ModxMcp\Tools\ElementUpdateTool::$attempts===array(),
+    'missing ID did not block all writes during preflight');
+// RU: В dry_run можно показывать отсутствующие цели, ничего не меняя.
+// EN: Preview may still report missing IDs, without any mutations.
+$preview=$tool->execute($ctx,array_merge($data,array('dry_run'=>true)));
+bulkCheck(($preview['results'][1]['status']??'')==='not_found',
+    'dry-run not_found reporting changed');
+// RU: Цель исчезла уже после preflight — это неопределённый исход.
+// EN: Target disappearing after preflight must flag uncertain outcome.
+$ctx=new BulkFaultContext();
+$ctx->modx()->vanishAfterPreflight=2;
+\ModxMcp\Tools\ElementUpdateTool::$attempts=array();
+$vanishedUncertain=false;
+try {$tool->execute($ctx,$data);}
+catch(ModxMCPClientException $e) {
+    $vanishedUncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+}
+bulkCheck($vanishedUncertain
+    && \ModxMcp\Tools\ElementUpdateTool::$attempts===array(1),
+    'vanished target after first write was not uncertain');
+echo 'BULK_RESOURCES_PARTIAL_OUTCOME_OK checks=10'.PHP_EOL;
 }
