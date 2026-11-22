@@ -136,6 +136,13 @@ class ProcessorMutationTool implements ToolInterface
             }
             return array('id' => $id);
         }
+        // RU: Другие ACL-процессоры (включая update_user) тоже могут
+        // RU: возвращать учётные данные во вложенном объекте/сообщении.
+        // EN: Other ACL processors (including update_user) can return
+        // EN: credentials in nested objects or processor messages.
+        if ($route === 'acl') {
+            return ProcessorSupport::sanitizeProcessorOutput($result);
+        }
         return $result;
     }
 

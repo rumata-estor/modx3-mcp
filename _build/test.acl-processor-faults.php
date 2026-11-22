@@ -19,6 +19,9 @@ namespace ModxMcp\Tools {
     class ProcessorSupport {
         public static function error($response){return 'injected processor failure';}
         public static function normalize($response){return array('success'=>true);}
+        // RU: Реальная реализация проверяется в тестах редактирования секретов.
+        // EN: The real sanitizer is covered by dedicated credential tests.
+        public static function sanitizeProcessorOutput($value){return $value;}
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Security/ProtectedSettingsGuard.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ProcessorMutationTool.php';
