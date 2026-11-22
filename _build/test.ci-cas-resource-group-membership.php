@@ -79,6 +79,11 @@ try{
 
     $assign=array('resource'=>$resourceId,'resourceGroup'=>$groupId,
         '_runtime_preconditions'=>rgGuard());
+    $perm=(int)$modx->hasPermission('resourcegroup_resource_edit');
+    $version=$modx->getVersionData();
+    fwrite(STDERR,'RESOURCE_GROUP_ASSIGN_PRECHECK platform='.
+        ($is2?'modx2':'modx3').' permission='.$perm
+        .' major='.(int)($version['version']??0).PHP_EOL);
     try {
         rgRpc('assign_resource_to_group',$assign);
     } catch (ModxMCPClientException $e) {
