@@ -275,6 +275,14 @@ class StateSupport
         $memberTable = $modx->getTableName(
             $context->platform()->className('user_group_member')
         );
+        if (getenv('MODXMCP_DISPOSABLE_CI')==='1') {
+            $t=$modx->query('SHOW TABLE STATUS LIKE '.$modx->quote(
+                trim(str_replace('`','',$memberTable))
+            ));
+            $info=$t?$t->fetch(\PDO::FETCH_ASSOC):array();
+            fwrite(STDERR,'ACL_LOCK_DIAG engine='.($info['Engine']??'unknown')
+                .' member_table='.$memberTable.' isolation='.$level.PHP_EOL);
+        }
         // A predictable indexed range is essential when no member exists.
         $indexStatement = $modx->query('SHOW INDEX FROM '.$memberTable);
         if (!$indexStatement) {
@@ -304,6 +312,7 @@ class StateSupport
         if (!is_array($group)) {
             throw new \ModxMCPClientException('STALE_STATE group disappeared.');
         }
+        $lockStart=microtime(true);
         $members = $modx->prepare(
             'SELECT `id`,`member`,`user_group`,`role` FROM '
             .$memberTable.' WHERE `user_group`=? FOR UPDATE'
@@ -311,6 +320,8 @@ class StateSupport
         if (!$members || !$members->execute(array($id))) {
             throw new \ModxMCPClientException('CAS_REQUIRED: membership range lock failed.');
         }
+        if (getenv('MODXMCP_DISPOSABLE_CI')==='1') fwrite(STDERR,
+            'ACL_LOCK_DIAG duration='.(microtime(true)-$lockStart).PHP_EOL);
         $rows = array();
         foreach ($members->fetchAll(\PDO::FETCH_ASSOC) as $record) {
             $rows[] = array('id'=>(int)$record['id'],
