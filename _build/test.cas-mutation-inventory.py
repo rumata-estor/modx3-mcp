@@ -138,6 +138,17 @@ assert all(a in expected and expected[a]['risk']=='critical' for a in high_impac
 assert all(expected[a]['cas_boundary']=='revision_reserved_before_action'
            for a in high_impact)
 
+# RU: Публикуемый отчёт не должен отставать от машинного реестра.
+# EN: Keep the human-readable evidence tracker identical to the manifest.
+import subprocess
+tracker = subprocess.check_output(
+    [sys.executable,str(ROOT / '_build/render.cas-evidence-tracker.py')],
+    text=True
+)
+assert (ROOT / 'docs/CAS-EVIDENCE-TRACKER-1.2.8.ru.md').read_text() == tracker, (
+    'CAS evidence tracker is stale; regenerate using render.cas-evidence-tracker.py'
+)
+
 unverified = [a for a,row in expected.items() if not row['verified_scenarios']]
 print(f'CAS_INVENTORY_COVERAGE_OK total={len(expected)} '
       f'static={sum(x["origin"]=="static" for x in expected.values())} '
