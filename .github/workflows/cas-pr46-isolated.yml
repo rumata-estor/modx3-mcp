@@ -752,3 +752,27 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-migx-installed.php
+      # RU: Модель VirtualPage с закреплённым SHA только в disposable MODX.
+      # EN: Pin upstream VirtualPage source for ephemeral MODX 2/3 PHP 8.2 E2E.
+      - name: Stage pinned VirtualPage model for disposable E2E
+        if: matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly VP_SHA=53ec66b697cde6d9b6ed1ba65c536d7f51707897
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/vgrish/virtualpage/tar.gz/$VP_SHA" \
+            -o "$RUNNER_TEMP/virtualpage-pinned.tar.gz"
+          mkdir -p "$RUNNER_TEMP/virtualpage-addon-source"
+          tar -xzf "$RUNNER_TEMP/virtualpage-pinned.tar.gz" \
+            -C "$RUNNER_TEMP/virtualpage-addon-source" --strip-components=1
+          test -f "$RUNNER_TEMP/virtualpage-addon-source/core/components/virtualpage/model/virtualpage/vpevent.class.php"
+          cp -a "$RUNNER_TEMP/virtualpage-addon-source/core/components/virtualpage" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable VirtualPage event handler route and cache MCP CAS
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-virtualpage-installed.php
