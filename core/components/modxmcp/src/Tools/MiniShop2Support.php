@@ -57,6 +57,39 @@ class MiniShop2Support
         return $value;
     }
 
+    /**
+     * RU: miniShop2 productlink/create interpolates these values into SQL.
+     * RU: Accept only canonical positive decimal IDs before its processor runs.
+     * EN: Validate every identifier before upstream string-interpolated SQL.
+     */
+    public static function productLinkPayload(array $data)
+    {
+        $payload = array();
+        foreach (array('link', 'master', 'slave') as $field) {
+            if (!array_key_exists($field, $data)
+                || (!is_int($data[$field]) && !is_string($data[$field]))) {
+                throw new \\ModxMCPClientException(
+                    $field . ' is required and must be a positive integer.'
+                );
+            }
+            $raw = (string)$data[$field];
+            // RU: Reject casts of 1.2, 1e0, trailing text and overflow.
+            // EN: Reject partial numeric casts, exponent notation and overflow.
+            $number = (int)$raw;
+            if (!preg_match('/\\A[1-9][0-9]*\\z/D', $raw)
+                || $number <= 0
+                || (string)$number !== $raw) {
+                throw new \\ModxMCPClientException(
+                    $field . ' is required and must be a positive integer.'
+                );
+            }
+            $payload[$field] = $number;
+        }
+        // RU: No incidental or underscore-prefixed fields reach the addon.
+        // EN: All other untrusted request properties are deliberately dropped.
+        return $payload;
+    }
+
     public static function assertProduct($context, $productId)
     {
         $resourceClass = $context->platform()->className('resource');
