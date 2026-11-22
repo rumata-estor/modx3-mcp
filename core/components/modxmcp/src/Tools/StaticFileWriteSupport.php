@@ -17,7 +17,7 @@ final class StaticFileWriteSupport
     /**
      * RU: Не менять прежнее поведение, если можно изменить только файл,
      * RU: но нельзя создать временный файл рядом с ним.
-     * EN: Preserve legacy semantics on file-writable, directory-readonly hosts.
+     * EN: Preserve legacy semantics when directories deny file creation.
      * EN: This preserves the preexisting TOCTOU risk and logs a warning.
      */
     private static function legacyCompatibleWrite($absolute, $content)
@@ -48,6 +48,7 @@ final class StaticFileWriteSupport
             'dev' => (string)$stat['dev'],
             'ino' => (string)$stat['ino'],
             'uid' => (string)$stat['uid'],
+            'gid' => (string)$stat['gid'],
             'mode' => (int)$stat['mode'],
             'nlink' => (int)$stat['nlink'],
         );
@@ -80,6 +81,19 @@ final class StaticFileWriteSupport
         }
 
         $target = self::fingerprint($absolute);
+        // RU: rename не должен обходить запрет записи в существующий файл.
+        // EN: Directory write permission must not bypass read-only file ACLs.
+        if ($target !== null && !is_writable($absolute)) {
+            throw new \ModxMCPClientException('Existing static file is not writable.');
+        }
+        // RU: Внутренние симлинки до 1.2.8 были допустимы; не ломаем их.
+        // EN: Preserve previously permitted in-root symlink behavior.
+        if (!$exclusive && is_link($absolute)) {
+            return self::legacyCompatibleWrite($absolute, $content);
+        }
+        if ($target !== null && ($target['mode'] & 0170000) !== 0100000) {
+            throw new \ModxMCPClientException('Static target must be a regular file.');
+        }
         if ($exclusive && ($target !== null || is_link($absolute))) {
             throw new \ModxMCPClientException(
                 'make_static: TV exclusive creation failed; target already exists.'
@@ -94,7 +108,7 @@ final class StaticFileWriteSupport
         }
         // RU: Некоторые хостинги разрешают запись в файл, но запрещают
         // RU: создание соседних файлов. До 1.2.8 этот случай работал.
-        // EN: Preserve pre-1.2.8 behavior for file-writable, dir-readonly hosts.
+        // EN: Preserve pre-1.2.8 behavior when directories deny creation.
         // EN: Never enable this compatibility path for new files.
         if (!$exclusive && $target !== null && !is_writable($directory)
             && is_writable($absolute)) {
@@ -142,8 +156,10 @@ final class StaticFileWriteSupport
             // RU: Не менять владельца чужого файла на хостинге при rename.
             // EN: Shared-hosting files may be owned by a different account;
             // EN: preserve ownership and legacy behavior instead of replacing inode.
-            if ($target !== null && $target['uid'] !== $tmpInfo['uid']
-                && is_writable($absolute)) {
+            if ($target !== null && (
+                $target['uid'] !== $tmpInfo['uid']
+                || $target['gid'] !== $tmpInfo['gid']
+            ) && is_writable($absolute)) {
                 ElementContentSupport::assertSafeStaticPath($context, $absolute);
                 return self::legacyCompatibleWrite($absolute, $content);
             }

@@ -48,6 +48,14 @@ try {
     pcheck(\ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,$binary)===strlen($binary),'binary write');
     pcheck(file_get_contents($target)===$binary,'binary readback');
     pcheck((fileperms($target)&0777)===0640,'existing mode retained');
+    // RU: Права каталога не должны разрешать обход read-only файла.
+    // EN: Being able to rename inside a directory cannot bypass file ACL.
+    chmod($target,0444);
+    denied(function()use($ctx,$target){
+        \ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,'UNAUTHORIZED');
+    },'read-only file must reject even when directory writable');
+    pcheck(file_get_contents($target)===$binary,'read-only bytes intact');
+    chmod($target,0640);
     denied(function()use($ctx,$target){
         \ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,'FORBIDDEN',true);
     },'exclusive must refuse existing target');
@@ -89,7 +97,7 @@ try {
         chmod($dir,0700);
     }
     pcheck(count(glob($dir.'/.modxmcp-*.tmp'))===0,'no temp leftovers');
-    echo 'STATIC_PORTABLE_REPLACE_OK checks=14'.PHP_EOL;
+    echo 'STATIC_PORTABLE_REPLACE_OK checks=16'.PHP_EOL;
 } finally {
     if(is_link($target)||is_file($target))unlink($target);
     if(is_link($root.'/core/elements/outlink'))unlink($root.'/core/elements/outlink');
