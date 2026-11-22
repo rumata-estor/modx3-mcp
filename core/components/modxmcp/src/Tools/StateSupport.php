@@ -29,6 +29,46 @@ class StateSupport
     }
 
     /**
+     * RU: Проверка отсутствующего необязательного компонента ДО CAS-резерва.
+     * RU: Это только отрицательный preflight: наличие папки не означает, что
+     * RU: компонент установлен и готов к работе. Права проверяются отдельно.
+     * EN: Read-only missing-addon preflight before any CAS revision reservation.
+     * EN: Folder presence is not proof of a valid installation or authorization.
+     */
+    public static function requireOptionalAddonPath($context, $action)
+    {
+        $modx = $context->modx();
+        $core = rtrim((string)$modx->getOption('core_path'), '/\\') . '/';
+        $pathOption = null;
+        $default = null;
+        $message = null;
+        if (strpos($action, 'migx_') === 0) {
+            $pathOption = 'migx.core_path';
+            $default = $core . 'components/migx/';
+            $message = 'MIGX is not installed (migxConfig class not found).';
+        } elseif (strpos($action, 'ms2_') === 0) {
+            $pathOption = 'minishop2.core_path';
+            $default = $core . 'components/minishop2/';
+            $message = 'Could not load miniShop2 service. Is miniShop2 installed on this MODX site?';
+        } elseif (strpos($action, 'virtualpage_') === 0) {
+            $pathOption = 'virtualpage_core_path';
+            $default = $core . 'components/virtualpage/';
+            $message = 'Could not find VirtualPage component core path.';
+        } elseif (strpos($action, 'versionx_') === 0) {
+            $pathOption = 'versionx.core_path';
+            $default = $core . 'components/versionx/';
+            $message = 'Could not load VersionX service. Is VersionX installed on this MODX site?';
+        }
+        if ($pathOption === null) {
+            return;
+        }
+        $path = $modx->getOption($pathOption, null, $default);
+        if (!is_string($path) || $path === '' || !is_dir($path)) {
+            throw new \ModxMCPClientException($message);
+        }
+    }
+
+    /**
      * Database-backed mutations only. No SQL transaction can roll back a
      * media file, package install, emitted event, or external I/O.
      */
