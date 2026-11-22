@@ -185,6 +185,32 @@ try {
         $modx->setOption('manager_date_format',$originalDateFormat);
         $modx->setOption('manager_time_format',$originalTimeFormat);
     }
+    // RU: Отсутствующий ID в bulk_resources не должен публиковать уже
+    // RU: найденный ресурс и оставлять незаметный частичный результат.
+    // EN: Mixed existing/missing bulk targets must reject preflight before
+    // EN: publishing any valid resource; dry_run stays nonmutating.
+    $nonexistentResourceId=2147483647;
+    $bulkMissingDenied=false;
+    try {acceptanceRpc('bulk_resources',array(
+        'operation'=>'publish','ids'=>array($resourceId,$nonexistentResourceId),
+    ));} catch(ModxMCPClientException $e) {
+        $bulkMissingDenied=strpos($e->getMessage(),'NOT_FOUND:')!==false;
+    }
+    acceptanceCheck($bulkMissingDenied,
+        'bulk_resources absent ID rejected before any mutation');
+    $afterBulkDenied=acceptanceRpc('get_element',array(
+        'type'=>'resource','id'=>$resourceId
+    ));
+    acceptanceCheck((int)($afterBulkDenied['published']??-1)===0
+        && (string)($afterBulkDenied['content']??'')==='BEFORE_'.$fixture,
+        'bulk_resources preflight left existing resource untouched');
+    $bulkPreview=acceptanceRpc('bulk_resources',array(
+        'operation'=>'publish','ids'=>array($resourceId,$nonexistentResourceId),
+        'dry_run'=>true
+    ));
+    acceptanceCheck(($bulkPreview['results'][1]['status']??null)==='not_found',
+        'bulk_resources dry-run still reports missing target');
+
     $beforeUpdate=acceptanceSnapshot('resource',$resourceId);
     acceptanceRpc('update_element',array(
         'type'=>'resource','id'=>$resourceId,'content'=>'AFTER_'.$fixture,
