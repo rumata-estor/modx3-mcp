@@ -96,7 +96,9 @@ jobs:
       - name: MCP client schemas must advertise mandatory CAS for all 116 actions
         run: python3 _build/test.cas-client-contract.py
       - name: Strict CAS precondition schema regression
-        run: php _build/test.cas-required-contract.php
+        run: |
+          php _build/test.cas-required-contract.php
+          php _build/test.cas-raw-resource-date-fingerprint.php
       - name: Revision transaction failure and after-commit isolation
         run: php _build/test.revision-transaction-faults.php
       - name: ACL, token rotation and protected settings fault isolation

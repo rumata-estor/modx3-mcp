@@ -2,6 +2,12 @@
 
 # MODX MCP — Changelog
 
+## Unreleased (1.2.8 isolated branch — NOT a release)
+
+- **CAS:** resource fingerprints now read raw `pub_date`, `unpub_date`, and `publishedon` from the MODX resource model **after** the ordinary authorized processor read. The public `get_element` date format remains backward-compatible; Manager date/time formatting and second truncation no longer affect CAS. **Reported by @AgelxNash**, [PR #57](https://github.com/rumata-estor/modx3-mcp/pull/57). Verified across 12 MODX/PHP configurations and a sub-minute drift regression.
+- **Secrets:** MODX 2 and 3 legacy monolithic setting-read fallbacks now fully redact API tokens and other sensitive values regardless of length, matching the modular `[REDACTED]` policy. **Reported by @AgelxNash**, [PR #52](https://github.com/rumata-estor/modx3-mcp/pull/52).
+- **Build:** both transport builders now exit with status 2 if `config.core.php` is missing instead of accidentally reporting success. Previously observed in the project review and independently restated by **@AgelxNash**, [PR #51](https://github.com/rumata-estor/modx3-mcp/pull/51). Added negative CI tests.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
