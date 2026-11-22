@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'test/128-real-kill-replay-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122']
 
 permissions:
   contents: read
@@ -828,3 +828,17 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-options-installed.php
+      # RU: Проверка пользовательских числовых идентификаторов до addon SQL.
+      # EN: Reject malformed product-link IDs before external processor calls.
+      - name: Product-link strict ID validation on disposable PHP matrix
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          php _build/test.ms2-productlink-strict-ids.php
+      # RU: Отказ без повтора после возможной частичной записи заказа.
+      # EN: Reject uncertain post-write order results without retries.
+      - name: miniShop2 order partial-effect classification on disposable PHP matrix
+        run: |
+          set -euo pipefail
+          php _build/test.ms2-order-uncertain-fault.php

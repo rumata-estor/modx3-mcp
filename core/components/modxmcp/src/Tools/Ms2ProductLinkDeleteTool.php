@@ -14,7 +14,7 @@ class Ms2ProductLinkDeleteTool implements ToolInterface
 
     public function execute($context, array $data)
     {
-        $payload = MiniShop2Support::cleanPayload($data);
+        $payload = MiniShop2Support::productLinkPayload($data);
         $result = MiniShop2Support::runProcessor(
             $context,
             'mgr/product/productlink/remove',
