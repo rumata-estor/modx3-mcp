@@ -31,7 +31,13 @@ $deniedKey='mcpdenyacl'.$fixture;
 $created=false;
 $checks=0;
 function acdRpc($action,array $data=array()){
-    global $api;
+    global $api,$modx;
+    // RU: refresh(context_settings) перечитывает системные опции MODX и
+    // RU: сбрасывает только временное включение группы в этом PHP-процессе.
+    // RU: Перед каждым вызовом возвращаем разрешение в памяти disposable CI.
+    // EN: Context-cache refresh reloads MODX options, undoing the CI-only
+    // EN: in-memory capability toggle; restore it without changing the DB.
+    $modx->setOption('modxmcp.disabled_groups','');
     return disposableCasRpc($api,$action,$data);
 }
 function acdCheck($ok,$label){
