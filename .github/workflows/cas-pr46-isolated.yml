@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122', 'test/128-ms2-modx2-scoped-evidence-20261122']
 
 permissions:
   contents: read
@@ -795,9 +795,9 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-virtualpage-installed.php
       # RU: Только одноразовая установка, закреплённые upstream исходники miniShop2.
-      # EN: Pinned upstream miniShop2 source, disposable MODX2/3 only.
+      # EN: miniShop2 targets MODX 2 only; MiniShop3 is a separate addon.
       - name: Stage pinned miniShop2 for isolated link-type E2E
-        if: matrix.php_version == '8.2'
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
         run: |
           set -euo pipefail
           readonly MS2_SHA=793bbb8e7a4a2fee07197142be1be57f7e68ab8f
@@ -811,7 +811,7 @@ jobs:
           cp -a "$RUNNER_TEMP/minishop2-source/core/components/minishop2" \
             "$RUNNER_TEMP/modx-site/core/components/"
       - name: Disposable miniShop2 native link-type MCP CAS lifecycle
-        if: matrix.php_version == '8.2'
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
         env:
           MODXMCP_DISPOSABLE_CI: '1'
         run: |
@@ -821,7 +821,7 @@ jobs:
       # RU: Проверка двух option-мутаторов на уже подготовленном pinned miniShop2.
       # EN: Reuse pinned disposable miniShop2 to check option create/update CAS.
       - name: Disposable miniShop2 option create update MCP CAS
-        if: matrix.php_version == '8.2'
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
         env:
           MODXMCP_DISPOSABLE_CI: '1'
         run: |
@@ -848,3 +848,13 @@ jobs:
         run: |
           set -euo pipefail
           php _build/test.versionx-revert-uncertain-fault.php
+      # RU: Положительный цикл 3 мутаций miniShop2 — только MODX 2.
+      # EN: miniShop2 native product links/options apply to MODX 2, never MODX 3.
+      - name: Disposable MODX2 miniShop2 product links and options native MCP CAS
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-product-links-installed.php
