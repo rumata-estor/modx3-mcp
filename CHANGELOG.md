@@ -10,6 +10,10 @@
 
 - **Settings:** `update_system_setting` now accepts optional `new_key`; rename is a single UPDATE against the original key under CAS, with conflict, protected-key and missing-readback guards. **Reported by @AgelxNash**, [PR #56](https://github.com/rumata-estor/modx3-mcp/pull/56); seven original contract tests were imported in a separate Git commit preserving the original author.
 
+- **Context settings:** successful `create/update/delete_context_setting` explicitly refreshes the affected `context_settings` cache; a failed processor does not refresh, and missing `context_key`/`fk` fails closed. **Reported by @AgelxNash**, [PR #54](https://github.com/rumata-estor/modx3-mcp/pull/54).
+- **Logs:** `read_error_log` and `read_audit_log` stream a bounded tail rather than loading the whole file, reporting `result_complete`, `scanned_bytes`, and `truncated_lines`. Original algorithm and regression tests **authored by @AgelxNash**, [PR #53](https://github.com/rumata-estor/modx3-mcp/pull/53), with Git authorship preserved. A separate 4 MiB aggregate response cap avoids memory exhaustion from 1000 large lines.
+- **Static files/TVs:** existing static-file reads/writes now validate persisted paths against traversal and external symlinks. TV create/update now permits validated `static`, `static_file`, and `source` fields, **reported by @AgelxNash**, [PR #55](https://github.com/rumata-estor/modx3-mcp/pull/55). TV automatic file conversion and static content editing are **not enabled yet**.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
