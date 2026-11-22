@@ -842,3 +842,13 @@ jobs:
         run: |
           set -euo pipefail
           php _build/test.ms2-order-uncertain-fault.php
+      # RU: Только реальные неопубликованные msProduct, через MCP, без обхода ACL.
+      # EN: Real unpublished msProduct fixtures, native links and independent MCP readback.
+      - name: Disposable native miniShop2 product links MCP CAS
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-product-links-installed.php
