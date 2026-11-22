@@ -35,6 +35,22 @@
   plugin/event, файловый эффект до ошибки внешнего процессора. Запуск
   процессора здесь инструментирован; сценарий не представляет все плагины.
 
+## Подтверждённый одноразовый прогон (22.11.2026)
+
+Матрица [GitHub Actions 45031640060](https://github.com/rumata-estor/modx3-mcp/actions/runs/45031640060):
+**12/12 SUCCESS** (MODX 2.8.9, MODX 3.1.2, MODX 3.2.4 с матрицей PHP).
+В каждой конфигурации зарегистрированы маркеры
+`EXTERNAL_PARTIAL_EFFECTS_REAL_MODX_*_OK`,
+`NATIVE_PACKAGE_INSTALL_UNINSTALL_UNCERTAIN_MODX*_OK` и
+`REAL_MODX_PLUGIN_EXTERNAL_EFFECT_MODX*_OK`.
+
+При настоящем `modTransportPackage::uninstall()` MODX сообщил об успешном
+удалении пакета, но отдельное чтение нашло сохранённую тестовую системную
+настройку: `NATIVE_PACKAGE_UNINSTALL_RESIDUAL_SETTING_OBSERVED`.
+Это доказанный **остаточный эффект для выбранной транспортной фикстуры**;
+не утверждаем, что любой пакет ведёт себя так же. Настройка и запись
+временного пакета удаляются на этапе cleanup одноразового CI.
+
 ## Порядок при `MUTATION_OUTCOME_UNCERTAIN`
 
 **Немедленно остановить автоматические повторы.** Зафиксировать команду,
