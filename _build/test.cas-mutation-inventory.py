@@ -331,6 +331,16 @@ for action,scenario,marker in (
 assert 'stale replay consumed no CAS revision' in clientconfig_addon_test
 assert 'clientconfig.context_aware' in clientconfig_addon_test
 
+# RU: Восстановление собственной страницы подтверждено на MODX 2/3.
+# EN: Undelete inventory requires executable isolated MCP lifecycle tests.
+undelete_test=(ROOT / '_build/test.ci-cas-undelete-resource.php').read_text()
+assert 'php _build/test.ci-cas-undelete-resource.php' in ci_workflow
+assert 'disposable_unpublished_resource_undelete_readback_stale_replay' in expected['undelete_resource']['verified_scenarios']
+assert "'undelete_resource'" in undelete_test
+assert 'CAS_UNDELETE_RESOURCE_READBACK_STALE_REPLAY_OK' in undelete_test
+assert 'restored resource remains unpublished' in undelete_test
+assert 'stale undelete replay denied' in undelete_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

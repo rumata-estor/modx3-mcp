@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 73. **Не имеют индивидуальных сценариев:** 43.
+сценарий:** 74. **Не имеют индивидуальных сценариев:** 42.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 43 без сценария
+## P2 — остальные операции — 42 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -55,7 +55,6 @@
 | `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `reorder_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `replace_across` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `undelete_resource` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -127,6 +126,7 @@
 | `run_processor` | critical | `revision_reservation_refusal_only` |
 | `set_lexicon_entry` | review | `disposable_namespace_lexicon_set_readback_stale_replay` |
 | `unassign_property_set` | review | `disposable_chunk_property_set_unassign_readback_stale_replay` |
+| `undelete_resource` | review | `disposable_unpublished_resource_undelete_readback_stale_replay` |
 | `uninstall_package` | critical | `revision_reservation_refusal_only` |
 | `update_access_policy` | critical | `disposable_unassigned_policy_description_update_readback_stale_replay` |
 | `update_access_policy_template` | critical | `disposable_grouped_policy_template_description_update_readback_stale_replay` |

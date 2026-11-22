@@ -274,3 +274,7 @@
 ## ClientConfig 2.5.0 (MODX2/MODX3 PHP 8.2): три CAS-сценария
 
 `_build/test.ci-clientconfig-installed.php` устанавливает зафиксированную версию upstream ClientConfig во временной MODX 2/3 инсталляции и проверяет `clientconfig_create_setting`, `clientconfig_update_setting`, `clientconfig_delete_setting` на фактических настройках, включая контекстные значения `web`, `mgr` и собственный контекст. Повтор каждого запроса с зафиксированным старым CAS отклоняется без увеличения ревизии; чтение через ClientConfig addon подтверждает значение после операций. [Матрица 12/12; ClientConfig выполнялся только в двух PHP 8.2 jobs](https://github.com/rumata-estor/modx3-mcp/actions/runs/45041037747). **Не доказана** работа ClientConfig addon на остальных PHP версиях, конкурентный Manager Save или транзакционная отмена нескольких контекстных значений после сбоя.
+
+## Восстановление одноразового ресурса
+
+`_build/test.ci-cas-undelete-resource.php` создаёт собственный неопубликованный и скрытый ресурс в disposable MODX 2/3, мягко удаляет его, восстанавливает через `undelete_resource`, проверяет состояние через независимый MCP `get_element`, отсутствие неявной публикации и отказ повторного CAS-запроса. [Матрица MODX 2/3 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45041387955). Восстановление реальных рабочих ресурсов, конфликты Manager и каскадные эффекты плагинов здесь не тестируются.
