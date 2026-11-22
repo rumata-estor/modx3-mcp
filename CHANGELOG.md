@@ -2,6 +2,10 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- Fix `modx_update_system_setting` rename: updating the primary-key `key` field could never succeed (lookup by the new key always reported "not found", and `xPDOObject::save()` cannot rename a PK because the UPDATE WHERE clause is built from the already-modified value). Renames now run as one atomic `updateCollection` against the original key and fail closed on conflicts. New optional `new_key` parameter; the plain update path is unchanged.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
