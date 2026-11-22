@@ -2,6 +2,10 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- TV mutations support `static_file` (validated against core/elements/ including symlink escapes) and static content mapping, so `view_element` / `edit_element_lines` / `make_static` work for template variables; TV listing selects all bound TVs and raw values in one query via `getTemplateVars()` with fallback; TV CAS compares raw stored values (`getValue`) instead of rendered output while writes keep the `modResource::setTVValue()` contract.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.

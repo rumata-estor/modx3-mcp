@@ -270,7 +270,7 @@ class modxMCP {
                 if ($currentResponse->isError()) throw new ModxMCPClientException($this->formatProcessorErrors($currentResponse));
 
                 $currentData = $currentResponse->getObject();
-                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin', 'tv'], true)) {
                     $data['static_file'] = $this->validateStaticFile($data['static_file']);
                 }
                 $updateData = array_merge($currentData, $data);
@@ -293,7 +293,7 @@ class modxMCP {
 
             case 'create_element':
                 $createData = $data;
-                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin'], true)) {
+                if (isset($data['static_file']) && in_array($elementType, ['chunk', 'snippet', 'template', 'plugin', 'tv'], true)) {
                     $createData['static_file'] = $this->validateStaticFile($data['static_file']);
                 }
                 unset($createData['events'], $createData['templates'], $createData['input_properties'], $createData['media_source'], $createData['field_type']);
@@ -3104,7 +3104,7 @@ class modxMCP {
             'snippet' => ['id', 'name', 'description', 'snippet', 'category', 'static', 'static_file', 'source', 'property_preprocess'],
             'template' => ['id', 'templatename', 'description', 'content', 'category', 'static', 'static_file', 'source'],
             'resource' => ['id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'],
-            'tv' => ['id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank'],
+            'tv' => ['id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank', 'static', 'static_file', 'source'],
             'category' => ['id', 'category', 'parent', 'rank'],
             'plugin' => ['id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'],
         ];
@@ -4147,7 +4147,9 @@ class modxMCP {
                 'name' => $tv->get('name'),
                 'caption' => $tv->get('caption'),
                 'type' => $tv->get('type'),
-                'value' => $resource->getTVValue($tv->get('name')),
+                'value' => method_exists($tv, 'getValue')
+                    ? (string)$tv->getValue($resourceId)
+                    : (string)$resource->getTVValue($tv->get('name')),
             ];
         }
 
