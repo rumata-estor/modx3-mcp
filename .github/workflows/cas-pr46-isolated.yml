@@ -868,3 +868,27 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-category-assign-modx2.php
+      # RU: Закреплённая VersionX 2.4.0 только для native processor revert на MODX2.
+      # EN: Pinned legacy VersionX supports resources/revert on disposable MODX 2.
+      - name: Stage pinned legacy VersionX for disposable MODX2
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        run: |
+          set -euo pipefail
+          readonly VX_SHA=f401c6317a22b521c8f0991bce5ef69b2d5a42f5
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://codeload.github.com/modmore/VersionX/tar.gz/$VX_SHA" \
+            -o "$RUNNER_TEMP/versionx-pinned.tar.gz"
+          mkdir -p "$RUNNER_TEMP/versionx-source"
+          tar -xzf "$RUNNER_TEMP/versionx-pinned.tar.gz" \
+            -C "$RUNNER_TEMP/versionx-source" --strip-components=1
+          test -f "$RUNNER_TEMP/versionx-source/core/components/versionx/processors/mgr/resources/revert.class.php"
+          cp -a "$RUNNER_TEMP/versionx-source/core/components/versionx" \
+            "$RUNNER_TEMP/modx-site/core/components/"
+      - name: Disposable MODX2 VersionX native resource revert MCP CAS
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-versionx-native-revert-modx2.php
