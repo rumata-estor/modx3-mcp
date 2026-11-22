@@ -11,19 +11,28 @@ class AuditLogReadTool implements ToolInterface
     public function execute($context, array $data)
     {
         $path = rtrim($context->modx()->getOption('core_path'), '/') . '/components/modxmcp/logs/audit.log';
-        if (!file_exists($path)) { return array('total' => 0, 'entries' => array()); }
-        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if ($lines === false) { $lines = array(); }
-        $filterAction = isset($data['action']) ? (string)$data['action'] : '';
-        $entries = array();
-        foreach ($lines as $line) {
-            $entry = json_decode($line, true);
-            if (!is_array($entry)) { continue; }
-            if ($filterAction !== '' && (!isset($entry['action']) || $entry['action'] !== $filterAction)) { continue; }
-            $entries[] = $entry;
+        if (!file_exists($path)) {
+            return array(
+                'total' => 0,
+                'entries' => array(),
+                'result_complete' => true,
+                'scanned_bytes' => 0,
+                'truncated_lines' => 0,
+            );
         }
+        $filterAction = isset($data['action']) ? (string)$data['action'] : '';
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 100;
-        $entries = array_slice($entries, -$limit);
-        return array('total' => count($entries), 'entries' => $entries);
+        $metadata = array();
+        $entries = FilesystemSupport::readTailLines($path, $limit, function ($line) use ($filterAction) {
+            $line = trim($line);
+            if ($line === '') { return null; }
+            $entry = json_decode($line, true);
+            if (!is_array($entry)) { return null; }
+            if ($filterAction !== '' && (!isset($entry['action']) || $entry['action'] !== $filterAction)) {
+                return null;
+            }
+            return $entry;
+        }, $metadata);
+        return array_merge(array('total' => count($entries), 'entries' => $entries), $metadata);
     }
 }

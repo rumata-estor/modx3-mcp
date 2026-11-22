@@ -2,6 +2,10 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- Log reads (`read_error_log`, `read_audit_log`) stream the tail with bounded memory (limit ≤1000 lines, 16 MiB scan window, 512 KiB line buffer), return one explicitly marked JSON-safe suffix of up to 8 KiB for oversized lines, omit truncated audit JSON, and report `result_complete`, `scanned_bytes`, and `truncated_lines` when a result is incomplete. Terminating newlines never produce empty tail entries; an unterminated final line is returned intact.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
