@@ -86,6 +86,37 @@ try{
         if(is_array($context)&&($context['key']??'')===$key)$found=true;
     }
     acdCheck($found,'new context exists without anonymous access');
+    // RU: PR #54, @AgelxNash: жизненный цикл настройки через MCP,
+    // RU: refresh() должен получать явный список затронутых контекстов.
+    // EN: PR #54, @AgelxNash: exercise context setting lifecycle and
+    // EN: explicit cache invalidation on real disposable MODX 2/3.
+    $settingKey='mcp_cache_'.$fixture;
+    acdRpc('create_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey,'value'=>'alpha',
+        'namespace'=>'core','area'=>'default',
+    ));
+    $settingRead=acdRpc('get_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey
+    ));
+    acdCheck(is_array($settingRead) && ($settingRead['value']??null)==='alpha',
+        'context setting persisted after creation');
+    acdRpc('update_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey,'value'=>'beta'
+    ));
+    $settingRead=acdRpc('get_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey
+    ));
+    acdCheck(is_array($settingRead) && ($settingRead['value']??null)==='beta',
+        'context setting updated via MCP');
+    acdRpc('delete_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey
+    ));
+    $removed=true;
+    try {acdRpc('get_context_setting',array(
+        'context_key'=>$key,'key'=>$settingKey
+    ));$removed=false;}
+    catch(ModxMCPClientException $e) {}
+    acdCheck($removed,'context setting removed by MCP');
     echo 'ACL_CONTEXT_DEFAULT_DENY_ANONYMOUS_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
