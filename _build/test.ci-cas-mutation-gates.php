@@ -6,7 +6,7 @@
 /**
  * Fail-safe CAS revision reservation matrix.
  *
- * One disposable GitHub Actions MODX database; all 104 nontransactional
+ * One disposable GitHub Actions MODX database; all 103 nontransactional
  * mutation endpoints are invoked via the REAL modxMCP::processRequest().
  * A MariaDB trigger refuses revision increment; consequently no external
  * processor, file, package, token rotation or addon mutation may start.
@@ -47,7 +47,7 @@ foreach($inventory['actions'] as $action=>$spec){
         $expected[]=$action;
 }
 sort($expected);
-if(count($expected)!==104)throw new RuntimeException('Unexpected external gate inventory');
+if(count($expected)!==103)throw new RuntimeException('Unexpected external gate inventory');
 $getRevision=function()use($api){
     $state=$api->processRequest('get_site_state','',array());
     return (int)$state['site_revision'];
