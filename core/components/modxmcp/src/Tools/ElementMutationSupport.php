@@ -293,6 +293,9 @@ class ElementMutationSupport
             'snippet' => array('class' => $context->platform()->className('snippet'), 'field' => 'snippet', 'dir' => 'snippets', 'ext' => 'php'),
             'template' => array('class' => $context->platform()->className('template'), 'field' => 'content', 'dir' => 'templates', 'ext' => 'tpl'),
             'plugin' => array('class' => $context->platform()->className('plugin'), 'field' => 'plugincode', 'dir' => 'plugins', 'ext' => 'php'),
+            // RU: По предложению @AgelxNash, PR #55 — TV static_file.
+            // EN: Static TV file mapping, proposed by @AgelxNash (PR #55).
+            'tv' => array('class' => $context->platform()->className('tv'), 'field' => 'default_text', 'dir' => 'tvs', 'ext' => 'tpl'),
         );
     }
 
@@ -325,6 +328,17 @@ class ElementMutationSupport
             $absolute = $base . $relative;
         }
 
+        if ($type === 'tv') {
+            // RU: При создании TV-файла отказываем при любом занятом пути;
+            // RU: нельзя перезаписывать файл другой TV или симлинк.
+            // EN: A TV conversion must never overwrite another file or symlink.
+            ElementContentSupport::assertSafeStaticPath($context, $absolute);
+            if (file_exists($absolute) || is_link($absolute)) {
+                throw new \ModxMCPClientException(
+                    'make_static: TV target already exists; refusing overwrite.'
+                );
+            }
+        }
         $directory = dirname($absolute);
         if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
             throw new \ModxMCPClientException("make_static: cannot create directory {$directory}");

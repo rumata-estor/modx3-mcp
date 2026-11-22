@@ -26,6 +26,7 @@ $fixture=bin2hex(random_bytes(6));
 $name='MCP_StaticTV_'.$fixture;
 $id=0;
 $bootstrapChunkId=0;
+$generatedStaticPath=null;
 $checks=0;
 function stvRpc($action,array $data=array()){
     global $api;
@@ -90,10 +91,41 @@ try {
         'partial TV update persisted');
     stvCheck((string)($updated['static_file']??'')===$path,
         'TV static_file preserved during partial update');
+
+    // RU: Файловая конверсия TV только через MCP; после создания проверяем
+    // RU: байты файла и сохранение static-флагов через независимое чтение.
+    // EN: Convert TV via guarded MCP and independently verify file bytes
+    // EN: plus persistent TV static metadata on disposable MODX 2/3.
+    $conversion=stvRpc('make_static',array('type'=>'tv','id'=>$id));
+    $relative=(string)($conversion['static_file']??'');
+    stvCheck(strpos($relative,'core/elements/tvs/')===0,
+        'TV conversion output remains in approved static directory');
+    $generatedStaticPath=rtrim((string)$modx->getOption('base_path'),'/').'/'.$relative;
+    stvCheck(is_file($generatedStaticPath),
+        'TV static conversion actually wrote a file');
+    stvCheck(file_get_contents($generatedStaticPath)==='UPDATED_'.$fixture,
+        'TV static conversion copied raw default text');
+    $converted=stvRpc('get_element',array('type'=>'tv','id'=>$id));
+    stvCheck((int)($converted['static']??0)===1
+        && (string)($converted['static_file']??'')===$relative,
+        'TV static metadata persisted independently');
+    $deniedOverwrite=false;
+    try{stvRpc('make_static',array('type'=>'tv','id'=>$id));}
+    catch(ModxMCPClientException $e){
+        $deniedOverwrite=strpos($e->getMessage(),'already exists')!==false;
+    }
+    stvCheck($deniedOverwrite,'second TV conversion refused overwriting its file');
+    stvCheck(file_get_contents($generatedStaticPath)==='UPDATED_'.$fixture,
+        'rejected overwrite preserved original bytes');
     echo 'STATIC_TV_DISPOSABLE_ACCEPTANCE_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
     if($id>0)stvRpc('delete_element',array('type'=>'tv','id'=>$id));
+    if($generatedStaticPath!==null && is_file($generatedStaticPath)){
+        // RU: Тест убирает только файл, созданный в этой disposable CI-сессии.
+        // EN: Cleanup only the test's freshly generated disposable TV file.
+        unlink($generatedStaticPath);
+    }
     if($bootstrapChunkId>0)stvRpc('delete_element',array(
         'type'=>'chunk','id'=>$bootstrapChunkId
     ));
