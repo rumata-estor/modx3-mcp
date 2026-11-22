@@ -511,7 +511,7 @@ try {
     ));
     $updatedRoleFound=false;
     foreach($membersUpdated['results'] as $memberRow){
-        if(is_array($memberRow) && (int)($memberRow['user']??0)===$userId
+        if(is_array($memberRow) && (int)($memberRow['id']??0)===$userId
             && (int)($memberRow['role']??0)===$secondRoleId) {
             $updatedRoleFound=true;
         }
