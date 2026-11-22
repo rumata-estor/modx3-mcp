@@ -985,7 +985,7 @@
       "origin": "dynamic",
       "route": "acl",
       "processor": "security/group/update",
-      "cas_boundary": "revision_reserved_before_action",
+      "cas_boundary": "database_transaction",
       "risk": "critical",
       "verified_scenarios": [
         "manager_out_of_band_edit_stale_target_denied"
