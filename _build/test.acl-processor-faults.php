@@ -53,8 +53,10 @@ class AclFakeResponse {
 }
 class AclFakePlatform {
     public $calls=0;public $fail=true;
+    public $noResponse=false;
     public function runProcessor($modx,$name,$props) {
-        $this->calls++;return new AclFakeResponse($this->fail);
+        $this->calls++;
+        return $this->noResponse ? false : new AclFakeResponse($this->fail);
     }
     public function className($name){return 'modUserGroup';}
 }
@@ -91,6 +93,28 @@ foreach($specs as $name=>$spec){
     $checks++;
 }
 if ($checks!==29)throw new \RuntimeException('ACL_FAULT_FAIL: unexpected ACL catalog size '.$checks);
+// RU: Каждый ACL-процессор может выполнить часть работы и не ответить.
+// RU: Нельзя интерпретировать отсутствие ответа как безопасный отказ.
+// EN: Every ACL action may partially mutate state and then return nothing;
+// EN: never classify a missing response as safe-to-retry failure.
+$missingResponseChecks=0;
+foreach ($specs as $name=>$spec) {
+    if ($spec['route']!=='acl') continue;
+    $ctx=new AclFakeContext();
+    $ctx->platform->noResponse=true;
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool($name,$spec);
+    try {
+        $tool->execute($ctx,array('id'=>9,'name'=>'fixture'));
+        throw new \RuntimeException('ACL_MISSING_RESPONSE_ACCEPTED: '.$name);
+    } catch (ModxMCPClientException $e) {
+        if (strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN')!==0)
+            throw new \RuntimeException('ACL_MISSING_RESPONSE_RETRY_RISK: '.$name);
+    }
+    if ($ctx->platform->calls!==1 || $ctx->modx->cache->flushes!==0)
+        throw new \RuntimeException('ACL_MISSING_RESPONSE_SIDE_EFFECT: '.$name);
+    $missingResponseChecks++;
+}
+if ($missingResponseChecks!==29) throw new \RuntimeException('ACL_NO_RESPONSE_COVERAGE');
 // RU: Ошибка create_user не должна раскрывать пароль, даже если
 // RU: штатный MODX-процессор включил его в текст ошибки.
 // EN: A create_user error must not expose a generated password even if
@@ -134,5 +158,6 @@ foreach (array(
     $contextChecks++;
 }
 echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks
+    .' no_response='.$missingResponseChecks
     .' secret_checks=1 context_denials='.$contextChecks.PHP_EOL;
 }

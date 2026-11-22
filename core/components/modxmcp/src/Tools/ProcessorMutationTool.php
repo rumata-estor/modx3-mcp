@@ -215,7 +215,12 @@ class ProcessorMutationTool implements ToolInterface
             return 'Context processor not found or returned nothing: ' . $this->spec['processor'];
         }
         if ($route === 'acl') {
-            return 'ACL processor not found or returned nothing: ' . $this->spec['processor'];
+            // RU: Отсутствие ответа после запуска ACL не доказывает откат.
+            // RU: Повтор без проверки состояния может дублировать выдачу прав.
+            // EN: A missing ACL processor response does not prove rollback;
+            // EN: blindly retrying may duplicate access grants.
+            return 'MUTATION_OUTCOME_UNCERTAIN: ACL processor returned no response; '
+                . 'verify state via MCP before retry.';
         }
         if ($route === 'workspace') {
             return 'Workspace processor not found: ' . $this->spec['processor'];
