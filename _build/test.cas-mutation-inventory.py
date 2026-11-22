@@ -239,6 +239,21 @@ for action,scenario,verb in (
 assert "'/home/runner/'" in media_test
 assert 'stale replay did not increment revision' in media_test
 
+# RU: Назначение property set только своему одноразовому чанку.
+# EN: Bind per-action evidence to disposable element assignment CI.
+assign_test = (ROOT / '_build/test.ci-cas-propertyset-assignment.php').read_text()
+assert 'php _build/test.ci-cas-propertyset-assignment.php' in ci_workflow
+for action,scenario,marker in (
+ ('assign_property_set','disposable_chunk_property_set_assign_readback_stale_replay','ASSIGN'),
+ ('unassign_property_set','disposable_chunk_property_set_unassign_readback_stale_replay','UNASSIGN'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in assign_test
+    assert 'CAS_PROPERTY_SET_'+marker+'_READBACK_STALE_REPLAY_OK' in assign_test
+assert "'type'=>'chunk'" in assign_test
+assert 'stale replay did not advance revision' in assign_test
+assert 'stale assignment produced no duplicate' in assign_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
