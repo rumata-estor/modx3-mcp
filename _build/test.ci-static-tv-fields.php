@@ -96,7 +96,16 @@ try {
     // RU: байты файла и сохранение static-флагов через независимое чтение.
     // EN: Convert TV via guarded MCP and independently verify file bytes
     // EN: plus persistent TV static metadata on disposable MODX 2/3.
-    $conversion=stvRpc('make_static',array('type'=>'tv','id'=>$id));
+    // RU: Фиксируем CAS до файлового преобразования, чтобы старый запрос
+    // RU: нельзя было применить повторно после создания файла.
+    // EN: Pin the site revision before writing the disposable static TV file.
+    $staticState=stvRpc('get_site_state');
+    $staticRequest=array('type'=>'tv','id'=>$id,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$staticState['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ));
+    $conversion=stvRpc('make_static',$staticRequest);
     $relative=(string)($conversion['static_file']??'');
     stvCheck(strpos($relative,'core/elements/tvs/')===0,
         'TV conversion output remains in approved static directory');
@@ -105,6 +114,25 @@ try {
         'TV static conversion actually wrote a file');
     stvCheck(file_get_contents($generatedStaticPath)==='UPDATED_'.$fixture,
         'TV static conversion copied raw default text');
+    // RU: Отказ старого CAS не должен повторно перезаписывать байты.
+    // EN: Replayed stale CAS must not overwrite the previously written file.
+    $afterStaticState=stvRpc('get_site_state');
+    stvCheck((int)$afterStaticState['site_revision']
+        ===(int)$staticState['site_revision']+1,
+        'make_static consumes exactly one site revision');
+    $staleStatic=false;
+    try {stvRpc('make_static',$staticRequest);}
+    catch(ModxMCPClientException $e) {
+        $staleStatic=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    stvCheck($staleStatic,'stale make_static CAS replay denied');
+    $afterReplay=stvRpc('get_site_state');
+    stvCheck((int)$afterReplay['site_revision']
+        ===(int)$afterStaticState['site_revision'],
+        'rejected static replay consumed no revision');
+    stvCheck(file_get_contents($generatedStaticPath)==='UPDATED_'.$fixture,
+        'stale make_static replay preserved static file bytes');
+    echo 'CAS_MAKE_STATIC_TV_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     $converted=stvRpc('get_element',array('type'=>'tv','id'=>$id));
     stvCheck((int)($converted['static']??0)===1
         && (string)($converted['static_file']??'')===$relative,
