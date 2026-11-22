@@ -447,6 +447,39 @@ try {
     // RU: по устаревшему CAS, удаление и независимое чтение результата.
     // EN: Membership lifecycle via MCP: grant, readback, stale CAS
     // EN: rejection, revoke and independent readback.
+    // RU: Независимый Manager добавляет участника, не изменяя site_revision.
+    // RU: MCP обязан отказать со старым отпечатком группы.
+    // EN: Independent Manager membership writes must invalidate a group CAS
+    // EN: snapshot without advancing the connector site revision.
+    $externalBefore=acceptanceSnapshot('user_group',$groupId);
+    $worker=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
+        (string)$groupId,(string)$userId,(string)$roleId);
+    $workerCommand=implode(' ',array_map('escapeshellarg',$worker));
+    $workerOutput=array();$workerExit=1;
+    exec($workerCommand.' 2>&1',$workerOutput,$workerExit);
+    acceptanceCheck($workerExit===0 && strpos(implode(' ',$workerOutput),
+        'DISPOSABLE_MANAGER_MEMBERSHIP_CHANGED_OK')!==false,
+        'independent Manager added group member');
+    $externalCurrent=acceptanceRpc('get_site_state');
+    acceptanceCheck((int)$externalCurrent['site_revision']
+        ===(int)$externalBefore['observed_site_revision'],
+        'independent membership does not bump MCP site revision');
+    $externalDenied=false;
+    try {
+        acceptanceRpc('update_user_group',array(
+            'id'=>$groupId,'name'=>'FORBIDDEN_STALE_'.$fixture,
+            '_runtime_preconditions'=>$externalBefore));
+    } catch (ModxMCPClientException $e) {
+        $externalDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($externalDenied,'stale group snapshot rejected Manager membership');
+    $afterExternal=acceptanceRpc('get_user_group',array('id'=>$groupId));
+    acceptanceCheck((string)($afterExternal['name']??'')
+        !=='FORBIDDEN_STALE_'.$fixture,
+        'rejected group mutation preserved Manager membership');
+    acceptanceClean('remove_user_from_group',array(
+        'user'=>$userId,'usergroup'=>$groupId));
+    echo 'ACL_MANAGER_MEMBERSHIP_CONFLICT_DENIED_OK'.PHP_EOL;
     $memberName='mcp_acceptance_'.$fixture;
     $membersBefore=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
