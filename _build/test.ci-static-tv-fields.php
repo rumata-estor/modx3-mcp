@@ -114,7 +114,7 @@ try {
     // EN: View/edit static TV content through guarded MCP, then compare
     // EN: the static file and the independently read raw TV default.
     $view=stvRpc('view_element',array('type'=>'tv','id'=>$id));
-    stvCheck(($view['numbered']??'')==='1\tUPDATED_'.$fixture,
+    stvCheck(($view['numbered']??'')==="1\tUPDATED_".$fixture,
         'view_element returns the raw TV static file');
     stvRpc('edit_element_lines',array('type'=>'tv','id'=>$id,'edits'=>array(
         array('start_line'=>1,'end_line'=>1,
