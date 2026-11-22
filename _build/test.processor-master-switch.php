@@ -52,9 +52,16 @@ class ProcessorGateFakeModx {
 }
 class ProcessorGateFakeResponse {
     public $fail=false;
+    public static $throwAt='';
     public function __construct($fail=false){$this->fail=$fail;}
-    public function isError() {return $this->fail;}
-    public function getResponse() {return '{"success":true}';}
+    public function isError() {
+        if(self::$throwAt==='isError')throw new \RuntimeException('SECRET_RESPONSE_STATUS');
+        return $this->fail;
+    }
+    public function getResponse() {
+        if(self::$throwAt==='getResponse')throw new \RuntimeException('SECRET_RESPONSE_BODY');
+        return '{"success":true}';
+    }
     public function getMessage() {return 'secret-should-not-appear';}
 }
 class ProcessorGateFakePlatform {
@@ -166,6 +173,19 @@ try {(new \ModxMcp\Tools\RunProcessorTool())->execute(
 }
 if(!$thrownUncertain)throw new \RuntimeException('PROCESSOR_THROW_SECRET_OR_STATUS');
 $ctx->p->throw=false;
+$ctx->p->respond=true;
+foreach(array('isError','getResponse') as $failurePoint) {
+    ProcessorGateFakeResponse::$throwAt=$failurePoint;
+    $uncertain=false;
+    try {(new \ModxMcp\Tools\RunProcessorTool())->execute(
+        $ctx,array('processor'=>'system/clearcache')
+    );} catch(ModxMCPClientException $e) {
+        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SECRET_RESPONSE')===false;
+    }
+    if(!$uncertain)throw new \RuntimeException('PROCESSOR_POST_DISPATCH_FAILURE_LEAK');
+}
+ProcessorGateFakeResponse::$throwAt='';
 // RU: В защищённом режиме фактическая политика БД важнее кеша PHP.
 // EN: Protected mode must use persisted policy even when PHP cache disagrees.
 \ModxMcp\Security\ProtectedAuthorization::$protected=true;
