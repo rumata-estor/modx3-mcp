@@ -33,6 +33,7 @@ require_once __DIR__ . '/test.cas-mcp-helper.php';
 $api = new modxMCP($modx);
 $checks = 0;
 $resourceId = 0;
+$dateResourceId = 0;
 $chunkId = 0;
 $userId = 0;
 $groupId = 0;
@@ -116,9 +117,6 @@ try {
         'alias'=>'mcp-acceptance-'.$fixture, 'content'=>'BEFORE_'.$fixture,
         'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
         'richtext'=>1,'searchable'=>0,'cacheable'=>0,
-        // RU: Непустая дата нужна для обнаружения форматирования в CAS.
-        // EN: Nonempty scheduled date exercises actual fingerprint stability.
-        'pub_date'=>'2027-02-03 14:15:46',
     ));
     acceptanceCheck(is_array($created) && isset($created['id']) && (int)$created['id']>0,
         'CAS guarded resource creation');
@@ -138,13 +136,27 @@ try {
     // EN: Reported by @AgelxNash, PR #57; verify through MCP only.
     $originalDateFormat=$modx->getOption('manager_date_format');
     $originalTimeFormat=$modx->getOption('manager_time_format');
-    acceptanceCheck(!empty($read['pub_date']),
-        'resource has nonempty date for fingerprint regression');
-    $dateSnapshot=acceptanceSnapshot('resource',$resourceId);
+    // RU: Отдельная временная опубликованная запись имеет ненулевую дату
+    // RU: publishedon; основную проверочную страницу оставляем неопубликованной.
+    // EN: Separate disposable published fixture has a real publishedon;
+    // EN: the primary acceptance resource remains unpublished.
+    $dateResource=acceptanceRpc('create_element',array(
+        'type'=>'resource','name'=>'MCP date CAS '.$fixture,
+        'alias'=>'mcp-date-cas-'.$fixture,'published'=>1,'hidemenu'=>1,
+        'template'=>0,'parent'=>0,'content'=>'DATE_ONLY_'.$fixture,
+    ));
+    $dateResourceId=(int)($dateResource['id'] ?? 0);
+    acceptanceCheck($dateResourceId>0,'published date fixture created');
+    $dateRead=acceptanceRpc('get_element',array(
+        'type'=>'resource','id'=>$dateResourceId
+    ));
+    acceptanceCheck(!empty($dateRead['publishedon']),
+        'published date fixture provides nonempty raw publishedon');
+    $dateSnapshot=acceptanceSnapshot('resource',$dateResourceId);
     try {
         $modx->setOption('manager_date_format','d/m/Y');
         $modx->setOption('manager_time_format','g:i A');
-        $formattedSnapshot=acceptanceSnapshot('resource',$resourceId);
+        $formattedSnapshot=acceptanceSnapshot('resource',$dateResourceId);
         acceptanceCheck(
             $dateSnapshot['read_set'][0]['fingerprint']
                 ===$formattedSnapshot['read_set'][0]['fingerprint'],
@@ -508,6 +520,8 @@ try {
     $groupId=0;
     acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
     $chunkId=0;
+    acceptanceClean('delete_element',array('type'=>'resource','id'=>$dateResourceId,'dry_run'=>false));
+    $dateResourceId=0;
     acceptanceClean('delete_element',array('type'=>'resource','id'=>$resourceId,'dry_run'=>false));
     $read=acceptanceRpc('get_element',array('type'=>'resource','id'=>$resourceId));
     acceptanceCheck(!empty($read['deleted']),'resource soft-delete persisted');
@@ -524,6 +538,8 @@ try {
     if ($roleId>0) acceptanceClean('delete_role',array('id'=>$roleId));
     if ($groupId>0) acceptanceClean('delete_user_group',array('id'=>$groupId));
     if ($chunkId>0) acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
+    if ($dateResourceId>0) acceptanceClean('delete_element',array(
+        'type'=>'resource','id'=>$dateResourceId,'dry_run'=>false));
     if ($resourceId>0) acceptanceClean('delete_element',array(
         'type'=>'resource','id'=>$resourceId,'dry_run'=>false));
 }
