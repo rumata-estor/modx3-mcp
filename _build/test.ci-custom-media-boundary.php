@@ -41,14 +41,30 @@ $modx->setOption('modxmcp.allow_root_filesystem_read',true);
 $list=$api->processRequest('list_media_source_files','',array('id'=>1));
 localCheck(is_array($list) && isset($list['entries'])
     && is_array($list['entries']),'stock source listing allowed');
-$path='components/modxmcp/api.php';
-$root=rtrim((string)$source['root_path'],'/').'/';
-localCheck(is_file($root.$path),'known disposable MCP asset installed');
-$result=$api->processRequest('read_media_source_file','',array(
-    'id'=>1,'path'=>$path,'bytes'=>256
-));
-$text=isset($result['content']) ? (string)$result['content'] : '';
-if(($result['encoding']??'')==='base64')$text=base64_decode($text);
-localCheck(strpos($text,'<?php')===0,'stock asset readable only when allowed');
-localCheck(($result['returned_bytes']??0)>0,'bounded read returned data');
+// RU: Фикстура на disposable runner создаётся отдельно от MCP; читаем
+// RU: файл только через реальный инструмент MCP. Не тестируем здесь запись.
+// EN: Prepare a disposable fixture; all tested reads run through MCP.
+$root=realpath((string)$source['root_path']);
+localCheck(is_string($root) && strpos($root,'/home/runner/')===0,
+    'source root restricted to disposable runner');
+$path='mcp-local-read-'.bin2hex(random_bytes(6)).'.txt';
+$fixture=$root.DIRECTORY_SEPARATOR.$path;
+$payload='LOCAL_MEDIA_READ_BOUNDARY_OK';
+$handle=@fopen($fixture,'xb');
+localCheck(is_resource($handle),'disposable fixture created');
+try {
+    localCheck(fwrite($handle,$payload)===strlen($payload),'fixture bytes written');
+    fclose($handle);$handle=null;
+    $result=$api->processRequest('read_media_source_file','',array(
+        'id'=>1,'path'=>$path,'bytes'=>256
+    ));
+    $text=isset($result['content']) ? (string)$result['content'] : '';
+    if(($result['encoding']??'')==='base64')$text=base64_decode($text);
+    localCheck($text===$payload,'stock file read via MCP preserved');
+    localCheck(($result['returned_bytes']??0)===strlen($payload),
+        'bounded read returned only requested fixture');
+} finally {
+    if(is_resource($handle))fclose($handle);
+    if(is_file($fixture))unlink($fixture);
+}
 echo 'STOCK_MEDIA_SOURCE_MODX'.($is2?'2':'3').'_OK checks='.$checks.PHP_EOL;
