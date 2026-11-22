@@ -277,6 +277,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-protected-auth.php
+      # RU: Отдельный процесс MODX для подписанных контекстов и конкурирующего CAS.
+      # EN: Separate MODX runtime for signed context and competing CAS clients.
+      - name: Signed context permits and competing CAS client readback
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-protected-context-cas.php
       # RU: Реальный подписанный вызов, повтор после потери ответа, без двойной мутации.
       # EN: Signed end-to-end replay after lost response without duplicate mutation.
       - name: Signed opt-in operation journal real dispatcher integration
