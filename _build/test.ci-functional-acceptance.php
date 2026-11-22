@@ -484,7 +484,6 @@ try {
     // RU: незавершённую транзакцию; MCP пытается обновить эту же группу.
     // EN: Probe a concurrent uncommitted Manager membership insertion. A
     // EN: successful MCP update here would demonstrate a CAS TOCTOU gap.
-    $raceBefore=acceptanceSnapshot('user_group',$groupId);
     $readyFile=rtrim(getenv('RUNNER_TEMP'),'/').'/member-cas-race-'.bin2hex(random_bytes(5));
     $raceUser=acceptanceRpc('create_user',array(
         'username'=>'mcp_race_'.$fixture,
@@ -493,6 +492,7 @@ try {
         'password'=>'CI-'.bin2hex(random_bytes(12)).'9Q!',
         'passwordnotifymethod'=>'s','active'=>0));
     $raceUserId=(int)$raceUser['id'];
+    $raceBefore=acceptanceSnapshot('user_group',$groupId);
     $raceCommand=array(PHP_BINARY,__DIR__.'/test.ci-acl-member-manager-worker.php',
         (string)$groupId,(string)$raceUserId,(string)$roleId,$readyFile);
     $racePipes=array();
