@@ -24,8 +24,10 @@ require_once __DIR__.'/test.cas-mcp-helper.php';
 $api=new modxMCP($modx);
 $modx->setOption('modxmcp.disabled_groups','');
 $fixture=bin2hex(random_bytes(5));
-$key='mcp_acl_'.$fixture;
-$deniedKey='mcp_deny_acl_'.$fixture;
+// RU: Ключ контекста должен быть буквенно-цифровым на MODX 2/3.
+// EN: Native MODX 2/3 context key validation requires alphanumeric keys.
+$key='mcpacl'.$fixture;
+$deniedKey='mcpdenyacl'.$fixture;
 $created=false;
 $checks=0;
 function acdRpc($action,array $data=array()){
