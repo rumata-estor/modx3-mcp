@@ -91,7 +91,7 @@ class StateSupport
                     || !isset($item['type'])
                     || !in_array($item['type'], array(
                         'resource','template','chunk','snippet','plugin','tv',
-                        'category','system_setting'
+                        'category','system_setting','user','user_group','role'
                     ), true)
                     || (empty($item['id']) && empty($item['name']) && empty($item['key']))) {
                     throw new \ModxMCPClientException(
@@ -406,6 +406,76 @@ class StateSupport
         return $state;
     }
 
+    // RU: ACL CAS считает хеш наблюдаемого через штатный MCP чтения.
+    // RU: Хеш пароля пользователя добавляется только ВНУТРИ fingerprint,
+    // RU: но в get_site_state никакие значения/хеши паролей не возвращаются.
+    // EN: Bind ACL fingerprints to MCP-readable models, including a private
+    // EN: password digest for users without exposing credentials to clients.
+    private static function aclTargetState($context, $type, array $item)
+    {
+        if (!isset($item['id']) || !is_int($item['id']) || $item['id'] < 1) {
+            throw new \ModxMCPClientException(
+                'STALE_STATE ACL target fingerprint requires numeric id.'
+            );
+        }
+        $id = $item['id'];
+        if ($type === 'user') {
+            $raw = (new UserGetTool())->execute($context, array('id'=>$id));
+        } elseif ($type === 'user_group') {
+            $raw = (new UserGroupGetTool())->execute($context, array('id'=>$id));
+        } else {
+            $raw = (new RoleGetTool())->execute($context, array('id'=>$id));
+        }
+        if (!is_array($raw) || !isset($raw['id']) || (int)$raw['id'] !== $id) {
+            throw new \ModxMCPClientException('STALE_STATE ACL target read failed.');
+        }
+        // Sensitive, derivative, and unstable processor fields are excluded.
+        $safeFields = array(
+            'user' => array('id','username','active','sudo','primary_group',
+                'remote_key','remote_data','blocked','blockeduntil',
+                'blockedafter','lastlogin','logincount','sessionid'),
+            'user_group' => array('id','name','description','parent','rank'),
+            'role' => array('id','name','description','authority'),
+        );
+        $state = array('exists'=>true, 'id'=>$id);
+        foreach ($safeFields[$type] as $field) {
+            if (array_key_exists($field, $raw)) {
+                $state[$field] = $raw[$field];
+            }
+        }
+        if ($type === 'user') {
+            // User profile may be joined by processors; include relevant
+            // persisted profile fields, but never return them individually.
+            $profile = $context->modx()->getObject(
+                $context->platform()->majorVersion() === 2
+                    ? 'modUserProfile' : 'MODX\Revolution\modUserProfile',
+                array('internalKey'=>$id)
+            );
+            if ($profile) {
+                $profileData = $profile->toArray();
+                foreach (array('fullname','email','phone','mobilephone',
+                    'address','city','state','zip','country','gender',
+                    'dob','extended') as $field) {
+                    if (array_key_exists($field,$profileData)) {
+                        $state['profile_'.$field] = $profileData[$field];
+                    }
+                }
+            }
+            $model = $context->modx()->getObject(
+                $context->platform()->className('user'), $id
+            );
+            if (!$model) {
+                throw new \ModxMCPClientException('STALE_STATE user model missing.');
+            }
+            foreach (array('password','salt','cachepwd') as $secret) {
+                $state['secret_'.$secret.'_sha256'] = hash(
+                    'sha256', (string)$model->get($secret)
+                );
+            }
+        }
+        return $state;
+    }
+
     private static function systemSettingState($context, array $item)
     {
         $key = isset($item['key']) ? trim((string)$item['key']) : '';
@@ -451,6 +521,8 @@ class StateSupport
         )));
         if ($type === 'system_setting') {
             $state = self::systemSettingState($context, $item);
+        } elseif (in_array($type,array('user','user_group','role'),true)) {
+            $state = self::aclTargetState($context, $type, $item);
         } elseif (in_array(
             $type,
             array('resource', 'template', 'chunk', 'snippet', 'plugin', 'tv', 'category'),
@@ -565,7 +637,7 @@ class StateSupport
                 || !isset($item['type'])
                 || !in_array($item['type'], array(
                     'resource','template','chunk','snippet','plugin','tv',
-                    'category','system_setting'
+                    'category','system_setting','user','user_group','role'
                 ), true)
                 || !isset($item['fingerprint'])
                 || !is_string($item['fingerprint'])
@@ -597,13 +669,23 @@ class StateSupport
     public static function requireProtectedTargetReadSet(
         $action, array $data, array $preconditions
     ) {
-        if (!in_array($action, array('update_element','delete_element'), true)) {
+        $protectedTargets = array(
+            'update_user' => 'user', 'delete_user' => 'user',
+            'update_user_group' => 'user_group',
+            'delete_user_group' => 'user_group',
+            'update_role' => 'role', 'delete_role' => 'role',
+        );
+        if (isset($protectedTargets[$action])) {
+            $type = $protectedTargets[$action];
+        } elseif (in_array($action, array('update_element','delete_element'), true)) {
+            $type = isset($data['type']) ? (string)$data['type'] : '';
+        } else {
             return $preconditions;
         }
-        $type = isset($data['type']) ? (string)$data['type'] : '';
         $id = isset($data['id']) ? $data['id'] : null;
         if (!in_array($type, array(
-                'resource','template','chunk','snippet','plugin','tv','category'
+                'resource','template','chunk','snippet','plugin','tv','category',
+                'user','user_group','role'
             ), true)
             || !is_int($id) || $id < 1) {
             throw new \ModxMCPClientException(
