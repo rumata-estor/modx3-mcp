@@ -842,3 +842,13 @@ jobs:
         run: |
           set -euo pipefail
           php _build/test.ms2-order-uncertain-fault.php
+      # RU: Проверяем штатную msCategory в pinned miniShop2; несовместимость = падение.
+      # EN: Native category and option assignment, fail if addon incompatible.
+      - name: Disposable miniShop2 categories and option assignment MCP CAS
+        if: matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-category-assignment-installed.php
