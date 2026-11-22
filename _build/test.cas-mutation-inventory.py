@@ -535,6 +535,23 @@ for action,marker in (
     assert marker in ms2_native
     assert "'"+action+"'" in ms2_native
 
+# RU: Назначение категории и создание msCategory на нативном MODX 2.
+# EN: Require installed MODX2 miniShop2 category and option assignment E2E.
+ms2_categories=(ROOT / '_build/test.ci-ms2-category-assign-modx2.php').read_text()
+assert 'php _build/test.ci-ms2-category-assign-modx2.php' in ci_workflow
+for action,marker in (
+    ('ms2_create_category','CAS_MS2_CREATE_CATEGORY_NATIVE_READBACK_STALE_OK'),
+    ('ms2_assign_option_to_category','CAS_MS2_ASSIGN_OPTION_CATEGORY_NATIVE_READBACK_STALE_OK'),
+):
+    assert expected[action]['verified_scenarios'] == [
+        'disposable_modx2_pinned_'+action+'_native_mcp_readback_stale_replay'
+    ]
+    assert marker in ms2_categories
+    assert "'"+action+"'" in ms2_categories
+assert "'value' => ''" in (
+    ROOT / 'core/components/modxmcp/src/Tools/Ms2OptionAssignCategoryTool.php'
+).read_text()
+
 # RU: Публикуемый отчёт не должен отставать от машинного реестра.
 # EN: Keep the human-readable evidence tracker identical to the manifest.
 import subprocess
