@@ -371,6 +371,15 @@ jobs:
           php _build/test.ci-cas-policy-evidence.php
       # RU: Disposable-набор свойств без привязки к элементам.
       # EN: Unassigned property set create/update/delete and stale replay.
+      # RU: Создание/обновление/удаление одноразового пространства имён.
+      # EN: Disposable namespace metadata lifecycle and stale replay.
+      - name: Disposable namespace CAS lifecycle
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-namespace-evidence.php
       - name: Disposable property set CAS lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'
