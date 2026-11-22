@@ -389,6 +389,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-media-source-evidence.php
+      # RU: Провайдер в .invalid: без сетевых запросов и реальных пакетов.
+      # EN: Metadata-only disposable provider lifecycle using reserved .invalid.
+      - name: Disposable provider CAS lifecycle
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-provider-evidence.php
       - name: Disposable property set CAS lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'
