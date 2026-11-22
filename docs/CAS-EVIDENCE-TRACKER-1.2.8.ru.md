@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 53. **Не имеют индивидуальных сценариев:** 63.
+сценарий:** 56. **Не имеют индивидуальных сценариев:** 60.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -24,14 +24,11 @@
 | `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
-## P1 — операции повышенного риска — 4 без сценария
+## P1 — операции повышенного риска — 1 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `create_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `delete_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 | `revert_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `update_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 
 ## P2 — остальные операции — 52 без сценария
 
@@ -103,6 +100,7 @@
 | `create_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `create_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `create_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `create_namespace` | high | `disposable_namespace_metadata_create_readback_stale_replay` |
 | `create_property_set` | review | `disposable_unassigned_property_set_create_readback_stale_replay` |
 | `create_resource_group` | critical | `disposable_create_readback_revision_stale_replay` |
 | `create_role` | critical | `disposable_create_readback_revision_stale_replay` |
@@ -117,6 +115,7 @@
 | `delete_element` | review | `regular_resource_soft_delete_revision_write_failure_rollback` |
 | `delete_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `delete_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `delete_namespace` | high | `disposable_namespace_metadata_delete_readback_stale_replay` |
 | `delete_property_set` | review | `disposable_unassigned_property_set_delete_readback_stale_replay` |
 | `delete_role` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `delete_system_setting` | review | `revision_write_failure_rollback` |
@@ -140,6 +139,7 @@
 | `update_context_setting` | high | `disposable_context_setting_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `update_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied`, `concurrent_media_cas` |
+| `update_namespace` | high | `disposable_namespace_metadata_update_readback_stale_replay` |
 | `update_property_set` | review | `disposable_unassigned_property_set_description_update_readback_stale_replay` |
 | `update_resource_tvs` | review | `revision_write_failure_rollback`, `concurrent_cas_conflict`, `raw_tv_and_inherit` |
 | `update_resourcegroup_access` | critical | `disposable_resourcegroup_acl_update_readback_stale_replay` |
