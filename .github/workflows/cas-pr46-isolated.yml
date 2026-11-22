@@ -427,6 +427,15 @@ jobs:
           php _build/test.ci-cas-lexicon-evidence.php
       # RU: Удалённый собственный ресурс и CAS-восстановление.
       # EN: Restore disposable unpublished resource with stale replay denial.
+      # RU: Перестановка только двух собственных неопубликованных ресурсов.
+      # EN: Disposable resource ordering with strict stale replay checks.
+      - name: Disposable reorder resources CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-reorder-resources.php
       - name: Disposable undelete resource CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
