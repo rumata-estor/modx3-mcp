@@ -94,6 +94,39 @@ try{
             'stale replay preserved new menuindex');
     }
     echo 'CAS_REORDER_RESOURCES_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    // RU: Ошибка следующей позиции должна быть обнаружена до первой записи.
+    // EN: Missing or malformed second target must not mutate the first.
+    $invalidBatches=array(
+        array('items'=>array(
+            array('id'=>$ids[0],'menuindex'=>$next[0]+300),
+            array('id'=>2147483600,'menuindex'=>42))),
+        array('items'=>array(
+            array('id'=>$ids[0],'menuindex'=>$next[0]+300),
+            array('id'=>-1,'menuindex'=>42))),
+        array('items'=>array(
+            array('id'=>$ids[0],'menuindex'=>$next[0]+300),
+            array('id'=>$ids[0],'menuindex'=>$next[0]+400))),
+        array('items'=>array(
+            array('id'=>$ids[0],'menuindex'=>$next[0]+300),
+            array('id'=>$ids[1],'menuindex'=>'not-a-number'))),
+    );
+    foreach($invalidBatches as $batch){
+        $batch['_runtime_preconditions']=orderGuard();
+        $rejected=false;
+        try{orderRpc('reorder_resources',$batch);}
+        catch(ModxMCPClientException $e){
+            $message=$e->getMessage();
+            $rejected=strpos($message,'NOT_FOUND:')!==false
+                || strpos($message,'VALIDATION_ERROR:')!==false;
+        }
+        orderCheck($rejected,'invalid reorder batch refused before writes');
+        foreach($ids as $idx=>$id){
+            $resource=orderRead($id);
+            orderCheck((int)$resource['menuindex']===$next[$idx],
+                'failed reorder left previously valid resource untouched');
+        }
+    }
+    echo 'CAS_REORDER_RESOURCES_FAILED_PREFLIGHT_NO_PARTIAL_WRITES_OK'.PHP_EOL;
 } finally {
     foreach(array_reverse($ids) as $id){
         orderRpc('delete_element',array('type'=>'resource','id'=>$id,'dry_run'=>false));
