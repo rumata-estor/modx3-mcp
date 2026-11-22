@@ -369,6 +369,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-policy-evidence.php
+      # RU: Disposable-набор свойств без привязки к элементам.
+      # EN: Unassigned property set create/update/delete and stale replay.
+      - name: Disposable property set CAS lifecycle
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-propertyset-evidence.php
       - name: Disposable per-action ACL create CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
