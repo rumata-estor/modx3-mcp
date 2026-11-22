@@ -35,12 +35,12 @@ class Ms2OrderUpdateTool implements ToolInterface
                 array('id', 'status', 'delivery', 'payment')
             );
             return $result;
-        } catch (\\Throwable $error) {
+        } catch (\Throwable $error) {
             // RU: Upstream сохраняет объект ДО смены статуса; ошибка, отсутствие
             // RU: ответа или сбой аудита не доказывают отсутствие записи.
             // EN: Native processor may save before status transition; no retry
             // EN: is safe without independently confirming the order state.
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: miniShop2 order update may have '
                 . 'partially changed the order; inspect via ms2_get_order '
                 . 'before any new authorized mutation.'
