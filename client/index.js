@@ -2208,7 +2208,7 @@ const toolDefinitions = [
   },
   {
     name: "modx_create_context",
-    description: "Create a context. 'key' is the unique identifier (e.g. 'mobile').",
+    description: "Create a context. 'key' is its unique identifier (e.g. 'mobile'). Unlike native MODX defaults, the MCP route DOES NOT grant anonymous Load Only access; grant context permissions explicitly through an independently authorized ACL workflow.",
     inputSchema: { type: "object", properties: { key: { type: "string" }, name: { type: "string" }, description: { type: "string" }, rank: { type: "number" } }, required: ["key"] },
   },
   {

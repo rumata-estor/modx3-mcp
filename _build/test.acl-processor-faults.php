@@ -271,7 +271,41 @@ foreach (array(
     }
     $contextChecks++;
 }
+// RU: Контекст не должен автоматически получать анонимный Load Only,
+// RU: даже если вызывающий пытается включить enableAnonymous или settings.
+// EN: Context creation must default to no anonymous grant and reject
+// EN: attempts to smuggle access/settings through a generic context action.
+$contextCreateDenials=0;
+foreach(array(
+    array('enableAnonymous'=>true),
+    array('enableAnonymous'=>'false'),
+    array(' ENABLEANONYMOUS '=>1),
+    array('settings'=>array('modxmcp.allow_run_processor'=>'1')),
+) as $payload){
+    $ctx=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool('create_context',$specs['create_context']);
+    try {$tool->execute($ctx,array_merge(array('key'=>'fixture_ctx'),$payload));
+        throw new \RuntimeException('CONTEXT_ANONYMOUS_AUTO_GRANT_ALLOWED');
+    } catch(ModxMCPClientException $e){
+        if(strpos($e->getMessage(),'AUTH_DENIED:')!==0
+            && strpos($e->getMessage(),'settings')===false)throw $e;
+    }
+    if($ctx->platform->calls!==0)
+        throw new \RuntimeException('CONTEXT_UNSAFE_PROCESSOR_CALLED');
+    $contextCreateDenials++;
+}
+$ctx=new AclFakeContext();
+$tool=new \ModxMcp\Tools\ProcessorMutationTool('create_context',$specs['create_context']);
+try {$tool->execute($ctx,array('key'=>'fixture_ctx'));}
+catch(ModxMCPClientException $e) {
+    if($e->getMessage()!=='injected processor failure')throw $e;
+}
+if($ctx->platform->calls!==1
+    || !array_key_exists('enableAnonymous',$ctx->platform->lastProps)
+    || $ctx->platform->lastProps['enableAnonymous']!==false)
+    throw new \RuntimeException('CONTEXT_CREATE_DEFAULT_ANONYMOUS_GRANT');
 echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks
+    .' anonymous_context_denials='.$contextCreateDenials
     .' no_response='.$missingResponseChecks
     .' secret_checks=1 context_denials='.$contextChecks.PHP_EOL;
 }

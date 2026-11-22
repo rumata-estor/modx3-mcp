@@ -104,10 +104,28 @@ class ProcessorMutationTool implements ToolInterface
                     }
                 }
             }
-            if ($this->toolName === 'update_context') {
+            if (in_array($this->toolName, array('create_context', 'update_context'), true)) {
                 \ModxMcp\Security\ProtectedSettingsGuard::assertNoOpaqueContextSettings(
                     $props
                 );
+            }
+            if ($this->toolName === 'create_context') {
+                // RU: MODX context/create по умолчанию создаёт ACL для
+                // RU: анонимных пользователей (Load Only). MCP не должен
+                // RU: выдавать этот доступ без отдельного grant_context_access.
+                // EN: Core context/create defaults to anonymous Load Only
+                // EN: access. Use explicit independent ACL grant instead.
+                foreach (array_keys($props) as $field) {
+                    if (!is_string($field)
+                        || strtolower(trim($field)) !== 'enableanonymous') { continue; }
+                    if ($field !== 'enableAnonymous'
+                        || !in_array($props[$field], array(false, 0, '0'), true)) {
+                        throw new \ModxMCPClientException(
+                            'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
+                        );
+                    }
+                }
+                $props['enableAnonymous'] = false;
             }
             $this->prepareContext($props);
             $this->loadLexicons(
