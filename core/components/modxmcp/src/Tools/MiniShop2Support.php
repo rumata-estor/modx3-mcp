@@ -68,7 +68,7 @@ class MiniShop2Support
         foreach (array('link', 'master', 'slave') as $field) {
             if (!array_key_exists($field, $data)
                 || (!is_int($data[$field]) && !is_string($data[$field]))) {
-                throw new \\ModxMCPClientException(
+                throw new \ModxMCPClientException(
                     $field . ' is required and must be a positive integer.'
                 );
             }
@@ -79,7 +79,7 @@ class MiniShop2Support
             if (!preg_match('/\\A[1-9][0-9]*\\z/D', $raw)
                 || $number <= 0
                 || (string)$number !== $raw) {
-                throw new \\ModxMCPClientException(
+                throw new \ModxMCPClientException(
                     $field . ' is required and must be a positive integer.'
                 );
             }
