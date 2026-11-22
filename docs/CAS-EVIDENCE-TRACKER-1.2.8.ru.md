@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 59. **Не имеют индивидуальных сценариев:** 57.
+сценарий:** 61. **Не имеют индивидуальных сценариев:** 55.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -30,11 +30,10 @@
 |---|---|---|
 | `revert_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 
-## P2 — остальные операции — 49 без сценария
+## P2 — остальные операции — 47 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `assign_property_set` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `bulk_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `clear_tv_values` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -68,7 +67,6 @@
 | `reorder_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `replace_across` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `set_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `unassign_property_set` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `undelete_resource` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -89,6 +87,7 @@
 | Действие | Риск | Подтверждённые сценарии (не полная гарантия) |
 |---|---|---|
 | `assign_element_category` | review | `revision_write_failure_rollback` |
+| `assign_property_set` | review | `disposable_chunk_property_set_assign_readback_stale_replay` |
 | `create_access_policy` | critical | `disposable_unassigned_policy_create_readback_revision_stale_replay` |
 | `create_access_policy_template` | critical | `disposable_grouped_policy_template_create_readback_stale_replay` |
 | `create_category` | review | `revision_write_failure_rollback` |
@@ -129,6 +128,7 @@
 | `revoke_context_access` | critical | `disposable_context_acl_revoke_readback_stale_replay` |
 | `revoke_resourcegroup_access` | critical | `disposable_resourcegroup_acl_revoke_readback_stale_replay` |
 | `run_processor` | critical | `revision_reservation_refusal_only` |
+| `unassign_property_set` | review | `disposable_chunk_property_set_unassign_readback_stale_replay` |
 | `uninstall_package` | critical | `revision_reservation_refusal_only` |
 | `update_access_policy` | critical | `disposable_unassigned_policy_description_update_readback_stale_replay` |
 | `update_access_policy_template` | critical | `disposable_grouped_policy_template_description_update_readback_stale_replay` |
