@@ -452,7 +452,8 @@ Update a MODX system setting by key.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
-| `key` | string | yes | — |
+| `key` | string | yes | Existing (original) setting key |
+| `new_key` | string | no | Rename to a new nonempty, non-protected key (fails if it already exists); reported by @AgelxNash, PR #56 |
 | `value` | string | no | — |
 | `xtype` | string | no | — |
 | `namespace` | string | no | — |

@@ -482,6 +482,49 @@ try {
     acceptanceRpc('update_system_setting',array('key'=>$settingKey,'value'=>'TWO'));
     $setting=acceptanceRpc('get_system_setting',array('key'=>$settingKey));
     acceptanceCheck((string)$setting['value']==='TWO','system setting update/readback');
+    // RU: PR #56, @AgelxNash: PK-ключ должен переименовываться одним UPDATE,
+    // RU: с CAS и независимым чтением, а не через xPDOObject::save().
+    // EN: PR #56, @AgelxNash: PK rename uses one guarded UPDATE and readback.
+    $originalSettingKey=$settingKey;
+    $renamedSettingKey=$settingKey.'_renamed';
+    $renameState=acceptanceRpc('get_site_state');
+    $renameRequest=array(
+        'key'=>$settingKey,'new_key'=>$renamedSettingKey,'value'=>'THREE',
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$renameState['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    $renamed=acceptanceRpc('update_system_setting',$renameRequest);
+    // RU: После успешного переименования finally удалит только новый ключ.
+    // EN: Cleanup always targets the actual renamed temporary setting.
+    $settingKey=$renamedSettingKey;
+    acceptanceCheck(($renamed['key']??'')===$settingKey
+        && ($renamed['value']??'')==='THREE',
+        'setting rename returned updated key/value');
+    $setting=acceptanceRpc('get_system_setting',array('key'=>$settingKey));
+    acceptanceCheck(($setting['value']??'')==='THREE',
+        'setting rename persisted via independent MCP readback');
+    $oldStillExists=false;
+    try {acceptanceRpc('get_system_setting',array('key'=>$originalSettingKey));
+        $oldStillExists=true;
+    } catch(ModxMCPClientException $e) {}
+    acceptanceCheck(!$oldStillExists,'old system setting key removed');
+    $renameReplayDenied=false;
+    try {acceptanceRpc('update_system_setting',$renameRequest);}
+    catch(ModxMCPClientException $e) {
+        $renameReplayDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($renameReplayDenied,'stale setting rename replay denied');
+    $protectedRenameDenied=false;
+    try {acceptanceRpc('update_system_setting',array(
+        'key'=>$settingKey,'new_key'=>' MODXMCP.api_token '
+    ));} catch(ModxMCPClientException $e) {
+        $protectedRenameDenied=strpos($e->getMessage(),'modxmcp.')!==false
+            || strpos($e->getMessage(),'AUTH_DENIED')!==false;
+    }
+    acceptanceCheck($protectedRenameDenied,
+        'protected modxmcp key cannot be rename target');
 
     // RU: Главная галочка активируется только в памяти disposable процесса.
     // EN: Enable master switch only in this disposable process; never persist it.

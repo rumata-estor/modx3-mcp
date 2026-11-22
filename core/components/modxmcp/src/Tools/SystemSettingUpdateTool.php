@@ -29,15 +29,59 @@ class SystemSettingUpdateTool implements ToolInterface
             );
         }
 
-        foreach (array('key', 'value', 'xtype', 'namespace', 'area') as $field) {
+        // RU: Переименование предложено @AgelxNash, PR #56.
+        // RU: Изменение первичного key через xPDOObject::save() создаёт
+        // RU: ложный success (UPDATE WHERE уже по новому ключу).
+        // EN: Reported by @AgelxNash, PR #56: xPDOObject::save() can
+        // EN: report success while renaming a primary key updates zero rows.
+        $modx = $context->modx();
+        $class = $context->platform()->className('system_setting');
+        $newKey = null;
+        if (array_key_exists('new_key', $data)) {
+            if (!is_string($data['new_key']) || trim($data['new_key']) === '') {
+                throw new \ModxMCPClientException('new_key must be a non-empty string.');
+            }
+            $newKey = $data['new_key'];
+            \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey($newKey);
+            if ($newKey !== $key
+                && $modx->getObject($class, array('key' => $newKey))) {
+                throw new \ModxMCPClientException(
+                    'System setting already exists: ' . $newKey
+                );
+            }
+            if ($newKey === $key) { $newKey = null; }
+        }
+        $changes = array();
+        foreach (array('value', 'xtype', 'namespace', 'area') as $field) {
             if (array_key_exists($field, $data)) {
-                $setting->set($field, $data[$field]);
+                $changes[$field] = $data[$field];
             }
         }
-        if (!$setting->save()) {
-            throw new \ModxMCPClientException(
-                'Failed to update system setting.'
+        if ($newKey !== null) {
+            // RU: Один UPDATE по исходному ключу внутри общей DB-CAS транзакции.
+            // EN: One UPDATE on the original key, under the DB-CAS transaction.
+            $updated = $modx->updateCollection(
+                $class, array_merge(array('key' => $newKey), $changes),
+                array('key' => $key)
             );
+            if ($updated !== 1) {
+                throw new \ModxMCPClientException(
+                    'Failed to update system setting: rename affected no single row.'
+                );
+            }
+            $setting = $modx->getObject($class, array('key' => $newKey));
+            if (!$setting) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: setting rename readback failed.'
+                );
+            }
+        } else {
+            foreach ($changes as $field => $value) {
+                $setting->set($field, $value);
+            }
+            if (!$setting->save()) {
+                throw new \ModxMCPClientException('Failed to update system setting.');
+            }
         }
 
         ElementMutationSupport::refreshCache($context);
@@ -57,12 +101,6 @@ class SystemSettingUpdateTool implements ToolInterface
             return $context->modx()->getObject(
                 $class,
                 array('key' => $data['key'])
-            );
-        }
-        if (!empty($data['id'])) {
-            return $context->modx()->getObject(
-                $class,
-                array('id' => (int)$data['id'])
             );
         }
         return null;

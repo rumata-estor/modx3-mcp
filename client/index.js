@@ -1126,11 +1126,12 @@ const toolDefinitions = [
   },
   {
     name: "modx_update_system_setting",
-    description: "Update a MODX system setting by key.",
+    description: "Update a MODX system setting by its original key. To rename it, provide new_key; rename is an atomic guarded CAS mutation and refuses existing or protected target keys.",
     inputSchema: {
       type: "object",
       properties: {
         key: { type: "string" },
+        new_key: { type: "string" },
         value: { type: "string" },
         xtype: { type: "string" },
         namespace: { type: "string" },
