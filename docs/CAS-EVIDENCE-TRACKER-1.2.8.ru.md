@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 113. **Не имеют индивидуальных сценариев:** 3.
+сценарий:** 114. **Не имеют индивидуальных сценариев:** 2.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -28,11 +28,10 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 3 без сценария
+## P2 — остальные операции — 2 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `ms2_update_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 
@@ -103,6 +102,7 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | `ms2_create_product_link` | review | `disposable_modx2_pinned_ms2_create_product_link_native_mcp_readback_stale_replay` |
 | `ms2_delete_link_type` | review | `disposable_pinned_ms2_delete_link_type_native_processor_readback_stale_replay` |
 | `ms2_delete_product_link` | review | `disposable_modx2_pinned_ms2_delete_product_link_native_mcp_readback_stale_replay` |
+| `ms2_update_category` | review | `disposable_modx2_pinned_ms2_update_category_full_context_mcp_readback_stale_replay` |
 | `ms2_update_link_type` | review | `disposable_pinned_ms2_update_link_type_native_processor_readback_stale_replay` |
 | `ms2_update_option` | review | `disposable_pinned_ms2_update_option_native_processor_list_readback_stale_replay` |
 | `ms2_update_product_options` | review | `disposable_modx2_pinned_ms2_update_product_options_native_mcp_readback_stale_replay` |
