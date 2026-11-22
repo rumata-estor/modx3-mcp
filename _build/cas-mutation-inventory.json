@@ -484,7 +484,9 @@
       "processor": "security/access/usergroup/context/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_acl_grant_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "grant_resourcegroup_access": {
@@ -494,7 +496,9 @@
       "processor": "security/access/usergroup/resourcegroup/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_resourcegroup_acl_grant_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "install_package": {
@@ -830,7 +834,9 @@
       "processor": "security/access/usergroup/context/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_acl_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_context_setting": {
@@ -947,7 +953,9 @@
       "processor": "security/access/usergroup/resourcegroup/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_resourcegroup_acl_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_role": {
