@@ -355,8 +355,15 @@ class ElementMutationSupport
         if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
             throw new \ModxMCPClientException("make_static: cannot create directory {$directory}");
         }
-        if (@file_put_contents($absolute, (string)$element->get($item['field'])) === false) {
-            throw new \ModxMCPClientException("make_static: cannot write {$absolute}");
+        $fileBody = (string)$element->get($item['field']);
+        $written = @file_put_contents($absolute, $fileBody);
+        if ($written === false || $written !== strlen($fileBody)) {
+            // RU: Даже при отказе записи файл мог быть создан или усечён.
+            // EN: Failed or short writes may leave partial filesystem changes.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: make_static file write incomplete; '
+                . 'inspect filesystem and MODX state before retry.'
+            );
         }
 
         $element->set('static', true);

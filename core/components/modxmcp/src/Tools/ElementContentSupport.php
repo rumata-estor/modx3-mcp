@@ -138,9 +138,13 @@ class ElementContentSupport
                     'cannot create directory ' . $directory
                 );
             }
-            if (@file_put_contents($absolute, $content) === false) {
+            $written = @file_put_contents($absolute, $content);
+            if ($written === false || $written !== strlen($content)) {
+                // RU: Частичная запись могла повредить файл; DB ещё не изменена.
+                // EN: Even a short write may corrupt existing static content.
                 throw new \ModxMCPClientException(
-                    'cannot write static file ' . $absolute
+                    'MUTATION_OUTCOME_UNCERTAIN: static file write incomplete; '
+                    . 'inspect filesystem and MODX state before retry.'
                 );
             }
         }
