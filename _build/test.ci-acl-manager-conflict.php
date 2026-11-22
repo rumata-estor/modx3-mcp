@@ -87,6 +87,21 @@ try {
             $denied=strpos($e->getMessage(),'STALE_STATE')!==false;
         }
         aclManagerCheck($denied,'independent Manager edit rejected '.$type);
+        // RU: Удаление со старым отпечатком также не должно уничтожить объект.
+        // EN: A stale target fingerprint must also block destructive deletes.
+        $deleteActions=array(
+            'user'=>'delete_user','role'=>'delete_role',
+            'user_group'=>'delete_user_group'
+        );
+        $deleteDenied=false;
+        try {
+            aclManagerRpc($deleteActions[$type],array(
+                'id'=>$id,'_runtime_preconditions'=>aclManagerGuard($before)
+            ));
+        } catch(\ModxMCPClientException $e) {
+            $deleteDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+        }
+        aclManagerCheck($deleteDenied,'stale delete blocked after Manager edit '.$type);
         $read=aclManagerRpc('get_'.$type,array('id'=>$id));
         aclManagerCheck((string)($read[$case['field']]??'')===(string)$case['changed'],
             'Manager edit preserved '.$type);
