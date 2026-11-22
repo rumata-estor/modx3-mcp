@@ -428,6 +428,16 @@ assert 'CAS_MAKE_STATIC_TV_READBACK_STALE_REPLAY_OK' in static_tv_test
 assert 'stale make_static replay preserved static file bytes' in static_tv_test
 assert 'make_static consumes exactly one site revision' in static_tv_test
 
+# RU: Очистка кэша подтверждена на одноразовом нативном cache key.
+# EN: Track only a disposable key removal and stale replay, not all partitions.
+clear_cache_test=(ROOT / '_build/test.ci-cas-clear-cache.php').read_text()
+assert 'php _build/test.ci-cas-clear-cache.php' in ci_workflow
+assert 'disposable_native_cache_key_clear_readback_revision_stale_replay' in expected['clear_cache']['verified_scenarios']
+assert "'clear_cache',$request" in clear_cache_test
+assert 'CAS_CLEAR_CACHE_DISPOSABLE_KEY_STALE_REPLAY_OK' in clear_cache_test
+assert 'disposable cache key removed by MCP clear' in clear_cache_test
+assert 'stale clear_cache CAS replay denied' in clear_cache_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
