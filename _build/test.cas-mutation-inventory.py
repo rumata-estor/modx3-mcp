@@ -79,6 +79,27 @@ for action in ('create_role','create_user_group'):
 assert 'stale replay denied' in fixture
 assert 'stale replay created no duplicate' in fixture
 
+# RU: Доказываем наличие исполняемых и активированных ACL-сценариев.
+# EN: Per-action grant/update claims require active executable integration tests.
+acl_scenarios = {
+    'grant_context_access': ('context-access', 'grant_readback_stale_replay'),
+    'update_context_access': ('context-access', 'update_readback_stale_replay'),
+    'grant_resourcegroup_access': ('resourcegroup-access', 'grant_readback_stale_replay'),
+    'update_resourcegroup_access': ('resourcegroup-access', 'update_readback_stale_replay'),
+}
+ci_workflow = (ROOT / '.github/workflows/cas-pr46-isolated.yml').read_text()
+for action, (suite, suffix) in acl_scenarios.items():
+    scenario_name = 'disposable_' + ('context_acl_' if suite=='context-access'
+                                  else 'resourcegroup_acl_') + suffix
+    assert scenario_name in expected[action]['verified_scenarios'], action
+    filename = '_build/test.ci-acl-'+suite+'.php'
+    assert 'php '+filename in ci_workflow
+    content = (ROOT / filename).read_text()
+    assert "'"+action+"'" in content
+    assert 'CAS_EVIDENCE_'+action.upper()+'_READBACK_STALE_REPLAY_OK' in content
+    assert 'stale replay did not duplicate grant' in content
+    assert 'rejected update preserved final authority' in content
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

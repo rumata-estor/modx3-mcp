@@ -165,6 +165,10 @@ try {
     $resourceGroupId=0;
     aclRpc('delete_user_group',array('id'=>$groupId));
     $groupId=0;
+    // RU: Маркеры соответствуют проверенному readback и stale-CAS replay.
+    // EN: Mark only confirmed readback and stale CAS replay scenarios.
+    echo 'CAS_EVIDENCE_GRANT_RESOURCEGROUP_ACCESS_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    echo 'CAS_EVIDENCE_UPDATE_RESOURCEGROUP_ACCESS_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     echo 'ACL_RESOURCEGROUP_ACCESS_LIFECYCLE_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
