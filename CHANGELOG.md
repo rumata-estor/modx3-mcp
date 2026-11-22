@@ -26,6 +26,8 @@
 
 - **External processors and packages:** `run_processor` now treats thrown errors and missing responses after dispatch as `MUTATION_OUTCOME_UNCERTAIN`, suppressing raw exception text. Transport download, install and uninstall also fail closed on exceptions and an incomplete download response. Isolated fault tests cover these paths but do not claim filesystem or DB rollback.
 
+- **`bulk_resources` safety:** preflight checks all IDs before writes; missing targets reject the batch, while a target disappearing during execution produces `MUTATION_OUTCOME_UNCERTAIN`. Invalid IDs and target counts over `limit` now fail before mutation instead of silently dropping or truncating requested targets. Covered by isolated and disposable MODX 2/3 tests.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.

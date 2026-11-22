@@ -300,7 +300,7 @@ Apply ONE operation to many resources at once: publish, unpublish, set_template 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
 | `operation` | string | yes | Allowed: publish, unpublish, set_template, move, delete |
-| `ids` | array of number | no | Explicit resource ids (preferred). |
+| `ids` | array of positive integers | no | Explicit targets. All IDs must be valid and exist before a mutation; invalid or missing IDs reject the entire batch. |
 | `parent` | number | no | Filter: select children of this parent id. |
 | `context` | string | no | Filter: context key. |
 | `query` | string | no | Filter: pagetitle/alias/uri substring. |
@@ -308,7 +308,7 @@ Apply ONE operation to many resources at once: publish, unpublish, set_template 
 | `parent_to` | number | no | For move: the new parent id. |
 | `context_to` | string | no | For move: the new context key. |
 | `dry_run` | boolean | no | Preview the change per resource without applying. Do this first. |
-| `limit` | number | no | Max resources to touch (default 200). |
+| `limit` | number | no | Maximum targets (default 200). Exceeding it is an error; the requested list is never silently truncated. |
 
 ### `modx_duplicate_resource`
 
