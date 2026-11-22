@@ -2,6 +2,9 @@
 
 ## 1.2.8 — актуальные security-gates PR #49 (22.11.2026)
 
+**P0 — ACL membership TOCTOU:** [PR #67](https://github.com/rumata-estor/modx3-mcp/pull/67) оставлен открытым. Независимый MODX Manager с незавершённой транзакцией добавления участника обходит проверку отпечатка группы: `ACL_MEMBERSHIP_TOCTOU_RACE_REPRODUCED` ([CI](https://github.com/rumata-estor/modx3-mcp/actions/runs/45014060027)). Не считать защищённые membership-операции CAS-безопасными до реальной транзакционной проверки и отсутствия phantom. [План и критерии](docs/CAS-SECURITY-ASSURANCE-1.2.8.ru.md).
+
+
 **Тестовый техдолг:** 15 неиспользуемых legacy `test.live-*` удалены после инвентаризации; индивидуальные сценарии, которых не хватает актуальному CI, переносить через штатный защищённый MODX MCP, а не через отключение `modularRuntime`. [Подробный реестр](docs/CAS-PR49-TEST-CLEANUP-1.2.8.ru.md).
 
 
