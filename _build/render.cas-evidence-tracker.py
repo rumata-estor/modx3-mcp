@@ -35,6 +35,7 @@ lines = [
     'MiniShop3 на MODX 3 — отдельный компонент и отдельное API, не считается',
     'проверенным этими сценариями. Маркер `disposable_modx2_*` однозначно',
     'ограничивает доказательство MODX 2.',
+    '',
 ]
 for risk in priorities:
     group = [(key,value) for key,value in sorted(actions.items())
