@@ -227,7 +227,8 @@ try {
         'value'=>'0','_runtime_preconditions'=>guardNow());
     $contextDeniedBefore=(int)guardNow()['observed_site_revision'];
     mustDeny('create_context_setting','',$deniedContext,
-        signedCall('create_context_setting','',$deniedContext));
+        signedCall('create_context_setting','',$deniedContext),
+        'Managing modxmcp.* settings');
     must((int)guardNow()['observed_site_revision']===$contextDeniedBefore,
         'signed protected context key rejected without CAS increment');
     $contextKey='ci_signed_context_'.bin2hex(random_bytes(6));
