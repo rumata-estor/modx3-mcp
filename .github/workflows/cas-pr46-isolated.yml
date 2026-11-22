@@ -353,6 +353,15 @@ jobs:
       # EN: Per-action create ACL CAS, replay and no-duplicate evidence.
       # RU: Создаём только ни к кому не привязанную тестовую ACL policy.
       # EN: Create an unassigned disposable policy and verify stale CAS replay.
+      # RU: Шаблон не привязан к реальным правам и пользователям.
+      # EN: Exercise unassigned policy template create/update/delete CAS.
+      - name: Disposable policy template lifecycle CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-policy-template-evidence.php
       - name: Disposable access policy create CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
