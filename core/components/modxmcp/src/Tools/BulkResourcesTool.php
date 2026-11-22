@@ -155,9 +155,20 @@ class BulkResourcesTool implements ToolInterface
                     (new ElementUpdateTool())->execute($context, $update);
                     $row['status'] = 'ok';
                 }
-            } catch (\Exception $e) {
-                $row['status'] = 'error';
-                $row['error'] = $e->getMessage();
+            } catch (\Throwable $e) {
+                // RU: Частичный отказ нельзя выдавать за успешную операцию.
+                // RU: Транзакция CAS может откатить БД, но не события MODX,
+                // RU: файлы или другие внешние побочные действия.
+                // EN: A per-resource failure must not become a successful
+                // EN: batch response. CAS rollback cannot undo plugins,
+                // EN: files or other external processor side effects.
+                try { ElementMutationSupport::refreshCache($context); }
+                catch (\Throwable $ignored) {}
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: bulk_resources failed while '
+                    . 'processing resource ' . $id . ' (' . $operation . '); '
+                    . 'inspect all batch targets before retry.'
+                );
             }
             $results[] = $row;
         }
