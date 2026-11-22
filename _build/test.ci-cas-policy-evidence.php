@@ -84,6 +84,61 @@ try {
     }
     casCreateCheck($matches===1,'stale replay produced no duplicate policy');
     echo 'CAS_POLICY_CREATE_EVIDENCE_OK platform='.($is2?'modx2':'modx3').PHP_EOL;
+    // RU: Изменяем только описание отдельной, никому не выданной политики.
+    // EN: Update only an unassigned disposable policy description.
+    $updateState=casCreateRpc('get_site_state');
+    $updateGuard=array('observed_site_revision'=>(int)$updateState['site_revision'],
+        'strict_site_revision'=>true,'read_set'=>array());
+    $updateRequest=array('id'=>$policyId,'name'=>$name,
+        'description'=>'modified disposable policy',
+        '_runtime_preconditions'=>$updateGuard);
+    casCreateRpc('update_access_policy',$updateRequest);
+    $updated=casCreateRpc('get_access_policy',array('id'=>$policyId));
+    casCreateCheck((string)($updated['description']??'')
+        ==='modified disposable policy','policy update independent readback');
+    $afterUpdate=casCreateRpc('get_site_state');
+    casCreateCheck((int)$afterUpdate['site_revision']
+        ===(int)$updateState['site_revision']+1,'policy update CAS revision +1');
+    $staleUpdate=false;
+    try {casCreateRpc('update_access_policy',$updateRequest);}
+    catch(ModxMCPClientException $e){
+        $staleUpdate=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    casCreateCheck($staleUpdate,'stale policy update replay denied');
+    $updated=casCreateRpc('get_access_policy',array('id'=>$policyId));
+    casCreateCheck((string)($updated['description']??'')
+        ==='modified disposable policy','stale update did not overwrite policy');
+    echo 'CAS_POLICY_UPDATE_EVIDENCE_OK'.PHP_EOL;
+
+    // RU: Удаление с фиксированным CAS и повтором по старой ревизии.
+    // EN: Delete under fixed CAS then reject stale replay.
+    $deleteState=casCreateRpc('get_site_state');
+    $deleteRequest=array('id'=>$policyId,'_runtime_preconditions'=>array(
+        'observed_site_revision'=>(int)$deleteState['site_revision'],
+        'strict_site_revision'=>true,'read_set'=>array()));
+    casCreateRpc('delete_access_policy',$deleteRequest);
+    $policyId=0;
+    $afterDelete=casCreateRpc('get_site_state');
+    casCreateCheck((int)$afterDelete['site_revision']
+        ===(int)$deleteState['site_revision']+1,'policy delete CAS revision +1');
+    $staleDelete=false;
+    try {casCreateRpc('delete_access_policy',$deleteRequest);}
+    catch(ModxMCPClientException $e){
+        $staleDelete=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    casCreateCheck($staleDelete,'stale policy delete replay denied');
+    $afterReplayDelete=casCreateRpc('get_site_state');
+    casCreateCheck((int)$afterReplayDelete['site_revision']
+        ===(int)$afterDelete['site_revision'],
+        'stale policy delete did not advance CAS revision');
+    $listAfterDelete=casCreateRpc('list_access_policies',array(
+        'query'=>$name,'limit'=>100));
+    foreach($listAfterDelete['results'] as $row){
+        casCreateCheck(!is_array($row)
+            || (string)($row['name']??'')!==$name,
+            'deleted policy absent after stale replay');
+    }
+    echo 'CAS_POLICY_DELETE_EVIDENCE_OK'.PHP_EOL;
 }finally {
     if($policyId>0)casCreateRpc('delete_access_policy',array('id'=>$policyId));
 }
