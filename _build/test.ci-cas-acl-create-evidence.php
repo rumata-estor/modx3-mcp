@@ -39,6 +39,8 @@ $cases=array(
         'list_user_groups','MCP_EvidenceGroup_'.$fixture,array()),
     array('create_role','get_role','delete_role',
         'list_roles','MCP_EvidenceRole_'.$fixture,array('authority'=>987)),
+    array('create_resource_group','get_resource_group','delete_resource_group',
+        'list_resource_groups','MCP_EvidenceResGroup_'.$fixture,array()),
 );
 foreach($cases as $case) {
     list($create,$read,$delete,$list,$name,$extra)=$case;
