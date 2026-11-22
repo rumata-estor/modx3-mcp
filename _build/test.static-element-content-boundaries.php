@@ -79,6 +79,29 @@ try {
         $context,$root.'/core/elements/tvs/future.tpl'
     );
     staticBoundaryAssert(true,'legitimate new static file accepted');
+    // RU: Hard link на внешний файл обходит realpath: запрещаем чтение и запись.
+    // EN: A hard link to an outside file bypasses realpath; deny read and write.
+    $alias=$root.'/core/elements/tvs/hardlinked.tpl';
+    if (!link($root.'/private/token.txt',$alias)) {
+        throw new \RuntimeException('Cannot create hard-link security fixture');
+    }
+    staticBoundaryAssert(realpath($alias)===$alias,
+        'hard link must look like a local file to realpath');
+    $hardReadDenied=false;
+    try {\ModxMcp\Tools\ElementContentSupport::read(
+        $context,new StaticBoundaryElement('core/elements/tvs/hardlinked.tpl'),
+        array('field'=>'default_text')
+    );} catch(ModxMCPClientException $e) {$hardReadDenied=true;}
+    staticBoundaryAssert($hardReadDenied,'external-inode hard link read denied');
+    $hardWriteDenied=false;
+    try {\ModxMcp\Tools\ElementContentSupport::write(
+        $context,new StaticBoundaryElement('core/elements/tvs/hardlinked.tpl'),
+        'tv',array('field'=>'default_text'),true,$alias,'CORRUPTED'
+    );} catch(ModxMCPClientException $e) {$hardWriteDenied=true;}
+    staticBoundaryAssert($hardWriteDenied,'external-inode hard link write denied');
+    staticBoundaryAssert(file_get_contents($root.'/private/token.txt')==='PRIVATE_DO_NOT_READ',
+        'outside secret file unchanged');
+    unlink($alias);
     // RU: Даже сам core/elements не может быть симлинком наружу.
     // EN: Reject replacement of the core/elements root with an outside link.
     rename($root.'/core/elements',$root.'/core/elements-safe');
