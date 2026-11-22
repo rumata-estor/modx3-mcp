@@ -25,9 +25,10 @@ foreach($indexes->fetchAll(PDO::FETCH_ASSOC) as $index){
 }
 if(!$exists){
     // No production DDL. This exists solely to test the required release migration.
-    if(!$modx->exec('CREATE INDEX `idx_modxmcp_ci_user_group` ON '.$table.' (`user_group`)')){
-        // PDO::exec returns 0 for successful index creation.
-    }
+    $created=$modx->exec(
+        'CREATE INDEX `idx_modxmcp_ci_user_group` ON '.$table.' (`user_group`)'
+    );
+    if($created===false)throw new RuntimeException('Disposable index DDL failed');
 }
 $verify=$modx->query('SHOW INDEX FROM '.$table);
 $exists=false;
