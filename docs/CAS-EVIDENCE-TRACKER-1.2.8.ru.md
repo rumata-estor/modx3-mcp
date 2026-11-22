@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 63. **Не имеют индивидуальных сценариев:** 53.
+сценарий:** 65. **Не имеют индивидуальных сценариев:** 51.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,13 +22,12 @@
 | `remove_user_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
-## P1 — операции повышенного риска — 1 без сценария
+## P1 — операции повышенного риска — 0 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `revert_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 
-## P2 — остальные операции — 47 без сценария
+## P2 — остальные операции — 46 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -64,7 +63,6 @@
 | `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `reorder_resources` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `replace_across` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `set_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `undelete_resource` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -124,9 +122,11 @@
 | `install_package` | critical | `revision_reservation_refusal_only` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
 | `rename_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `revert_lexicon_entry` | high | `disposable_namespace_lexicon_revert_readback_stale_replay` |
 | `revoke_context_access` | critical | `disposable_context_acl_revoke_readback_stale_replay` |
 | `revoke_resourcegroup_access` | critical | `disposable_resourcegroup_acl_revoke_readback_stale_replay` |
 | `run_processor` | critical | `revision_reservation_refusal_only` |
+| `set_lexicon_entry` | review | `disposable_namespace_lexicon_set_readback_stale_replay` |
 | `unassign_property_set` | review | `disposable_chunk_property_set_unassign_readback_stale_replay` |
 | `uninstall_package` | critical | `revision_reservation_refusal_only` |
 | `update_access_policy` | critical | `disposable_unassigned_policy_description_update_readback_stale_replay` |

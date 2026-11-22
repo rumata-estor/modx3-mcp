@@ -268,6 +268,22 @@ for action,scenario,marker in (
 assert 'stale CAS did not advance revision' in resourcegroup_test
 assert 'resource group rename persisted' in resourcegroup_test
 
+# RU: Для lexicon set/revert нужен проверенный disposable-цикл MCP.
+# EN: Track only observed lexicon set/revert through isolated MCP readbacks.
+lexicon_evidence = (ROOT / '_build/test.ci-cas-lexicon-evidence.php').read_text()
+lexicon_reader = (ROOT / '_build/test.ci-cas-lexicon-readback.php').read_text()
+assert 'php _build/test.ci-cas-lexicon-evidence.php' in ci_workflow
+for action,scenario,verb in (
+ ('set_lexicon_entry','disposable_namespace_lexicon_set_readback_stale_replay','SET'),
+ ('revert_lexicon_entry','disposable_namespace_lexicon_revert_readback_stale_replay','REVERT'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in lexicon_evidence
+    assert 'CAS_LEXICON_'+verb+'_READBACK_STALE_REPLAY_OK' in lexicon_evidence
+assert 'test.ci-cas-lexicon-readback.php' in lexicon_evidence
+assert "processRequest('list_lexicon_entries'" in lexicon_reader
+assert 'stale replay consumed no revision' in lexicon_evidence
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
