@@ -32,6 +32,8 @@ $cases=array(
     array('modxmcp.api_token','[REDACTED]'),
     array('smtp_password','[REDACTED]'),
     array('vendorAuthToken','[REDACTED]'),
+    array('ci_mcp_provider_access_token_abcdef','[REDACTED]'),
+    array('ci_mcp_service_password_v2','[REDACTED]'),
     array('my_clientSecret','[REDACTED]'),
     array('payment.credentials','[REDACTED]'),
     array('dbPrivateKey','[REDACTED]'),

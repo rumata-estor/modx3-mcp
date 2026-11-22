@@ -14,9 +14,16 @@ final class SettingSecretSupport
         // RU: Публичный ключ проверки подписи не является закрытым секретом.
         // EN: The public signature verification key is intentionally readable.
         if ($key === 'modxmcp.permit_public_key') return false;
+        // RU: Сегмент secret/token может иметь префикс и суффикс версии.
+        // EN: A sensitive segment may have additional prefixes and suffixes.
+        if (preg_match(
+            '/(?:\\A|[._-])(?:password|passwd|token|secret|credentials|'
+            . 'private_key|api_key|access_key|client_secret)(?:[._-]|\\z)/iD',
+            $key
+        )) return true;
         $canonical = preg_replace('/[^a-z0-9]/', '', $key);
-        // RU: Учитываем и MODX-style snake_case, и camelCase имена.
-        // EN: Recognize both snake_case and camelCase credential key names.
+        // RU: Дополнительно узнаём camelCase и слитные имена.
+        // EN: Also recognize camelCase and concatenated credential names.
         return (bool)preg_match(
             '/(?:password|passwd|(?:api|access|refresh|auth|session)?token|secret|'
             . 'privatekey|apikey|credentials|credential|authorization|'
