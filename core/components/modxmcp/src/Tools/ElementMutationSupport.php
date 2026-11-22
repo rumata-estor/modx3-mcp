@@ -371,7 +371,9 @@ class ElementMutationSupport
             $written = @fwrite($handle, $fileBody);
             $closed = @fclose($handle);
         } else {
-            $written = @file_put_contents($absolute, $fileBody);
+            // RU: Для обычных элементов сначала записываем временный файл.
+            // EN: Avoid truncating the original until the replacement is ready.
+            $written = StaticFileWriteSupport::replace($context, $absolute, $fileBody);
             $closed = true;
         }
         if ($written === false || $written !== strlen($fileBody) || !$closed) {

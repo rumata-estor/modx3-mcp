@@ -152,7 +152,9 @@ class ElementContentSupport
                     'cannot create directory ' . $directory
                 );
             }
-            $written = @file_put_contents($absolute, $content);
+            // RU: Не усекать исходный файл до завершения записи.
+            // EN: Write a same-directory temporary file before replacing original.
+            $written = StaticFileWriteSupport::replace($context, $absolute, $content);
             if ($written === false || $written !== strlen($content)) {
                 // RU: Частичная запись могла повредить файл; DB ещё не изменена.
                 // EN: Even a short write may corrupt existing static content.
