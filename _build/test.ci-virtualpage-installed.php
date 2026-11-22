@@ -179,7 +179,8 @@ try {
     $manager = $modx->getCacheManager();
     $options = array('cache_key' => 'default/virtualpage/');
     $cacheKey = 'mcp-disposable-cache-' . $marker;
-    $manager->set($cacheKey, 'fixture', 0, $options);
+    $cacheValue = 'fixture';
+    $manager->set($cacheKey, $cacheValue, 0, $options);
     vpAssert($manager->get($cacheKey, $options) === 'fixture', 'cache seed visible');
     list($cleared, $old) = vpMut('virtualpage_clear_cache', array());
     vpAssert(!empty($cleared['cleared']), 'clear cache command succeeded');
