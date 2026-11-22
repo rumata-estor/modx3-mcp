@@ -42,7 +42,9 @@
       "processor": "security/resourcegroup/updateresourcesin",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_unpublished_resource_group_assign_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "bulk_resources": {
@@ -710,7 +712,9 @@
       "processor": "security/resourcegroup/removeresource",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_unpublished_resource_group_remove_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "remove_user_from_group": {

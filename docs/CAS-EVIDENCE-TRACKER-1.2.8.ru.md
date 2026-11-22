@@ -5,19 +5,17 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 68. **Не имеют индивидуальных сценариев:** 48.
+сценарий:** 70. **Не имеют индивидуальных сценариев:** 46.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
 
-## P0 — критические операции — 2 без сценария
+## P0 — критические операции — 0 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `assign_resource_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `remove_resource_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
 ## P1 — операции повышенного риска — 0 без сценария
 
@@ -82,6 +80,7 @@
 | `add_user_to_group` | critical | `disposable_inactive_user_group_membership_add_readback_stale_replay` |
 | `assign_element_category` | review | `revision_write_failure_rollback` |
 | `assign_property_set` | review | `disposable_chunk_property_set_assign_readback_stale_replay` |
+| `assign_resource_to_group` | critical | `disposable_unpublished_resource_group_assign_readback_stale_replay` |
 | `create_access_policy` | critical | `disposable_unassigned_policy_create_readback_revision_stale_replay` |
 | `create_access_policy_template` | critical | `disposable_grouped_policy_template_create_readback_stale_replay` |
 | `create_category` | review | `revision_write_failure_rollback` |
@@ -119,6 +118,7 @@
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
+| `remove_resource_from_group` | critical | `disposable_unpublished_resource_group_remove_readback_stale_replay` |
 | `remove_user_from_group` | critical | `disposable_inactive_user_group_membership_remove_readback_stale_replay` |
 | `rename_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `revert_lexicon_entry` | high | `disposable_namespace_lexicon_revert_readback_stale_replay` |

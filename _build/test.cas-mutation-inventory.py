@@ -300,6 +300,21 @@ assert "'active'=>0" in member_test or "'active'=>0," in member_test
 assert 'member role stale CAS denied' in member_test
 assert 'member removal stale CAS denied' in member_test
 
+# RU: Только одноразовые группы/ресурсы; формат ID проверяется MODX2/3 CI.
+# EN: Confirm real disposable resource-group link and replay on both core APIs.
+resource_link_test=(ROOT / '_build/test.ci-cas-resource-group-membership.php').read_text()
+assert 'php _build/test.ci-cas-resource-group-membership.php' in ci_workflow
+for action,scenario,marker in (
+ ('assign_resource_to_group','disposable_unpublished_resource_group_assign_readback_stale_replay','ASSIGN'),
+ ('remove_resource_from_group','disposable_unpublished_resource_group_remove_readback_stale_replay','REMOVE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in resource_link_test
+    assert 'CAS_RESOURCE_GROUP_'+marker+'_RESOURCE_STALE_READBACK_OK' in resource_link_test
+assert 'list_resource_group_resources' in resource_link_test
+assert 'stale replay did not consume site revision' in resource_link_test
+assert "'published'=>0" in resource_link_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
