@@ -335,6 +335,15 @@ jobs:
           php _build/test.ci-cas-mutation-gates.php
       # RU: Независимая запись Manager при прежней ревизии MCP: user, role, group.
       # EN: Reject stale target fingerprints after Manager edits user, role, group.
+      # RU: Индекс добавляется только в одноразовую БД для эксперимента P0.
+      # EN: Prepare index in disposable CI; no production schema migration.
+      - name: Prepare indexed ACL membership locking fixture
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-acl-index-fixture.php
       - name: ACL external Manager edit denied by target fingerprint
         env:
           MODXMCP_DISPOSABLE_CI: '1'
