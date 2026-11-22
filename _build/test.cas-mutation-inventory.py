@@ -127,6 +127,26 @@ assert 'create_user readback masks ' in user_fixture
 assert 'stale replay did not consume revision' in user_fixture
 assert 'stale replay created no duplicate' in user_fixture
 
+# RU: Проверенные сценарии политики не являются проверкой выдачи полномочий.
+# EN: Unassigned policy lifecycle proves no permissions-granting behavior.
+policy_test = (ROOT / '_build/test.ci-cas-policy-evidence.php').read_text()
+assert 'php _build/test.ci-cas-policy-evidence.php' in ci_workflow
+policy_evidence = {
+ 'create_access_policy': ('disposable_unassigned_policy_create_readback_revision_stale_replay',
+                          'CAS_POLICY_CREATE_EVIDENCE_OK'),
+ 'update_access_policy': ('disposable_unassigned_policy_description_update_readback_stale_replay',
+                          'CAS_POLICY_UPDATE_EVIDENCE_OK'),
+ 'delete_access_policy': ('disposable_unassigned_policy_delete_readback_stale_replay',
+                          'CAS_POLICY_DELETE_EVIDENCE_OK'),
+}
+for action,(scenario,marker) in policy_evidence.items():
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in policy_test
+    assert marker in policy_test
+assert 'stale policy update replay denied' in policy_test
+assert 'stale policy delete replay denied' in policy_test
+assert 'stale replay produced no duplicate policy' in policy_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
