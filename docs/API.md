@@ -671,9 +671,11 @@ Site-wide search & replace across code elements (chunk/snippet/template/plugin):
 | `find` | string | yes | Exact substring to find in element content. |
 | `replacement` | string | yes | Replacement ("" removes the substring). |
 | `types` | array of string | no | Element types to scan. Default: all four. |
-| `case_sensitive` | boolean | no | Case-sensitive match (default false). |
+| `case_sensitive` | boolean | no | Case-sensitive match (default true). |
 | `dry_run` | boolean | no | Preview only — report matches without writing (default false). Do this first. |
-| `limit` | number | no | Max elements to touch (default 200). |
+| `limit` | number | no | Max search targets (default 200, hard cap 200); if selection is incomplete, mutation is rejected before any write. |
+
+**Safety:** Before modifying any element, the tool reads and validates the full selected set. Each target is re-fetched and compared immediately before its write. A stale first target fails with `STALE_STATE`; changes detected after earlier writes report `MUTATION_OUTCOME_UNCERTAIN`. On `dry_run`, `search_limit_reached=true` warns that not all matches may have been returned. Static files are read through the guarded path validator, including when found by `search_code` and dependency graph analysis.
 
 ### `modx_dependency_graph`
 

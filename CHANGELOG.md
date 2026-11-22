@@ -28,6 +28,8 @@
 
 - **`bulk_resources` safety:** preflight checks all IDs before writes; missing targets reject the batch, while a target disappearing during execution produces `MUTATION_OUTCOME_UNCERTAIN`. Invalid IDs and target counts over `limit` now fail before mutation instead of silently dropping or truncating requested targets. Covered by isolated and disposable MODX 2/3 tests.
 
+- **Batch replacement hardening:** `replace_across` preflights all selected elements and re-fetches each target before writing, rejecting stale content. A potentially truncated search blocks mutation; `dry_run` exposes `search_limit_reached`. Code search and dependency graph now use validated static file paths rather than directly invoking potentially unsafe MODX static-content methods. Added isolated and disposable MODX 2/3 tests.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
