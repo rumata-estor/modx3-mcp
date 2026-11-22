@@ -420,7 +420,9 @@
       "processor": "security/resourcegroup/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_unassigned_resource_group_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_role": {
@@ -985,7 +987,9 @@
       "processor": "security/resourcegroup/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "critical",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_unassigned_resource_group_rename_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_resource_tvs": {
