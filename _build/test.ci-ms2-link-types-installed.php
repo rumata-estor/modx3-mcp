@@ -30,7 +30,7 @@ if (!is_file($path . 'model/minishop2/minishop2.class.php')
 // EN: Use installed disposable administrator; never bypass processor ACLs.
 $adminClass = $is2 ? 'modUser' : '\MODX\Revolution\modUser';
 $admin = $modx->getObject($adminClass, 1);
-if (!$admin || !$admin->isSudo()) {
+if (!$admin || (int)$admin->get('sudo') !== 1) {
     throw new RuntimeException('Disposable MODX sudo administrator not available');
 }
 $modx->user = $admin;
