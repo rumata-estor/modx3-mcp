@@ -330,6 +330,16 @@ class ProcessorMutationTool implements ToolInterface
             array('create_context_setting', 'update_context_setting', 'delete_context_setting'),
             true
         )) {
+            // RU: Несовпадающие fk/context_key не должны направлять
+            // RU: изменение настройки в другой контекст MODX.
+            // EN: Mismatched fk/context_key must not redirect a setting
+            // EN: mutation into a different MODX context.
+            if (isset($props['fk'], $props['context_key'])
+                && (string)$props['fk'] !== (string)$props['context_key']) {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: conflicting context_key and fk.'
+                );
+            }
             if (!isset($props['fk']) && isset($props['context_key'])) {
                 $props['fk'] = $props['context_key'];
             }

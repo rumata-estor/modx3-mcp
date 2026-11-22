@@ -336,6 +336,20 @@ foreach (array('create_context_setting','update_context_setting',
             )))throw new \RuntimeException('CONTEXT_CACHE_INVALIDATION_CONTRACT');
         $contextCacheChecks++;
     }
+    // RU: Два разных идентификатора контекста не могут быть выбраны молча.
+    // EN: Conflicting context selectors must be rejected before dispatch.
+    $ctx=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool($action,$specs[$action]);
+    try {
+        $tool->execute($ctx,array('key'=>'fixture_setting',
+            'context_key'=>'web','fk'=>'other'));
+        throw new \RuntimeException('CONTEXT_SELECTORS_CONFLICT_ALLOWED');
+    } catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'AUTH_DENIED:')!==0)throw $e;
+    }
+    if($ctx->platform->calls!==0)
+        throw new \RuntimeException('CONFLICTING_CONTEXT_SELECTOR_DISPATCHED');
+    $contextCacheChecks++;
     // RU: Без контекста отказываем до запуска процессора.
     // EN: Missing context target must fail before processor dispatch.
     $ctx=new AclFakeContext();
