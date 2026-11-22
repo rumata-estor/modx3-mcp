@@ -84,6 +84,11 @@ with tempfile.TemporaryDirectory() as td:
         if "const VERSION = '" + expected_version + "';" not in model:
             errors.append(f'{platform}: connector version mismatch')
 
+        # RU: Оба распространяемых диспетчера должны содержать CAS-preflight.
+        # EN: Staged MODX 2/3 dispatcher must include missing-addon preflight.
+        if 'StateSupport::requireOptionalAddonPath' not in model:
+            errors.append(f'{platform}: staged dispatcher missing addon CAS preflight')
+
         if platform == 'modx2':
             if "const VARIANT = 'modx2';" not in model:
                 errors.append('modx2: wrong fallback model')

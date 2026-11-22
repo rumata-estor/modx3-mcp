@@ -89,7 +89,7 @@ try {
         }
         if(strpos($message,'Failed to persist MODX MCP site revision')!==false){
             $gated[]=$action;
-        } elseif(preg_match('/(not supported|unsupported|not available|requires (?:.*? )?integration|integration .*? not installed)/i',$message)){
+        } elseif(preg_match('/(not supported|unsupported|not available|requires (?:.*? )?integration|integration .*? not installed|MIGX is not installed|Could not load miniShop2 service|Could not find VirtualPage component core path|Could not load VersionX service)/i',$message)){
             $unsupported[$action]=substr($message,0,100);
         }else{
             $failed[$action]=substr($message,0,200);
