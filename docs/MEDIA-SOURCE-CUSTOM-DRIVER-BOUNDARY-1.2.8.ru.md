@@ -18,7 +18,7 @@
 ## Принятое ограниченное исправление
 
 - Прямые PHP filesystem-read/list допускаются только для штатного
-  `modFileMediaSource` MODX 2 и
+  `sources.modFileMediaSource` (или `modFileMediaSource`) MODX 2 и
   `MODX\\Revolution\\Sources\\modFileMediaSource` MODX 3.
   Для этих источников **сохраняется** существующий переключатель
   `modxmcp.allow_root_filesystem_read` и проверка realpath/root.
@@ -57,8 +57,9 @@
   source-relative путь, локальные файловые источники сохраняют read/list
   и соответствующий переключатель; прежний MODX2-путь сохранён.
 - `_build/test.ci-custom-media-boundary.php`: реальная disposable
-  установка MODX 2/3, создание источника и файла через MODX MCP,
-  чтение/list/readback и удаление без production.
+  установка MODX 2/3, существующий стандартный Media Source id=1,
+  запрет чтения без переключателя и разрешённые list/bounded-read
+  установленного компонента через MODX MCP. Никакой записи в production.
 - Прежние `test.media-path-boundaries.php` и
   `test.media-folder-path-contract.php` остаются обязательными.
 

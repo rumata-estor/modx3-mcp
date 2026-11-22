@@ -140,6 +140,7 @@ class MediaSourceSupport
     {
         $classKey = ltrim((string)$source->get('class_key'), '\\');
         return $classKey === 'modFileMediaSource'
+            || $classKey === 'sources.modFileMediaSource'
             || $classKey === 'MODX\\Revolution\\Sources\\modFileMediaSource';
     }
 

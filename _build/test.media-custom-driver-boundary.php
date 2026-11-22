@@ -100,7 +100,7 @@ try {
         customCheck(file_get_contents($root.'/secret.txt')==='DO_NOT_EXPOSE',
             'custom driver did not read or modify external host file');
     }
-    foreach(array('modFileMediaSource',
+    foreach(array('modFileMediaSource','sources.modFileMediaSource',
         'MODX\\Revolution\\Sources\\modFileMediaSource') as $builtIn) {
         $source=new CustomMediaFakeSource($builtIn,$root);
         $disabled=new CustomMediaFakeContext($source,false,2);
@@ -121,7 +121,7 @@ try {
         customCheck($source->deletedPath===$root.'/subfolder',
             'built-in MODX2 directory delete uses same existing absolute path');
     }
-    customCheck($checks===16,'expected boundary check count');
+    customCheck($checks===20,'expected boundary check count');
     echo 'CUSTOM_MEDIA_DRIVER_BOUNDARY_OK checks='.$checks.PHP_EOL;
 } finally {
     unlink($root.'/secret.txt');
