@@ -71,4 +71,28 @@ $normalized = \ModxMcp\Tools\MiniShop2Support::productLinkPayload($input);
 ms2GuardAssert($normalized === array('link' => 5, 'master' => 6, 'slave' => 7),
     'valid IDs normalized and unrelated parameters removed');
 ++$checks;
+// RU: Прямой обход через run_processor с кастомным путём запрещён.
+ // EN: Exact allowlisting cannot authorize user-supplied add-on processor roots.
+require_once $base . '../Security/ProcessorAccessPolicy.php';
+foreach (array('allowlist', 'privileged') as $mode) {
+    $denied = false;
+    try {
+        \\ModxMcp\\Security\\ProcessorAccessPolicy::authorize(
+            array(
+                'processor' => 'mgr/product/productlink/create',
+                'processors_path' => '/tmp/addon/processors/',
+                'properties' => array(
+                    'link' => 1, 'master' => '1 OR 1=1', 'slave' => 3
+                ),
+            ),
+            $mode,
+            'mgr/product/productlink/create',
+            'mgr/product/productlink/create'
+        );
+    } catch (RuntimeException $e) {
+        $denied = strpos($e->getMessage(), 'AUTH_DENIED:') === 0;
+    }
+    ms2GuardAssert($denied, 'generic processor custom-path bypass denied: ' . $mode);
+    ++$checks;
+}
 echo 'MS2_PRODUCTLINK_STRICT_IDS_BEFORE_SQL_OK checks=' . $checks . PHP_EOL;
