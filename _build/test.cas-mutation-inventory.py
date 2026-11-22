@@ -194,6 +194,21 @@ assert 'updated context name persisted through MCP list' in context_test
 assert 'context setting updated via MCP' in context_test
 assert 'deleted context absent from MCP context list' in context_test
 
+# RU: Для наборов свойств есть настоящий CI-сценарий, не просто запись в реестре.
+# EN: Require executable unassigned property-set evidence, not a bare claim.
+property_test = (ROOT / '_build/test.ci-cas-propertyset-evidence.php').read_text()
+assert 'php _build/test.ci-cas-propertyset-evidence.php' in ci_workflow
+for action,scenario,marker in (
+ ('create_property_set','disposable_unassigned_property_set_create_readback_stale_replay','CREATE'),
+ ('update_property_set','disposable_unassigned_property_set_description_update_readback_stale_replay','UPDATE'),
+ ('delete_property_set','disposable_unassigned_property_set_delete_readback_stale_replay','DELETE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in property_test
+    assert 'CAS_PROPERTY_SET_'+marker+'_READBACK_STALE_REPLAY_OK' in property_test
+assert 'no unexpected property set assignment' in property_test
+assert 'stale CAS replay denied' in property_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
