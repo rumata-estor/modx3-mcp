@@ -5,14 +5,14 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 37. **Не имеют индивидуальных сценариев:** 79.
+сценарий:** 38. **Не имеют индивидуальных сценариев:** 78.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
 
-## P0 — критические операции — 14 без сценария
+## P0 — критические операции — 13 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -20,7 +20,6 @@
 | `assign_resource_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `create_access_policy` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `create_access_policy_template` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `create_user` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `delete_access_policy` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `delete_access_policy_template` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `delete_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
@@ -118,6 +117,7 @@
 | `create_resource_group` | critical | `disposable_create_readback_revision_stale_replay` |
 | `create_role` | critical | `disposable_create_readback_revision_stale_replay` |
 | `create_system_setting` | review | `revision_write_failure_rollback` |
+| `create_user` | critical | `disposable_inactive_user_create_readback_revision_stale_replay_secret_fields` |
 | `create_user_group` | critical | `disposable_create_readback_revision_stale_replay` |
 | `delete_category` | review | `revision_write_failure_rollback` |
 | `delete_element` | review | `regular_resource_soft_delete_revision_write_failure_rollback` |

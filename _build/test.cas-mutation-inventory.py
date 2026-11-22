@@ -114,6 +114,19 @@ for action,suite,prefix in (
     assert 'revoke stale CAS replay denied' in source
     assert 'rejected revoke did not advance revision' in source
 
+# RU: Новый сценарий create_user обязан присутствовать в настоящей CI-матрице.
+# EN: Track the exact inactive-user create/replay evidence, not generic safety.
+user_scenario = 'disposable_inactive_user_create_readback_revision_stale_replay_secret_fields'
+assert user_scenario in expected['create_user']['verified_scenarios']
+user_fixture = (ROOT / '_build/test.ci-cas-acl-create-evidence.php').read_text()
+assert 'php _build/test.ci-cas-acl-create-evidence.php' in ci_workflow
+assert "'create_user'" in user_fixture
+assert "'active'=>0" in user_fixture
+assert 'created user remains inactive' in user_fixture
+assert 'create_user readback masks ' in user_fixture
+assert 'stale replay did not consume revision' in user_fixture
+assert 'stale replay created no duplicate' in user_fixture
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
