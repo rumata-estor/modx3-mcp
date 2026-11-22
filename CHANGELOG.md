@@ -2,6 +2,10 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- `list_system_settings` and `get_system_settings` now mask `modxmcp.api_token` in the modular tools and in both monolithic `normalizeSystemSetting` fallbacks (MODX 2 and 3); short tokens are fully masked instead of a reversible first-6/last-4 preview.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
