@@ -5563,10 +5563,22 @@ class modxMCP {
     }
 
     private function normalizeSystemSetting(modSystemSetting $setting) {
+        // RU: Замечание @AgelxNash, PR #52: старый fallback не должен
+        // RU: раскрывать токены. Применяем полную маску без превью символов.
+        // EN: Reported by @AgelxNash (PR #52): the legacy fallback must
+        // EN: never expose token excerpts, including short credentials.
+        $key = (string)$setting->get('key');
+        $value = $setting->get('value');
+        $isSecret = preg_match(
+            '/(?:\\A|[._-])(?:api_token|access_token|refresh_token|'
+            . 'secret|password|passwd|client_secret|private_key|api_key|'
+            . 'credentials)(?:\\z|[._-])/iD',
+            $key
+        ) === 1;
         return [
             'id' => $setting->get('id'),
-            'key' => $setting->get('key'),
-            'value' => $setting->get('value'),
+            'key' => $key,
+            'value' => $isSecret ? '[REDACTED]' : $value,
             'xtype' => $setting->get('xtype'),
             'namespace' => $setting->get('namespace'),
             'area' => $setting->get('area'),

@@ -104,6 +104,8 @@ jobs:
           php _build/test.token-rotation-faults.php
           php _build/test.security-settings-immutability.php
           php _build/test.settings-secret-redaction.php
+          php _build/test.legacy-token-redaction.php modx2
+          php _build/test.legacy-token-redaction.php modx3
           php _build/test.user-read-redaction.php
       - name: Exact processor allowlists and privileged mode must fail closed
         run: |
