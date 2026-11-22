@@ -478,6 +478,23 @@ assert "'remove_locks'" in remove_locks_test
 assert 'CAS_REMOVE_LOCKS_EMPTY_INSTALL_STALE_REPLAY_OK' in remove_locks_test
 assert 'stale remove_locks replay denied' in remove_locks_test
 
+# RU: Provider create/update требует настоящего локального verify endpoint.
+# EN: Provider CAS evidence only valid with stock processor against loopback XML.
+provider_loopback_test=(ROOT / '_build/test.ci-cas-provider-local-verify.php').read_text()
+provider_loopback_router=(ROOT / '_build/test.ci-cas-provider-loopback-router.php').read_text()
+assert 'php _build/test.ci-cas-provider-local-verify.php' in ci_workflow
+assert 'php -S 127.0.0.1:18779' in ci_workflow
+assert "'<verified>1</verified>'" in provider_loopback_router or '<verified>1</verified>' in provider_loopback_router
+for action,scenario,marker in (
+ ('create_provider','disposable_loopback_provider_create_readback_stale_replay','CREATE'),
+ ('update_provider','disposable_loopback_provider_description_update_readback_stale_replay','UPDATE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in provider_loopback_test
+    assert 'CAS_PROVIDER_'+marker+'_LOCAL_VERIFY_STALE_REPLAY_OK' in provider_loopback_test
+assert 'stale replay consumed no extra revision' in provider_loopback_test
+assert 'disposable provider cleanup complete' in provider_loopback_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
