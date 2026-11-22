@@ -167,7 +167,7 @@ dispatcher. The mutation migration is complete: all **112** mutation actions
 are registered in the modular Runtime, so all **193** server actions have a modular
 implementation.
 
-On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with `_build/test.live-modular-parity.php`. That full live matrix covered the 182-action release contract, including all 74 read-only actions available at that time.
+On 2026-10-02 the then-current v1.1.0 modular registry was re-audited on the live MODX 3.2.4-pl sandbox with historical `_build/test.live-modular-parity.php` (removed from current tree; available in Git history at `7ac665a`). That full live matrix covered the 182-action release contract, including all 74 read-only actions available at that time.
 
 On 2026-10-06 the new `get_site_state` action and Runtime-CAS path first received a dedicated live smoke on both MODX 3.2.4-pl and MODX 2.8.9-pl sandboxes. Each sandbox confirmed `atomic_preconditions=true`; stale create/update attempts were rejected with `STALE_STATE`; intervening content was preserved; revision state persisted; and test data was cleaned up. On 2026-10-07 the 1.2.0 release validation then reran the full 81-action read parity on both platforms, the complete 14-suite live regression on MODX 3, and the MODX 2 core/runtime suites supported by the installed extras.
 

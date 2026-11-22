@@ -2,6 +2,9 @@
 
 ## 1.2.8 — актуальные security-gates PR #49 (22.11.2026)
 
+**Тестовый техдолг:** 15 неиспользуемых legacy `test.live-*` удалены после инвентаризации; индивидуальные сценарии, которых не хватает актуальному CI, переносить через штатный защищённый MODX MCP, а не через отключение `modularRuntime`. [Подробный реестр](docs/CAS-PR49-TEST-CLEANUP-1.2.8.ru.md).
+
+
 **Подтверждено, не перепроверять как отсутствующее:** Ed25519 + одноразовые nonce и fail-closed авторизация в изолированной 1.2.8; защищённый `update_element/delete_element` с полным target fingerprint; несовпадение после независимого изменения Manager и параллельная InnoDB-транзакция; публичный CI [12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45008665939) и приватный Controller/Executor/TLS [3/3](https://github.com/rumata-estor/site-agent-runtime/actions/runs/45008844831).
 
 **Открыто:** остальные мутации при пустом `read_set` и изменениях вне MCP; внешние необратимые эффекты процессоров, пакетов и плагинов; реальная production-доставка согласований через Telegram, TLS/WAF/systemd; межузловая конкуренция и восстановление; пооперационные положительные/fault-тесты для 94 неполно покрытых действий. Подробные условия и границы: [CAS security assurance](docs/CAS-SECURITY-ASSURANCE-1.2.8.ru.md). PR #49 остаётся Draft, выпуск не разрешён.
