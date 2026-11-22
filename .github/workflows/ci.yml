@@ -154,6 +154,9 @@ jobs:
       - name: miniShop2 order partial-write and lost-response fail-closed
         run: php _build/test.ms2-order-uncertain-fault.php
 
+      - name: VersionX native revert outcome and error isolation
+        run: php _build/test.versionx-revert-uncertain-fault.php
+
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata
         run: |
           MODX3_PKG=$(php -r "include '_build/build.config.php'; echo PKG_VERSION;")
