@@ -20,6 +20,8 @@
 
 - **`make_static` failure semantics:** if the file write succeeds but element metadata save fails, the tool reports `MUTATION_OUTCOME_UNCERTAIN` rather than suggesting a clean rollback; a fault-injection test reproduces that state.
 
+- **Filesystem failure handling:** a failed MODX processor after a static edit, or a short file write, now reports `MUTATION_OUTCOME_UNCERTAIN`; isolated fault-injection tests reproduce both cases. TV static conversion uses exclusive `xb` creation to avoid overwriting a competing writer at the final filename.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
