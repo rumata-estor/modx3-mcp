@@ -128,6 +128,21 @@ class ProcessorMutationTool implements ToolInterface
                 $props['enableAnonymous'] = false;
             }
             $this->prepareContext($props);
+            if (in_array($this->toolName, array(
+                'create_context_setting', 'update_context_setting', 'delete_context_setting'
+            ), true)) {
+                // RU: До вызова штатного процессора нужен ключ для
+                // RU: гарантированной инвалидации нужного кэша.
+                // EN: Require a context target before invoking a mutation;
+                // EN: otherwise its cache could stay stale after success.
+                $target = isset($props['fk']) ? $props['fk']
+                    : (isset($props['context_key']) ? $props['context_key'] : null);
+                if (!is_string($target) || trim($target) === '') {
+                    throw new \ModxMCPClientException(
+                        'AUTH_DENIED: context setting mutation needs context_key or fk.'
+                    );
+                }
+            }
             $this->loadLexicons(
                 $context,
                 array('core:default', 'core:context', 'core:setting')
@@ -182,6 +197,30 @@ class ProcessorMutationTool implements ToolInterface
 
         if ($route === 'acl' && $context->modx()->getCacheManager()) {
             $context->modx()->getCacheManager()->flushPermissions();
+        }
+        if ($route === 'context' && in_array($this->toolName, array(
+            'create_context_setting', 'update_context_setting', 'delete_context_setting'
+        ), true)) {
+            // RU: Замечание @AgelxNash, PR #54: refresh() без списка
+            // RU: contexts не инвалидирует кэш контекстных настроек MODX.
+            // RU: После успешной записи обновляем только затронутый контекст.
+            // EN: Reported by @AgelxNash, PR #54: context_settings cache
+            // EN: refresh needs an explicit contexts list, after a successful write.
+            $contextKey = isset($props['fk']) ? $props['fk']
+                : (isset($props['context_key']) ? $props['context_key'] : null);
+            if (!is_string($contextKey) || $contextKey === '') {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: context setting changed but cache target is unknown.'
+                );
+            }
+            StateSupport::afterRevisionCommit($context, function () use ($context, $contextKey) {
+                $manager = $context->modx()->getCacheManager();
+                if ($manager) {
+                    $manager->refresh(array(
+                        'context_settings' => array('contexts' => array($contextKey))
+                    ));
+                }
+            });
         }
 
         AuditSupport::log(
@@ -288,7 +327,7 @@ class ProcessorMutationTool implements ToolInterface
     {
         if (in_array(
             $this->toolName,
-            array('create_context_setting', 'update_context_setting'),
+            array('create_context_setting', 'update_context_setting', 'delete_context_setting'),
             true
         )) {
             if (!isset($props['fk']) && isset($props['context_key'])) {

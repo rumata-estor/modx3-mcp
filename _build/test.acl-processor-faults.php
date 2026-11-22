@@ -16,6 +16,9 @@ namespace ModxMcp\Tools {
         public static $calls=0;
         public static function log($context,$name,$type,$payload){self::$calls++;}
     }
+    class StateSupport {
+        public static function afterRevisionCommit($context,$callback){$callback();}
+    }
     class ProcessorSupport {
         public static function error($response){return 'injected processor failure';}
         public static function normalize($response){return array('success'=>true);}
@@ -33,8 +36,9 @@ class AclFakeLexicon {
     public function load() {$this->loads++;}
 }
 class AclFakeCache {
-    public $flushes=0;
+    public $flushes=0;public $refreshes=array();
     public function flushPermissions() {$this->flushes++;}
+    public function refresh($options=array()){$this->refreshes[]=$options;}
 }
 class AclFakeError {
     public $resets=0;
@@ -304,7 +308,49 @@ if($ctx->platform->calls!==1
     || !array_key_exists('enableAnonymous',$ctx->platform->lastProps)
     || $ctx->platform->lastProps['enableAnonymous']!==false)
     throw new \RuntimeException('CONTEXT_CREATE_DEFAULT_ANONYMOUS_GRANT');
+// RU: PR #54, @AgelxNash: create/update/remove контекстной настройки
+// RU: обновляют кэш нужного контекста, только после успешного процессора.
+// EN: PR #54, @AgelxNash: explicit context_settings refresh targets only
+// EN: the changed context and never runs after a failed processor call.
+$contextCacheChecks=0;
+foreach (array('create_context_setting','update_context_setting',
+    'delete_context_setting') as $action) {
+    foreach(array(true,false) as $succeeds) {
+        $ctx=new AclFakeContext();
+        $ctx->platform->fail=!$succeeds;
+        $tool=new \ModxMcp\Tools\ProcessorMutationTool($action,$specs[$action]);
+        try {
+            $tool->execute($ctx,array(
+                'key'=>'fixture_setting','context_key'=>'web'
+            ));
+            if (!$succeeds)throw new \RuntimeException('CONTEXT_FAILURE_NOT_REPORTED');
+        } catch(ModxMCPClientException $e) {
+            if($succeeds || $e->getMessage()!=='injected processor failure')throw $e;
+        }
+        $refreshes=$ctx->modx->cache->refreshes;
+        if($ctx->platform->calls!==1
+            || ($ctx->platform->lastProps['fk']??null)!=='web'
+            || count($refreshes)!==($succeeds?1:0)
+            || ($succeeds && $refreshes[0]!==array(
+                'context_settings'=>array('contexts'=>array('web'))
+            )))throw new \RuntimeException('CONTEXT_CACHE_INVALIDATION_CONTRACT');
+        $contextCacheChecks++;
+    }
+    // RU: Без контекста отказываем до запуска процессора.
+    // EN: Missing context target must fail before processor dispatch.
+    $ctx=new AclFakeContext();
+    $tool=new \ModxMcp\Tools\ProcessorMutationTool($action,$specs[$action]);
+    try {
+        $tool->execute($ctx,array('key'=>'fixture_setting'));
+        throw new \RuntimeException('CONTEXT_MISSING_TARGET_ALLOWED');
+    } catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'AUTH_DENIED:')!==0)throw $e;
+    }
+    if($ctx->platform->calls!==0)throw new \RuntimeException('CONTEXT_MISSING_TARGET_DISPATCHED');
+    $contextCacheChecks++;
+}
 echo 'ACL_PROCESSOR_ERROR_MATRIX_OK actions='.$checks
+    .' context_cache_checks='.$contextCacheChecks
     .' anonymous_context_denials='.$contextCreateDenials
     .' no_response='.$missingResponseChecks
     .' secret_checks=1 context_denials='.$contextChecks.PHP_EOL;
