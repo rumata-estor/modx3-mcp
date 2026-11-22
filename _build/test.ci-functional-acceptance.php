@@ -116,6 +116,9 @@ try {
         'alias'=>'mcp-acceptance-'.$fixture, 'content'=>'BEFORE_'.$fixture,
         'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
         'richtext'=>1,'searchable'=>0,'cacheable'=>0,
+        // RU: Непустая дата нужна для обнаружения форматирования в CAS.
+        // EN: Nonempty scheduled date exercises actual fingerprint stability.
+        'pub_date'=>'2027-02-03 14:15:46',
     ));
     acceptanceCheck(is_array($created) && isset($created['id']) && (int)$created['id']>0,
         'CAS guarded resource creation');
@@ -128,6 +131,28 @@ try {
     foreach (array('richtext'=>1,'searchable'=>0,'cacheable'=>0) as $field=>$expected) {
         acceptanceCheck(isset($read[$field]) && (int)$read[$field]===$expected,
             'initial resource flag '.$field);
+    }
+    // RU: Смена Manager-формата дат не должна менять CAS-отпечаток.
+    // EN: Manager date/time presentation settings cannot affect CAS.
+    // RU: Замечание @AgelxNash, PR #57 (проверка без SQL и записи в сайт).
+    // EN: Reported by @AgelxNash, PR #57; verify through MCP only.
+    $originalDateFormat=$modx->getOption('manager_date_format');
+    $originalTimeFormat=$modx->getOption('manager_time_format');
+    acceptanceCheck(!empty($read['pub_date']),
+        'resource has nonempty date for fingerprint regression');
+    $dateSnapshot=acceptanceSnapshot('resource',$resourceId);
+    try {
+        $modx->setOption('manager_date_format','d/m/Y');
+        $modx->setOption('manager_time_format','g:i A');
+        $formattedSnapshot=acceptanceSnapshot('resource',$resourceId);
+        acceptanceCheck(
+            $dateSnapshot['read_set'][0]['fingerprint']
+                ===$formattedSnapshot['read_set'][0]['fingerprint'],
+            'resource CAS fingerprint independent of Manager date/time format'
+        );
+    } finally {
+        $modx->setOption('manager_date_format',$originalDateFormat);
+        $modx->setOption('manager_time_format',$originalTimeFormat);
     }
     $beforeUpdate=acceptanceSnapshot('resource',$resourceId);
     acceptanceRpc('update_element',array(

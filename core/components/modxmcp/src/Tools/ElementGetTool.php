@@ -20,10 +20,18 @@ class ElementGetTool implements ToolInterface
             throw new \ModxMCPClientException($type . ' not found by name or ID is missing.');
         }
 
+        // RU: Отпечатки CAS ресурса не должны зависеть от формата дат Manager.
+        // RU: Замечание @AgelxNash, PR #57; читаем исходные даты из MODX.
+        // EN: Resource CAS dates must be independent of Manager formatting.
+        // EN: Reported by @AgelxNash in PR #57; request raw processor dates.
+        $properties = array('id' => $id);
+        if ($type === 'resource') {
+            $properties['skipFormatDates'] = true;
+        }
         $response = $context->platform()->runProcessor(
             $context->modx(),
             ElementSupport::processorBase($type) . 'get',
-            array('id' => $id)
+            $properties
         );
         if ($response->isError()) {
             throw new \ModxMCPClientException(ElementSupport::processorError($response));
