@@ -276,6 +276,30 @@ try {
     $userRead=acceptanceRpc('get_user',array('id'=>$userId));
     acceptanceCheck(is_array($userRead) && (string)$userRead['username']==='mcp_acceptance_'.$fixture,
         'inactive user readback');
+    // RU: Безопасное обновление имени пользователя должно работать,
+    // RU: а устаревшая CAS-проверка не должна менять профиль.
+    // EN: Normal profile updates must work; stale CAS must not change user data.
+    $userRevision=acceptanceRpc('get_site_state');
+    $userChange=array(
+        'id'=>$userId,'fullname'=>'MCP Updated User '.$fixture,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$userRevision['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceRpc('update_user',$userChange);
+    $userRead=acceptanceRpc('get_user',array('id'=>$userId));
+    acceptanceCheck((string)($userRead['fullname'] ?? '')==='MCP Updated User '.$fixture,
+        'ACL user profile change persisted');
+    acceptanceCheck((int)($userRead['active'] ?? -1)===0,
+        'ACL user activation flag preserved');
+    $staleUserDenied=false;
+    try {acceptanceRpc('update_user',$userChange);}
+    catch (ModxMCPClientException $e) {
+        $staleUserDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($staleUserDenied,'ACL user replay with stale CAS denied');
+
     // RU: В штатном чтении профиля не должны появляться хеши и соли.
     // EN: Normal user reads must never include password hashes or salts.
     foreach (array('password','cachepwd','salt','remote_key','sudo') as $secretField) {
