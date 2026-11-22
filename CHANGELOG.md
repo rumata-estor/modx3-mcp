@@ -22,6 +22,8 @@
 
 - **Filesystem failure handling:** a failed MODX processor after a static edit, or a short file write, now reports `MUTATION_OUTCOME_UNCERTAIN`; isolated fault-injection tests reproduce both cases. TV static conversion uses exclusive `xb` creation to avoid overwriting a competing writer at the final filename.
 
+- **Batch mutations:** `replace_across` and `bulk_resources` no longer turn errors after a write attempt into apparent success. They return `MUTATION_OUTCOME_UNCERTAIN`, requiring independent target reconciliation before retry, and perform best-effort cache refresh on failure. Added isolated first/second-target fault injection and dry-run compatibility tests.
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
