@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 111. **Не имеют индивидуальных сценариев:** 5.
+сценарий:** 113. **Не имеют индивидуальных сценариев:** 3.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -28,12 +28,10 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 5 без сценария
+## P2 — остальные операции — 3 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `ms2_assign_option_to_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `ms2_create_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_category` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -98,6 +96,8 @@ MiniShop3 на MODX 3 — отдельный компонент и отдель�
 | `migx_create_config` | review | `disposable_installed_migx_create_config_readback_stale_replay` |
 | `migx_delete_config` | review | `disposable_installed_migx_delete_config_readback_stale_replay` |
 | `migx_update_config` | review | `disposable_installed_migx_update_config_readback_stale_replay` |
+| `ms2_assign_option_to_category` | review | `disposable_modx2_pinned_ms2_assign_option_to_category_native_mcp_readback_stale_replay` |
+| `ms2_create_category` | review | `disposable_modx2_pinned_ms2_create_category_native_mcp_readback_stale_replay` |
 | `ms2_create_link_type` | review | `disposable_pinned_ms2_create_link_type_native_processor_readback_stale_replay` |
 | `ms2_create_option` | review | `disposable_pinned_ms2_create_option_native_processor_list_readback_stale_replay` |
 | `ms2_create_product_link` | review | `disposable_modx2_pinned_ms2_create_product_link_native_mcp_readback_stale_replay` |
