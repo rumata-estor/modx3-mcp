@@ -56,7 +56,9 @@ class ClientConfigSupport
                     = $value->get('value');
             }
         }
-        return $out;
+        // RU: Значения и переопределения секретов не должны попадать в MCP.
+        // EN: Never expose addon secret values, defaults or context overrides.
+        return SettingSecretSupport::settingRow($out);
     }
 
     public static function applyFields($setting, array $data)
