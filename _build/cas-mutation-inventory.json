@@ -76,7 +76,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "pinned_clientconfig25_php82_create_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clientconfig_delete_setting": {
@@ -84,7 +86,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "pinned_clientconfig25_php82_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "clientconfig_update_setting": {
@@ -92,7 +96,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "pinned_clientconfig25_php82_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_access_policy": {
