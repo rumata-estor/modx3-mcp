@@ -492,6 +492,24 @@ jobs:
           php _build/test.ci-cas-replace-across.php
       # RU: Очистка lock-состояния только на disposable MODX CI.
       # EN: Empty-install remove_locks CAS success and stale replay only.
+      # RU: Локальный HTTP /verify — тест штатных provider processors без интернета.
+      # EN: Loopback-only verification, no outbound transport provider service.
+      - name: Disposable provider create/update with local verify endpoint
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODXMCP_CI_PROVIDER_URL="http://127.0.0.1:18779/"
+          php -S 127.0.0.1:18779 _build/test.ci-cas-provider-loopback-router.php > "$RUNNER_TEMP/mcp-provider-mock.log" 2>&1 &
+          mock_pid=$!
+          trap 'kill "$mock_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --max-time 2 "$MODXMCP_CI_PROVIDER_URL/verify" > "$RUNNER_TEMP/mcp-provider-verify.xml"; then break; fi
+            sleep 0.2
+          done
+          grep -q '<verified>1</verified>' "$RUNNER_TEMP/mcp-provider-verify.xml"
+          php _build/test.ci-cas-provider-local-verify.php
       - name: Disposable remove locks empty-install CAS
         env:
           MODXMCP_DISPOSABLE_CI: '1'
