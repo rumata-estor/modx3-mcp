@@ -61,25 +61,6 @@ foreach($cases as $case){
     addonCheck(stripos($message,$case[2])!==false,
         'missing addon error identifies dependency: '.$case[0]);
     $after=addonRpc('get_site_state');
-    if((int)$after['site_revision']!==(int)$before['site_revision']){
-        $loaded='unavailable';
-        if(class_exists('ModxMcp\\Tools\\StateSupport')){
-            $reflect=new ReflectionClass('ModxMcp\\Tools\\StateSupport');
-            $loaded=$reflect->getFileName();
-        }
-        $dispatcherFile=MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
-        $dispatcherHasCall=is_file($dispatcherFile)
-            && strpos(file_get_contents($dispatcherFile),'requireOptionalAddonPath')!==false;
-        $stateSupportHasCall=class_exists('ModxMcp\\Tools\\StateSupport')
-            && method_exists('ModxMcp\\Tools\\StateSupport','requireOptionalAddonPath');
-        fwrite(STDERR,'OPTIONAL_ADDON_DIAG installed_dispatcher_call='.
-            ($dispatcherHasCall?'yes':'no').' installed_state_method='.
-            ($stateSupportHasCall?'yes':'no').PHP_EOL);
-        fwrite(STDERR,'OPTIONAL_ADDON_DIAG action='.$case[0]
-            .' before='.(int)$before['site_revision']
-            .' after='.(int)$after['site_revision']
-            .' class_path='.$loaded.PHP_EOL);
-    }
     addonCheck((int)$after['site_revision']===(int)$before['site_revision'],
         'missing addon did not consume CAS revision: '.$case[0]);
     echo 'MISSING_ADDON_DENIED_SAFE action='.$case[0].PHP_EOL;
