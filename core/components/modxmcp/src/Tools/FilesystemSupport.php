@@ -139,7 +139,9 @@ class FilesystemSupport
         $push = function ($item) use (
             &$lines, &$returnedBytes, &$outputLimitReached, $maxReturnedBytes
         ) {
-            $encoded = is_string($item) ? $item : json_encode($item);
+            // RU: JSON может увеличить размер управляющих символов в 6 раз.
+            // EN: Count serialized bytes; control characters may expand 6x.
+            $encoded = json_encode($item);
             $bytes = is_string($encoded) ? strlen($encoded) : $maxReturnedBytes + 1;
             if ($bytes > $maxReturnedBytes - $returnedBytes) {
                 $outputLimitReached = true;
@@ -164,6 +166,10 @@ class FilesystemSupport
                 if ($item !== null) {
                     $push($item);
                 }
+            } elseif (preg_match('//u', $line) !== 1) {
+                // RU: Короткие бинарные строки тоже обязаны быть JSON-safe.
+                // EN: Even short binary log lines must be JSON-safe.
+                $push('[MODX MCP: binary line base64] ' . base64_encode($line));
             } else {
                 $push($line);
             }

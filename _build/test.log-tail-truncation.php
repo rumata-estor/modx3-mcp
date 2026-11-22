@@ -101,6 +101,40 @@ try {
     demandTail(strpos($binaryTail[0], '[MODX MCP: line truncated; base64 of last 8192 bytes] ') === 0, 'Binary tail was not encoded');
     demandTail(json_encode($binaryTail, JSON_UNESCAPED_UNICODE) !== false, 'Binary tail cannot be encoded as JSON');
 
+    // RU: Маленькие бинарные строки тоже должны сериализоваться в JSON.
+    // EN: Small invalid-UTF8 lines must be encoded, not returned raw.
+    $smallBinaryFile = sys_get_temp_dir().'/modxmcp-tail-smallbinary-'
+        .bin2hex(random_bytes(6)).'.log';
+    file_put_contents($smallBinaryFile,"NORMAL\nBIN_\xFF\xFE\n");
+    $smallBinaryMetadata=array();
+    $smallBinaryTail=\ModxMcp\Tools\FilesystemSupport::readTailLines(
+        $smallBinaryFile,2,null,$smallBinaryMetadata
+    );
+    demandTail(count($smallBinaryTail)===2,'Small binary tail lines missing');
+    demandTail(strpos($smallBinaryTail[1],'[MODX MCP: binary line base64] ')===0,
+        'Small binary line was not encoded');
+    demandTail(json_encode($smallBinaryTail)!==false,
+        'Small binary line made JSON invalid');
+
+    // RU: Измеряем именно JSON-байты: нулевой байт расширяется до \u0000.
+    // EN: JSON escaped NUL bytes can multiply the serialized output size.
+    $escapedFile=sys_get_temp_dir().'/modxmcp-tail-escaped-'
+        .bin2hex(random_bytes(6)).'.log';
+    $escapedHandle=fopen($escapedFile,'wb');
+    for($idx=0;$idx<400;$idx++){
+        fwrite($escapedHandle,str_repeat("\x00",8192)."\n");
+    }
+    fclose($escapedHandle);
+    $escapedMetadata=array();
+    $escapedTail=\ModxMcp\Tools\FilesystemSupport::readTailLines(
+        $escapedFile,1000,null,$escapedMetadata
+    );
+    $jsonSize=strlen(json_encode($escapedTail));
+    demandTail($jsonSize<=4194304 && count($escapedTail)<400,
+        'Serialized log tail exceeded aggregate JSON budget');
+    demandTail($escapedMetadata['result_complete']===false,
+        'Escaped output truncation was marked complete');
+
     $boundedLineFile = sys_get_temp_dir() . '/modxmcp-tail-bounded-' . bin2hex(random_bytes(6)) . '.log';
     file_put_contents($boundedLineFile, "BEFORE\n" . str_repeat('Z', 524289) . "\nAFTER\n");
     $boundedMetadata = array();
@@ -210,6 +244,8 @@ try {
 } finally {
     foreach (array(
         $aggregateFile,
+        $smallBinaryFile,
+        $escapedFile,
         $binaryLineFile,
         $boundedLineFile,
         $hugeLineFile,
