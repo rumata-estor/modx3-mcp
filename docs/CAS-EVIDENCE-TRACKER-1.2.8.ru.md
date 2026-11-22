@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 85. **Не имеют индивидуальных сценариев:** 31.
+сценарий:** 86. **Не имеют индивидуальных сценариев:** 30.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,7 +22,7 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 31 без сценария
+## P2 — остальные операции — 30 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -44,7 +44,6 @@
 | `ms2_update_order` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `ms2_update_product_options` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `remove_locks` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `virtualpage_clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -135,6 +134,7 @@
 | `update_context_access` | critical | `disposable_context_acl_update_readback_stale_replay` |
 | `update_context_setting` | high | `disposable_context_setting_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
+| `update_element_property` | review | `disposable_chunk_single_property_expected_value_and_site_revision_cas` |
 | `update_group_member` | critical | `disposable_inactive_user_group_role_update_readback_stale_replay` |
 | `update_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied`, `concurrent_media_cas` |
 | `update_media_source` | review | `disposable_media_source_definition_description_update_readback_stale_replay` |

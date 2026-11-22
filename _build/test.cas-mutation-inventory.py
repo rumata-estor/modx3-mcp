@@ -448,6 +448,17 @@ assert 'CAS_FLUSH_PERMISSIONS_NATIVE_STALE_REPLAY_OK' in flush_test
 assert 'native MODX permissions cache manager confirms successful flush' in flush_test
 assert 'flush_permissions old CAS denied' in flush_test
 
+# RU: Прямой native seed допустим только для одноразовой фикстуры CI,
+# RU: сама мутация свойства выполняется исключительно через MCP.
+# EN: Native seeding is limited to the isolated test fixture only.
+element_property_test=(ROOT / '_build/test.ci-cas-element-property.php').read_text()
+assert 'php _build/test.ci-cas-element-property.php' in ci_workflow
+assert 'disposable_chunk_single_property_expected_value_and_site_revision_cas' in expected['update_element_property']['verified_scenarios']
+assert "'update_element_property',$request" in element_property_test
+assert 'CAS_ELEMENT_PROPERTY_UPDATE_READBACK_STALE_REPLAY_OK' in element_property_test
+assert 'unrelated property preserved' in element_property_test
+assert 'per-property expected_value mismatch rejected' in element_property_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
