@@ -56,6 +56,16 @@ class ResourceReorderTool implements ToolInterface
                 );
             }
             $seen[$id] = true;
+            // RU: Несуществующий второй parent также нельзя проверять
+            // RU: после изменения первого ресурса.
+            // EN: Validate target parents up front, not after earlier writes.
+            if (array_key_exists('parent', $item) && (int)$item['parent'] > 0
+                && !$context->modx()->getObject($resourceClass, (int)$item['parent'])) {
+                throw new \ModxMCPClientException(
+                    'NOT_FOUND: reorder_resources parent ' . (int)$item['parent']
+                    . ' does not exist; no writes attempted.'
+                );
+            }
         }
         foreach (array_keys($seen) as $id) {
             if (!$context->modx()->getObject($resourceClass, $id)) {
@@ -99,13 +109,22 @@ class ResourceReorderTool implements ToolInterface
             );
         }
 
-        ElementMutationSupport::refreshCache($context);
-        AuditSupport::log(
-            $context,
-            $this->name(),
-            'resource',
-            array('count' => count($results))
-        );
+        try {
+            ElementMutationSupport::refreshCache($context);
+            AuditSupport::log(
+                $context,
+                $this->name(),
+                'resource',
+                array('count' => count($results))
+            );
+        } catch (\Throwable $e) {
+            // RU: Изменения уже могли сохраниться: безопасная классификация.
+            // EN: Cache/audit failure after writes is an uncertain mutation.
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: reorder_resources post-execution '
+                . 'handling failed; inspect all target resources before retry.'
+            );
+        }
         return array('count' => count($results), 'results' => $results);
     }
 }

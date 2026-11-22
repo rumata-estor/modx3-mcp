@@ -109,6 +109,9 @@ try{
         array('items'=>array(
             array('id'=>$ids[0],'menuindex'=>$next[0]+300),
             array('id'=>$ids[1],'menuindex'=>'not-a-number'))),
+        array('items'=>array(
+            array('id'=>$ids[0],'menuindex'=>$next[0]+300),
+            array('id'=>$ids[1],'menuindex'=>$next[1]+300,'parent'=>2147483600))),
     );
     foreach($invalidBatches as $batch){
         $batch['_runtime_preconditions']=orderGuard();
