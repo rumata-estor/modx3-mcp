@@ -33,13 +33,15 @@
 
 ## 1.2.8 — ОБЯЗАТЕЛЬНО перед релизом: секреты сторонних настроек (22.11.2026)
 
-**Статус: OPEN — приёмочная проверка.** В тестовую ветку принят [PR #124](https://github.com/rumata-estor/modx3-mcp/pull/124): закрыто раскрытие значений secret/password/token в system settings, контекстных processor outputs и ClientConfig по именам ключей. Подтверждены одноразовые MODX 2/3 12/12 и общий CI 4/4. Запрет изменения `modxmcp.*` через MCP существовал ранее и остаётся обязательным.
+**Статус: PARTIAL — реальные E2E контекста и pinned ClientConfig закрыты PR #127; установка/upgrade и комплексные отказы остаются OPEN.** В тестовую ветку принят [PR #124](https://github.com/rumata-estor/modx3-mcp/pull/124): закрыто раскрытие значений secret/password/token в system settings, контекстных processor outputs и ClientConfig по именам ключей. Подтверждены одноразовые MODX 2/3 12/12 и общий CI 4/4. Запрет изменения `modxmcp.*` через MCP существовал ранее и остаётся обязательным.
 
-- [ ] На отдельных disposable MODX 2 и 3 проверить **реальные** `get/list_context_settings` с секретом и обычной настройкой, включая формат и вложенность ответа native processor.
-- [ ] При наличии установленного стороннего ClientConfig проверить `clientconfig_get/list/create/update` с фиктивными `value/default/context_values`, в том числе по нескольким контекстам: секреты скрыты в ответе, а сохранённые значения не теряются.
-- [ ] Проверить варианты именования credential key: snake_case, camelCase, префиксы/суффиксы, mixed case, public key, нейтральные названия. Не заявлять распознавание секрета под произвольным ключом `custom_data`.
+- [x] На отдельных disposable MODX 2 и 3 проверить **реальные** `get/list_context_settings` с секретом и обычной настройкой, включая формат и вложенность ответа native processor. **Проверено:** PR #127, MODX2/3 PHP 8.2.
+- [x] При наличии установленного стороннего ClientConfig проверить `clientconfig_get/list/create/update` с фиктивными `value/default/context_values`, в том числе по нескольким контекстам: секреты скрыты в ответе, а сохранённые значения не теряются. **Проверено:** pinned ClientConfig 2.5.0 на MODX2/3 PHP 8.2, PR #127.
+- [x] Проверить варианты именования credential key: snake_case, camelCase, префиксы/суффиксы, mixed case, public key, нейтральные названия. Не заявлять распознавание секрета под произвольным ключом `custom_data`. **Проверено:** unit 54 сценария PR #124; эвристика не гарантирует скрытие произвольного названия.
 - [ ] Независимая авторизация/политика настроек: попытки create/update/delete/rename `modxmcp.*` и обходы через context settings и универсальные процессоры не изменяют значение и CAS без разрешённой операции.
 - [ ] Обновление **1.2.7 → 1.2.8**: совместимость обычных настроек и сознательное маскирование секретов; понятное сообщение в release notes. Никаких проверок на production.
+
+**Результаты PR #127:** [MODX2/3 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45056292324), [общий CI 4/4](https://github.com/rumata-estor/modx3-mcp/actions/runs/45056309363). ClientConfig 2.5.0 выполнялся на PHP 8.2; нельзя переносить результат на все версии дополнения и PHP.
 
 **Критерий закрытия:** воспроизводимые E2E/CI, фиктивные секреты не выходят в HTTP/MCP response или журналы; сохранены обычные значения и публичный Ed25519 verification key. Подробности: [аудит настроек](docs/SETTINGS-SECURITY-AUDIT-1.2.8.ru.md).
 
