@@ -3067,7 +3067,11 @@ class modxMCP {
 
         // context/setting/create identifies the context via `fk` (get/remove/getlist use
         // `context_key`); mirror context_key -> fk so a single param works everywhere.
-        if (in_array($action, array('create_context_setting', 'update_context_setting'), true)) {
+        if (in_array($action, array('create_context_setting', 'update_context_setting', 'delete_context_setting'), true)) {
+            $key = trim(isset($props['key']) ? (string)$props['key'] : '');
+            if ($key !== '' && stripos($key, 'modxmcp.') === 0) {
+                throw new ModxMCPClientException('Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.');
+            }
             if (!isset($props['fk']) && isset($props['context_key'])) { $props['fk'] = $props['context_key']; }
             if (!isset($props['namespace'])) { $props['namespace'] = 'core'; }
         }
@@ -3078,6 +3082,16 @@ class modxMCP {
         $response = $this->runCoreProcessor($cfg['processor'], $props);
         if (!$response) { throw new ModxMCPClientException("Context processor not found or returned nothing: {$cfg['processor']}"); }
         if ($response->isError()) { throw new ModxMCPClientException($this->formatProcessorErrors($response)); }
+
+        if (in_array($action, array('create_context_setting', 'update_context_setting', 'delete_context_setting'), true)) {
+            if ($this->modx->getCacheManager() && isset($props['fk']) && is_string($props['fk']) && $props['fk'] !== '') {
+                // MODX regenerates the context_settings cache only when the provider
+                // receives an explicit `contexts` list; an empty options array is a silent no-op.
+                $this->modx->getCacheManager()->refresh(
+                    array('context_settings' => array('contexts' => array($props['fk'])))
+                );
+            }
+        }
 
         $this->logAudit($action, 'context', array_intersect_key($props, array_flip(array('key', 'context_key', 'name'))));
 
@@ -3377,8 +3391,10 @@ class modxMCP {
         $processor = isset($data['processor']) ? (string) $data['processor'] : '';
         if ($processor === '') { throw new ModxMCPClientException('run_processor: "processor" path is required.'); }
         $props = (isset($data['properties']) && is_array($data['properties'])) ? $data['properties'] : array();
+        $processorsPath = !empty($data['processors_path']) ? (string)$data['processors_path'] : '';
+        $this->assertRunProcessorProtectedSettings($processor, $props, $processorsPath);
         $options = array();
-        if (!empty($data['processors_path'])) { $options['processors_path'] = (string) $data['processors_path']; }
+        if ($processorsPath !== '') { $options['processors_path'] = $processorsPath; }
 
         // For core processors prefer the explicit MODX 3 PSR-4 class. Custom processor
         // paths remain untouched when processors_path is provided.
@@ -3392,6 +3408,54 @@ class modxMCP {
         $this->logAudit('run_processor', 'system', array('processor' => $processor));
         $decoded = json_decode($response->getResponse(), true);
         return is_array($decoded) ? $decoded : $this->normalizeProcessorResponse($response);
+    }
+
+    private function assertRunProcessorProtectedSettings($processor, array $properties, $processorsPath = '') {
+        $processor = $this->normalizeRunProcessorPath($processor);
+        $combined = $processor;
+        if (trim((string)$processorsPath) !== '') {
+            $combined = $this->normalizeRunProcessorPath($processorsPath . '/' . $processor);
+        }
+        $settingsRoute = '(?:context/setting|system/settings|system/setting|security/(?:user|group)/setting)';
+        $directSettingMutation = preg_match('#(?:^|/)' . $settingsRoute . '/(create|update|remove|updatefromgrid)(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
+        $contextUpdate = preg_match('#(?:^|/)context/update(?:\\.class)?(?:\\.php)?$#', $combined) === 1;
+        if (!$directSettingMutation && !$contextUpdate) { return; }
+        $payloads = array($properties);
+        foreach (array('data', 'settings') as $field) {
+            if (!isset($properties[$field])) { continue; }
+            $nested = is_array($properties[$field])
+                ? $properties[$field]
+                : json_decode((string)$properties[$field], true);
+            if (is_array($nested)) { $payloads[] = $nested; }
+        }
+        foreach ($payloads as $payload) {
+            if ($this->runProcessorPayloadHasProtectedKey($payload)) {
+                throw new ModxMCPClientException('Managing modxmcp.* settings via run_processor is not allowed.');
+            }
+        }
+    }
+
+    private function runProcessorPayloadHasProtectedKey(array $payload) {
+        foreach ($payload as $field => $value) {
+            if (($field === 'key' || $field === 'oldkey') && is_scalar($value)) {
+                $key = trim((string)$value);
+                if ($key !== '' && stripos($key, 'modxmcp.') === 0) { return true; }
+            }
+            if (is_array($value) && $this->runProcessorPayloadHasProtectedKey($value)) { return true; }
+        }
+        return false;
+    }
+
+    private function normalizeRunProcessorPath($path) {
+        $path = str_replace('\\', '/', strtolower(trim((string)$path)));
+        $path = trim(preg_replace('#/+#', '/', $path), '/');
+        $segments = array();
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') { continue; }
+            if ($segment === '..') { array_pop($segments); continue; }
+            $segments[] = $segment;
+        }
+        return implode('/', $segments);
     }
 
     /**

@@ -58,6 +58,22 @@ class ProcessorMutationTool implements ToolInterface
         if ($route === 'acl' && $context->modx()->getCacheManager()) {
             $context->modx()->getCacheManager()->flushPermissions();
         }
+        if ($route === 'context' && $context->modx()->getCacheManager()) {
+            // MODX regenerates the context_settings cache only when the provider
+            // receives an explicit `contexts` list; an empty options array is a silent no-op.
+            $contextKeys = array();
+            foreach (array('fk', 'context_key', 'key') as $contextField) {
+                if (isset($props[$contextField]) && is_string($props[$contextField]) && $props[$contextField] !== '') {
+                    $contextKeys[] = $props[$contextField];
+                    break;
+                }
+            }
+            if (!empty($contextKeys)) {
+                $context->modx()->getCacheManager()->refresh(
+                    array('context_settings' => array('contexts' => $contextKeys))
+                );
+            }
+        }
 
         AuditSupport::log(
             $context,
@@ -72,9 +88,15 @@ class ProcessorMutationTool implements ToolInterface
     {
         if (in_array(
             $this->toolName,
-            array('create_context_setting', 'update_context_setting'),
+            array('create_context_setting', 'update_context_setting', 'delete_context_setting'),
             true
         )) {
+            $key = trim(isset($props['key']) ? (string)$props['key'] : '');
+            if ($key !== '' && stripos($key, 'modxmcp.') === 0) {
+                throw new \ModxMCPClientException(
+                    'Managing modxmcp.* settings via MCP API is not allowed; use the manager or regenerate_token.'
+                );
+            }
             if (!isset($props['fk']) && isset($props['context_key'])) {
                 $props['fk'] = $props['context_key'];
             }

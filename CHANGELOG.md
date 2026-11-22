@@ -2,6 +2,11 @@
 
 # MODX MCP — Changelog
 
+## Unreleased
+
+- `run_processor` blocks `modxmcp.*` changes through system, context, user, and user-group setting processors across legacy paths, MODX 3 class names, grid payloads, nested context-update settings, and processor-path overrides (ProtectedSettingsGuard plus monolithic fallbacks).
+- Context-setting mutations (`create/update/delete_context_setting`) normalize the key (trim, case-insensitive) and block the `modxmcp.*` namespace, mirror `context_key` to `fk` for delete, and regenerate the affected context cache with an explicit `contexts` list (an empty refresh payload was a silent no-op in the MODX cache manager).
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
