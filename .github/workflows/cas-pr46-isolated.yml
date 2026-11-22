@@ -425,6 +425,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-lexicon-evidence.php
+      # RU: Дублирование только временного чанка без внешних эффектов.
+      # EN: Duplicate disposable chunk with independent readback.
+      - name: Disposable chunk duplication CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-duplicate-elements.php
       - name: Disposable property set CAS lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'
