@@ -11,6 +11,7 @@ $is2=!is_file(MODX_CORE_PATH.'src/Revolution/modX.php');
 if($is2){require MODX_CORE_PATH.'model/modx/modx.class.php';$modx=new modX();}
 else{require MODX_CORE_PATH.'vendor/autoload.php';$modx=\MODX\Revolution\modX::getInstance();}
 $modx->initialize('mgr');
+$modx->setOption('modxmcp.disabled_groups','');
 require MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
 require __DIR__.'/test.cas-mcp-helper.php';
 $api=new modxMCP($modx);
