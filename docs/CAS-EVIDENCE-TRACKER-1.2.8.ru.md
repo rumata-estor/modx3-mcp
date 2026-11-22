@@ -5,25 +5,22 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 41. **Не имеют индивидуальных сценариев:** 75.
+сценарий:** 44. **Не имеют индивидуальных сценариев:** 72.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
 
-## P0 — критические операции — 10 без сценария
+## P0 — критические операции — 7 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `add_user_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `assign_resource_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `create_access_policy_template` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `delete_access_policy_template` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `delete_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `remove_resource_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `remove_user_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `update_access_policy_template` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
@@ -108,6 +105,7 @@
 |---|---|---|
 | `assign_element_category` | review | `revision_write_failure_rollback` |
 | `create_access_policy` | critical | `disposable_unassigned_policy_create_readback_revision_stale_replay` |
+| `create_access_policy_template` | critical | `disposable_grouped_policy_template_create_readback_stale_replay` |
 | `create_category` | review | `revision_write_failure_rollback` |
 | `create_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `create_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
@@ -118,6 +116,7 @@
 | `create_user` | critical | `disposable_inactive_user_create_readback_revision_stale_replay_secret_fields` |
 | `create_user_group` | critical | `disposable_create_readback_revision_stale_replay` |
 | `delete_access_policy` | critical | `disposable_unassigned_policy_delete_readback_stale_replay` |
+| `delete_access_policy_template` | critical | `disposable_grouped_policy_template_delete_readback_stale_replay` |
 | `delete_category` | review | `revision_write_failure_rollback` |
 | `delete_element` | review | `regular_resource_soft_delete_revision_write_failure_rollback` |
 | `delete_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
@@ -137,6 +136,7 @@
 | `run_processor` | critical | `revision_reservation_refusal_only` |
 | `uninstall_package` | critical | `revision_reservation_refusal_only` |
 | `update_access_policy` | critical | `disposable_unassigned_policy_description_update_readback_stale_replay` |
+| `update_access_policy_template` | critical | `disposable_grouped_policy_template_description_update_readback_stale_replay` |
 | `update_category` | review | `revision_write_failure_rollback` |
 | `update_context_access` | critical | `disposable_context_acl_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
