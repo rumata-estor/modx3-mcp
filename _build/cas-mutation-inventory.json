@@ -656,7 +656,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_modx2_pinned_ms2_create_product_link_native_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_delete_link_type": {
@@ -674,7 +676,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_modx2_pinned_ms2_delete_product_link_native_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "ms2_update_category": {
@@ -718,7 +722,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_modx2_pinned_ms2_update_product_options_native_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "refresh_uris": {
