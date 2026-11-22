@@ -35,6 +35,7 @@ $checks = 0;
 $resourceId = 0;
 $dateResourceId = 0;
 $chunkId = 0;
+$replaceChunkId = 0;
 $userId = 0;
 $groupId = 0;
 $roleId = 0;
@@ -248,6 +249,59 @@ try {
     $chunkRead=acceptanceRpc('get_element',array('type'=>'chunk','id'=>$chunkId));
     acceptanceCheck(is_array($chunkRead) && (string)$chunkRead['content']==='CHUNK_'.$fixture,
         'chunk readback');
+
+    // RU: Два одноразовых чанка: при слишком маленьком лимите поиск не
+    // RU: должен поменять ни один, затем оба меняются с достаточным лимитом.
+    // EN: Two disposable chunks: an undersized search limit must leave
+    // EN: both unchanged; an adequate limit must update both through MCP.
+    $replaceNeedle='MCP_BATCH_FIND_'.$fixture;
+    acceptanceRpc('update_element',array(
+        'type'=>'chunk','id'=>$chunkId,'content'=>$replaceNeedle,
+    ));
+    $replaceChunk=acceptanceRpc('create_element',array(
+        'type'=>'chunk','name'=>'MCP_BatchSecond_'.$fixture,
+        'content'=>$replaceNeedle,
+    ));
+    $replaceChunkId=(int)($replaceChunk['id']??0);
+    acceptanceCheck($replaceChunkId>0,'second disposable batch chunk created');
+    $modx->setOption('modxmcp.disabled_groups','');
+    $replaceArgs=array(
+        'find'=>$replaceNeedle,
+        'replacement'=>'MCP_BATCH_DONE_'.$fixture,
+        'types'=>array('chunk'),'case_sensitive'=>true,
+        'limit'=>1,
+    );
+    $limitRejected=false;
+    try {acceptanceRpc('replace_across',$replaceArgs);}
+    catch(ModxMCPClientException $e) {
+        $limitRejected=strpos($e->getMessage(),'VALIDATION_ERROR:')!==false;
+    }
+    acceptanceCheck($limitRejected,'replace_across incomplete selection denied');
+    foreach (array($chunkId,$replaceChunkId) as $targetId) {
+        $unchanged=acceptanceRpc('get_element',array(
+            'type'=>'chunk','id'=>$targetId
+        ));
+        acceptanceCheck((string)($unchanged['content']??'')===$replaceNeedle,
+            'replace_across limit rejection left both targets unchanged');
+    }
+    $replacePreview=acceptanceRpc('replace_across',array_merge(
+        $replaceArgs,array('dry_run'=>true)
+    ));
+    acceptanceCheck(!empty($replacePreview['search_limit_reached']),
+        'replace_across preview warns about incomplete search');
+    $replaceResult=acceptanceRpc('replace_across',array_merge(
+        $replaceArgs,array('limit'=>10)
+    ));
+    acceptanceCheck((int)($replaceResult['elements']??0)===2,
+        'replace_across updated two targets through MCP');
+    foreach (array($chunkId,$replaceChunkId) as $targetId) {
+        $replaced=acceptanceRpc('get_element',array(
+            'type'=>'chunk','id'=>$targetId
+        ));
+        acceptanceCheck((string)($replaced['content']??'')
+            ==='MCP_BATCH_DONE_'.$fixture,
+            'replace_across changed only the intended fixture content');
+    }
 
     // RU: Группа ACL по умолчанию выключена. Включаем только внутри
     // RU: disposable PHP-процесса и проверяем реальные права и операции.
@@ -606,6 +660,8 @@ try {
     $userId=0;
     acceptanceClean('delete_user_group',array('id'=>$groupId));
     $groupId=0;
+    acceptanceClean('delete_element',array('type'=>'chunk','id'=>$replaceChunkId));
+    $replaceChunkId=0;
     acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
     $chunkId=0;
     acceptanceClean('delete_element',array('type'=>'resource','id'=>$dateResourceId,'dry_run'=>false));
@@ -625,6 +681,8 @@ try {
     if ($userId>0) acceptanceClean('delete_user',array('id'=>$userId));
     if ($roleId>0) acceptanceClean('delete_role',array('id'=>$roleId));
     if ($groupId>0) acceptanceClean('delete_user_group',array('id'=>$groupId));
+    if ($replaceChunkId>0) acceptanceClean('delete_element',array(
+        'type'=>'chunk','id'=>$replaceChunkId));
     if ($chunkId>0) acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
     if ($dateResourceId>0) acceptanceClean('delete_element',array(
         'type'=>'resource','id'=>$dateResourceId,'dry_run'=>false));
