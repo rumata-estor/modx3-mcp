@@ -29,13 +29,14 @@ class ClientConfigSettingCreateTool implements ToolInterface
             );
         }
         $setting = $context->modx()->newObject('cgSetting');
+        ClientConfigSupport::validateContextValues($data);
         ClientConfigSupport::applyFields($setting, $data);
         if (!$setting->save()) {
             throw new \ModxMCPClientException(
                 'Failed to save ClientConfig setting.'
             );
         }
-        ClientConfigSupport::applyContextValues($context, $setting, $data);
+        ClientConfigSupport::applyContextValuesAfterSave($context, $setting, $data);
         ClientConfigSupport::refresh($context);
         AuditSupport::log(
             $context,

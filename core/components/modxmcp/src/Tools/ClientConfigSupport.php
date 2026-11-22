@@ -72,6 +72,39 @@ class ClientConfigSupport
         }
     }
 
+    // RU: Проверяем контексты до сохранения основной настройки.
+    // EN: Reject invalid context-value payloads before the first DB write.
+    public static function validateContextValues(array $data)
+    {
+        if (!array_key_exists('context_values', $data)) return;
+        if (!is_array($data['context_values'])) {
+            throw new \ModxMCPClientException('context_values must be an object/map.');
+        }
+        foreach ($data['context_values'] as $contextKey => $value) {
+            if (!is_string($contextKey) || $contextKey === '') {
+                throw new \ModxMCPClientException('Invalid ClientConfig context key.');
+            }
+            if ($value !== null && !is_scalar($value)) {
+                throw new \ModxMCPClientException(
+                    'ClientConfig context value must be scalar or null.'
+                );
+            }
+        }
+    }
+
+    // RU: Не обещаем откат после частично успешной записи дочерних настроек.
+    // EN: Post-save context failures are uncertain, not rolled back by CAS.
+    public static function applyContextValuesAfterSave($context, $setting, array $data)
+    {
+        try {
+            self::applyContextValues($context, $setting, $data);
+        } catch (\Throwable $e) {
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: ClientConfig context values may be partially saved.'
+            );
+        }
+    }
+
     public static function applyContextValues($context, $setting, array $data)
     {
         if (!array_key_exists('context_values', $data)) {
