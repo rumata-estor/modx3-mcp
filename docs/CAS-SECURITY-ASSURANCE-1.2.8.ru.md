@@ -254,3 +254,7 @@
 ## Группы ресурсов: изменение и удаление без ACL
 
 `_build/test.ci-cas-resourcegroup-update-delete.php` создаёт только временную группу ресурсов (без ресурсов, пользователей и назначенных политик), меняет имя, читает обратно через MCP, затем удаляет. Для `update_resource_group` и `delete_resource_group` отдельно проверяет `STALE_STATE` при повторе старого CAS и отсутствие новой ревизии. [Первичная матрица MODX2/3 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45034360651). **Не проверены** конкурентные изменения Manager и удаление группы с работающими разрешениями: PR #67 остаётся отдельным блокером проверки ACL-гонок.
+
+## Лексикон: индивидуальные CAS-сценарии set/revert
+
+`_build/test.ci-cas-lexicon-evidence.php` создаёт временное пространство имён и запись перевода, проверяет значение через MCP, возвращает override к исходному отсутствующему состоянию и проверяет отказы повторов по старой site revision. Чтение `list_lexicon_entries` запускается в отдельных disposable PHP-процессах через `_build/test.ci-cas-lexicon-readback.php`: штатный процессор MODX2 `workspace/lexicon/getlist` объявляет глобальную функцию `parseArray()` и при повторном вызове в том же PHP-процессе вызывает Fatal error (`Cannot redeclare parseArray()`). Это ограничение MODX2 следует учитывать для длительного resident-runtime MCP; описанное тестирование не является исправлением MODX2-процессора. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45036271736).
