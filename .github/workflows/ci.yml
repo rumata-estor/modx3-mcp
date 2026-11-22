@@ -134,6 +134,7 @@ jobs:
           php _build/test.make-static-symlink-boundary.php
           php _build/test.static-content-postwrite-fault.php
           php _build/test.static-short-write-fault.php
+          php _build/test.tv-exclusive-create-race.php
           php _build/test.static-tv-contract.php
 
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata
