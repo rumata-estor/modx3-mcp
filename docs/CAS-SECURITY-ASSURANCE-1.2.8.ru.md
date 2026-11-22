@@ -1,5 +1,7 @@
 # MODX MCP 1.2.8: проверяемые гарантии CAS и карта оставшихся рисков
 
+> **Обновление 22.11.2026:** описанный ниже P0-дефект воспроизведён исторически, но исправление [PR #162](https://github.com/rumata-estor/modx3-mcp/pull/162) уже прошло 12/12 disposable MODX2/3 и объединено **только с тестовой 1.2.8**. PR #67 закрыт без повторного merge. **Релиз не разрешён:** остаются migration/upgrade индекса, deadlock/timeout, внешние эффекты ACL и многосерверные тесты. Детали: [ACL-MEMBERSHIP-TRANSACTION-1.2.8.ru.md](ACL-MEMBERSHIP-TRANSACTION-1.2.8.ru.md).
+
 Статус: **тестовая ветка / черновик PR №49, НЕ релиз**. Документ — техническое свидетельство проверки конкретных инвариантов, не сертификат абсолютной безопасности.
 
 Ветка: [feature/1.2.8-cas-pr46-20261121](https://github.com/rumata-estor/modx3-mcp/tree/feature/1.2.8-cas-pr46-20261121). Изменения исходного TV/CAS — **AgelxNash**, [PR №40](https://github.com/rumata-estor/modx3-mcp/pull/40) и [PR №46](https://github.com/rumata-estor/modx3-mcp/pull/46); оригинальное авторство сохранено в cherry-pick-коммите. Дополнительные изменения транзакций, файловых проверок и CI выполнены отдельными коммитами.
