@@ -85,6 +85,13 @@ final class StaticFileWriteSupport
                 'make_static: TV exclusive creation failed; target already exists.'
             );
         }
+        // RU: Windows rename поверх существующего файла отличается от Unix.
+        // RU: Там оставляем прежний способ, не вводя новые требования.
+        // EN: Windows rename-replace is not equivalent to POSIX rename;
+        // EN: keep legacy behavior rather than break existing installations.
+        if (DIRECTORY_SEPARATOR === '\\' && !$exclusive) {
+            return self::legacyCompatibleWrite($absolute, $content);
+        }
         // RU: Некоторые хостинги разрешают запись в файл, но запрещают
         // RU: создание соседних файлов. До 1.2.8 этот случай работал.
         // EN: Preserve pre-1.2.8 behavior for file-writable, dir-readonly hosts.
