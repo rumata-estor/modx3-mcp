@@ -215,6 +215,75 @@ try {
     must((int)$api->processRequest('get_site_state','',array())['site_revision']
         ===$revisionBeforeApproved+1,'approved processor increments CAS revision');
     mustDeny('run_processor','',$approvedRead,$approvedPermit);
+    // RU: Подписанный context setting: отклонённый ключ не меняет CAS,
+    // RU: а два независимых permit с одним снимком не могут оба победить.
+    // EN: Signed context setting denies before CAS; two distinct permits
+    // EN: with the same observed revision cannot both commit.
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,'
+        .'run_processor,create_context_setting,update_context_setting,delete_context_setting');
+    $protectedContextKey='modxmcp.external_authorization_required';
+    $deniedContext=array('context_key'=>'web','key'=>$protectedContextKey,
+        'value'=>'0','_runtime_preconditions'=>guardNow());
+    $contextDeniedBefore=(int)guardNow()['observed_site_revision'];
+    mustDeny('create_context_setting','',$deniedContext,
+        signedCall('create_context_setting','',$deniedContext));
+    must((int)guardNow()['observed_site_revision']===$contextDeniedBefore,
+        'signed protected context key rejected without CAS increment');
+    $contextKey='ci_signed_context_'.bin2hex(random_bytes(6));
+    $contextValue='SIGNED_INITIAL';
+    $contextCreate=array('context_key'=>'web','key'=>$contextKey,
+        'value'=>$contextValue,'_runtime_preconditions'=>guardNow());
+    $createdContext=rpc('create_context_setting','',$contextCreate,
+        signedCall('create_context_setting','',$contextCreate));
+    must(is_array($createdContext),'signed context fixture created');
+    $contextRead=$api->processRequest('get_context_setting','',array(
+        'context_key'=>'web','key'=>$contextKey));
+    must(($contextRead['value']??null)===$contextValue,
+        'signed context creation readback via MCP');
+    $sameSnapshot=guardNow();
+    $firstClient=array('context_key'=>'web','key'=>$contextKey,
+        'value'=>'CLIENT_A_WINS','_runtime_preconditions'=>$sameSnapshot);
+    $secondClient=array('context_key'=>'web','key'=>$contextKey,
+        'value'=>'CLIENT_B_MUST_NOT_OVERWRITE','_runtime_preconditions'=>$sameSnapshot);
+    $firstSigned=signedCall('update_context_setting','',$firstClient);
+    $secondSigned=signedCall('update_context_setting','',$secondClient);
+    must($firstSigned['permit']['claims']['nonce']
+        !==$secondSigned['permit']['claims']['nonce'],
+        'competing clients have distinct signed nonces');
+    $clientA=rpc('update_context_setting','',$firstClient,$firstSigned);
+    must(is_array($clientA),'first independently signed context update committed');
+    $afterClientA=(int)guardNow()['observed_site_revision'];
+    must($afterClientA===(int)$sameSnapshot['observed_site_revision']+1,
+        'winning signed context update increments CAS once');
+    $clientBDenied=false;
+    try{rpc('update_context_setting','',$secondClient,$secondSigned);}
+    catch(\ModxMCPClientException $e){
+        $clientBDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    must($clientBDenied,'second signed client denied stale context revision');
+    must((int)guardNow()['observed_site_revision']===$afterClientA,
+        'stale signed client never increments revision');
+    $contextAfter=$api->processRequest('get_context_setting','',array(
+        'context_key'=>'web','key'=>$contextKey));
+    must(($contextAfter['value']??null)==='CLIENT_A_WINS',
+        'signed loser did not overwrite first client');
+    mustDeny('update_context_setting','',$firstClient,$firstSigned);
+    must((int)guardNow()['observed_site_revision']===$afterClientA,
+        'replayed signed context mutation cannot consume CAS');
+    $contextDelete=array('context_key'=>'web','key'=>$contextKey,
+        '_runtime_preconditions'=>guardNow());
+    rpc('delete_context_setting','',$contextDelete,
+        signedCall('delete_context_setting','',$contextDelete));
+    $contextMissing=false;
+    try{$contextAfterDelete=$api->processRequest('get_context_setting','',array(
+        'context_key'=>'web','key'=>$contextKey));
+        $contextMissing=!is_array($contextAfterDelete)
+            || !array_key_exists('value',$contextAfterDelete);
+    }catch(\ModxMCPClientException $e){$contextMissing=true;}
+    must($contextMissing,'signed context fixture removed via MCP');
+    echo 'PROTECTED_SIGNED_CONTEXT_CAS_CONFLICT_AND_REPLAY_OK'.PHP_EOL;
+
     securitySetting('modxmcp.processor_access_mode','disabled');
     mustDeny('run_processor','',$generic,
         signedCall('run_processor','',$generic));
