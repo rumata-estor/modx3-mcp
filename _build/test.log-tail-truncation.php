@@ -169,6 +169,25 @@ try {
     demandTail(strpos($error['lines'][1], $marker) === 0, 'Error-log truncation marker is missing');
     demandTail($error['truncated_lines'] === 1 && $error['result_complete'] === false, 'Error-log metadata is invalid');
 
+    // RU: Общий бюджет ответа 4 МиБ нужен даже для корректных коротких строк.
+    // EN: 1000 individually valid lines must still respect a 4 MiB budget.
+    $aggregateFile = sys_get_temp_dir() . '/modxmcp-tail-aggregate-' . bin2hex(random_bytes(6)) . '.log';
+    $aggregateHandle = fopen($aggregateFile, 'wb');
+    for ($lineNumber = 0; $lineNumber < 800; $lineNumber++) {
+        fwrite($aggregateHandle, str_repeat('A', 8192) . "\n");
+    }
+    fclose($aggregateHandle);
+    $aggregateMetadata = array();
+    $aggregateTail = \ModxMcp\Tools\FilesystemSupport::readTailLines(
+        $aggregateFile, 1000, null, $aggregateMetadata
+    );
+    $aggregateBytes = 0;
+    foreach ($aggregateTail as $line) { $aggregateBytes += strlen($line); }
+    demandTail($aggregateBytes <= 4194304 && count($aggregateTail) < 800,
+        'Aggregate tail exceeded 4 MiB output budget');
+    demandTail($aggregateMetadata['result_complete'] === false,
+        'Aggregate output truncation was incorrectly marked complete');
+
     $windowFile = sys_get_temp_dir() . '/modxmcp-tail-window-' . bin2hex(random_bytes(6)) . '.log';
     $fpWindow = fopen($windowFile, 'wb');
     fwrite($fpWindow, "EARLY_MATCH\n");
@@ -190,6 +209,7 @@ try {
     echo "LOG_TAIL_TRUNCATION_PHP_OK\n";
 } finally {
     foreach (array(
+        $aggregateFile,
         $binaryLineFile,
         $boundedLineFile,
         $hugeLineFile,

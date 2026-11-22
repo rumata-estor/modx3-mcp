@@ -129,28 +129,43 @@ class FilesystemSupport
         $totalBytesRead = 0;
         $discardingTruncatedLine = false;
         $readFailed = false;
+        // RU: Дополнительный предел на весь ответ (не только на строку):
+        // RU: 1000 допустимых строк по 512 КиБ иначе дали бы ~500 МиБ RAM.
+        // EN: Bound the aggregate response as well as individual lines:
+        // EN: 1000 valid 512 KiB lines could otherwise consume ~500 MiB.
+        $maxReturnedBytes = 4194304;
+        $returnedBytes = 0;
+        $outputLimitReached = false;
+        $push = function ($item) use (
+            &$lines, &$returnedBytes, &$outputLimitReached, $maxReturnedBytes
+        ) {
+            $encoded = is_string($item) ? $item : json_encode($item);
+            $bytes = is_string($encoded) ? strlen($encoded) : $maxReturnedBytes + 1;
+            if ($bytes > $maxReturnedBytes - $returnedBytes) {
+                $outputLimitReached = true;
+                return;
+            }
+            $lines[] = $item;
+            $returnedBytes += $bytes;
+        };
         $appendLine = function ($line) use (
-            &$lines,
-            $filter,
-            &$metadata,
-            $maxBufferSize,
-            $chunkSize
+            $push, $filter, &$metadata, $maxBufferSize, $chunkSize
         ) {
             $line = rtrim($line, "\r");
             if (strlen($line) > $maxBufferSize) {
                 $metadata['truncated_lines']++;
                 if ($filter === null) {
-                    $lines[] = self::tailFragment($line, $chunkSize);
+                    $push(self::tailFragment($line, $chunkSize));
                 }
                 return;
             }
             if ($filter !== null) {
                 $item = call_user_func($filter, $line);
                 if ($item !== null) {
-                    $lines[] = $item;
+                    $push($item);
                 }
             } else {
-                $lines[] = $line;
+                $push($line);
             }
         };
 
@@ -167,7 +182,8 @@ class FilesystemSupport
         }
         $firstChunk = true;
 
-        while ($pos > 0 && count($lines) < $limit && $totalBytesRead < $maxBytesToScan) {
+        while ($pos > 0 && count($lines) < $limit
+            && $totalBytesRead < $maxBytesToScan && !$outputLimitReached) {
             $readSize = min($chunkSize, $pos, $maxBytesToScan - $totalBytesRead);
             $pos -= $readSize;
             $totalBytesRead += $readSize;
@@ -197,7 +213,7 @@ class FilesystemSupport
             if (strlen($buffer) > $maxBufferSize && strpos($buffer, "\n") === false) {
                 $metadata['truncated_lines']++;
                 if ($filter === null) {
-                    $lines[] = self::tailFragment($buffer, $chunkSize);
+                    $push(self::tailFragment($buffer, $chunkSize));
                 }
                 $buffer = '';
                 $discardingTruncatedLine = true;
@@ -213,14 +229,14 @@ class FilesystemSupport
 
             for ($i = count($parts) - 1; $i >= 0; $i--) {
                 $appendLine($parts[$i]);
-                if (count($lines) >= $limit) {
+                if (count($lines) >= $limit || $outputLimitReached) {
                     break;
                 }
             }
         }
         fclose($fp);
 
-        $metadata['result_complete'] = !$readFailed
+        $metadata['result_complete'] = !$readFailed && !$outputLimitReached
             && $metadata['truncated_lines'] === 0
             && (count($lines) >= $limit || $pos === 0);
         $metadata['scanned_bytes'] = $totalBytesRead;
