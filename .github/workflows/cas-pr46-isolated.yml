@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122']
 
 permissions:
   contents: read
@@ -422,6 +422,15 @@ jobs:
 
       # RU: @AgelxNash PR #54 — проверяем старые маршруты на реальном disposable MODX.
       # EN: @AgelxNash PR #54 — exercise legacy route guards on disposable MODX.
+      # RU: Реальные файловые последствия и точка неопределённого исхода, fake-диспетчер.
+      # EN: Real file effects and uncertain-outcome boundary, instrumented dispatcher.
+      - name: Disposable package and processor partial external effects
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-external-partial-effects.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'
