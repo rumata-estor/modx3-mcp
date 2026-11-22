@@ -224,6 +224,21 @@ for action,scenario,verb in (
 assert 'stale replay did not increment revision' in namespace_test
 assert 'namespace removed' in namespace_test
 
+# RU: Индивидуальный контракт media source без реальных файловых операций.
+# EN: Verify metadata-only source lifecycle CI evidence, not filesystem safety.
+media_test = (ROOT / '_build/test.ci-cas-media-source-evidence.php').read_text()
+assert 'php _build/test.ci-cas-media-source-evidence.php' in ci_workflow
+for action,scenario,verb in (
+ ('create_media_source','disposable_media_source_definition_create_readback_stale_replay','CREATE'),
+ ('update_media_source','disposable_media_source_definition_description_update_readback_stale_replay','UPDATE'),
+ ('delete_media_source','disposable_media_source_definition_delete_readback_stale_replay','DELETE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in media_test
+    assert 'CAS_MEDIA_SOURCE_'+verb+'_READBACK_STALE_REPLAY_OK' in media_test
+assert "'/home/runner/'" in media_test
+assert 'stale replay did not increment revision' in media_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

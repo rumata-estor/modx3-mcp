@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 56. **Не имеют индивидуальных сценариев:** 60.
+сценарий:** 59. **Не имеют индивидуальных сценариев:** 57.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -30,7 +30,7 @@
 |---|---|---|
 | `revert_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 
-## P2 — остальные операции — 52 без сценария
+## P2 — остальные операции — 49 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
@@ -41,9 +41,7 @@
 | `clientconfig_create_setting` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `clientconfig_delete_setting` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `clientconfig_update_setting` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `create_media_source` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `delete_media_source` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `duplicate_element` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `duplicate_resource` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -73,7 +71,6 @@
 | `unassign_property_set` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `undelete_resource` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_element_property` | `database_transaction` | Реальная запись, rollback при сбое, readback |
-| `update_media_source` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `update_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `versionx_revert_version` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `virtualpage_clear_cache` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -100,6 +97,7 @@
 | `create_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `create_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `create_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `create_media_source` | review | `disposable_media_source_definition_create_readback_stale_replay` |
 | `create_namespace` | high | `disposable_namespace_metadata_create_readback_stale_replay` |
 | `create_property_set` | review | `disposable_unassigned_property_set_create_readback_stale_replay` |
 | `create_resource_group` | critical | `disposable_create_readback_revision_stale_replay` |
@@ -115,6 +113,7 @@
 | `delete_element` | review | `regular_resource_soft_delete_revision_write_failure_rollback` |
 | `delete_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `delete_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
+| `delete_media_source` | review | `disposable_media_source_definition_delete_readback_stale_replay` |
 | `delete_namespace` | high | `disposable_namespace_metadata_delete_readback_stale_replay` |
 | `delete_property_set` | review | `disposable_unassigned_property_set_delete_readback_stale_replay` |
 | `delete_role` | critical | `manager_out_of_band_edit_stale_target_denied` |
@@ -139,6 +138,7 @@
 | `update_context_setting` | high | `disposable_context_setting_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `update_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied`, `concurrent_media_cas` |
+| `update_media_source` | review | `disposable_media_source_definition_description_update_readback_stale_replay` |
 | `update_namespace` | high | `disposable_namespace_metadata_update_readback_stale_replay` |
 | `update_property_set` | review | `disposable_unassigned_property_set_description_update_readback_stale_replay` |
 | `update_resource_tvs` | review | `revision_write_failure_rollback`, `concurrent_cas_conflict`, `raw_tv_and_inherit` |
