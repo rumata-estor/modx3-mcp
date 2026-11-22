@@ -85,14 +85,17 @@ class DependencyGraphService
                 $index[$type][$name] = $i;
                 $nodeByTypeId[$type][(int) $o->get('id')] = $i;
 
-                // Static elements: read the file directly. (getContent() would re-save a stale
-                // element as a side effect — this action must stay read-only.)
-                $raw = '';
+                // RU: Путь static_file нельзя считать доверенным даже в
+                // RU: режиме чтения. Используем общий защитный валидатор.
+                // EN: Static file paths are untrusted even during read-only
+                // EN: graph analysis; use the common safe-read boundary.
                 if ($o->get('static')) {
-                    try { $raw = (string) $o->getFileContent(); } catch (\Exception $e) { $raw = ''; }
-                    if ($raw === '') { $raw = (string) $o->get($m['content']); }
+                    $contentMap = ElementContentSupport::map($context, $type);
+                    list($raw) = ElementContentSupport::read(
+                        $context, $o, $contentMap
+                    );
                 } else {
-                    $raw = (string) $o->get($m['content']);
+                    $raw = (string)$o->get($m['content']);
                 }
                 $refs = array_merge(self::scanModxTags($raw), self::scanPhpElementCalls($raw));
                 // An element's DEFAULT properties are a first-class wiring mechanism: miniShop2's

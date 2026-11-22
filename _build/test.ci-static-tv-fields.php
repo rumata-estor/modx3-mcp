@@ -125,6 +125,25 @@ try {
     $afterEdit=stvRpc('get_element',array('type'=>'tv','id'=>$id));
     stvCheck((string)($afterEdit['default_text']??'')==='EDITED_'.$fixture,
         'TV raw default_text mirrored to MODX DB');
+    // RU: Поиск и граф зависимостей читают static_file через общий
+    // RU: валидатор пути, а не через getContent/getFileContent MODX.
+    // EN: Search and dependency analysis must use validated static reads,
+    // EN: without invoking MODX getContent/getFileContent side effects.
+    $search=stvRpc('search_code',array(
+        'query'=>'EDITED_'.$fixture,'types'=>array('tv'),
+        'case_sensitive'=>true,'limit'=>20,
+    ));
+    $foundStaticTv=false;
+    foreach(($search['results']??array()) as $hit){
+        if(($hit['type']??null)==='tv' && (int)($hit['id']??0)===$id){
+            $foundStaticTv=true;
+        }
+    }
+    stvCheck($foundStaticTv,'static TV content found through guarded search');
+    $graph=stvRpc('dependency_graph',array('format'=>'summary'));
+    stvCheck(is_array($graph) && !empty($graph),
+        'dependency graph with disposable static TV completes safely');
+
     $staleEditDenied=false;
     try {stvRpc('edit_element_lines',array('type'=>'tv','id'=>$id,
         'edits'=>array(array('start_line'=>1,'end_line'=>1,

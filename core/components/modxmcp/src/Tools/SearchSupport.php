@@ -63,7 +63,14 @@ class SearchSupport
                 $needle = $caseSensitive ? $query : strtolower($query);
                 foreach ($modx->getCollection($m['class'], $staticQuery) as $object) {
                     if (count($results) >= $limit) { break; }
-                    $content = (string)$object->getContent();
+                    // RU: getContent() может читать небезопасный static_file
+                    // RU: и иметь побочные эффекты. Проверяем реальный путь.
+                    // EN: Do not use getContent() for static search: validate
+                    // EN: filesystem boundaries without potential write effects.
+                    $contentMap = ElementContentSupport::map($context, $type);
+                    list($content) = ElementContentSupport::read(
+                        $context, $object, $contentMap
+                    );
                     $name = (string)$object->get($m['name']);
                     $haystack = $caseSensitive ? ($content . "\n" . $name) : strtolower($content . "\n" . $name);
                     if (strpos($haystack, $needle) !== false) {
