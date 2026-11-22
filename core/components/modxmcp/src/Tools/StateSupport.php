@@ -12,6 +12,7 @@ class StateSupport
     // PHP-request-local. Never stored in MODX system settings or client input.
     // Callbacks do not fire when the database transaction is rolled back.
     private static $transactionCallbacks = array();
+    private static $lockedGroupSnapshots = array();
 
     public static function inRevisionTransaction($context)
     {
@@ -293,18 +294,34 @@ class StateSupport
             );
         }
         $parent = $modx->prepare(
-            'SELECT `id` FROM '.$groupTable.' WHERE `id`=? FOR UPDATE'
+            'SELECT `id`,`name`,`description`,`parent`,`rank` FROM '
+            .$groupTable.' WHERE `id`=? FOR UPDATE'
         );
-        if (!$parent || !$parent->execute(array($id)) || $parent->fetchColumn()===false) {
+        if (!$parent || !$parent->execute(array($id))) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: group row lock failed.');
+        }
+        $group = $parent->fetch(\PDO::FETCH_ASSOC);
+        if (!is_array($group)) {
             throw new \ModxMCPClientException('STALE_STATE group disappeared.');
         }
         $members = $modx->prepare(
-            'SELECT `id` FROM '.$memberTable.' WHERE `user_group`=? FOR UPDATE'
+            'SELECT `id`,`member`,`user_group`,`role` FROM '
+            .$memberTable.' WHERE `user_group`=? FOR UPDATE'
         );
         if (!$members || !$members->execute(array($id))) {
             throw new \ModxMCPClientException('CAS_REQUIRED: membership range lock failed.');
         }
-        $members->fetchAll(\PDO::FETCH_COLUMN);
+        $rows = array();
+        foreach ($members->fetchAll(\PDO::FETCH_ASSOC) as $record) {
+            $rows[] = array('id'=>(int)$record['id'],
+                'member'=>(int)$record['member'],
+                'user_group'=>(int)$record['user_group'],
+                'role'=>(int)$record['role']);
+        }
+        usort($rows, function ($a,$b) {return $a['id'] <=> $b['id'];});
+        self::$lockedGroupSnapshots[spl_object_hash($modx).':'.$id] = array(
+            'group'=>$group,'members'=>$rows
+        );
     }
 
     /**
@@ -330,8 +347,14 @@ class StateSupport
             }
             $callbacks = self::$transactionCallbacks[$key];
             unset(self::$transactionCallbacks[$key]);
+            foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
+                if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
+            }
         } catch (\Throwable $e) {
             unset(self::$transactionCallbacks[$key]);
+            foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
+                if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
+            }
             $modx->rollback();
             throw $e;
         }
@@ -501,12 +524,21 @@ class StateSupport
             'role' => array('id','name','description','authority'),
         );
         $state = array('exists'=>true, 'id'=>$id);
+        $snapshotKey = spl_object_hash($context->modx()).':'.$id;
+        $lockedGroup = ($type === 'user_group' && self::inRevisionTransaction($context)
+            && isset(self::$lockedGroupSnapshots[$snapshotKey]))
+            ? self::$lockedGroupSnapshots[$snapshotKey] : null;
         foreach ($safeFields[$type] as $field) {
-            if (array_key_exists($field, $raw)) {
+            if ($lockedGroup !== null && array_key_exists($field,$lockedGroup['group'])) {
+                $state[$field] = $lockedGroup['group'][$field];
+            } elseif (array_key_exists($field, $raw)) {
                 $state[$field] = $raw[$field];
             }
         }
         if ($type === 'user_group') {
+            if ($lockedGroup !== null) {
+                $state['membership']=$lockedGroup['members'];
+            } else {
             // RU: Внешняя выдача членства меняет права, даже если сама группа
             // RU: не редактировалась. Снимок включает связанные членства.
             // EN: Include group membership rows so out-of-band Manager grants
@@ -532,6 +564,7 @@ class StateSupport
             }
             usort($rows,function($a,$b){return $a['id'] <=> $b['id'];});
             $state['membership'] = $rows;
+            }
         }
         if ($type === 'user') {
             // User profile may be joined by processors; include relevant
