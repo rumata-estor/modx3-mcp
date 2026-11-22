@@ -46,5 +46,22 @@ foreach($actions as $action=>$type) {
     if($got!==$valid)throw new \RuntimeException('ACL_TARGET_VALID_REJECTED_'.$action);
     $checks++;
 }
+foreach(array('add_user_to_group','update_group_member','remove_user_from_group') as $action) {
+    $guard=array('observed_site_revision'=>7,'strict_site_revision'=>true,'read_set'=>array());
+    try {
+        \ModxMcp\Tools\StateSupport::requireProtectedTargetReadSet(
+            $action,array('usergroup'=>87,'user'=>22),$guard);
+        throw new \RuntimeException('MEMBER_TARGET_CAS_NOT_REQUIRED');
+    } catch(ModxMCPClientException $e) {
+        if(strpos($e->getMessage(),'CAS_REQUIRED:')!==0)throw $e;
+        $checks++;
+    }
+    $guard['read_set']=array(array('role'=>'target','type'=>'user_group',
+        'id'=>87,'fingerprint'=>str_repeat('c',64)));
+    if(\ModxMcp\Tools\StateSupport::requireProtectedTargetReadSet(
+        $action,array('usergroup'=>87,'user'=>22),$guard)!==$guard)
+        throw new \RuntimeException('MEMBER_TARGET_CAS_VALID_REJECTED');
+    $checks++;
+}
 echo 'PROTECTED_ACL_TARGET_CAS_CONTRACT_OK checks='.$checks.PHP_EOL;
 }

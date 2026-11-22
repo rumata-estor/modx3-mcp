@@ -12,6 +12,7 @@ class StateSupport
     // PHP-request-local. Never stored in MODX system settings or client input.
     // Callbacks do not fire when the database transaction is rolled back.
     private static $transactionCallbacks = array();
+    private static $lockedGroupSnapshots = array();
 
     public static function inRevisionTransaction($context)
     {
@@ -80,6 +81,8 @@ class StateSupport
             'assign_element_category',
             'create_system_setting', 'update_system_setting',
             'delete_system_setting', 'update_element_property',
+            'update_user_group', 'delete_user_group',
+            'add_user_to_group', 'update_group_member', 'remove_user_from_group',
         ), true)) {
             return true;
         }
@@ -285,6 +288,106 @@ class StateSupport
     }
 
     /**
+     * RU: Защита от внешней вставки членства (phantom) в границе InnoDB.
+     * EN: Lock the group parent and its indexed membership range BEFORE
+     * EN: CAS evaluation, under the same REPEATABLE READ transaction.
+     * EN: This must run in withRevisionTransaction(), never standalone.
+     */
+    public static function lockGroupMembershipForCas($context, $id)
+    {
+        if (!self::inRevisionTransaction($context) || !is_int($id) || $id < 1) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: group membership lock requires active transaction and numeric group id.'
+            );
+        }
+        $modx = $context->modx();
+        // MariaDB CI uses tx_isolation; do not claim next-key protection
+        // at READ COMMITTED where locking reads allow phantom inserts.
+        $level = '';
+        foreach (array('SELECT @@transaction_isolation', 'SELECT @@tx_isolation') as $sql) {
+            try {
+                $isolation = $modx->query($sql);
+                if ($isolation) {
+                    $level = strtoupper(str_replace('-', ' ', (string)$isolation->fetchColumn()));
+                    if ($level !== '') { break; }
+                }
+            } catch (\Throwable $e) {
+                // MySQL and MariaDB expose different variable aliases.
+            }
+        }
+        if (str_replace(' ', '', $level) !== 'REPEATABLEREAD') {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: membership range locking needs REPEATABLE READ.'
+            );
+        }
+        $groupTable = $modx->getTableName(
+            $context->platform()->className('user_group')
+        );
+        $memberTable = $modx->getTableName(
+            $context->platform()->className('user_group_member')
+        );
+        // Locking reads require transactional tables; never silently downgrade.
+        foreach (array($groupTable, $memberTable) as $table) {
+            $engineCheck = $modx->prepare(
+                'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=?'
+            );
+            if (!$engineCheck || !$engineCheck->execute(array(str_replace('`','',$table)))
+                || strtoupper((string)$engineCheck->fetchColumn()) !== 'INNODB') {
+                throw new \ModxMCPClientException(
+                    'CAS_REQUIRED: ACL membership locking requires InnoDB tables.'
+                );
+            }
+        }
+        // A predictable indexed range is essential when no member exists.
+        $indexStatement = $modx->query('SHOW INDEX FROM '.$memberTable);
+        if (!$indexStatement) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: cannot validate member index.');
+        }
+        $hasIndex = false;
+        foreach ($indexStatement->fetchAll(\PDO::FETCH_ASSOC) as $index) {
+            if (isset($index['Column_name'],$index['Seq_in_index'])
+                && $index['Column_name']==='user_group'
+                && (int)$index['Seq_in_index']===1) {
+                $hasIndex=true;
+            }
+        }
+        if (!$hasIndex) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: user_group_member needs leading user_group index.'
+            );
+        }
+        $parent = $modx->prepare(
+            'SELECT `id`,`name`,`description`,`parent`,`rank` FROM '
+            .$groupTable.' WHERE `id`=? FOR UPDATE'
+        );
+        if (!$parent || !$parent->execute(array($id))) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: group row lock failed.');
+        }
+        $group = $parent->fetch(\PDO::FETCH_ASSOC);
+        if (!is_array($group)) {
+            throw new \ModxMCPClientException('STALE_STATE group disappeared.');
+        }
+        $members = $modx->prepare(
+            'SELECT `id`,`member`,`user_group`,`role` FROM '
+            .$memberTable.' WHERE `user_group`=? FOR UPDATE'
+        );
+        if (!$members || !$members->execute(array($id))) {
+            throw new \ModxMCPClientException('CAS_REQUIRED: membership range lock failed.');
+        }
+        $rows = array();
+        foreach ($members->fetchAll(\PDO::FETCH_ASSOC) as $record) {
+            $rows[] = array('id'=>(int)$record['id'],
+                'member'=>(int)$record['member'],
+                'user_group'=>(int)$record['user_group'],
+                'role'=>(int)$record['role']);
+        }
+        usort($rows, function ($a,$b) {return $a['id'] <=> $b['id'];});
+        self::$lockedGroupSnapshots[spl_object_hash($modx).':'.$id] = array(
+            'group'=>$group,'members'=>$rows
+        );
+    }
+
+    /**
      * Database-only atomic mutation boundary for guarded writes. The caller
      * must hold the shared mutation lock. Never use this for operations with
      * external effects that cannot be rolled back by MariaDB.
@@ -307,8 +410,14 @@ class StateSupport
             }
             $callbacks = self::$transactionCallbacks[$key];
             unset(self::$transactionCallbacks[$key]);
+            foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
+                if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
+            }
         } catch (\Throwable $e) {
             unset(self::$transactionCallbacks[$key]);
+            foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
+                if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
+            }
             $modx->rollback();
             throw $e;
         }
@@ -478,9 +587,46 @@ class StateSupport
             'role' => array('id','name','description','authority'),
         );
         $state = array('exists'=>true, 'id'=>$id);
+        $snapshotKey = spl_object_hash($context->modx()).':'.$id;
+        $lockedGroup = ($type === 'user_group' && self::inRevisionTransaction($context)
+            && isset(self::$lockedGroupSnapshots[$snapshotKey]))
+            ? self::$lockedGroupSnapshots[$snapshotKey] : null;
         foreach ($safeFields[$type] as $field) {
-            if (array_key_exists($field, $raw)) {
+            if ($lockedGroup !== null && array_key_exists($field,$lockedGroup['group'])) {
+                $state[$field] = $lockedGroup['group'][$field];
+            } elseif (array_key_exists($field, $raw)) {
                 $state[$field] = $raw[$field];
+            }
+        }
+        if ($type === 'user_group') {
+            if ($lockedGroup !== null) {
+                $state['membership']=$lockedGroup['members'];
+            } else {
+            // RU: Внешняя выдача членства меняет права, даже если сама группа
+            // RU: не редактировалась. Снимок включает связанные членства.
+            // EN: Include group membership rows so out-of-band Manager grants
+            // EN: invalidate a protected group target snapshot.
+            $members = $context->modx()->getCollection(
+                $context->platform()->className('user_group_member'),
+                array('user_group'=>$id)
+            );
+            if (!is_array($members)) {
+                throw new \ModxMCPClientException(
+                    'STALE_STATE unable to observe group membership.'
+                );
+            }
+            $rows = array();
+            foreach ($members as $member) {
+                $row = $member->toArray();
+                $rows[] = array(
+                    'id'=>(int)$row['id'],
+                    'member'=>(int)$row['member'],
+                    'user_group'=>(int)$row['user_group'],
+                    'role'=>(int)$row['role'],
+                );
+            }
+            usort($rows,function($a,$b){return $a['id'] <=> $b['id'];});
+            $state['membership'] = $rows;
             }
         }
         if ($type === 'user') {
@@ -713,6 +859,9 @@ class StateSupport
             'update_user_group' => 'user_group',
             'delete_user_group' => 'user_group',
             'update_role' => 'role', 'delete_role' => 'role',
+            'add_user_to_group' => 'user_group',
+            'update_group_member' => 'user_group',
+            'remove_user_from_group' => 'user_group',
         );
         if (isset($protectedTargets[$action])) {
             $type = $protectedTargets[$action];
@@ -722,6 +871,13 @@ class StateSupport
             return $preconditions;
         }
         $id = isset($data['id']) ? $data['id'] : null;
+        if (in_array($action,array(
+            'add_user_to_group','update_group_member','remove_user_from_group'
+        ),true)) {
+            // RU: Для записи членства нужна снимок именно целевой группы.
+            // EN: Membership mutations require their exact affected group.
+            $id = isset($data['usergroup']) ? $data['usergroup'] : null;
+        }
         if (!in_array($type, array(
                 'resource','template','chunk','snippet','plugin','tv','category',
                 'user','user_group','role'

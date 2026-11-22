@@ -196,7 +196,17 @@ class ProcessorMutationTool implements ToolInterface
         }
 
         if ($route === 'acl' && $context->modx()->getCacheManager()) {
-            $context->modx()->getCacheManager()->flushPermissions();
+            // RU: В штатном диспетчере очистка ACL только после DB-коммита.
+            // EN: Defer ACL cache invalidation until commit when CAS runtime exists.
+            if (class_exists('ModxMcp\\Tools\\StateSupport',false)) {
+                StateSupport::afterRevisionCommit($context, function () use ($context) {
+                    $context->modx()->getCacheManager()->flushPermissions();
+                });
+            } else {
+                // RU: Совместимость прямых unit-тестов без bootstrap runtime.
+                // EN: Legacy isolated unit tests invoke this tool without runtime.
+                $context->modx()->getCacheManager()->flushPermissions();
+            }
         }
         if ($route === 'context' && in_array($this->toolName, array(
             'create_context_setting', 'update_context_setting', 'delete_context_setting'
