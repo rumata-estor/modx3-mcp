@@ -409,6 +409,15 @@ assert 'dry-run preserved unpublished state' in bulk_test
 assert 'published state independently confirmed' in bulk_test
 assert 'stale bulk action denied' in bulk_test
 
+# RU: Массовая замена проверяется только на уникальном тестовом маркере.
+# EN: Replace-across coverage needs an executable isolated MCP readback.
+replace_test=(ROOT / '_build/test.ci-cas-replace-across.php').read_text()
+assert 'php _build/test.ci-cas-replace-across.php' in ci_workflow
+assert 'disposable_unique_chunk_replace_across_dry_run_readback_stale_replay' in expected['replace_across']['verified_scenarios']
+assert 'CAS_REPLACE_ACROSS_READBACK_STALE_REPLAY_OK' in replace_test
+assert 'dry-run did not modify content' in replace_test
+assert 'stale replace-across replay denied' in replace_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
