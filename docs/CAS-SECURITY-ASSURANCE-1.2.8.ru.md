@@ -264,3 +264,9 @@
 В `_build/test.ci-functional-acceptance.php` на одноразовых MODX 2/3 зарегистрированы индивидуальные маркеры `add_user_to_group`, `update_group_member` и `remove_user_from_group`: добавление неактивного пользователя в собственную группу, независимый readback через MCP, смена роли на другую одноразовую роль, отказ повторного запроса с устаревшей ревизией и удаление членства. Роль читается из штатного `list_user_group_members` (идентификатор пользователя находится в поле `id`). [Матрица MODX 2/3 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45039852054).
 
 Эти сценарии не доказывают отсутствие гонки между Manager и MCP: PR #67 продолжает блокировать заявление о полной конкурентной безопасности ACL.
+
+## Resource group: назначение и снятие ресурсов (MODX2, 3.1, 3.2)
+
+`_build/test.ci-cas-resource-group-membership.php` создаёт собственную группу и неопубликованный ресурс. Проверены `assign_resource_to_group`, `remove_resource_from_group`, точное readback связей через `list_resource_group_resources`, отсутствие дублирования и отказ повторов со старой CAS-ревизией. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45040407772).
+
+**Исправлена реальная межверсионная несовместимость:** штатный `updateresourcesin` MODX 2.8.9 и MODX 3.1.2 принимает tree-node ID вида `n_123`, а MODX 3.2.4 — числовой ID. Адаптер теперь выбирает формат по `majorVersion()` и `getVersionData()['major_version']`. Ранний тест с условием только по MODX major 2/3 не работал на MODX 3.1 и был отвергнут CI. Не доказана защита от параллельного изменения доступа через MODX Manager (PR #67 остаётся блокером).

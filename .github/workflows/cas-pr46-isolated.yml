@@ -400,6 +400,15 @@ jobs:
           php _build/test.ci-cas-propertyset-assignment.php
       # RU: Группа ресурсов без реальных привязок/ACL.
       # EN: Rename/remove only a disposable unassigned resource group.
+      # RU: Фикстура связывает только собственные resource/group в disposable CI.
+      # EN: No shared or production resources used in group linkage tests.
+      - name: Disposable resource group membership CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-resource-group-membership.php
       - name: Disposable resource group update and delete CAS
         env:
           MODXMCP_DISPOSABLE_CI: '1'

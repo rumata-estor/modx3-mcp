@@ -69,6 +69,7 @@ class AclFakeModx {
         $this->error=new AclFakeError();
     }
     public function getCacheManager(){return $this->cache;}
+    public function getVersionData(){return array('version'=>2,'major_version'=>8);}
 }
 class AclFakeResponse {
     public $error;
@@ -83,6 +84,7 @@ class AclFakePlatform {
         return $this->noResponse ? false : new AclFakeResponse($this->fail);
     }
     public function className($name){return $name==='user'?'modUser':'modUserGroup';}
+    public function majorVersion(){return 2;}
 }
 class AclFakeContext {
     public $modx;public $platform;
