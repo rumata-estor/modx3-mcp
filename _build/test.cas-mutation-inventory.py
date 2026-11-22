@@ -552,6 +552,18 @@ assert "'value' => ''" in (
     ROOT / 'core/components/modxmcp/src/Tools/Ms2OptionAssignCategoryTool.php'
 ).read_text()
 
+# RU: Native msCategory update подтверждается на поддерживаемом MODX 2.
+# EN: Category update must be a real MODX2 processor with full context.
+ms2_update=(ROOT / '_build/test.ci-ms2-update-category-modx2.php').read_text()
+assert expected['ms2_update_category']['verified_scenarios'] == [
+    'disposable_modx2_pinned_ms2_update_category_full_context_mcp_readback_stale_replay'
+]
+assert 'php _build/test.ci-ms2-update-category-modx2.php' in ci_workflow
+assert 'CAS_MS2_UPDATE_CATEGORY_NATIVE_READBACK_STALE_OK' in ms2_update
+assert "'context_key'=>'web'" in ms2_update
+assert "'class_key'=>'msCategory'" in ms2_update
+assert "'ms2_update_category'" in ms2_update
+
 # RU: Публикуемый отчёт не должен отставать от машинного реестра.
 # EN: Keep the human-readable evidence tracker identical to the manifest.
 import subprocess
