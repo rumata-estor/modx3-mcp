@@ -137,6 +137,23 @@ try {
     must($blocked,'critical signed create_user rejected stale CAS');
     must((int)$api->processRequest('get_site_state','',array())['site_revision']
         ===$beforeUser,'denied create_user did not change connector revision');
+    // RU: Подписанное разрешение НЕ заменяет точный снимок ACL-объекта.
+    // EN: A valid Ed25519 permit cannot waive the ACL target fingerprint.
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,'
+        .'create_user,update_user,update_user_group,update_role');
+    foreach (array('update_user','update_user_group','update_role') as $aclAction) {
+        $aclBefore=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+        $aclWithoutTarget=array('id'=>987654321,
+            '_runtime_preconditions'=>guardNow());
+        mustDeny($aclAction,'',$aclWithoutTarget,
+            signedCall($aclAction,'',$aclWithoutTarget));
+        must((int)$api->processRequest('get_site_state','',array())['site_revision']
+            ===$aclBefore,'signed ACL without target fingerprint did not write');
+    }
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,create_user');
+
     // RU: Повторно читаем список пользователей только через MODX MCP.
     // EN: Verify absence through the MODX MCP read tool, never direct SQL.
     $users=$api->processRequest('list_users','',array('query'=>$blockedUsername));

@@ -16,6 +16,7 @@ class Modx3Platform extends AbstractPlatform
         'plugin' => 'MODX\\Revolution\\modPlugin',
         'category' => 'MODX\\Revolution\\modCategory',
         'user' => 'MODX\\Revolution\\modUser',
+        'user_profile' => 'MODX\\Revolution\\modUserProfile',
         'user_group' => 'MODX\\Revolution\\modUserGroup',
         'access_policy' => 'MODX\\Revolution\\modAccessPolicy',
         'access_policy_template' => 'MODX\\Revolution\\modAccessPolicyTemplate',
