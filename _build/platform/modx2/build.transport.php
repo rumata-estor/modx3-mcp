@@ -38,7 +38,10 @@ if (!$config || !file_exists($config)) {
     }
 }
 if (!$config || !file_exists($config)) {
-    die("modxMCP build: cannot find config.core.php. Set the MODX_CONFIG_CORE env var to its full path.\n");
+    // RU: Отсутствие конфигурации — ошибка сборки, а не успешный exit(0).
+    // EN: Missing MODX configuration must fail with a nonzero exit status.
+    fwrite(STDERR, "modxMCP build: cannot find config.core.php. Set MODX_CONFIG_CORE.\n");
+    exit(2);
 }
 
 // Some MODX installations derive paths from DOCUMENT_ROOT even in CLI.

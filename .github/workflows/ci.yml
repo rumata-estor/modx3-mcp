@@ -36,6 +36,7 @@ jobs:
         run: |
           python3 _build/test.architecture.py
           python3 _build/test.build-architecture.py
+          python3 _build/test.build-preflight-exit.py
           python3 _build/test.endpoint-architecture.py
           python3 _build/test.modx2-php-compat.py
           python3 _build/test.migration-coverage.py
