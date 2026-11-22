@@ -868,3 +868,13 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-ms2-category-assign-modx2.php
+      # RU: Реальный собственный заказ только внутри disposable MODX 2.
+      # EN: Native test-only order, MCP update/readback/CAS on supported MODX 2.
+      - name: Disposable MODX2 miniShop2 native order update MCP CAS
+        if: matrix.platform == 'modx2' && matrix.php_version == '8.2'
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-ms2-order-native-modx2.php
