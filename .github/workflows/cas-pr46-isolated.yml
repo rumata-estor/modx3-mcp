@@ -505,7 +505,7 @@ jobs:
           mock_pid=$!
           trap 'kill "$mock_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 20); do
-            if curl --fail --silent --max-time 2 "$MODXMCP_CI_PROVIDER_URL/verify" > "$RUNNER_TEMP/mcp-provider-verify.xml"; then break; fi
+            if curl --fail --silent --max-time 2 "${MODXMCP_CI_PROVIDER_URL}verify" > "$RUNNER_TEMP/mcp-provider-verify.xml"; then break; fi
             sleep 0.2
           done
           grep -q '<verified>1</verified>' "$RUNNER_TEMP/mcp-provider-verify.xml"
