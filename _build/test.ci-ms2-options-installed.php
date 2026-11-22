@@ -107,8 +107,9 @@ $id = (int)($rows[0]['id'] ?? 0);
 optCheck($id > 0, 'option id available from MCP readback');
 optCheck((string)$rows[0]['caption'] === 'temporary-before',
     'option first caption persisted');
-$read = optRpc('ms2_get_option', array('id' => $id));
-optCheck((string)$read['key'] === $key, 'get option readback key');
+$read = optList($key);
+optCheck(count($read) === 1 && (int)$read[0]['id'] === $id,
+    'option list readback preserves key and id');
 optStale('ms2_create_option', $request);
 optCheck(count(optList($key)) === 1, 'stale create did not duplicate');
 echo "CAS_MS2_CREATE_OPTION_INSTALLED_READBACK_STALE_OK\n";
@@ -117,12 +118,13 @@ list($updated, $request) = optMut('ms2_update_option', array(
     'id' => $id, 'key' => $key, 'caption' => 'temporary-after',
     'description' => 'changed in isolated addon'
 ));
-$read = optRpc('ms2_get_option', array('id' => $id));
-optCheck((string)$read['caption'] === 'temporary-after', 'update persisted via MCP');
-optCheck((string)$read['key'] === $key, 'update left key unchanged');
+$read = optList($key);
+optCheck(count($read) === 1 && (string)$read[0]['caption'] === 'temporary-after',
+    'update persisted through independent MCP list');
+optCheck((string)$read[0]['key'] === $key, 'update left key unchanged');
 optStale('ms2_update_option', $request);
-$read = optRpc('ms2_get_option', array('id' => $id));
-optCheck((string)$read['caption'] === 'temporary-after',
+$read = optList($key);
+optCheck(count($read) === 1 && (string)$read[0]['caption'] === 'temporary-after',
     'stale update did not overwrite option');
 echo "CAS_MS2_UPDATE_OPTION_INSTALLED_READBACK_STALE_OK\n";
 // RU: Тестовая база и единственный сгенерированный option удаляются целиком GitHub CI.
