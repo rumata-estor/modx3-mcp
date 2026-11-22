@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 44. **Не имеют индивидуальных сценариев:** 72.
+сценарий:** 50. **Не имеют индивидуальных сценариев:** 66.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -24,19 +24,13 @@
 | `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
-## P1 — операции повышенного риска — 10 без сценария
+## P1 — операции повышенного риска — 4 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `create_context` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `create_context_setting` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 | `create_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `delete_context` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `delete_context_setting` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 | `delete_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 | `revert_lexicon_entry` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `update_context` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
-| `update_context_setting` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 | `update_namespace` | `revision_reserved_before_action` | Readback + stale/replay + целевые настройки/разрешения |
 
 ## P2 — остальные операции — 55 без сценария
@@ -107,6 +101,8 @@
 | `create_access_policy` | critical | `disposable_unassigned_policy_create_readback_revision_stale_replay` |
 | `create_access_policy_template` | critical | `disposable_grouped_policy_template_create_readback_stale_replay` |
 | `create_category` | review | `revision_write_failure_rollback` |
+| `create_context` | high | `disposable_context_create_readback_stale_replay_no_anonymous` |
+| `create_context_setting` | high | `disposable_context_setting_create_readback_stale_replay` |
 | `create_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `create_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `create_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
@@ -118,6 +114,8 @@
 | `delete_access_policy` | critical | `disposable_unassigned_policy_delete_readback_stale_replay` |
 | `delete_access_policy_template` | critical | `disposable_grouped_policy_template_delete_readback_stale_replay` |
 | `delete_category` | review | `revision_write_failure_rollback` |
+| `delete_context` | high | `disposable_context_delete_readback_stale_replay` |
+| `delete_context_setting` | high | `disposable_context_setting_delete_readback_stale_replay` |
 | `delete_element` | review | `regular_resource_soft_delete_revision_write_failure_rollback` |
 | `delete_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `delete_media_folder` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
@@ -138,7 +136,9 @@
 | `update_access_policy` | critical | `disposable_unassigned_policy_description_update_readback_stale_replay` |
 | `update_access_policy_template` | critical | `disposable_grouped_policy_template_description_update_readback_stale_replay` |
 | `update_category` | review | `revision_write_failure_rollback` |
+| `update_context` | high | `disposable_context_name_update_readback_stale_replay_no_anonymous` |
 | `update_context_access` | critical | `disposable_context_acl_update_readback_stale_replay` |
+| `update_context_setting` | high | `disposable_context_setting_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
 | `update_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied`, `concurrent_media_cas` |
 | `update_resource_tvs` | review | `revision_write_failure_rollback`, `concurrent_cas_conflict`, `raw_tv_and_inherit` |

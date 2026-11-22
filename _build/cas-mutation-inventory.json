@@ -130,7 +130,9 @@
       "processor": "context/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_create_readback_stale_replay_no_anonymous"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_context_setting": {
@@ -140,7 +142,9 @@
       "processor": "context/setting/create",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_setting_create_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "create_element": {
@@ -310,7 +314,9 @@
       "processor": "context/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_context_setting": {
@@ -320,7 +326,9 @@
       "processor": "context/setting/remove",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_setting_delete_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "delete_element": {
@@ -844,7 +852,9 @@
       "processor": "context/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_name_update_readback_stale_replay_no_anonymous"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_context_access": {
@@ -866,7 +876,9 @@
       "processor": "context/setting/update",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "high",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_context_setting_update_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "update_element": {
