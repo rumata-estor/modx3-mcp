@@ -36,6 +36,7 @@ $resourceId = 0;
 $chunkId = 0;
 $userId = 0;
 $groupId = 0;
+$roleId = 0;
 $settingKey = '';
 $fixture = bin2hex(random_bytes(6));
 
@@ -178,6 +179,46 @@ try {
     $groupRead=acceptanceRpc('get_user_group',array('id'=>$groupId));
     acceptanceCheck(is_array($groupRead) && (int)$groupRead['id']===$groupId,
         'user group readback');
+
+    // RU: Индивидуальные интеграционные проверки ACL create/update/delete.
+    // RU: Все объекты созданы в disposable MODX и имеют случайные имена.
+    // EN: Individual ACL mutation checks use random disposable fixtures.
+    $role=acceptanceRpc('create_role',array(
+        'name'=>'MCP_AcceptanceRole_'.$fixture,'authority'=>985,
+    ));
+    acceptanceCheck(is_array($role) && (int)($role['id'] ?? 0)>0,
+        'ACL role creation through guarded MCP');
+    $roleId=(int)$role['id'];
+    $roleRead=acceptanceRpc('get_role',array('id'=>$roleId));
+    acceptanceCheck(is_array($roleRead)
+        && (string)($roleRead['name'] ?? '')==='MCP_AcceptanceRole_'.$fixture,
+        'ACL role readback after create');
+    $roleRevision=acceptanceRpc('get_site_state');
+    $roleUpdate=array(
+        'id'=>$roleId,'name'=>'MCP_AcceptanceRoleUpdated_'.$fixture,
+        'authority'=>984,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$roleRevision['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceRpc('update_role',$roleUpdate);
+    $roleRead=acceptanceRpc('get_role',array('id'=>$roleId));
+    acceptanceCheck(is_array($roleRead)
+        && (string)($roleRead['name'] ?? '')==='MCP_AcceptanceRoleUpdated_'.$fixture,
+        'ACL role update persisted');
+    $roleStale=false;
+    try { acceptanceRpc('update_role',$roleUpdate); }
+    catch (ModxMCPClientException $e) {
+        $roleStale=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($roleStale,'ACL role stale CAS denied');
+    $roleRead=acceptanceRpc('get_role',array('id'=>$roleId));
+    acceptanceCheck((string)($roleRead['name'] ?? '')==='MCP_AcceptanceRoleUpdated_'.$fixture,
+        'stale ACL role update has no effect');
+    acceptanceClean('delete_role',array('id'=>$roleId));
+    $roleId=0;
+
     try {
         $user=acceptanceRpc('create_user',array(
             'username'=>'mcp_acceptance_'.$fixture,
@@ -298,6 +339,7 @@ try {
     // EN: Do not suppress cleanup errors; the entire installation is disposable.
     if ($settingKey!=='') acceptanceClean('delete_system_setting',array('key'=>$settingKey));
     if ($userId>0) acceptanceClean('delete_user',array('id'=>$userId));
+    if ($roleId>0) acceptanceClean('delete_role',array('id'=>$roleId));
     if ($groupId>0) acceptanceClean('delete_user_group',array('id'=>$groupId));
     if ($chunkId>0) acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
     if ($resourceId>0) acceptanceClean('delete_element',array(
