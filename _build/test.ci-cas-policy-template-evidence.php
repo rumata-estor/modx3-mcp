@@ -62,12 +62,21 @@ try {
     $afterReplay=casCreateRpc('get_site_state');
     casCreateCheck((int)$afterReplay['site_revision']
         ===(int)$after['site_revision'],'stale policy replay did not advance revision');
-    $list=casCreateRpc('list_access_policy_templates',array('query'=>$name,'limit'=>100));
+    $list=casCreateRpc('list_access_policy_templates',array('limit'=>500));
     casCreateCheck(isset($list['results']) && is_array($list['results']),
         'policies list available');
     $matches=0;
     foreach($list['results'] as $row) {
         if(is_array($row) && (string)($row['name']??'')===$name)$matches++;
+    }
+    if($matches!==1) {
+        // RU: Только безопасная метаинформация одноразовых тестовых записей.
+        // EN: Log schema keys only, never values or credentials.
+        $first=isset($list['results'][0]) && is_array($list['results'][0])
+            ? array_keys($list['results'][0]) : array();
+        fwrite(STDERR,'POLICY_TEMPLATE_LIST_DIAG matches='.$matches
+            .' rows='.count($list['results'])
+            .' fields='.implode(',', $first).PHP_EOL);
     }
     casCreateCheck($matches===1,'stale replay produced no duplicate policy');
     echo 'CAS_POLICY_TEMPLATE_CREATE_EVIDENCE_OK platform='.($is2?'modx2':'modx3').PHP_EOL;
