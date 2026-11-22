@@ -322,3 +322,7 @@
 ## flush_permissions: штатная очистка кэша разрешений
 
 `_build/test.ci-cas-flush-permissions.php` проверяет возврат `flushed=true` штатным MODX cache manager после вызова `flush_permissions` через MCP, одно приращение site revision и отказ повторного запроса с прежним CAS без второго приращения. Не создаются и не меняются реальные ACL; тест выполняется на disposable MODX 2/3. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45048715097). Нельзя интерпретировать это как подтверждение гонок с Manager или всех пользовательских ACL-контекстов.
+
+## update_element_property: двойная CAS-проверка
+
+`_build/test.ci-cas-element-property.php` на disposable MODX 2/3 создаёт только собственный чанк через MCP. Штатным MODX API в тестовой фикстуре заранее устанавливаются два определения свойств (у MCP нет инструмента создания определений). Само `update_element_property` выполняется **только через MCP**: новое значение читается независимо, соседнее свойство остаётся неизменным, повтор со старой site revision запрещён, неверный `expected_value` также отвергается. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45049253295). Сценарий не доказывает отсутствие конкуренции с внешним MODX Manager и последствия исполнения кода элемента, которого в этой фикстуре нет.
