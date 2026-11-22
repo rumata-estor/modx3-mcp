@@ -85,6 +85,12 @@ try {
     $createdSetting=true;
     clientConfigLiveCheck(isset($result['id']) && (int)$result['id']>0,
         'created setting through MCP');
+    // RU: Явно переданное пустое описание не должно стать значением '0'.
+    // EN: An explicit empty description must not be replaced by schema default '0'.
+    $readback=clientConfigLiveRpc('clientconfig_get_setting',array('key'=>$key));
+    clientConfigLiveCheck(array_key_exists('description',$readback)
+        && $readback['description']==='',
+        'explicit empty description must survive real addon create');
     foreach(array('web'=>'web_old','mgr'=>'mgr_old',$other=>'custom_old') as $ctx=>$val) {
         clientConfigLiveCheck(clientConfigLiveValue($ctx,$key)===$val,
             'first addon getSettings in '.$ctx);
@@ -103,6 +109,13 @@ try {
         'mgr override remains untouched');
     clientConfigLiveCheck(clientConfigLiveValue($other,$key)==='custom_new',
         'custom context reads independent new value');
+    // RU: При выключенной context_aware все контексты берут глобальное значение.
+    // EN: With context_aware disabled, context-specific values must not override global.
+    $modx->setOption('clientconfig.context_aware',false);
+    $plain=$client->getSettings('web');
+    clientConfigLiveCheck(isset($plain[$key]) && $plain[$key]==='global_new',
+        'context_aware=false falls back to global value');
+    $modx->setOption('clientconfig.context_aware',true);
     $global=$client->getSettings();
     clientConfigLiveCheck(isset($global[$key]) && $global[$key]==='global_new',
         'global setting is independently current');
