@@ -1151,7 +1151,9 @@
       "origin": "static",
       "cas_boundary": "revision_reserved_before_action",
       "risk": "review",
-      "verified_scenarios": [],
+      "verified_scenarios": [
+        "disposable_modx2_pinned_versionx_revert_version_native_snapshot_mcp_readback_stale_replay"
+      ],
       "revision_denial_test": "full_catalog_trigger_gate_ci"
     },
     "virtualpage_clear_cache": {
