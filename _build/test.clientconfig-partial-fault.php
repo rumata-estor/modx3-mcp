@@ -16,9 +16,25 @@ class FakeCCRow {
     public function get($key) { return isset($this->values[$key]) ? $this->values[$key] : null; }
     public function save() { $this->saves++; return !$this->shouldFail; }
 }
+class FakeCCCache {
+    public $removed = array();
+    public function delete($key, $options) {
+        $this->removed[] = $options['cache_key'].':'.$key;
+        return true;
+    }
+    public function get($key, $options) { return null; }
+}
 class FakeCCModx {
     public $created = array();
     public $failChild = false;
+    public $cache;
+    public $events = array();
+    public function __construct() { $this->cache = new FakeCCCache(); }
+    public function getCacheManager() { return $this->cache; }
+    public function getOption($key, $unused=null, $default=null) {
+        return $key==='clientconfig.clear_cache' ? false : $default;
+    }
+    public function invokeEvent($event) { $this->events[] = $event; }
     public function getObject($class, $criteria) { return null; }
     public function newObject($class) {
         $row = new FakeCCRow();
@@ -56,6 +72,11 @@ try {
     if (strpos($e->getMessage(), 'MUTATION_OUTCOME_UNCERTAIN:') !== 0) throw $e;
     $checks++;
 }
+if ($ctx->db->cache->removed !== array('system_settings:clientconfig')
+    || $ctx->db->events !== array('ClientConfig_ConfigChange')) {
+    throw new \RuntimeException('CLIENTCONFIG_PARTIAL_WRITE_CACHE_NOT_INVALIDATED');
+}
+$checks++;
 $create = file_get_contents(__DIR__.'/../core/components/modxmcp/src/Tools/ClientConfigSettingCreateTool.php');
 $update = file_get_contents(__DIR__.'/../core/components/modxmcp/src/Tools/ClientConfigSettingUpdateTool.php');
 foreach (array($create, $update) as $tool) {

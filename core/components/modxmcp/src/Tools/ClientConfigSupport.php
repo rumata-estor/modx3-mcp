@@ -99,6 +99,14 @@ class ClientConfigSupport
         try {
             self::applyContextValues($context, $setting, $data);
         } catch (\Throwable $e) {
+            // RU: Даже при частичном сохранении инвалидируем кеш, чтобы
+            // RU: MODX не продолжал читать заведомо устаревшую конфигурацию.
+            // EN: Best-effort cache invalidation after a partial write.
+            try {
+                self::refresh($context);
+            } catch (\Throwable $ignored) {
+                // Preserve the uncertain outcome and do not disclose internals.
+            }
             throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: ClientConfig context values may be partially saved.'
             );
