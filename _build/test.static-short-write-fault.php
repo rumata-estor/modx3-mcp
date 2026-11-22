@@ -4,10 +4,13 @@
  * EN: Simulate short file writes and require fail-closed uncertain outcomes.
  */
 namespace ModxMcp\Tools {
-    function file_put_contents($file,$content) {
-        // RU: В этом отдельном тестовом PHP-процессе записываем лишь 2 байта.
-        // EN: Namespace-local interception simulates a two-byte short write.
-        return \file_put_contents($file,substr((string)$content,0,2));
+    function fwrite($stream,$content) {
+        // RU: Первая запись — два байта, затем авария; исходный файл цел.
+        // EN: Two bytes enter only the temporary file, then the write fails.
+        if (!isset($GLOBALS['short_write_calls'])) $GLOBALS['short_write_calls']=0;
+        $GLOBALS['short_write_calls']++;
+        return $GLOBALS['short_write_calls']%2===1
+            ? \fwrite($stream,substr($content,0,2)) : false;
     }
     class ElementSupport {
         public static function processorBase($type){return 'element/';}
@@ -16,6 +19,7 @@ namespace ModxMcp\Tools {
         public static function error($response){return 'unexpected';}
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileWriteSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
 }
@@ -61,8 +65,8 @@ mkdir($root.'/core/elements/chunks',0700,true);
 $ctx=new ShortWriteContext($root);
 $checks=0;
 try {
-    // RU: make_static создал два байта — не разрешаем metadata save.
-    // EN: make_static short write must never proceed to metadata save.
+    // RU: Аварийная запись не оставляет целевой файл и не сохраняет metadata.
+    // EN: Failed temp write must leave the destination absent and skip metadata.
     $uncertain=false;
     try {
         \ModxMcp\Tools\ElementMutationSupport::makeStatic($ctx,'chunk',1);
@@ -70,11 +74,11 @@ try {
         $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
     }
     $target=$root.'/core/elements/chunks/shortwrite.tpl';
-    if(!$uncertain || !is_file($target)
-        || \file_get_contents($target)!=='12' || $ctx->m->element->saveCalls!==0) {
+    if(!$uncertain || is_file($target) || $ctx->m->element->saveCalls!==0) {
         throw new \RuntimeException('MAKE_STATIC_SHORT_WRITE_NOT_DETECTED');
     }
     $checks++;
+    \file_put_contents($target,'ORIGINAL');
     // RU: edit_element_lines/replace_across не вызывают процессор после
     // RU: неполной файловой записи.
     // EN: Static content edits must not dispatch a MODX processor after short writes.
@@ -87,7 +91,7 @@ try {
     }catch(ModxMCPClientException $e){
         $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
     }
-    if(!$uncertain || \file_get_contents($target)!=='NE'
+    if(!$uncertain || \file_get_contents($target)!=='ORIGINAL'
         || $ctx->p->processorCalls!==0) {
         throw new \RuntimeException('STATIC_EDIT_SHORT_WRITE_NOT_DETECTED');
     }

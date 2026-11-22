@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122']
 
 permissions:
   contents: read
@@ -620,6 +620,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-processor-plugin-effects.php
+      # RU: Переносимая PHP-запись на установленном MODX без Python/proc_open.
+      # EN: Portable native PHP static replacement on real disposable MODX.
+      - name: Disposable MODX 2/3 native PHP static write compatibility
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-static-portable-write.php
       - name: Legacy PR54 setting guards against disposable MODX
         env:
           MODXMCP_DISPOSABLE_CI: '1'
