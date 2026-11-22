@@ -318,3 +318,7 @@
 ## clear_cache: одноразовый кэш-ключ и CAS
 
 `_build/test.ci-cas-clear-cache.php` создаёт собственный ключ в стандартном кэше disposable MODX 2/3 через штатный cache manager. Затем `clear_cache` вызывается через MCP, а отсутствие ключа проверяется независимым чтением cache manager. Повтор с тем же snapshot обязан вернуть `STALE_STATE`, не менять ревизию и не восстанавливать ключ. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45048302938). Сценарий не означает, что проверены все кэш-провайдеры, все partitions или реальные сайты.
+
+## flush_permissions: штатная очистка кэша разрешений
+
+`_build/test.ci-cas-flush-permissions.php` проверяет возврат `flushed=true` штатным MODX cache manager после вызова `flush_permissions` через MCP, одно приращение site revision и отказ повторного запроса с прежним CAS без второго приращения. Не создаются и не меняются реальные ACL; тест выполняется на disposable MODX 2/3. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45048715097). Нельзя интерпретировать это как подтверждение гонок с Manager или всех пользовательских ACL-контекстов.

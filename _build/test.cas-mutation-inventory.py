@@ -438,6 +438,16 @@ assert 'CAS_CLEAR_CACHE_DISPOSABLE_KEY_STALE_REPLAY_OK' in clear_cache_test
 assert 'disposable cache key removed by MCP clear' in clear_cache_test
 assert 'stale clear_cache CAS replay denied' in clear_cache_test
 
+# RU: Подтверждение flush_permissions требует штатного результата MODX.
+# EN: Permission-cache flush evidence is limited to native successful flush.
+flush_test=(ROOT / '_build/test.ci-cas-flush-permissions.php').read_text()
+assert 'php _build/test.ci-cas-flush-permissions.php' in ci_workflow
+assert 'disposable_native_permission_cache_flush_success_revision_stale_replay' in expected['flush_permissions']['verified_scenarios']
+assert "'flush_permissions',$request" in flush_test
+assert 'CAS_FLUSH_PERMISSIONS_NATIVE_STALE_REPLAY_OK' in flush_test
+assert 'native MODX permissions cache manager confirms successful flush' in flush_test
+assert 'flush_permissions old CAS denied' in flush_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]
