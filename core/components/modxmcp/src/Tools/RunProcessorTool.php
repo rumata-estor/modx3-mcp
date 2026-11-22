@@ -112,31 +112,40 @@ class RunProcessorTool implements ToolInterface
                 . 'verify actual state via MCP before any retry.'
             );
         }
-        if ($response->isError()) {
-            // RU: Не раскрываем строку ошибки стороннего процессора: она
-            // RU: может содержать пароли. Результат мутации неизвестен.
-            // EN: Third-party error text may contain credentials, and the
-            // EN: mutation may already have occurred. Require readback.
+        try {
+            if ($response->isError()) {
+                // RU: Внешние эффекты могли выполниться до ошибки.
+                // EN: Side effects may precede a reported processor error.
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: processor reported an error; '
+                    . 'verify actual state via MCP before any retry.'
+                );
+            }
+            // RU: Даже чтение ответа и аудит могут выбросить исключение
+            // RU: после выполнения опасного процессора. Не раскрывать его текст.
+            // EN: Response decoding and audit can fail AFTER side effects;
+            // EN: never expose raw third-party exception text to the caller.
+            $decoded = ProcessorSupport::decodedResponse($response);
+            $result = !empty($decoded)
+                ? $decoded
+                : ProcessorSupport::normalize($response);
+            $safeResult = ProcessorSupport::sanitizeProcessorOutput($result);
+            AuditSupport::log(
+                $context,
+                $this->name(),
+                'system',
+                array('processor' => $auditProcessor)
+            );
+            return $safeResult;
+        } catch (\Throwable $e) {
+            if ($e instanceof \ModxMCPClientException
+                && strpos($e->getMessage(), 'MUTATION_OUTCOME_UNCERTAIN:') === 0) {
+                throw $e;
+            }
             throw new \ModxMCPClientException(
-                'MUTATION_OUTCOME_UNCERTAIN: processor reported an error; '
-                . 'verify actual state via MCP before any retry.'
+                'MUTATION_OUTCOME_UNCERTAIN: processor post-execution '
+                . 'verification failed; inspect actual state before retry.'
             );
         }
-
-        AuditSupport::log(
-            $context,
-            $this->name(),
-            'system',
-            array('processor' => $auditProcessor)
-        );
-        // RU: Возвращаем полный статус штатного процессора; MODX 3 может
-        // RU: вернуть готовый массив вместо JSON-строки.
-        // EN: Preserve the native processor response; MODX 3 may return an
-        // EN: already decoded array instead of JSON text.
-        $decoded = ProcessorSupport::decodedResponse($response);
-        $result = !empty($decoded)
-            ? $decoded
-            : ProcessorSupport::normalize($response);
-        return ProcessorSupport::sanitizeProcessorOutput($result);
     }
 }
