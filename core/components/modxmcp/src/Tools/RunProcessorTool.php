@@ -12,7 +12,9 @@ class RunProcessorTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
-    public function execute($context, array $data)
+    // RU: Вызов до CAS-резервирования и повторно в execute() — одна политика.
+    // EN: Shared guard before CAS and at processor execution (defense in depth).
+    public static function assertDispatchAllowed($context, array $data)
     {
         $modx = $context->modx();
         // RU: В защищённом режиме галочка читается из БД, а не кеша PHP.
@@ -50,6 +52,13 @@ class RunProcessorTool implements ToolInterface
                 (string)$modx->getOption('modxmcp.privileged_processors', null, '')
             );
         }
+        return true;
+    }
+
+    public function execute($context, array $data)
+    {
+        self::assertDispatchAllowed($context, $data);
+        $modx = $context->modx();
         $processor = isset($data['processor'])
             ? (string)$data['processor']
             : '';

@@ -150,9 +150,20 @@ try {
     absentAtRevisionFault('uninstall_package',
         array('signature'=>'nonexistent-cas-ci-'.$key),
         'uninstall_package_gate',function(){return true;},true);
-    absentAtRevisionFault('run_processor',
-        array('processor'=>'context/getlist','properties'=>array()),
-        'run_processor_gate',function(){return true;},true);
+    // RU: Выключенный run_processor запрещается ещё до CAS-триггера.
+    // EN: A disabled processor must fail at the master-switch preflight.
+    $beforeProcessorRevision=rev();
+    $processorDenied=false;
+    try {
+        rpc('run_processor',array('processor'=>'context/getlist',
+            'properties'=>array()));
+    } catch (ModxMCPClientException $e) {
+        $processorDenied=strpos($e->getMessage(),'run_processor is disabled')!==false;
+    }
+    requireCas($processorDenied,'disabled run_processor denied before reservation');
+    requireCas(rev()===$beforeProcessorRevision,
+        'disabled run_processor must not consume CAS revision');
+    echo 'CAS_EXTERNAL_DENY_OK run_processor_preflight'.PHP_EOL;
     absentAtRevisionFault('regenerate_token',array(),
         'regenerate_token_gate',function(){return true;},true);
     absentAtRevisionFault('empty_recycle_bin',array(),

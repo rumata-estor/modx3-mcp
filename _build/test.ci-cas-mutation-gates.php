@@ -62,6 +62,7 @@ $trigger='cas_all_gates_'.bin2hex(random_bytes(5));
 $armed=false;
 $gated=array();
 $unsupported=array();
+$preflightDenied=array();
 $failed=array();
 try {
     $pdo->exec(
@@ -89,6 +90,12 @@ try {
         }
         if(strpos($message,'Failed to persist MODX MCP site revision')!==false){
             $gated[]=$action;
+        } elseif ($action==='run_processor'
+            && (strpos($message,'run_processor is disabled')!==false
+                || strpos($message,'AUTH_DENIED: processor execution disabled.')!==false)) {
+            // RU: Детерминированный запрет сильнее отказа CAS-резерва.
+            // EN: Independent master-switch denial precedes CAS reservation.
+            $preflightDenied[$action]='disabled by administrator';
         } elseif(preg_match('/(not supported|unsupported|not available|requires (?:.*? )?integration|integration .*? not installed|MIGX is not installed|Could not load miniShop2 service|Could not find VirtualPage component core path|Could not load VersionX service)/i',$message)){
             $unsupported[$action]=substr($message,0,100);
         }else{
@@ -102,12 +109,13 @@ try {
     if($armed)$pdo->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');
 }
 echo 'CAS_EXTERNAL_GATE_SWEEP total='.count($expected)
-    .' gated='.count($gated).' unsupported='.count($unsupported)
+    .' gated='.count($gated).' preflight_denied='.count($preflightDenied)
+    .' unsupported='.count($unsupported)
     .' failures='.count($failed).PHP_EOL;
 foreach($unsupported as $a=>$why)echo 'CAS_GATE_UNSUPPORTED '.$a.' '.$why.PHP_EOL;
 foreach($failed as $a=>$why)echo 'CAS_GATE_UNEXPECTED '.$a.' '.$why.PHP_EOL;
 if($failed)throw new RuntimeException('Mutating endpoints not fail-closed: '.implode(',',array_keys($failed)));
-if(count($gated)+count($unsupported)!==count($expected))
+if(count($gated)+count($preflightDenied)+count($unsupported)!==count($expected))
     throw new RuntimeException('Missing CAS endpoint classifications');
 if(count($gated)<70)
     throw new RuntimeException('Insufficient available CAS-gated endpoints: '.count($gated));
