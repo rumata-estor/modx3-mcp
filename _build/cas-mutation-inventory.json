@@ -990,7 +990,7 @@
       "verified_scenarios": [
         "manager_out_of_band_edit_stale_target_denied"
       ],
-      "revision_denial_test": "full_catalog_trigger_gate_ci"
+      "revision_denial_test": "acl_group_membership_race_ci"
     },
     "versionx_revert_version": {
       "tool": "VersionXVersionRevertTool",

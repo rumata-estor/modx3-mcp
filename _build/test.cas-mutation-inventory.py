@@ -58,7 +58,9 @@ for action, value in actual.items():
     ), f'Missing CAS boundary classification: {action}'
     assert row['risk'] in ('critical', 'high', 'review'), action
     assert isinstance(row['verified_scenarios'], list), action
-    expected_test = ('full_catalog_trigger_gate_ci'
+    expected_test = ('acl_group_membership_race_ci' if action == 'update_user_group'
+                     and row['cas_boundary'] == 'database_transaction'
+                     else 'full_catalog_trigger_gate_ci'
                      if row['cas_boundary'] == 'revision_reserved_before_action'
                      else 'per_action_rollback_ci' if row['verified_scenarios']
                      else 'not_individually_exercised')
