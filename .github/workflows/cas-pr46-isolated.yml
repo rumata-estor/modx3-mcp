@@ -481,6 +481,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-bulk-resources.php
+      # RU: Замена только уникального маркера собственного чанка.
+      # EN: Unique one-chunk search-and-replace with CAS replay.
+      - name: Disposable replace across CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-replace-across.php
       - name: Disposable undelete resource CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
