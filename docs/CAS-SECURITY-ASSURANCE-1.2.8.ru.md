@@ -258,3 +258,9 @@
 ## Лексикон: индивидуальные CAS-сценарии set/revert
 
 `_build/test.ci-cas-lexicon-evidence.php` создаёт временное пространство имён и запись перевода, проверяет значение через MCP, возвращает override к исходному отсутствующему состоянию и проверяет отказы повторов по старой site revision. Чтение `list_lexicon_entries` запускается в отдельных disposable PHP-процессах через `_build/test.ci-cas-lexicon-readback.php`: штатный процессор MODX2 `workspace/lexicon/getlist` объявляет глобальную функцию `parseArray()` и при повторном вызове в том же PHP-процессе вызывает Fatal error (`Cannot redeclare parseArray()`). Это ограничение MODX2 следует учитывать для длительного resident-runtime MCP; описанное тестирование не является исправлением MODX2-процессора. [Матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45036271736).
+
+## Членство пользователей: add/update/remove, независимое чтение и stale replay
+
+В `_build/test.ci-functional-acceptance.php` на одноразовых MODX 2/3 зарегистрированы индивидуальные маркеры `add_user_to_group`, `update_group_member` и `remove_user_from_group`: добавление неактивного пользователя в собственную группу, независимый readback через MCP, смена роли на другую одноразовую роль, отказ повторного запроса с устаревшей ревизией и удаление членства. Роль читается из штатного `list_user_group_members` (идентификатор пользователя находится в поле `id`). [Матрица MODX 2/3 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45039852054).
+
+Эти сценарии не доказывают отсутствие гонки между Manager и MCP: PR #67 продолжает блокировать заявление о полной конкурентной безопасности ACL.

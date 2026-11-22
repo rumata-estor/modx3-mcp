@@ -117,6 +117,20 @@ class ElementContentSupport
                 'static_file resolves outside core/elements.'
             );
         }
+        // RU: realpath() не видит hard link: файл внутри elements может
+        // RU: разделять inode с секретным файлом вне дерева.
+        // EN: realpath() cannot detect hard links to outside files;
+        // EN: reject multiply linked files before reads or writes.
+        if (is_file($absolute)) {
+            clearstatcache(true, $absolute);
+            $stat = @stat($absolute);
+            if ($stat === false || !isset($stat['nlink'])
+                || (int)$stat['nlink'] !== 1) {
+                throw new \ModxMCPClientException(
+                    'static_file hard link or unreadable link metadata is forbidden.'
+                );
+            }
+        }
     }
 
     public static function write(

@@ -39,6 +39,7 @@ $replaceChunkId = 0;
 $userId = 0;
 $groupId = 0;
 $roleId = 0;
+$secondRoleId = 0;
 $memberAdded = false;
 $settingKey = '';
 $fixture = bin2hex(random_bytes(6));
@@ -374,6 +375,11 @@ try {
     acceptanceCheck((string)($roleRead['name'] ?? '')==='MCP_AcceptanceRoleUpdated_'.$fixture,
         'stale ACL role update has no effect');
     // Role remains available for membership testing below.
+    $secondRole=acceptanceRpc('create_role',array(
+        'name'=>'MCP_AcceptanceMemberRole_'.$fixture,'authority'=>987,
+    ));
+    $secondRoleId=(int)($secondRole['id']??0);
+    acceptanceCheck($secondRoleId>0,'second disposable role for member update');
 
     try {
         $user=acceptanceRpc('create_user',array(
@@ -488,15 +494,62 @@ try {
     ));
     acceptanceCheck(count($membersAfterReplay['results'])===count($membersAdded['results']),
         'rejected membership replay produced no duplicate');
-    acceptanceClean('remove_user_from_group',array(
-        'user'=>$userId,'usergroup'=>$groupId,
+    echo 'CAS_USER_GROUP_ADD_MEMBER_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+
+    // RU: Меняем роль только у собственного неактивного пользователя.
+    // EN: Change role only for our inactive disposable user.
+    $memberUpdateState=acceptanceRpc('get_site_state');
+    $memberUpdate=array('user'=>$userId,'usergroup'=>$groupId,'role'=>$secondRoleId,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$memberUpdateState['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceRpc('update_group_member',$memberUpdate);
+    $membersUpdated=acceptanceRpc('list_user_group_members',array(
+        'usergroup'=>$groupId,'limit'=>200,
     ));
+    $updatedRoleFound=false;
+    foreach($membersUpdated['results'] as $memberRow){
+        if(is_array($memberRow) && (int)($memberRow['id']??0)===$userId
+            && (int)($memberRow['role']??0)===$secondRoleId) {
+            $updatedRoleFound=true;
+        }
+    }
+    acceptanceCheck($updatedRoleFound,'new member role independently read via MCP');
+    $staleMemberUpdate=false;
+    try {acceptanceRpc('update_group_member',$memberUpdate);}
+    catch(ModxMCPClientException $e){
+        $staleMemberUpdate=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($staleMemberUpdate,'member role stale CAS denied');
+    echo 'CAS_USER_GROUP_UPDATE_MEMBER_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+
+    // RU: Удаление фиксируется по старому CAS; повтор запрещён.
+    // EN: Remove membership under one snapshot and reject stale replay.
+    $memberRemoveState=acceptanceRpc('get_site_state');
+    $memberRemove=array('user'=>$userId,'usergroup'=>$groupId,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$memberRemoveState['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array(),
+        ),
+    );
+    acceptanceClean('remove_user_from_group',$memberRemove);
     $memberAdded=false;
+    $removeReplayDenied=false;
+    try {acceptanceRpc('remove_user_from_group',$memberRemove);}
+    catch(ModxMCPClientException $e){
+        $removeReplayDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    acceptanceCheck($removeReplayDenied,'member removal stale CAS denied');
+    echo 'CAS_USER_GROUP_REMOVE_MEMBER_READBACK_STALE_REPLAY_OK'.PHP_EOL;
     $membersRemoved=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
     ));
     acceptanceCheck(count($membersRemoved['results'])===count($membersBefore['results']),
         'ACL membership removal restored original count');
+    acceptanceClean('delete_role',array('id'=>$secondRoleId));
+    $secondRoleId=0;
     acceptanceClean('delete_role',array('id'=>$roleId));
     $roleId=0;
 
@@ -679,6 +732,7 @@ try {
     if ($memberAdded && $userId>0 && $groupId>0)
         acceptanceClean('remove_user_from_group',array('user'=>$userId,'usergroup'=>$groupId));
     if ($userId>0) acceptanceClean('delete_user',array('id'=>$userId));
+    if ($secondRoleId>0) acceptanceClean('delete_role',array('id'=>$secondRoleId));
     if ($roleId>0) acceptanceClean('delete_role',array('id'=>$roleId));
     if ($groupId>0) acceptanceClean('delete_user_group',array('id'=>$groupId));
     if ($replaceChunkId>0) acceptanceClean('delete_element',array(

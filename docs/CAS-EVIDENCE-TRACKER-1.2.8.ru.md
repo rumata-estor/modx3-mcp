@@ -5,22 +5,19 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 65. **Не имеют индивидуальных сценариев:** 51.
+сценарий:** 68. **Не имеют индивидуальных сценариев:** 48.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
 
-## P0 — критические операции — 5 без сценария
+## P0 — критические операции — 2 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
-| `add_user_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `assign_resource_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `remove_resource_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `remove_user_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
 ## P1 — операции повышенного риска — 0 без сценария
 
@@ -82,6 +79,7 @@
 
 | Действие | Риск | Подтверждённые сценарии (не полная гарантия) |
 |---|---|---|
+| `add_user_to_group` | critical | `disposable_inactive_user_group_membership_add_readback_stale_replay` |
 | `assign_element_category` | review | `revision_write_failure_rollback` |
 | `assign_property_set` | review | `disposable_chunk_property_set_assign_readback_stale_replay` |
 | `create_access_policy` | critical | `disposable_unassigned_policy_create_readback_revision_stale_replay` |
@@ -121,6 +119,7 @@
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
 | `regenerate_token` | critical | `revision_reservation_refusal_only` |
+| `remove_user_from_group` | critical | `disposable_inactive_user_group_membership_remove_readback_stale_replay` |
 | `rename_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied` |
 | `revert_lexicon_entry` | high | `disposable_namespace_lexicon_revert_readback_stale_replay` |
 | `revoke_context_access` | critical | `disposable_context_acl_revoke_readback_stale_replay` |
@@ -136,6 +135,7 @@
 | `update_context_access` | critical | `disposable_context_acl_update_readback_stale_replay` |
 | `update_context_setting` | high | `disposable_context_setting_update_readback_stale_replay` |
 | `update_element` | review | `regular_resource_revision_write_failure_rollback` |
+| `update_group_member` | critical | `disposable_inactive_user_group_role_update_readback_stale_replay` |
 | `update_media_file` | high | `revision_reservation_refusal`, `positive_file_readback`, `path_traversal_denied`, `concurrent_media_cas` |
 | `update_media_source` | review | `disposable_media_source_definition_description_update_readback_stale_replay` |
 | `update_namespace` | high | `disposable_namespace_metadata_update_readback_stale_replay` |
