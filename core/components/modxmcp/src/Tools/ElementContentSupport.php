@@ -81,8 +81,16 @@ class ElementContentSupport
         $root = rtrim((string)$context->modx()->getOption('core_path'), '/\\')
             . DIRECTORY_SEPARATOR . 'elements';
         $rootReal = realpath($root);
-        if ($rootReal === false || !is_dir($rootReal)) {
-            throw new \ModxMCPClientException('Static elements directory is unavailable.');
+        $coreReal = realpath((string)$context->modx()->getOption('core_path'));
+        // RU: core/elements не должен быть симлинком на внешний каталог.
+        // RU: Сам core_path допускает штатный симлинк хостинга.
+        // EN: core/elements cannot be redirected by a symlink; hosting's
+        // EN: own core_path may legitimately resolve through a symlink.
+        if (is_link($root) || $coreReal === false || $rootReal === false
+            || !is_dir($rootReal)
+            || $rootReal !== rtrim($coreReal, DIRECTORY_SEPARATOR)
+                . DIRECTORY_SEPARATOR . 'elements') {
+            throw new \ModxMCPClientException('Static elements directory is unavailable or unsafe.');
         }
         $absolute = (string)$absolute;
         if (!FilesystemSupport::isAbsolutePath($absolute)) {

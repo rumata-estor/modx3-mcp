@@ -79,6 +79,17 @@ try {
         $context,$root.'/core/elements/tvs/future.tpl'
     );
     staticBoundaryAssert(true,'legitimate new static file accepted');
+    // RU: Даже сам core/elements не может быть симлинком наружу.
+    // EN: Reject replacement of the core/elements root with an outside link.
+    rename($root.'/core/elements',$root.'/core/elements-safe');
+    symlink($root.'/private',$root.'/core/elements');
+    $rootSymlinkDenied=false;
+    try {\ModxMcp\Tools\ElementContentSupport::assertSafeStaticPath(
+        $context,$root.'/core/elements/token.txt'
+    );}catch(ModxMCPClientException $e){$rootSymlinkDenied=true;}
+    unlink($root.'/core/elements');
+    rename($root.'/core/elements-safe',$root.'/core/elements');
+    staticBoundaryAssert($rootSymlinkDenied,'external static root symlink rejected');
     echo 'STATIC_ELEMENT_CONTENT_BOUNDARY_OK checks='.$checks.PHP_EOL;
 } finally {
     unlink($root.'/core/elements/tvs/outlink');

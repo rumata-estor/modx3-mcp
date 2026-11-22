@@ -328,11 +328,23 @@ class ElementMutationSupport
             $absolute = $base . $relative;
         }
 
+        // RU: Проверка корня и пути обязательна для ВСЕХ static-элементов.
+        // RU: Чистая установка MODX может ещё не иметь core/elements.
+        // EN: Validate the actual target for ALL static elements; MODX may
+        // EN: initially have no core/elements directory.
+        $rootPath = rtrim((string)$modx->getOption('core_path'), '/\\')
+            . DIRECTORY_SEPARATOR . 'elements';
+        if (is_link($rootPath)) {
+            throw new \ModxMCPClientException('make_static: unsafe symlink root.');
+        }
+        if (!is_dir($rootPath) && !@mkdir($rootPath, 0755, false)) {
+            throw new \ModxMCPClientException('make_static: cannot create static root.');
+        }
+        ElementContentSupport::assertSafeStaticPath($context, $absolute);
         if ($type === 'tv') {
             // RU: При создании TV-файла отказываем при любом занятом пути;
             // RU: нельзя перезаписывать файл другой TV или симлинк.
             // EN: A TV conversion must never overwrite another file or symlink.
-            ElementContentSupport::assertSafeStaticPath($context, $absolute);
             if (file_exists($absolute) || is_link($absolute)) {
                 throw new \ModxMCPClientException(
                     'make_static: TV target already exists; refusing overwrite.'
