@@ -5,7 +5,7 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 84. **Не имеют индивидуальных сценариев:** 32.
+сценарий:** 85. **Не имеют индивидуальных сценариев:** 31.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
@@ -22,13 +22,12 @@
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 
-## P2 — остальные операции — 32 без сценария
+## P2 — остальные операции — 31 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `create_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `delete_provider` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
-| `flush_permissions` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_create_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_delete_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
 | `migx_update_config` | `revision_reserved_before_action` | Readback + stale/replay + отказ/восстановление |
@@ -109,6 +108,7 @@
 | `duplicate_resource` | review | `disposable_unpublished_resource_copy_readback_stale_replay` |
 | `edit_element_lines` | review | `disposable_chunk_exact_line_edit_readback_expect_guard_stale_replay` |
 | `empty_recycle_bin` | critical | `revision_reservation_refusal_only` |
+| `flush_permissions` | review | `disposable_native_permission_cache_flush_success_revision_stale_replay` |
 | `grant_context_access` | critical | `disposable_context_acl_grant_readback_stale_replay` |
 | `grant_resourcegroup_access` | critical | `disposable_resourcegroup_acl_grant_readback_stale_replay` |
 | `install_package` | critical | `revision_reservation_refusal_only` |
