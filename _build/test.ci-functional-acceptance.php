@@ -524,11 +524,13 @@ try {
     if($raceUnexpected) {
         echo 'ACL_MEMBERSHIP_TOCTOU_RACE_REPRODUCED'.PHP_EOL;
     }
-    acceptanceCheck($raceDenied,
-        'MCP must reject membership edit committed during CAS critical section');
+    // RU: Сначала убираем одноразовые данные, затем сигнализируем о гонке.
+    // EN: Remove disposable fixtures before asserting the TOCTOU regression.
     acceptanceClean('remove_user_from_group',array(
         'user'=>$raceUserId,'usergroup'=>$groupId));
     acceptanceClean('delete_user',array('id'=>$raceUserId));
+    acceptanceCheck($raceDenied,
+        'P0 TOCTOU: MCP must reject membership edit committed during CAS critical section');
     $memberName='mcp_acceptance_'.$fixture;
     $membersBefore=acceptanceRpc('list_user_group_members',array(
         'usergroup'=>$groupId,'limit'=>200,
