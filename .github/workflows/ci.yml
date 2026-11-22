@@ -132,6 +132,7 @@ jobs:
           php _build/test.media-folder-path-contract.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.make-static-symlink-boundary.php
+          php _build/test.static-content-postwrite-fault.php
           php _build/test.static-tv-contract.php
 
       - name: Version consistency across shared, MODX 2 and MODX 3 metadata

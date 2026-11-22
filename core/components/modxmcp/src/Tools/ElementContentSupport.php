@@ -154,12 +154,21 @@ class ElementContentSupport
             $data
         );
         if (!$response || $response->isError()) {
-            throw new \ModxMCPClientException(
-                'element save failed: '
-                . ($response
-                    ? ProcessorSupport::error($response)
-                    : 'no response.')
-            );
+            $detail = $response
+                ? ProcessorSupport::error($response)
+                : 'no response.';
+            if ($isStatic && $absolute !== null) {
+                // RU: Файл уже изменён, но процессор MODX мог откатить БД.
+                // RU: Возвращаем неопределённый исход, не безопасный retry.
+                // EN: Static bytes were written before a failed processor;
+                // EN: database rollback cannot undo the filesystem effect.
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: static element file was written '
+                    . 'but MODX processor failed; inspect file and element before retry. '
+                    . $detail
+                );
+            }
+            throw new \ModxMCPClientException('element save failed: ' . $detail);
         }
     }
 }
