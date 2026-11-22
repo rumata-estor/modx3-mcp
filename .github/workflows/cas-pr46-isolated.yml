@@ -454,6 +454,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-duplicate-resource.php
+      # RU: Только собственная TV и одно значение в disposable MODX.
+      # EN: TV value clear dry-run and confirmed mutation in isolated CI.
+      - name: Disposable clear TV values CAS evidence
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-clear-tv-values.php
       - name: Disposable undelete resource CAS evidence
         env:
           MODXMCP_DISPOSABLE_CI: '1'
