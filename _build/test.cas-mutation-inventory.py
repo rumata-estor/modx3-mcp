@@ -254,6 +254,20 @@ assert "'type'=>'chunk'" in assign_test
 assert 'stale replay did not advance revision' in assign_test
 assert 'stale assignment produced no duplicate' in assign_test
 
+# RU: Критические CRUD группы ресурсов без ACL/членства.
+# EN: Require executable unassigned resource-group rename/delete CAS evidence.
+resourcegroup_test = (ROOT / '_build/test.ci-cas-resourcegroup-update-delete.php').read_text()
+assert 'php _build/test.ci-cas-resourcegroup-update-delete.php' in ci_workflow
+for action,scenario,marker in (
+ ('update_resource_group','disposable_unassigned_resource_group_rename_readback_stale_replay','UPDATE'),
+ ('delete_resource_group','disposable_unassigned_resource_group_delete_readback_stale_replay','DELETE'),
+):
+    assert scenario in expected[action]['verified_scenarios']
+    assert "'"+action+"'" in resourcegroup_test
+    assert 'CAS_RESOURCE_GROUP_'+marker+'_READBACK_STALE_REPLAY_OK' in resourcegroup_test
+assert 'stale CAS did not advance revision' in resourcegroup_test
+assert 'resource group rename persisted' in resourcegroup_test
+
 # Detect accidental mismatch between runtime's ATOMIC policy and reviewed inventory.
 state = SOURCE.read_text()
 chunk = state.split('public static function supportsAtomicRevision', 1)[1]

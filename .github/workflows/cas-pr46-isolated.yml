@@ -398,6 +398,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-propertyset-assignment.php
+      # RU: Группа ресурсов без реальных привязок/ACL.
+      # EN: Rename/remove only a disposable unassigned resource group.
+      - name: Disposable resource group update and delete CAS
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cas-resourcegroup-update-delete.php
       - name: Disposable property set CAS lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'

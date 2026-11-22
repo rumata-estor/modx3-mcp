@@ -5,24 +5,22 @@
 > в тесте. Этот список не является сертификатом безопасности.
 
 **Всего мутаций:** 116. **Есть хотя бы один индивидуальный
-сценарий:** 61. **Не имеют индивидуальных сценариев:** 55.
+сценарий:** 63. **Не имеют индивидуальных сценариев:** 53.
 
 Общее тестирование CAS, подписей и раннего отказа действует отдельно.
 Оно не гарантирует rollback внешних эффектов, защиту от Manager или
 безопасный повтор после обрыва связи. Подтверждённый сценарий отмечает
 только указанное в его имени свойство. PR #67 остаётся блокером ACL.
 
-## P0 — критические операции — 7 без сценария
+## P0 — критические операции — 5 без сценария
 
 | Действие | CAS-граница | Следующая проверка |
 |---|---|---|
 | `add_user_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `assign_resource_to_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `delete_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `remove_resource_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `remove_user_from_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 | `update_group_member` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
-| `update_resource_group` | `revision_reserved_before_action` | Readback + stale/replay + независимые права и Manager race |
 
 ## P1 — операции повышенного риска — 1 без сценария
 
@@ -115,6 +113,7 @@
 | `delete_media_source` | review | `disposable_media_source_definition_delete_readback_stale_replay` |
 | `delete_namespace` | high | `disposable_namespace_metadata_delete_readback_stale_replay` |
 | `delete_property_set` | review | `disposable_unassigned_property_set_delete_readback_stale_replay` |
+| `delete_resource_group` | critical | `disposable_unassigned_resource_group_delete_readback_stale_replay` |
 | `delete_role` | critical | `manager_out_of_band_edit_stale_target_denied` |
 | `delete_system_setting` | review | `revision_write_failure_rollback` |
 | `delete_user` | critical | `manager_out_of_band_edit_stale_target_denied` |
@@ -141,6 +140,7 @@
 | `update_media_source` | review | `disposable_media_source_definition_description_update_readback_stale_replay` |
 | `update_namespace` | high | `disposable_namespace_metadata_update_readback_stale_replay` |
 | `update_property_set` | review | `disposable_unassigned_property_set_description_update_readback_stale_replay` |
+| `update_resource_group` | critical | `disposable_unassigned_resource_group_rename_readback_stale_replay` |
 | `update_resource_tvs` | review | `revision_write_failure_rollback`, `concurrent_cas_conflict`, `raw_tv_and_inherit` |
 | `update_resourcegroup_access` | critical | `disposable_resourcegroup_acl_update_readback_stale_replay` |
 | `update_role` | critical | `manager_out_of_band_edit_stale_target_denied` |
