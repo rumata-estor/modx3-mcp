@@ -150,7 +150,7 @@ Convert a chunk/snippet/template/plugin to a static file under core/elements/ (w
 
 ### `modx_get_element`
 
-Read a MODX element (returns its fields + full code). For a large chunk/snippet/template/plugin you only need to edit, prefer modx_view_element (numbered, windowable) so you don't pull the whole body into context.
+Read a MODX element (returns its fields + full code). For a large chunk/snippet/template/plugin you only need to edit, prefer modx_view_element (numbered, windowable) so you don't pull the whole body into context. For `type: resource`, date fields (`pub_date`, `unpub_date`, `publishedon`) are returned as raw DB values (`Y-m-d H:i:s`); Manager date formatting is not applied, so CAS fingerprints and automated clients stay stable regardless of `manager_date_format`, `manager_time_format` or the PHP timezone.
 
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |

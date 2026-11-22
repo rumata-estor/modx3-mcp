@@ -2,6 +2,10 @@
 
 # MODX MCP — Changelog
 
+## Unreleased (1.2.8 work branch)
+
+- Fix CAS fingerprint date instability for resources: `get_element` now passes `skipFormatDates=true` to `resource/get` (supported by the processor on MODX 2 and MODX 3). Without it `pub_date`, `unpub_date` and `publishedon` were reformatted via `manager_date_format` + `manager_time_format` and the PHP timezone, so CAS fingerprints depended on Manager settings and read time instead of the target state — false `STALE_STATE` after Manager format changes and missed real changes within the same minute. Resource date fields in tool output are now raw DB values (`Y-m-d H:i:s`).
+
 ## 1.2.7 (2026-11-20)
 
 - Incorporate the already prepared 1.2.5 modCategory management and its validated support for MODX 2 and MODX 3.
