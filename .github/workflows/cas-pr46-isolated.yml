@@ -177,6 +177,15 @@ jobs:
           echo "INSTALLED_CAS_V2_CONSISTENCY_OK\n";
           '
           echo "MODXMCP_127_UPGRADE_PASS ${{ matrix.platform }} PHP ${{ matrix.php_version }}"
+      # RU: Реальная адресная очистка кеша MODX, без установленного ClientConfig.
+      # EN: Verify native MODX cache invalidation; addon integration is separate.
+      - name: Native MODX ClientConfig cache key invalidation
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-clientconfig-cache.php
       - name: Ordinary HTTP API functional acceptance without Ed25519
         env:
           MODXMCP_DISPOSABLE_CI: '1'
