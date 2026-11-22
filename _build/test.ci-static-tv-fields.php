@@ -109,14 +109,39 @@ try {
     stvCheck((int)($converted['static']??0)===1
         && (string)($converted['static_file']??'')===$relative,
         'TV static metadata persisted independently');
+    // RU: Просмотр и правка содержимого TV строками через MCP,
+    // RU: затем независимое сравнение файла и default_text в MODX.
+    // EN: View/edit static TV content through guarded MCP, then compare
+    // EN: the static file and the independently read raw TV default.
+    $view=stvRpc('view_element',array('type'=>'tv','id'=>$id));
+    stvCheck(($view['numbered']??'')==='1\tUPDATED_'.$fixture,
+        'view_element returns the raw TV static file');
+    stvRpc('edit_element_lines',array('type'=>'tv','id'=>$id,'edits'=>array(
+        array('start_line'=>1,'end_line'=>1,
+            'expect'=>'UPDATED_'.$fixture,'replacement'=>'EDITED_'.$fixture)
+    )));
+    stvCheck(file_get_contents($generatedStaticPath)==='EDITED_'.$fixture,
+        'edit_element_lines changed TV static file');
+    $afterEdit=stvRpc('get_element',array('type'=>'tv','id'=>$id));
+    stvCheck((string)($afterEdit['default_text']??'')==='EDITED_'.$fixture,
+        'TV raw default_text mirrored to MODX DB');
+    $staleEditDenied=false;
+    try {stvRpc('edit_element_lines',array('type'=>'tv','id'=>$id,
+        'edits'=>array(array('start_line'=>1,'end_line'=>1,
+            'expect'=>'UPDATED_'.$fixture,'replacement'=>'STALE_EDIT'))));}
+    catch(ModxMCPClientException $e){$staleEditDenied=true;}
+    stvCheck($staleEditDenied,'stale static TV line anchor denied');
+    stvCheck(file_get_contents($generatedStaticPath)==='EDITED_'.$fixture,
+        'stale edit left TV static bytes unchanged');
+
     $deniedOverwrite=false;
     try{stvRpc('make_static',array('type'=>'tv','id'=>$id));}
     catch(ModxMCPClientException $e){
         $deniedOverwrite=strpos($e->getMessage(),'already exists')!==false;
     }
     stvCheck($deniedOverwrite,'second TV conversion refused overwriting its file');
-    stvCheck(file_get_contents($generatedStaticPath)==='UPDATED_'.$fixture,
-        'rejected overwrite preserved original bytes');
+    stvCheck(file_get_contents($generatedStaticPath)==='EDITED_'.$fixture,
+        'rejected overwrite preserved edited bytes');
     echo 'STATIC_TV_DISPOSABLE_ACCEPTANCE_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {

@@ -14,9 +14,12 @@ class ElementContentSupport
             'snippet' => array('class' => 'snippet', 'field' => 'snippet'),
             'template' => array('class' => 'template', 'field' => 'content'),
             'plugin' => array('class' => 'plugin', 'field' => 'plugincode'),
+            // RU: По идее @AgelxNash PR #55: содержимое TV — default_text.
+            // EN: TV content is its default_text, proposed by @AgelxNash PR #55.
+            'tv' => array('class' => 'tv', 'field' => 'default_text'),
         );
         if (!isset($map[$type])) {
-            throw new \ModxMCPClientException('type must be one of: chunk, snippet, template, plugin.');
+            throw new \ModxMCPClientException('type must be one of: chunk, snippet, template, plugin, tv.');
         }
         $map[$type]['class'] = $context->platform()->className($map[$type]['class']);
         return $map[$type];

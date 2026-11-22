@@ -846,18 +846,18 @@ const toolDefinitions = [
   {
     name: "modx_make_static",
     description:
-      "Convert a chunk/snippet/template/plugin to a static file under core/elements/ (writes the file, sets static=1 + source=Filesystem). One element via {type,id}, or a batch via {items:[{type,id}]}. Edit the resulting files directly afterwards. (See also the modxmcp.auto_static setting to do this automatically on every create/update.)",
+      "Convert a chunk/snippet/template/plugin/TV to a static file under core/elements/ (writes the file, sets static=1 + source=Filesystem). One element via {type,id}, or a batch via {items:[{type,id}]}. Edit the resulting files directly afterwards. (See also the modxmcp.auto_static setting to do this automatically on every create/update.)",
     inputSchema: {
       type: "object",
       properties: {
-        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin"] },
+        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin", "tv"] },
         id: { type: "number" },
         items: {
           type: "array",
           items: {
             type: "object",
             properties: {
-              type: { type: "string", enum: ["chunk", "snippet", "template", "plugin"] },
+              type: { type: "string", enum: ["chunk", "snippet", "template", "plugin", "tv"] },
               id: { type: "number" },
             },
           },
@@ -1046,11 +1046,11 @@ const toolDefinitions = [
   {
     name: "modx_view_element",
     description:
-      "View a chunk/snippet/template/plugin as NUMBERED lines (like `cat -n`), optionally windowed by start_line/end_line. Use this to find the exact line numbers to edit with modx_edit_element_lines — cheaper than pulling the whole element. Returns total_lines and the numbered window.",
+      "View a chunk/snippet/template/plugin/TV as NUMBERED lines (like `cat -n`), optionally windowed by start_line/end_line. Use this to find the exact line numbers to edit with modx_edit_element_lines — cheaper than pulling the whole element. Returns total_lines and the numbered window.",
     inputSchema: {
       type: "object",
       properties: {
-        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin"] },
+        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin", "tv"] },
         id: { type: "number" },
         name: { type: "string" },
         start_line: { type: "number", description: "1-based first line of the window (default 1)." },
@@ -1062,11 +1062,11 @@ const toolDefinitions = [
   {
     name: "modx_edit_element_lines",
     description:
-      "Edit a chunk/snippet/template/plugin BY LINE, sending only the changed lines (no need to resend the whole element). Each edit replaces the inclusive range [start_line..end_line] with `replacement`. Conventions: delete = replacement \"\"; insert before a line = set end_line to start_line-1. Strongly recommended: pass `expect` (the current text of those lines) as a safety anchor — it is verified, and relocated to its unique match if the line numbers drifted; any mismatch aborts the WHOLE call (atomic, nothing is written). MULTI-EDIT RULES: all line numbers refer to the file exactly as you last saw it in modx_view_element (the original) — do NOT adjust them for the effect of your other edits; the server applies edits together (bottom-up) so earlier inserts/deletes never shift later ones. Ranges must not overlap. So to change several spots in one big file, send them all in ONE call with original line numbers. Read first with modx_view_element to get line numbers.",
+      "Edit a chunk/snippet/template/plugin/TV BY LINE, sending only the changed lines (no need to resend the whole element). Each edit replaces the inclusive range [start_line..end_line] with `replacement`. Conventions: delete = replacement \"\"; insert before a line = set end_line to start_line-1. Strongly recommended: pass `expect` (the current text of those lines) as a safety anchor — it is verified, and relocated to its unique match if the line numbers drifted; any mismatch aborts the WHOLE call (atomic, nothing is written). MULTI-EDIT RULES: all line numbers refer to the file exactly as you last saw it in modx_view_element (the original) — do NOT adjust them for the effect of your other edits; the server applies edits together (bottom-up) so earlier inserts/deletes never shift later ones. Ranges must not overlap. So to change several spots in one big file, send them all in ONE call with original line numbers. Read first with modx_view_element to get line numbers.",
     inputSchema: {
       type: "object",
       properties: {
-        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin"] },
+        type: { type: "string", enum: ["chunk", "snippet", "template", "plugin", "tv"] },
         id: { type: "number" },
         name: { type: "string" },
         edits: {
