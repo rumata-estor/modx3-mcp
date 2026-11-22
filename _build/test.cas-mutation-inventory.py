@@ -519,6 +519,22 @@ assert all(a in expected and expected[a]['risk']=='critical' for a in high_impac
 assert all(expected[a]['cas_boundary']=='revision_reserved_before_action'
            for a in high_impact)
 
+# RU: miniShop2 не является дополнением MODX 3; проверяется на MODX 2.
+# EN: miniShop2 evidence must target the supported MODX2 platform only.
+ms2_native=(ROOT / '_build/test.ci-ms2-product-links-installed.php').read_text()
+assert 'matrix.platform == \'modx2\' && matrix.php_version == \'8.2\'' in ci_workflow
+assert 'php _build/test.ci-ms2-product-links-installed.php' in ci_workflow
+for action,marker in (
+    ('ms2_create_product_link','CAS_MS2_CREATE_PRODUCT_LINK_NATIVE_READBACK_STALE_OK'),
+    ('ms2_delete_product_link','CAS_MS2_DELETE_PRODUCT_LINK_NATIVE_READBACK_STALE_OK'),
+    ('ms2_update_product_options','CAS_MS2_UPDATE_PRODUCT_OPTIONS_NATIVE_READBACK_STALE_OK'),
+):
+    assert expected[action]['verified_scenarios'] == [
+        'disposable_modx2_pinned_'+action+'_native_mcp_readback_stale_replay'
+    ]
+    assert marker in ms2_native
+    assert "'"+action+"'" in ms2_native
+
 # RU: Публикуемый отчёт не должен отставать от машинного реестра.
 # EN: Keep the human-readable evidence tracker identical to the manifest.
 import subprocess
