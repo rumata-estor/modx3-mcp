@@ -48,15 +48,32 @@ class ReplaceAcrossTool implements ToolInterface
         }
 
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 200;
+        $limit = min(200, $limit);
+        // RU: Ищем на один элемент больше лимита, когда это возможно.
+        // RU: Без проверки можно незаметно заменить только начало выборки.
+        // EN: Overfetch one result when possible to detect an incomplete
+        // EN: target set before the first batch mutation.
+        $searchLimit = min(200, $limit + 1);
         $hits = SearchSupport::search(
             $context,
             array(
                 'query' => $find,
                 'types' => $types,
-                'limit' => $limit,
+                'limit' => $searchLimit,
                 'case_sensitive' => $caseSensitive,
             )
         );
+        $searchMayBeIncomplete = count($hits['results']) > $limit
+            || ($searchLimit === 200 && count($hits['results']) >= 200);
+        if (!$dryRun && $searchMayBeIncomplete) {
+            throw new \ModxMCPClientException(
+                'VALIDATION_ERROR: replace_across search reached its limit; '
+                . 'narrow query or element types to avoid partial replacement.'
+            );
+        }
+        if (count($hits['results']) > $limit) {
+            $hits['results'] = array_slice($hits['results'], 0, $limit);
+        }
 
         $results = array();
         $totalOccurrences = 0;
@@ -238,6 +255,9 @@ class ReplaceAcrossTool implements ToolInterface
         }
 
         return array(
+            // RU: Для dry_run явно показываем, что выборка неполная.
+            // EN: Tell preview consumers when the result set is truncated.
+            'search_limit_reached' => $searchMayBeIncomplete,
             'find' => $find,
             'replacement' => $replacement,
             'case_sensitive' => $caseSensitive,

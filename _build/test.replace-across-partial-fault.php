@@ -13,12 +13,17 @@ namespace ModxMcp\Tools {
     }
     class SearchSupport {
         public static $failureBeforeWrites=false;
+        public static $extraHits=0;
         public static function search($ctx,array $data){
             if(self::$failureBeforeWrites)throw new \RuntimeException('search fault');
-            return array('results'=>array(
+            $hits=array(
                 array('type'=>'chunk','id'=>1,'name'=>'first'),
                 array('type'=>'chunk','id'=>2,'name'=>'second'),
-            ));
+            );
+            for($i=0;$i<self::$extraHits;$i++) {
+                $hits[]=array('type'=>'chunk','id'=>1,'name'=>'extra');
+            }
+            return array('results'=>array_slice($hits,0,(int)$data['limit']));
         }
     }
     class ElementContentSupport {
@@ -201,5 +206,35 @@ $ok=$tool->execute($ctx,$arg);
 batchCheck(($ok['elements']??0)===2
     && \ModxMcp\Tools\ElementMutationSupport::$refreshes===5,
     'successful batch must still report full result and refresh once');
-echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=12'.PHP_EOL;
+// RU: Переполнение лимита поиска не должно тихо изменять подмножество.
+// EN: A result set larger than the limit must fail before mutation.
+\ModxMcp\Tools\SearchSupport::$extraHits=1;
+\ModxMcp\Tools\ElementContentSupport::$changed=array();
+$truncatedDenied=false;
+try {$tool->execute($ctx,array_merge($arg,array('limit'=>2)));}
+catch(ModxMCPClientException $e) {
+    $truncatedDenied=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;
+}
+batchCheck($truncatedDenied
+    && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
+    'truncated search silently mutated selected targets');
+$truncatedPreview=$tool->execute($ctx,array_merge($arg,array(
+    'limit'=>2,'dry_run'=>true
+)));
+batchCheck(($truncatedPreview['search_limit_reached']??false)===true
+    && ($truncatedPreview['elements']??0)===2,
+    'dry-run did not disclose incomplete search');
+// RU: При 200 совпадениях нельзя доказать, что 201-го нет.
+// EN: The hard 200-result cap cannot prove that no 201st match exists.
+\ModxMcp\Tools\SearchSupport::$extraHits=198;
+$hardCapDenied=false;
+try {$tool->execute($ctx,array_merge($arg,array('limit'=>200)));}
+catch(ModxMCPClientException $e) {
+    $hardCapDenied=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;
+}
+batchCheck($hardCapDenied
+    && \ModxMcp\Tools\ElementContentSupport::$changed===array(),
+    'hard 200-target search cap silently accepted');
+\ModxMcp\Tools\SearchSupport::$extraHits=0;
+echo 'REPLACE_ACROSS_PARTIAL_OUTCOME_OK checks=15'.PHP_EOL;
 }
