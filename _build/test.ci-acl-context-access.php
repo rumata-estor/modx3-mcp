@@ -98,6 +98,33 @@ try {
     $still=aclMatchingRules(aclRules($groupId),$groupId,$policyId);
     aclCheck(count($still)===1 && (int)$still[0]['id']===$aclId,
         'stale replay did not duplicate grant');
+    // RU: Штатный MODX update требует полный набор полей даже при смене
+    // RU: только authority. Проверяем изменение без замены principal/target.
+    // EN: Core update needs all ACL fields. Update authority only while
+    // EN: preserving principal, context and policy through complete input.
+    $updateSnapshot=aclRpc('get_site_state');
+    $update=array(
+        'id'=>$aclId,'principal'=>$groupId,'target'=>'web',
+        'policy'=>$policyId,'authority'=>998,
+        '_runtime_preconditions'=>array(
+            'observed_site_revision'=>(int)$updateSnapshot['site_revision'],
+            'strict_site_revision'=>true,'read_set'=>array()
+        ),
+    );
+    aclRpc('update_context_access',$update);
+    $afterUpdate=aclMatchingRules(aclRules($groupId),$groupId,$policyId);
+    aclCheck(count($afterUpdate)===1 && (int)$afterUpdate[0]['authority']===998
+        && (int)$afterUpdate[0]['id']===$aclId,
+        'context ACL authority updated without new grant');
+    $staleUpdateDenied=false;
+    try {aclRpc('update_context_access',$update);}
+    catch(ModxMCPClientException $e){
+        $staleUpdateDenied=strpos($e->getMessage(),'STALE_STATE')!==false;
+    }
+    aclCheck($staleUpdateDenied,'context ACL update stale CAS denied');
+    $afterStale=aclMatchingRules(aclRules($groupId),$groupId,$policyId);
+    aclCheck(count($afterStale)===1 && (int)$afterStale[0]['authority']===998,
+        'rejected update preserved final authority');
     aclRpc('revoke_context_access',array('id'=>$aclId));
     $aclId=0;
     aclCheck(count(aclMatchingRules(aclRules($groupId),$groupId,$policyId))===0,
