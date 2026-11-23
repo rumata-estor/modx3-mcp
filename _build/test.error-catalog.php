@@ -9,6 +9,7 @@ function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
+    array('MANUAL_REVIEW_REQUIRED: conflict unknown', 'MANUAL_REVIEW_REQUIRED', 'not_applied', 'after_review'),
     array('CAS_REQUIRED: revision required', 'CAS_REQUIRED', 'not_applied', 'after_refresh'),
     array('AUTH_DENIED: no permission', 'AUTH_DENIED', 'not_applied', 'after_authorization'),
     array('STALE_STATE: changed', 'STALE_STATE', 'not_applied', 'after_review'),
