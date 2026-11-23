@@ -65,12 +65,9 @@ class ElementContentSupport
                 if (is_file($absolute)) {
                     // RU: Ошибка чтения не равна пустому содержимому файла.
                     // EN: A read failure must never masquerade as empty content.
-                    $contents = @file_get_contents($absolute);
-                    if ($contents === false) {
-                        throw new \ModxMCPClientException(
-                            'STATIC_READ_FAILED: static element content could not be read.'
-                        );
-                    }
+                    // RU: Единственный backend для portable/strict, включая чтение.
+                    // EN: Shared portable/strict static I/O boundary, including reads.
+                    $contents = StaticFileWriteSupport::read($context, $absolute);
                     return array($contents, true, $absolute);
                 }
             }
@@ -154,12 +151,9 @@ class ElementContentSupport
             // RU: Повторная проверка после чтения: симлинк мог измениться.
             // EN: Revalidate before writes; a symlink may change after read.
             self::assertSafeStaticPath($context, $absolute);
-            $directory = dirname($absolute);
-            if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-                throw new \ModxMCPClientException(
-                    'cannot create directory ' . $directory
-                );
-            }
+            // RU: Создание каталогов только через выбранный backend:
+            // RU: строгий режим использует dirfd, не mkdir по имени.
+            // EN: The selected backend owns directory creation.
             // RU: Не усекать исходный файл до завершения записи.
             // EN: Write a same-directory temporary file before replacing original.
             $written = StaticFileWriteSupport::replace($context, $absolute, $content);

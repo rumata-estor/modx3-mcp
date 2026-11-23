@@ -11,6 +11,7 @@ namespace ModxMcp\Tools {
         return \file_get_contents($filename);
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileWriteSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
 }
 namespace {

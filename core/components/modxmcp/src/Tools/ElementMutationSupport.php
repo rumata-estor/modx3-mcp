@@ -376,8 +376,15 @@ class ElementMutationSupport
         if (is_link($rootPath)) {
             throw new \ModxMCPClientException('make_static: unsafe symlink root.');
         }
-        if (!is_dir($rootPath) && !@mkdir($rootPath, 0755, false)) {
-            throw new \ModxMCPClientException('make_static: cannot create static root.');
+        if (!is_dir($rootPath)) {
+            // RU: strict не создаёт core/elements по непроверенному PHP пути.
+            // EN: Never create the static root via PHP before strict dirfd I/O.
+            if (StaticFileWriteSupport::usesStrict($context)
+                || !@mkdir($rootPath, 0755, false)) {
+                throw new \ModxMCPClientException(
+                    'make_static: static root missing or cannot be created safely.'
+                );
+            }
         }
         ElementContentSupport::assertSafeStaticPath($context, $absolute);
         if ($type === 'tv') {
@@ -390,32 +397,16 @@ class ElementMutationSupport
                 );
             }
         }
-        $directory = dirname($absolute);
-        if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-            throw new \ModxMCPClientException("make_static: cannot create directory {$directory}");
-        }
+        // RU: Вложенный каталог создаёт backend; strict — только через dirfd.
+        // EN: Backend owns subdirectory creation, strict via anchored dirfd.
         $fileBody = (string)$element->get($item['field']);
-        if ($type === 'tv') {
-            // RU: Ранее проверенный свободный путь могли занять конкурентно.
-            // RU: Режим xb атомарно запрещает перезапись конечного файла.
-            // EN: Exclusive xb creation closes the final-file TOCTOU gap:
-            // EN: no replacement if another writer created the target.
-            $handle = @fopen($absolute, 'xb');
-            if ($handle === false) {
-                throw new \ModxMCPClientException(
-                    'make_static: TV exclusive creation failed; '
-                    . 'target may already exist, inspect before retry.'
-                );
-            }
-            $written = @fwrite($handle, $fileBody);
-            $closed = @fclose($handle);
-        } else {
-            // RU: Для обычных элементов сначала записываем временный файл.
-            // EN: Avoid truncating the original until the replacement is ready.
-            $written = StaticFileWriteSupport::replace($context, $absolute, $fileBody);
-            $closed = true;
-        }
-        if ($written === false || $written !== strlen($fileBody) || !$closed) {
+        // RU: Одна файловая граница для TV, chunks, plugins и остальных
+        // RU: элементов. TV создаётся эксклюзивно без частичного xb/fwrite.
+        // EN: Shared backend with atomic exclusive publish for static TVs.
+        $written = StaticFileWriteSupport::replace(
+            $context, $absolute, $fileBody, $type === 'tv'
+        );
+        if ($written === false || $written !== strlen($fileBody)) {
             // RU: Даже при отказе записи файл мог быть создан или усечён.
             // EN: Failed or short writes may leave partial filesystem changes.
             throw new \ModxMCPClientException(
