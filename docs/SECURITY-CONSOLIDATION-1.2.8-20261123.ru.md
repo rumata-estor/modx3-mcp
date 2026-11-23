@@ -24,7 +24,7 @@
 
 1. **Полный маршрут клиента и нестандартная сеть.** Два отдельных физических PHP-FPM/сайта с одним writer DB, валидность DB-session GET_LOCK, node restart, reverse proxy/TLS/Node bridge/Ed25519, lost response/reconnect; смешанные клиенты 1.2.7↔1.2.8. Отдельно зафиксировать, что Galera/multi-primary не поддержан этой моделью без самостоятельного дизайна.
 2. **Последствия и журнал.** Систематически проверить аварийные окна до/после claim, эффекта, COMMIT, SUCCEEDED и HTTP-ответа, журнал PENDING/UNCERTAIN, запрет повторов и автоматического внешнего rollback. Особое внимание package install/uninstall, сторонним processor, cache/plugins/webhooks и общему `withMutationLock`.
-3. **Статические файлы и symlink TOCTOU.** В целевой ветке уже есть переносимый PHP-путь с проверками symlink/hardlink, но между path-check и write остаётся модель гонок. PR #95 содержит недопустимую потерю прежних байтов при short-write, поэтому не принимать. Более сильный атомарный кандидат PR #174 использует Python 3 + `proc_open` + Unix `dir_fd`; **Draft, не сливать** до независимого review, CI, проверки прав/владельцев, atomic rename/crash и решения о совместимости целевых хостингов. Без согласованного решения не объявлять полную TOCTOU защиту.
+3. **Статические файлы и symlink TOCTOU.** PR #175 **принят только в тестовую 1.2.8**: один `StaticFileWriteSupport` для чтения/записи/TV make_static, режимы `portable` (PHP без дополнительной зависимости) и `strict` (опциональный Python 3 + `proc_open` + Unix `dir_fd`), запрещён небезопасный прямой fallback. Проверены 4/4 CI, 12/12 disposable MODX 2/3 и 2/2 upgrade до merge. **Release blocker остаётся:** portable не устраняет parent-directory TOCTOU, strict меняет inode и может терять ACL/xattrs; нужны независимое review, реальные PHP-FPM/права/хостинги и враждебные конкурентные записи. Старые PR #95 и #174 закрыты без merge как superseded.
 4. **Media Source.** Настоящие нестандартные источники (наследуемые local, S3/SFTP/object drivers), разрешения, path traversal, parent symlink race и удаление папок. Использовать штатный API драйвера, не универсальный прямой путь в FS; неизвестные внешние побочные эффекты — `unknown`, а не ложный rollback.
 5. **ACL и установленные сайты.** Выполнить CLI migration `--check` на копиях существующих MODX 2/3 баз и отдельно согласованное `--apply --ack-backup --ack-writes-paused` только на **одноразовом стенде**. Проверить другие индексы, lock timeout/deadlock, сторонние ACL-плагины и отсутствие неожиданных побочных эффектов. Без автоматической миграции production.
 6. **Контракт клиента/ответов.** Явно документировать, что legacy write без `_runtime_preconditions` теперь предсказуемо получает `CAS_REQUIRED`; старое чтение сохраняется. Проверить install/upgrade и настоящий read→CAS→write по Node bridge и MCP transport на MODX 2/3, включая человекочитаемые безопасные ошибки и outcome `not_applied / rolled_back / partial / unknown / completed`. Нельзя возвращать обход старой небезопасной записи ради «совместимости».
@@ -46,7 +46,8 @@
 - #103: старый кандидат resource duplicate; функциональность уже принята; дубликат.
 - #123: старый кандидат 26 missing-addon denial; закрыт по содержанию принятым #169; дубликат.
 - #95: старый descriptor I/O candidate с short-write риском; не включать.
-- #174: атомарный descriptor I/O candidate, пока несовместим с политикой «без обязательных новых runtime-зависимостей»; оставить изолированным draft.
+- #174: закрыт без merge как superseded; descriptor-anchored helper переиспользован в принятом тестовом PR #175, без обязательной зависимости Python по умолчанию.
+- #175: **merged только в test/1.2.8**; режимы portable/strict и общие API проверены, выпускные риски ACL/xattrs и hosting PHP-FPM открыты.
 
 ## Release gate / решение
 
