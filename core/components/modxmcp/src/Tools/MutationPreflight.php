@@ -38,6 +38,9 @@ final class MutationPreflight
         if ($action === 'reorder_resources') {
             ResourceReorderTool::validateBatch($context, $data);
         }
+        if ($action === 'bulk_resources') {
+            BulkResourcesTool::validateBatch($context, $data);
+        }
         // Paths/names are deterministic and must be rejected BEFORE
         // reserving a CAS revision or an operation ID. The media driver
         // revalidates these inputs before its actual filesystem effect.
