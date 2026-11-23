@@ -51,6 +51,13 @@ for node in ("a","b"):
 PY
 
 cleanup() {
+  local result=$?
+  if [[ "$result" -ne 0 ]]; then
+    echo "Real FPM two-container check failed; sanitized container diagnostics:" >&2
+    for node in mcp-fpm-a mcp-fpm-b mcp-fpm-nginx; do
+      docker logs --tail 45 "$node" >&2 || true
+    done
+  fi
   docker rm -f mcp-fpm-nginx mcp-fpm-a mcp-fpm-b >/dev/null 2>&1 || true
   docker network rm mcp-fpm-test-net >/dev/null 2>&1 || true
 }
