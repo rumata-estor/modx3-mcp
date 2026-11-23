@@ -25,7 +25,7 @@ final class StaticFileWriteSupport
             $value = 'portable'; // Pre-upgrade sites have no setting.
         }
         if ($value !== 'portable' && $value !== 'strict') {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'SECURE_STATIC_IO_UNAVAILABLE: invalid static I/O mode.'
             );
         }
@@ -40,7 +40,7 @@ final class StaticFileWriteSupport
         }
         $contents = @file_get_contents($absolute);
         if ($contents === false) {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'STATIC_READ_FAILED: static element content could not be read.'
             );
         }
@@ -99,7 +99,7 @@ final class StaticFileWriteSupport
             . DIRECTORY_SEPARATOR . 'static_io_guard.py';
         $python = '/usr/bin/python3';
         if (!is_file($script) || !is_file($python) || !function_exists('proc_open')) {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'SECURE_STATIC_IO_UNAVAILABLE: strict filesystem helper unavailable.'
             );
         }
@@ -114,7 +114,7 @@ final class StaticFileWriteSupport
             $descriptors, $pipes, null, null, array('bypass_shell' => true)
         );
         if (!is_resource($process)) {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'SECURE_STATIC_IO_UNAVAILABLE: strict filesystem helper could not start.'
             );
         }
@@ -139,7 +139,7 @@ final class StaticFileWriteSupport
             $code = @proc_close($process);
         }
         if ($code !== 0) {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 $action === 'read'
                     ? 'STATIC_READ_FAILED: strict static file read refused.'
                     : 'MUTATION_OUTCOME_UNCERTAIN: strict static file write refused; inspect before retry.'
@@ -150,7 +150,7 @@ final class StaticFileWriteSupport
         }
         if (!ctype_digit(trim((string)$stdout))
             || (int)trim((string)$stdout) !== strlen((string)$payload)) {
-            throw new \\ModxMCPClientException(
+            throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: strict static write result mismatch.'
             );
         }
@@ -213,7 +213,7 @@ final class StaticFileWriteSupport
         // RU: Внутренние симлинки до 1.2.8 были допустимы; не ломаем их.
         // EN: Preserve previously permitted in-root symlink behavior.
         if (!$exclusive && is_link($absolute)) {
-            throw new \\ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
+            throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
         }
         if ($target !== null && ($target['mode'] & 0170000) !== 0100000) {
             throw new \ModxMCPClientException('Static target must be a regular file.');
@@ -228,7 +228,7 @@ final class StaticFileWriteSupport
         // EN: Windows rename-replace is not equivalent to POSIX rename;
         // EN: keep legacy behavior rather than break existing installations.
         if (DIRECTORY_SEPARATOR === '\\' && !$exclusive) {
-            throw new \\ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
+            throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
         }
         // RU: Некоторые хостинги разрешают запись в файл, но запрещают
         // RU: создание соседних файлов. До 1.2.8 этот случай работал.
@@ -236,7 +236,7 @@ final class StaticFileWriteSupport
         // EN: Never enable this compatibility path for new files.
         if (!$exclusive && $target !== null && !is_writable($directory)
             && is_writable($absolute)) {
-            throw new \\ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
+            throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
         }
         $temp = $directory . DIRECTORY_SEPARATOR . '.modxmcp-' . bin2hex(random_bytes(12)) . '.tmp';
         $handle = @fopen($temp, 'xb');
@@ -285,7 +285,7 @@ final class StaticFileWriteSupport
                 || $target['gid'] !== $tmpInfo['gid']
             ) && is_writable($absolute)) {
                 ElementContentSupport::assertSafeStaticPath($context, $absolute);
-                throw new \\ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
+                throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
             }
 
             // Detect parent/target substitution between our initial checks and
@@ -301,7 +301,7 @@ final class StaticFileWriteSupport
             }
             if ($exclusive) {
                 if (!@link($temp, $absolute)) {
-                    throw new \\ModxMCPClientException(
+                    throw new \ModxMCPClientException(
                         'make_static: TV exclusive creation failed; target already exists or link unavailable.'
                     );
                 }
