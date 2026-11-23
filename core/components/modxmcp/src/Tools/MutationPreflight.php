@@ -35,6 +35,9 @@ final class MutationPreflight
         if ($action === 'run_processor') {
             RunProcessorTool::assertDispatchAllowed($context, $data);
         }
+        if ($action === 'reorder_resources') {
+            ResourceReorderTool::validateBatch($context, $data);
+        }
         // Paths/names are deterministic and must be rejected BEFORE
         // reserving a CAS revision or an operation ID. The media driver
         // revalidates these inputs before its actual filesystem effect.
