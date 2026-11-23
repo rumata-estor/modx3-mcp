@@ -7,8 +7,74 @@ namespace ModxMcp\Tools;
 
 class AuditSupport
 {
+    // RU: Журналируем только безопасные метаданные, не содержание объектов.
+    // EN: Whitelist structural metadata instead of persisting arbitrary payload text.
+    public static function safeLabel($label)
+    {
+        return is_string($label) && preg_match('/\A[a-z][a-z0-9_]{0,79}\z/D', $label)
+            ? $label : '[OMITTED]';
+    }
+
+    public static function safePayload(array $payload, $depth = 0)
+    {
+        if ($depth >= 4) return array();
+        $result = array();
+        $ids = array('id', 'resource_id', 'tv_id', 'source', 'source_id',
+            'parent', 'parent_id', 'user_id', 'group_id', 'role_id',
+            'order_id', 'category_id', 'product_id', 'count', 'total', 'revision');
+        $states = array('success', 'failed', 'error', 'expected', 'pending',
+            'denied', 'completed', 'not_applied', 'rolled_back', 'partial',
+            'unknown', 'cancelled', 'skipped', 'created', 'updated', 'deleted');
+        foreach ($payload as $key => $value) {
+            if (count($result) >= 32) break;
+            if (!is_string($key)
+                || !preg_match('/\A[a-z][a-z0-9_]{0,63}\z/D', $key)) {
+                continue;
+            }
+            if (\ModxMcp\Security\SecretRedactor::isSecretKey($key)) {
+                $result[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                // RU: TV-имена, списки файлов и другие массивы не пишем.
+                // EN: TV names, file lists and other free-form arrays are omitted.
+                $result[$key] = $key === 'metadata'
+                    ? self::safePayload($value, $depth + 1) : '[OMITTED]';
+            } elseif (in_array($key, $ids, true)
+                && (is_int($value) || (is_string($value)
+                    && preg_match('/\A[0-9]{1,18}\z/D', $value)))) {
+                $result[$key] = (int)$value;
+            } elseif (in_array($key, array('state', 'status', 'outcome'), true)
+                && is_string($value) && in_array($value, $states, true)) {
+                $result[$key] = $value;
+            } else {
+                // RU: Скрываем произвольный текст без анализа его содержимого.
+                // EN: Text is withheld even when it lacks recognizable secret markers.
+                $result[$key] = '[OMITTED]';
+            }
+        }
+        return $result;
+    }
+
+    public static function safeEntry(array $entry)
+    {
+        $ts = isset($entry['ts']) && is_string($entry['ts'])
+            && preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+[+-][0-9:]+\z/D',
+                $entry['ts']) ? $entry['ts'] : null;
+        return array(
+            'ts' => $ts,
+            'action' => self::safeLabel(isset($entry['action']) ? $entry['action'] : null),
+            'type' => self::safeLabel(isset($entry['type']) ? $entry['type'] : null),
+            'user' => isset($entry['user']) && is_numeric($entry['user'])
+                ? (int)$entry['user'] : null,
+            'payload' => self::safePayload(isset($entry['payload'])
+                && is_array($entry['payload']) ? $entry['payload'] : array()),
+        );
+    }
+
     public static function log($context, $action, $type, array $payload = array())
     {
+        $payload = self::safePayload($payload);
+        $action = self::safeLabel($action);
+        $type = self::safeLabel($type);
         if (StateSupport::inRevisionTransaction($context)) {
             StateSupport::afterRevisionCommit($context, function () use (
                 $context, $action, $type, $payload
@@ -20,9 +86,6 @@ class AuditSupport
         $modx = $context->modx();
         if (!(bool)$modx->getOption('modxmcp.audit_log', null, true)) { return; }
 
-        $payload = \ModxMcp\Security\SecretRedactor::value($payload);
-        $action = \ModxMcp\Security\SecretRedactor::text($action);
-        $type = \ModxMcp\Security\SecretRedactor::text($type);
         $userId = $modx->user ? (int)$modx->user->get('id') : null;
         $modx->log(
             defined('modX::LOG_LEVEL_INFO') ? \modX::LOG_LEVEL_INFO : 1,
