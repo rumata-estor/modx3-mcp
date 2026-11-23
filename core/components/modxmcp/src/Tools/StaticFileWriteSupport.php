@@ -32,6 +32,11 @@ final class StaticFileWriteSupport
         return $value;
     }
 
+    public static function usesStrict($context)
+    {
+        return self::mode($context) === 'strict';
+    }
+
     public static function read($context, $absolute)
     {
         ElementContentSupport::assertSafeStaticPath($context, $absolute);
