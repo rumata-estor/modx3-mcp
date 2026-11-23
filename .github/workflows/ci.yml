@@ -107,6 +107,7 @@ jobs:
         run: |
           php _build/test.cas-required-contract.php
           php _build/test.cas-raw-resource-date-fingerprint.php
+          php _build/test.cas-resource-persisted-fingerprint.php
       - name: Revision transaction failure and after-commit isolation
         run: php _build/test.revision-transaction-faults.php
       - name: ACL, token rotation and protected settings fault isolation
@@ -168,6 +169,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq acl
           python3 _build/test.static-metadata-integrity.py
+          php _build/test.static-portable-metadata.php
 
       - name: Strict miniShop2 product-link IDs before addon SQL
         run: php _build/test.ms2-productlink-strict-ids.php
