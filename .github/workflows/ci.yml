@@ -154,6 +154,7 @@ jobs:
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
           php _build/test.component-anchored-read.php
+          python3 _build/test.component-symlink-race.py
           php _build/test.make-static-symlink-boundary.php
           php _build/test.static-content-postwrite-fault.php
           php _build/test.static-read-failure.php
