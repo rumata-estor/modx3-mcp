@@ -42,4 +42,20 @@ foreach (array(
     }
     outcomeCheck($attempts===$before+1, 'never re-execute the operation');
 }
+// Verify both distributed MODX 2/3 dispatchers use the same safe boundary
+// for non-atomic effects and work performed after a confirmed DB commit.
+foreach (array(
+    __DIR__.'/../core/components/modxmcp/model/modxmcp.class.php',
+    __DIR__.'/../core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+) as $dispatcher) {
+    $source = file_get_contents($dispatcher);
+    outcomeCheck(is_string($source), 'dispatcher source present');
+    outcomeCheck(substr_count($source,
+        '\\ModxMcp\\Security\\MutationOutcomeGuard::run(')===2,
+        'non-atomic and post-commit boundaries wired: '.basename($dispatcher));
+}
+$gate = file_get_contents(__DIR__.'/../core/components/modxmcp/src/Security/MutationOperationGate.php');
+outcomeCheck(strpos($gate, 'throw MutationOutcomeGuard::uncertain();')!==false,
+    'signed operation journal also fails closed after a thrown operation');
+
 echo 'MUTATION_OUTCOME_GUARD_OK attempts='.$attempts.PHP_EOL;
