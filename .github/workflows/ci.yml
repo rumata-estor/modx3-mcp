@@ -150,6 +150,7 @@ jobs:
           php _build/test.static-tv-contract.php
           php _build/test.static-secure-php-bridge.php
           php _build/test.static-secure-failclosed.php
+          php _build/test.static-strict-root-boundary.php
           python3 _build/test.static-toctou-race.py
           python3 _build/test.static-atomic-short-write.py
           php _build/test.tv-relation-save-faults.php
