@@ -22,6 +22,12 @@ A media hash is returned by `modx_read_media_source_file` only for a complete re
 
 For access policies, use `get_site_state` with a `read_set` target selector such as `{"role":"target","type":"access_policy","id":123}` or `{"role":"target","type":"access_policy_template","id":123}`. Forward the server-issued fingerprint and revision in `_runtime_preconditions`; never fabricate hashes client-side.
 
+## Component file reads and filesystem trust
+
+`read_component_file` uses Python 3 on POSIX systems with `openat`/`O_NOFOLLOW`, opening the requested file through pinned directory descriptors (no check-then-reopen by pathname). Returned payloads are capped at 4 MiB. Any symlink in the requested component path is rejected, even one pointing inside the permitted tree. When Python 3, `proc_open`, or the required POSIX primitives are missing, the operation returns `MANUAL_REVIEW_REQUIRED` rather than falling back to a race-prone PHP pathname read. **Validate nonstandard/symlinked hosting layouts before upgrading.**
+
+The reader is **read-only** and adds no SQL locks. It does not make every Media Source or file-read operation immune to hostile local writers; these retain their documented limitations.
+
 ## Stop and report
 
 - **`CAS_REQUIRED`** — no required snapshot; mutation has not begun. Obtain fresh state and prepare a new request.
