@@ -54,6 +54,80 @@ class FilesystemSupport
         return self::normalizePath($absolutePath);
     }
 
+    /**
+     * RU: Для чтения исходников компонента используем последовательный
+     * RU: openat(O_NOFOLLOW) от корня файловой системы; не открываем файл
+     * RU: по имени после отдельной проверки realpath.
+     * EN: Read component source through pinned dirfds and O_NOFOLLOW.
+     * EN: Missing Python/POSIX support fails closed; no PHP path fallback.
+     */
+    public static function readComponentFileAnchored($modx, $componentRoot, $relativePath, array $data)
+    {
+        $maxAllowed = (int)$modx->getOption('modxmcp.max_read_bytes', null, 262144);
+        if ($maxAllowed <= 0) { $maxAllowed = 262144; }
+        // Bound JSON/stdout allocations even when the admin raises the limit.
+        $maxAllowed = min($maxAllowed, 4194304);
+        $offset = isset($data['offset']) ? max(0, (int)$data['offset']) : 0;
+        $wanted = isset($data['bytes']) ? (int)$data['bytes']
+            : (isset($data['length']) ? (int)$data['length'] : $maxAllowed);
+        if ($wanted <= 0 || $wanted > $maxAllowed) {
+            $wanted = $maxAllowed;
+        }
+
+        $helper = dirname(__DIR__) . '/Security/component_read_guard.py';
+        if (!function_exists('proc_open') || !is_file($helper)) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: secure component-file reader unavailable;'
+                . ' install Python 3 and enable proc_open.'
+            );
+        }
+        $command = array(
+            'python3', $helper, (string)$componentRoot, (string)$relativePath,
+            (string)$offset, (string)$wanted
+        );
+        $spec = array(
+            0 => array('pipe', 'r'),
+            1 => array('pipe', 'w'),
+            2 => array('pipe', 'w'),
+        );
+        $pipes = array();
+        try {
+            $process = @proc_open($command, $spec, $pipes, null, null,
+                array('bypass_shell' => true));
+        } catch (\Throwable $error) {
+            $process = false;
+        }
+        if (!is_resource($process)) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: secure component-file reader cannot start.'
+            );
+        }
+        fclose($pipes[0]);
+        // Python caps raw reads at 4 MiB; JSON/base64 can be larger.
+        $response = stream_get_contents($pipes[1], 8388608);
+        fclose($pipes[1]);
+        // Read/discard stderr; do not reveal paths or internal failures.
+        stream_get_contents($pipes[2], 8192);
+        fclose($pipes[2]);
+        $exit = proc_close($process);
+        $decoded = is_string($response) ? json_decode($response, true) : null;
+        if ($exit !== 0 || !is_array($decoded)
+            || !isset($decoded['size'], $decoded['offset'],
+                $decoded['returned_bytes'], $decoded['encoding'], $decoded['content'])
+            || !array_key_exists('truncated', $decoded)
+            || !is_int($decoded['size']) || !is_int($decoded['offset'])
+            || !is_int($decoded['returned_bytes'])
+            || !is_bool($decoded['truncated'])
+            || !in_array($decoded['encoding'], array('utf-8','base64'), true)
+            || !is_string($decoded['content'])
+        ) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: secure component-file read could not be verified.'
+            );
+        }
+        return $decoded;
+    }
+
     public static function readFileBounded($modx, $absolutePath, array $data)
     {
         $total = (int) filesize($absolutePath);
