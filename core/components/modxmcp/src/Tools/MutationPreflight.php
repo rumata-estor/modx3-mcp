@@ -35,5 +35,41 @@ final class MutationPreflight
         if ($action === 'run_processor') {
             RunProcessorTool::assertDispatchAllowed($context, $data);
         }
+        // Paths/names are deterministic and must be rejected BEFORE
+        // reserving a CAS revision or an operation ID. The media driver
+        // revalidates these inputs before its actual filesystem effect.
+        if ($action === 'create_media_folder') {
+            if (array_key_exists('path', $data)) {
+                throw new \ModxMCPClientException(
+                    'create_media_folder: unsupported path field; '
+                    . 'use parent for the destination directory and name for the new folder.'
+                );
+            }
+            MediaSourceMutationSupport::relativePath(
+                isset($data['parent']) ? $data['parent'] : '/', true
+            );
+            MediaSourceMutationSupport::leafName(
+                isset($data['name']) ? $data['name'] : ''
+            );
+        } elseif ($action === 'create_media_file') {
+            MediaSourceMutationSupport::relativePath(
+                isset($data['path']) ? $data['path'] : '', true
+            );
+            MediaSourceMutationSupport::leafName(
+                isset($data['name']) ? $data['name'] : ''
+            );
+        } elseif (in_array($action, array(
+            'update_media_file', 'delete_media_file',
+            'rename_media_file', 'delete_media_folder'
+        ), true)) {
+            MediaSourceMutationSupport::relativePath(
+                isset($data['path']) ? $data['path'] : ''
+            );
+            if ($action === 'rename_media_file') {
+                MediaSourceMutationSupport::leafName(
+                    isset($data['new_name']) ? $data['new_name'] : ''
+                );
+            }
+        }
     }
 }
