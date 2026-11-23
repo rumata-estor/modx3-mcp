@@ -131,6 +131,7 @@ jobs:
           php _build/test.clientconfig-cache.php
           php _build/test.clientconfig-partial-fault.php
           php _build/test.protected-acl-target-cas.php
+          php _build/test.p1-acl-policy-stop.php
           php _build/test.log-tail.php
           php _build/test.log-tail-truncation.php
       - name: Independent Ed25519 permit interoperability (no site writes)
@@ -142,6 +143,7 @@ jobs:
           php _build/test.media-path-boundaries.php
           php _build/test.media-folder-path-contract.php
           php _build/test.media-custom-driver-boundary.php
+          php _build/test.p1-media-cas-stop.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
           php _build/test.make-static-symlink-boundary.php
