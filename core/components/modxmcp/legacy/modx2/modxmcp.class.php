@@ -190,6 +190,22 @@ class modxMCP {
                             \ModxMcp\Tools\MutationPreflight::assertAllowed(
                                 $runtimeContext, $action, $toolData
                             );
+                            // Exact stale-CAS semantics take priority over
+                            // deterministic static-file conflicts. Optional
+                            // signed replay IDs must still reach the journal
+                            // so a duplicate request is reported as replay.
+                            if ($action === 'make_static' && $operationId === null
+                                && !(isset($toolData['items'])
+                                    && is_array($toolData['items']))) {
+                                \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                    $runtimeContext, $runtimePreconditions
+                                );
+                                \ModxMcp\Tools\ElementMutationSupport::preflightMakeStatic(
+                                    $runtimeContext,
+                                    isset($toolData['type']) ? (string)$toolData['type'] : '',
+                                    isset($toolData['id']) ? (int)$toolData['id'] : 0
+                                );
+                            }
                             $atomicTv = $tool instanceof
                                 \ModxMcp\Tools\ResourceTvUpdateTool;
                             $atomicDatabase = \ModxMcp\Tools\StateSupport::supportsAtomicRevision(
