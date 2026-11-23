@@ -61,7 +61,8 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-toctou-") as temp:
     for _ in range(250):
         for action, payload in (("write", b"INSIDE"), ("read", b"")):
             p = subprocess.run(
-                [sys.executable, str(HELPER), str(core), "elements/chunks/target.tpl", action],
+                [sys.executable, str(HELPER), str(core), "elements/chunks/target.tpl", action,
+                 "-" if action == "read" else str(len(payload))],
                 input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 timeout=6, check=False,
             )
@@ -85,7 +86,8 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-toctou-") as temp:
     os.link(external_secret, hardlink)
     for action, payload in (("read", b""), ("write", b"DAMAGE")):
         p = subprocess.run(
-            [sys.executable, str(HELPER), str(core), "elements/chunks/linked.tpl", action],
+            [sys.executable, str(HELPER), str(core), "elements/chunks/linked.tpl", action,
+             "-" if action == "read" else str(len(payload))],
             input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5
         )
         check(p.returncode != 0, "hard link accepted " + action)
