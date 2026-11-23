@@ -224,6 +224,23 @@ jobs:
         run: |
           set -euo pipefail
           npm ci --ignore-scripts
+          # Report exact dependency advisories for the release gate.
+          # Audit findings are reviewed separately; do not hide npm warnings.
+          npm audit --omit=dev --json > "$RUNNER_TEMP/npm-audit.json" || true
+          python3 - <<'PY'
+          import json,os,pathlib
+          report=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'npm-audit.json').read_text())
+          for name,detail in sorted(report.get('vulnerabilities',{}).items()):
+              if detail.get('severity') in ('high','critical'):
+                  via=detail.get('via',[])
+                  advisories=[v.get('title','') for v in via if isinstance(v,dict)]
+                  print('BETA_NODE_AUDIT', name, detail.get('severity'),
+                        'direct='+str(detail.get('isDirect')),
+                        'fix='+str(detail.get('fixAvailable')),
+                        'advisories='+repr(advisories[:2]))
+          print('BETA_NODE_AUDIT_SUMMARY',
+                json.dumps(report.get('metadata',{}).get('vulnerabilities',{}),sort_keys=True))
+          PY
           node --check client/index.js
           python3 _build/test.cas-client-contract.py
           node _build/test.error-presenter.cjs
@@ -234,7 +251,9 @@ jobs:
           npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/client-artifacts"
           file="$RUNNER_TEMP/client-artifacts/modx3-mcp-1.2.8-beta.1.tgz"
           test -s "$file"
-          tar -tzf "$file" | grep -Fxq 'package/client/index.js'
+          # Avoid grep -q + pipefail SIGPIPE from tar when the file is found.
+          tar -tzf "$file" > "$RUNNER_TEMP/client-manifest.txt"
+          grep -Fxq 'package/client/index.js' "$RUNNER_TEMP/client-manifest.txt"
           (
             cd "$RUNNER_TEMP/client-artifacts"
             sha256sum "$(basename "$file")" > SHA256SUMS
