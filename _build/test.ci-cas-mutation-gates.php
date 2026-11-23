@@ -100,6 +100,9 @@ try {
             && strpos($message, 'reorder_resources: "items"')!==false) {
             // A missing batch is now rejected before CAS, not after it.
             $preflightDenied[$action]='missing reorder batch';
+        } elseif ($action==='bulk_resources'
+            && strpos($message, 'bulk_resources: operation must be one of')!==false) {
+            $preflightDenied[$action]='missing bulk operation';
         } elseif (in_array($action, array(
             'create_media_file','update_media_file','delete_media_file',
             'rename_media_file','create_media_folder','delete_media_folder'
