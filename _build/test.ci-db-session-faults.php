@@ -39,6 +39,25 @@ if($mode==='disconnect'){
   strpos($error,'MUTATION_OUTCOME_UNCERTAIN:')===0?'unknown':'bad:'.substr($error,0,100));
  exit(0);
 }
+if($mode==='postcommit'){
+    // DB commit completed; lose the DB lock session before RELEASE_LOCK.
+    $ctx=(new \ModxMcp\Core\Runtime($modx,$api))->context();
+    $out='unexpected-success';
+    try{$class::withMutationLock($ctx,function()use($ctx,$modx,$class,$work){
+        $class::withRevisionTransaction($ctx,function()use($ctx,$class){
+            $class::incrementRevision($ctx);
+        });
+        file_put_contents($work.'/postcommit-thread',
+            (string)$modx->query('SELECT CONNECTION_ID()')->fetchColumn());
+        $end=microtime(true)+15;
+        while(!is_file($work.'/postcommit-go')&&microtime(true)<$end)usleep(20000);
+        if(!is_file($work.'/postcommit-go'))throw new RuntimeException('CI barrier timeout');
+    });}
+    catch(\Throwable $e){$out=strpos($e->getMessage(),
+        'MUTATION_OUTCOME_UNCERTAIN:')===0?'unknown':'bad:'.substr($e->getMessage(),0,80);}
+    file_put_contents($work.'/postcommit-result',$out);
+    exit(0);
+}
 if($mode==='probe'){
  $ctx=(new \ModxMcp\Core\Runtime($modx,$api))->context();
  try{$class::withMutationLock($ctx,function()use($work){file_put_contents($work.'/probe-ok','yes');});}
@@ -117,6 +136,22 @@ try{
  checkDb((int)$api->processRequest('get_site_state','',array())['site_revision']===$rev,
   'uncommitted revision rollback');
  echo 'MCP_DB_KILL_CONNECTION_UNKNOWN_AND_ROLLBACK_OK'.PHP_EOL;
+ // The transaction already COMMITTED, but its lock/session response is lost.
+ $afterRecovery=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+ $jobs['postcommit']=spawnDb('postcommit',$work);
+ waitDb($work.'/postcommit-thread');
+ $postThread=trim(file_get_contents($work.'/postcommit-thread'));
+ checkDb(ctype_digit($postThread)&&(int)$postThread>0,'postcommit thread');
+ $pdo->exec('KILL CONNECTION '.(int)$postThread);
+ file_put_contents($work.'/postcommit-go','yes');
+ waitDb($work.'/postcommit-result');
+ $postStatus=trim(file_get_contents($work.'/postcommit-result'));
+ $done=closeDb($jobs['postcommit']);unset($jobs['postcommit']);
+ checkDb($done[0]===0&&$postStatus==='unknown',
+  'postcommit disconnect must not report success: '.$postStatus.' '.$done[2]);
+ checkDb((int)$api->processRequest('get_site_state','',array())['site_revision']
+  ===$afterRecovery+1,'confirmed DB commit remains despite lost response');
+ echo 'MCP_DB_POSTCOMMIT_DISCONNECT_UNKNOWN_WITH_PERSISTED_REVISION_OK'.PHP_EOL;
  $jobs['probe']=spawnDb('probe',$work);waitDb($work.'/probe-ok',12);
  $done=closeDb($jobs['probe']);unset($jobs['probe']);
  checkDb($done[0]===0,'fresh DB lock after disconnect');
