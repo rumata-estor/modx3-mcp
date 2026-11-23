@@ -190,16 +190,6 @@ class modxMCP {
                             \ModxMcp\Tools\MutationPreflight::assertAllowed(
                                 $runtimeContext, $action, $toolData
                             );
-                            // Prove deterministic denials before an optional
-                            // operation journal claims a durable ID. The
-                            // checks inside the mutation remain as a final
-                            // defense against concurrent Manager changes.
-                            \ModxMcp\Tools\StateSupport::requireOptionalAddonPath(
-                                $runtimeContext, $action
-                            );
-                            \ModxMcp\Tools\StateSupport::assertPreconditions(
-                                $runtimeContext, $runtimePreconditions
-                            );
                             $atomicTv = $tool instanceof
                                 \ModxMcp\Tools\ResourceTvUpdateTool;
                             $atomicDatabase = \ModxMcp\Tools\StateSupport::supportsAtomicRevision(
