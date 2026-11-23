@@ -136,6 +136,17 @@ try{
  checkDb((int)$api->processRequest('get_site_state','',array())['site_revision']===$rev,
   'uncommitted revision rollback');
  echo 'MCP_DB_KILL_CONNECTION_UNKNOWN_AND_ROLLBACK_OK'.PHP_EOL;
+ $jobs['probe']=spawnDb('probe',$work);waitDb($work.'/probe-ok',12);
+ $done=closeDb($jobs['probe']);unset($jobs['probe']);
+ checkDb($done[0]===0,'fresh DB lock after disconnect');
+ echo 'MCP_DB_FRESH_SESSION_REACQUIRES_LOCK_OK'.PHP_EOL;
+ $jobs['recover']=spawnDb('recover',$work);waitDb($work.'/recover-result',12);
+ $done=closeDb($jobs['recover']);unset($jobs['recover']);
+ checkDb($done[0]===0,'fresh operation '.$done[2]);
+ $x=json_decode(file_get_contents($work.'/recover-result'),true);
+ checkDb(is_array($x)&&($x['id']??0)>0
+  &&$x['before']===$rev&&$x['after']===$rev+1,'fresh CAS after reconnect');
+ $cleanup=(int)$x['id'];echo 'MCP_DB_FRESH_OPERATION_AFTER_RECONNECT_OK'.PHP_EOL;
  // The transaction already COMMITTED, but its lock/session response is lost.
  $afterRecovery=(int)$api->processRequest('get_site_state','',array())['site_revision'];
  $jobs['postcommit']=spawnDb('postcommit',$work);
@@ -152,17 +163,6 @@ try{
  checkDb((int)$api->processRequest('get_site_state','',array())['site_revision']
   ===$afterRecovery+1,'confirmed DB commit remains despite lost response');
  echo 'MCP_DB_POSTCOMMIT_DISCONNECT_UNKNOWN_WITH_PERSISTED_REVISION_OK'.PHP_EOL;
- $jobs['probe']=spawnDb('probe',$work);waitDb($work.'/probe-ok',12);
- $done=closeDb($jobs['probe']);unset($jobs['probe']);
- checkDb($done[0]===0,'fresh DB lock after disconnect');
- echo 'MCP_DB_FRESH_SESSION_REACQUIRES_LOCK_OK'.PHP_EOL;
- $jobs['recover']=spawnDb('recover',$work);waitDb($work.'/recover-result',12);
- $done=closeDb($jobs['recover']);unset($jobs['recover']);
- checkDb($done[0]===0,'fresh operation '.$done[2]);
- $x=json_decode(file_get_contents($work.'/recover-result'),true);
- checkDb(is_array($x)&&($x['id']??0)>0
-  &&$x['before']===$rev&&$x['after']===$rev+1,'fresh CAS after reconnect');
- $cleanup=(int)$x['id'];echo 'MCP_DB_FRESH_OPERATION_AFTER_RECONNECT_OK'.PHP_EOL;
  // SQL setup is a random throwaway lock-inversion table, not CMS data.
  $pdo->exec('CREATE TABLE '.$table.' (id INT PRIMARY KEY,v INT NOT NULL) ENGINE=InnoDB');$created=true;
  $rows=array();for($i=1;$i<=100;$i++)$rows[]='('.$i.',0)';
