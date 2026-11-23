@@ -46,12 +46,12 @@ if($mode==='before'){
     upgradeCheck(modxMCP::VERSION==='1.2.7','historical installed release version');
     $token=(string)upgradeSetting($modx,$settingClass,'modxmcp.api_token')->get('value');
     upgradeCheck(strlen($token)===64,'token exists in published 1.2.7 install');
-    $setting=upgradeSetting($modx,$settingClass,'modxmcp.allowed_processors');
-    $setting->set('value','resource/getlist');
+    $setting=upgradeSetting($modx,$settingClass,'modxmcp.max_read_bytes');
+    $setting->set('value','131072');
     upgradeCheck($setting->save(),'cannot persist administrator override');
     $enabled=(string)upgradeSetting($modx,$settingClass,'modxmcp.enabled')->get('value');
     $saved=array('token_sha256'=>hash('sha256',$token),
-        'allowed_processors'=>'resource/getlist','enabled'=>$enabled);
+        'max_read_bytes'=>'131072','enabled'=>$enabled);
     file_put_contents($manifest,json_encode($saved));
     echo 'UPGRADE_127_BASELINE_PUBLISHED_PACKAGE_OK'.PHP_EOL;
     exit(0);
@@ -62,8 +62,10 @@ upgradeCheck(is_array($saved),'upgrade baseline available');
 $token=(string)upgradeSetting($modx,$settingClass,'modxmcp.api_token')->get('value');
 upgradeCheck(hash_equals($saved['token_sha256'],hash('sha256',$token)),
     'token retained byte-for-byte');
+upgradeCheck((string)upgradeSetting($modx,$settingClass,'modxmcp.max_read_bytes')
+    ->get('value')===$saved['max_read_bytes'],'administrator read limit preserved');
 upgradeCheck((string)upgradeSetting($modx,$settingClass,'modxmcp.allowed_processors')
-    ->get('value')===$saved['allowed_processors'],'administrator allowlist preserved');
+    ->get('value')==='', 'new 1.2.8 processor allowlist installed disabled by default');
 upgradeCheck((string)upgradeSetting($modx,$settingClass,'modxmcp.enabled')
     ->get('value')===$saved['enabled'],'enabled flag preserved');
 echo 'UPGRADE_128_TOKEN_SETTINGS_PRESERVED_OK'.PHP_EOL;
