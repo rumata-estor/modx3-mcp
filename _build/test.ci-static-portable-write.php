@@ -67,6 +67,28 @@ try {
         'symlink refused and secret unchanged');
     unlink($file);
     portableCIAssert(count(glob($dir.'/.modxmcp-*.tmp'))===0,'cleanup');
+    // RU: Тот же установленный backend — но в strict без fallback на PHP.
+    // EN: The installed backend must honor explicitly selected strict mode.
+    $strictFile=$dir.'/strict.tpl';
+    $modx->setOption('modxmcp.static_io_mode','strict');
+    try {
+        $n=\ModxMcp\Tools\StaticFileWriteSupport::replace(
+            $ctx,$strictFile,'STRICT_OLD',true
+        );
+        portableCIAssert($n===10 && file_get_contents($strictFile)==='STRICT_OLD',
+            'installed strict exclusive create');
+        $n=\ModxMcp\Tools\StaticFileWriteSupport::replace(
+            $ctx,$strictFile,'STRICT_NEW'
+        );
+        portableCIAssert($n===10,'installed strict replace');
+        portableCIAssert(
+            \ModxMcp\Tools\StaticFileWriteSupport::read($ctx,$strictFile)==='STRICT_NEW',
+            'installed strict read'
+        );
+    } finally {
+        $modx->setOption('modxmcp.static_io_mode','portable');
+        if(is_file($strictFile))unlink($strictFile);
+    }
     echo 'CI_PORTABLE_STATIC_REAL_MODX'.($is2?'2':'3').'_OK'.PHP_EOL;
 } finally {
     if(is_file($file)||is_link($file))unlink($file);
