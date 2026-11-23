@@ -118,6 +118,30 @@ def main():
                         or existing.st_gid != os.getegid()
                     ):
                         raise UnsafePath("cannot preserve owner of existing file")
+                    if existing is not None:
+                        # RU: Замена inode не сохраняет POSIX ACL/xattrs.
+                        # RU: Отказываем до создания temp, не удаляя атрибуты.
+                        # EN: Replacing an inode drops POSIX ACLs/xattrs.
+                        # EN: Fail closed rather than silently remove them.
+                        prior_fd = os.open(
+                            leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+                            | os.O_NONBLOCK, dir_fd=parent,
+                        )
+                        try:
+                            guard_file(prior_fd)
+                            prior = os.fstat(prior_fd)
+                            if (
+                                prior.st_dev != existing.st_dev
+                                or prior.st_ino != existing.st_ino
+                                or prior.st_ctime_ns != existing.st_ctime_ns
+                            ):
+                                raise UnsafePath("target changed before metadata check")
+                            if os.listxattr(prior_fd):
+                                raise UnsafePath(
+                                    "existing ACL/xattrs cannot be preserved by atomic replacement"
+                                )
+                        finally:
+                            os.close(prior_fd)
                     temp_name = ".modxmcp-" + secrets.token_hex(12) + ".tmp"
                     temp = os.open(
                         temp_name,
@@ -159,9 +183,9 @@ def main():
                         if existing is not None and (
                             now is None
                             or not stat.S_ISREG(now.st_mode) or now.st_nlink != 1
-                            or (now.st_dev, now.st_ino, now.st_size, now.st_mtime_ns)
+                            or (now.st_dev, now.st_ino, now.st_size, now.st_mtime_ns, now.st_ctime_ns)
                                != (existing.st_dev, existing.st_ino,
-                                   existing.st_size, existing.st_mtime_ns)
+                                   existing.st_size, existing.st_mtime_ns, existing.st_ctime_ns)
                         ):
                             raise UnsafePath("target changed during write")
                         if action == "create" or existing is None:

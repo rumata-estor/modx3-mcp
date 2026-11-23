@@ -8,7 +8,7 @@ name: True 1.2.7 to staged 1.2.8 transport upgrade (disposable only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'audit/128-upgrade-127-128-20261123', 'fix/128-unified-static-io-modes-20261123']
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'audit/128-upgrade-127-128-20261123', 'fix/128-unified-static-io-modes-20261123', 'test/128-final-three-release-gates-20261123']
 
 permissions:
   contents: read
@@ -120,6 +120,7 @@ jobs:
           php "$RUNNER_TEMP/stage-127/_build/install.transport.php" \
             --signature="${old}mcp-1.2.7-pl"
           MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
+          MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-upgrade-acl-migration.php before
       - name: Build a separate unpublished 1.2.8 transport on the disposable MODX
         env:
           BUILD_PLATFORM: '${{ matrix.platform }}'
@@ -152,6 +153,24 @@ jobs:
           unzip -t "$zip" | tail -3
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" \
             --signature="${BUILD_PLATFORM}mcp-1.2.8-pl"
+      # RU: Существующие ACL-строки из 1.2.7, явный DDL только в disposable DB.
+      # EN: Verify actual historical ACL rows survive new transport and explicit index migration.
+      - name: Historical ACL data and explicit index migration on upgraded disposable MODX
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php _build/migrate-acl-index.php --check | grep -E 'ACL_INDEX_MIGRATION_(REQUIRED|ALREADY_PRESENT)'
+          if php _build/migrate-acl-index.php --apply; then
+            echo "Unacknowledged migration unexpectedly succeeded" >&2
+            exit 1
+          fi
+          php _build/migrate-acl-index.php --apply --ci-disposable | grep -E 'ACL_INDEX_MIGRATION_(APPLIED|ALREADY_PRESENT)'
+          php _build/migrate-acl-index.php --check | grep 'ACL_INDEX_MIGRATION_ALREADY_PRESENT'
+          php _build/migrate-acl-index.php --apply --ci-disposable | grep 'ACL_INDEX_MIGRATION_ALREADY_PRESENT'
+          php _build/test.ci-upgrade-acl-migration.php after
       - name: Verify token settings CAS and legacy read compatibility
         env:
           MODXMCP_DISPOSABLE_CI: '1'

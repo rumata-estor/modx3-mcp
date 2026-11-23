@@ -155,6 +155,15 @@ jobs:
           python3 _build/test.static-atomic-short-write.py
           php _build/test.tv-relation-save-faults.php
 
+      # RU: Только одноразовая runner FS, не рабочие сайты.
+      # EN: Disposable filesystem metadata regression gate, no real sites.
+      - name: Static file owner/mode/POSIX ACL/xattr integrity
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq acl
+          python3 _build/test.static-metadata-integrity.py
+
       - name: Strict miniShop2 product-link IDs before addon SQL
         run: php _build/test.ms2-productlink-strict-ids.php
 
