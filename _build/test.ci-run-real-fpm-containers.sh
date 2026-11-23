@@ -14,6 +14,8 @@ readonly REPO="$(pwd)"
 readonly WORK="$RUNNER_TEMP/mcp-fpm-ci"
 readonly SHARED="$WORK/shared"
 mkdir -p "$SHARED" "$WORK/build"
+# FPM runs as www-data, which must be able to create test-only barriers.
+chmod 0777 "$SHARED"
 printf 'disposable-github-only\n' > "$SHARED/CI_MARKER"
 cat > "$WORK/build/Dockerfile" <<'DOCKERFILE'
 FROM php:8.2-fpm-bookworm
