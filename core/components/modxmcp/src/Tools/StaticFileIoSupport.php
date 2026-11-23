@@ -78,7 +78,8 @@ final class StaticFileIoSupport
         );
         // PHP 7.4 supports the argv array form, avoiding any shell.
         $process = @proc_open(
-            array($python, $script, $core, $relative, $action),
+            array($python, $script, $core, $relative, $action,
+                $action === 'read' ? '-' : (string)strlen((string)$payload)),
             $descriptors, $pipes, null, null,
             array('bypass_shell' => true)
         );
