@@ -10,7 +10,10 @@
 - [x] P1 Media: `expected_sha256` при полном сверенном чтении; двойная проверка через MODX Media Source перед `updateObject()`; неизвестный драйвер/снимок — `MANUAL_REVIEW_REQUIRED`. Старые прямые запросы без хеша теперь намеренно отклоняются.
 - [x] P1 Policy: для `update/delete_access_policy(_template)` полный серверный CAS снимок через объекты MODX; шаблон включает дочерние permissions. Внешние гонки и другие ACL-сущности не объявляются атомарными.
 - [x] `MANUAL_REVIEW_REQUIRED` в PHP/Node диагностике, отказ до побочных эффектов и корректная классификация `not_applied`; после начала внешнего эффекта возможен `MUTATION_OUTCOME_UNCERTAIN`.
-- [ ] Финальная приёмка объединённых PR #179 + #180 в единой тестовой ветке, проверка пакетов и нового клиента, затем решение о публикации Beta. В production автоматически не устанавливать.
+- [x] Исправления PR #179, #180, #181 и #182 объединены с тестовой веткой. Основной CI [4/4](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260810009), одноразовая MODX 2/3 [матрица 12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260796333), [обновление 1.2.7→1.2.8 2/2](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260796315) — SHA `b21300f71659332c15c09eb725109afe6358bab4`.
+- [x] FINDING-006: descriptor-anchored `read_component_file` + symlink-race; FINDING-007: документирован opt-in ledger; Node `package-lock.json` закреплён и `npm audit` включён в CI. Подробно: [реестр готовности](docs/RELEASE-READINESS-1.2.8.ru.md).
+- [x] Beta 2 собрана раздельными подписями для MODX 2, MODX 3 и соответствующего Node-клиента с `npm-shrinkwrap.json`, первоначальная проверка [3/3](https://github.com/rumata-estor/modx3-mcp/actions/runs/45261191704). Beta 1 НЕ подменять.
+- [ ] Финальная приёмка текущей Beta 2 сборки и решение о PUBLIC GitHub prerelease. В `main`, production, npm registry и MODX Extras автоматически не публиковать.
 
 ## P0 / 1.2.8 — подтверждённая межсерверная гонка CAS и безопасный SIGKILL (23.11.2026)
 
