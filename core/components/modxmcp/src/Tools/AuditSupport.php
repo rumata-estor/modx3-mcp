@@ -98,9 +98,22 @@ class AuditSupport
             )
         );
 
+        // RU: Приватный журнал нельзя оставлять world-readable на общем хостинге.
+        // EN: Secure audit file and directory permissions before appending.
+        $previousUmask = umask(0077);
         try {
             $dir = rtrim($modx->getOption('core_path'), '/') . '/components/modxmcp/logs';
-            if (!is_dir($dir)) { @mkdir($dir, 0755, true); }
+            if (!is_dir($dir)) { @mkdir($dir, 0700, true); }
+            if (!is_dir($dir) || is_link($dir) || !@chmod($dir, 0700)) return;
+            $file = $dir . '/audit.log';
+            if (is_link($file)) return;
+            if (!is_file($file)) {
+                // RU: Новый файл создаётся эксклюзивно с umask 077.
+                // EN: Exclusive creation under umask 077, no open-write race.
+                $created = @fopen($file, 'xb');
+                if (is_resource($created)) fclose($created);
+            }
+            if (!is_file($file) || is_link($file) || !@chmod($file, 0600)) return;
             $entry = array(
                 'ts' => date('c'),
                 'action' => $action,
@@ -109,12 +122,15 @@ class AuditSupport
                 'payload' => $payload,
             );
             @file_put_contents(
-                $dir . '/audit.log',
-                json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n",
+                $file,
+                json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) . "\n",
                 FILE_APPEND | LOCK_EX
             );
-        } catch (\Exception $e) {
-            // Auditing must never break the mutation.
+        } catch (\Throwable $e) {
+            // RU: Журналирование не должно превращать мутацию в новую ошибку.
+            // EN: An audit failure must never rewrite the mutation outcome.
+        } finally {
+            umask($previousUmask);
         }
     }
 }
