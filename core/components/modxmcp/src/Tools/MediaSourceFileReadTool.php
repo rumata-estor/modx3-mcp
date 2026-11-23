@@ -43,6 +43,9 @@ class MediaSourceFileReadTool implements ToolInterface
             try {
                 $source->initialize();
                 $native = $source->getObjectContents($relativePath);
+                if (is_array($native) && array_key_exists('content', $native)) {
+                    $native = $native['content'];
+                }
                 $bytes = $bounded['encoding'] === 'base64'
                     ? base64_decode($bounded['content'], true)
                     : $bounded['content'];
