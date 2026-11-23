@@ -37,6 +37,10 @@ A MODX Manager change or external writer **can still race** after the final chec
 
 ACL-index migration may require deliberate administrator action on older installations; the Beta does not silently apply schema migration. See the project migration helper and the deployment guidance. For rollback, restore validated site and DB backups instead of installing old archives over the candidate.
 
+### Component read security gate (FINDING-006)
+
+On a disposable installation, first read a regular component source file with `modx_read_component_file`, then attempt to read a symlink pointing outside its allowed component root. The latter must refuse and never reveal external contents. Python 3 with POSIX `O_NOFOLLOW` and PHP `proc_open` is required for this secure read. Hosts with symlinked component roots should verify this deliberately stricter behavior before upgrading.
+
 Report observations in [GitHub Issues](https://github.com/rumata-estor/modx3-mcp/issues) with MODX/PHP versions, package, source commit, action, error code and a sanitized reproduction. Do **not** publish API tokens, private keys, personal records, or unredacted logs.
 
 **Release gate:** integration on MODX 2/3, proper 1.2.7→Beta upgrades, mandatory CAS, controlled TV/media/ACL conflict tests and accurate stop messages. Remaining TOCTOU limitations are documented and not claimed to be eliminated.
