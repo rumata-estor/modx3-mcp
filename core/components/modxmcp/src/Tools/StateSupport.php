@@ -246,7 +246,51 @@ class StateSupport
             if (!flock($handle, LOCK_EX)) {
                 throw new \RuntimeException('Cannot acquire MODX MCP mutation lock.');
             }
-            return call_user_func($callback);
+            // RU: flock локален; общая БД сериализует независимые web-узлы.
+            // EN: flock is host-local; a session-scoped DB mutex spans PHP hosts.
+            // No new table, daemon, distributed state or Site Agent dependency.
+            // Works only when every MCP node uses the SAME MySQL/MariaDB writer.
+            try {
+                $databaseResult = $modx->query('SELECT DATABASE()');
+                $database = $databaseResult ? $databaseResult->fetchColumn() : false;
+                $table = $modx->getTableName(
+                    $context->platform()->className('system_setting')
+                );
+                if (!is_string($database) || $database === ''
+                    || !is_string($table) || $table === '') {
+                    throw new \RuntimeException('Unable to identify mutation lock scope.');
+                }
+                // Stable across hosts sharing a schema and MODX table prefix.
+                $lockName = 'modxmcp:'.substr(
+                    hash('sha256', $database."\0".$table), 0, 56
+                );
+                $acquire = $modx->prepare('SELECT GET_LOCK(?, 5)');
+                if (!$acquire || !$acquire->execute(array($lockName))
+                    || (string)$acquire->fetchColumn() !== '1') {
+                    throw new \RuntimeException('Shared mutation lock busy.');
+                }
+            } catch (\Throwable $e) {
+                // No business effect begins without the shared DB mutex.
+                throw new \ModxMCPClientException(
+                    'CAS_LOCK_UNAVAILABLE: shared MODX mutation lock not acquired.'
+                );
+            }
+            try {
+                return call_user_func($callback);
+            } finally {
+                // MySQL automatically frees GET_LOCK on disconnect / SIGKILL.
+                // If RELEASE_LOCK is unconfirmed, never report a definite
+                // outcome after potentially successful business effects.
+                try {
+                    $release = $modx->prepare('SELECT RELEASE_LOCK(?)');
+                    if (!$release || !$release->execute(array($lockName))
+                        || (string)$release->fetchColumn() !== '1') {
+                        throw new \RuntimeException('Shared lock release not confirmed.');
+                    }
+                } catch (\Throwable $e) {
+                    throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+                }
+            }
         } finally {
             @flock($handle, LOCK_UN);
             @fclose($handle);
