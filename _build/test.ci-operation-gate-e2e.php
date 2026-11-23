@@ -307,13 +307,21 @@ try{
         opE2eCheck($pendingAfter==='PENDING',
             'SIGKILL leaves durable PENDING rather than false SUCCEEDED');
         $killReplayBlocked=false;
+        $killReplayCode='NONE';
         try { opE2eRequest('create_element',$killData); }
         catch(ModxMCPClientException $e) {
-            $killReplayBlocked=strpos($e->getMessage(),
-                'OPERATION_REPLAY_BLOCKED: prior state=PENDING')===0;
+            $message=$e->getMessage();
+            $killReplayBlocked=strpos($message,
+                'OPERATION_REPLAY_BLOCKED: prior state=')===0;
+            // Never include the native error text or secrets in CI logs.
+            if(preg_match('/\A([A-Z_]+):/', $message,$code)) {
+                $killReplayCode=$code[1];
+            } else {
+                $killReplayCode='OTHER';
+            }
         }
         opE2eCheck($killReplayBlocked,
-            'new signed permit cannot re-execute after real SIGKILL');
+            'new signed permit cannot re-execute after real SIGKILL code='.$killReplayCode);
         opE2eCheck(
             (int)$api->processRequest('get_site_state','',array())['site_revision']
                 ===$killBefore+1,
