@@ -30,12 +30,36 @@ class MediaSourceFileReadTool implements ToolInterface
             throw new \ModxMCPClientException("File not found: {$relativePath}");
         }
 
+        $bounded = FilesystemSupport::readFileBounded(
+            $context->modx(), $absolutePath, $data
+        );
+        // RU: Хеш выдаётся лишь для полного, сверенного с MODX чтения.
+        // RU: Хеш частичного или противоречивого снимка использовать нельзя.
+        // EN: Advertise a media CAS hash only for a complete snapshot
+        // EN: matching the native MODX source bytes, never partial reads.
+        if ($bounded['offset'] === 0 && !$bounded['truncated']
+            && $bounded['returned_bytes'] === $bounded['size']
+            && method_exists($source, 'getObjectContents')) {
+            try {
+                $source->initialize();
+                $native = $source->getObjectContents($relativePath);
+                $bytes = $bounded['encoding'] === 'base64'
+                    ? base64_decode($bounded['content'], true)
+                    : $bounded['content'];
+                if (is_string($native) && is_string($bytes)
+                    && hash_equals(hash('sha256', $native), hash('sha256', $bytes))) {
+                    $bounded['sha256'] = hash('sha256', $native);
+                }
+            } catch (\Throwable $e) {
+                // No hash means no safe automatic media overwrite.
+            }
+        }
         return array_merge(
             array(
                 'media_source' => MediaSourceSupport::normalize($context, $source, false),
                 'path' => $relativePath,
             ),
-            FilesystemSupport::readFileBounded($context->modx(), $absolutePath, $data)
+            $bounded
         );
     }
 }
