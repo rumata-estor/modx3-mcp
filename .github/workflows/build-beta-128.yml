@@ -253,8 +253,8 @@ jobs:
           # package.json / lockfile remain 1.2.7 until an approved release.
           # Pin the validated direct dependency versions in the Beta tarball
           # so users do not resolve the known-vulnerable minimum versions.
-          sdk_version="$(node -p 'require("./node_modules/@modelcontextprotocol/sdk/package.json").version')"
-          axios_version="$(node -p 'require("./node_modules/axios/package.json").version')"
+          sdk_version="$(node -p 'JSON.parse(require("fs").readFileSync("./node_modules/@modelcontextprotocol/sdk/package.json","utf8")).version')"
+          axios_version="$(node -p 'JSON.parse(require("fs").readFileSync("./node_modules/axios/package.json","utf8")).version')"
           npm pkg set version=1.2.8-beta.1
           npm pkg set "dependencies.@modelcontextprotocol/sdk=$sdk_version" "dependencies.axios=$axios_version"
           echo "BETA_NODE_PINNED_DIRECT_DEPS sdk=$sdk_version axios=$axios_version"
