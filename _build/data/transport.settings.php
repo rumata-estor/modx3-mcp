@@ -18,6 +18,7 @@ $defs = array(
     array('modxmcp.audit_log', 1, 'combo-boolean', 'modxmcp:main'),
     array('modxmcp.debug', 0, 'combo-boolean', 'modxmcp:main'),
     array('modxmcp.auto_static', 0, 'combo-boolean', 'modxmcp:main'),
+    array('modxmcp.static_io_mode', 'portable', 'textfield', 'modxmcp:security'),
     array('modxmcp.disabled_groups', 'versionx,virtualpage,minishop2,migx,access,property_sets,contexts,package_management,namespaces,lexicon', 'textfield', 'modxmcp:main'),
     array('modxmcp.allow_run_processor', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.processor_access_mode', 'disabled', 'textfield', 'modxmcp:security'),
