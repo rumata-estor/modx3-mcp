@@ -51,7 +51,10 @@ function fpmBarrier($node,$type,$timeout=20) {
 try {
     $op=$input['op'];
     if($op==='state') {
-        $out['state']=$api->processRequest('get_site_state','',array());
+        $readSet=$input['read_set']??null;
+        if($readSet!==null && !is_array($readSet))throw new RuntimeException('Bad read_set');
+        $out['state']=$api->processRequest('get_site_state','',
+            $readSet===null?array():array('read_set'=>$readSet));
     } elseif($op==='create') {
         if(!isset($input['revision'],$input['name']) || !is_int($input['revision'])
             || !is_string($input['name'])
