@@ -10,7 +10,7 @@ const SAFE_CODES = new Set([
   "PROJECT_BUSY", "BACKUP_FAILED", "HTTPS_REQUIRED", "METHOD_NOT_ALLOWED",
   "MCP_DISABLED", "IP_NOT_ALLOWED", "UNAUTHORIZED", "PAYLOAD_TOO_LARGE",
   "INVALID_REQUEST", "INTERNAL_ERROR", "OPERATION_REFUSED", "CONNECTION_FAILED",
-  "CLIENT_OPERATION_FAILED", "SAFETY_CONFIRMATION_REQUIRED",
+  "CLIENT_OPERATION_FAILED", "CLIENT_CONFIG_INVALID", "SAFETY_CONFIRMATION_REQUIRED",
 ]);
 const ALLOWED_OUTCOMES = new Set([
   "not_applied", "rolled_back", "partial", "unknown", "completed",
@@ -64,6 +64,10 @@ const FALLBACK = {
   INVALID_REQUEST: ["Сервер отклонил некорректный запрос.",
     "Не удалось проверить параметры запроса.",
     "Проверьте формат и переданные поля; затем отправьте исправленный запрос.",
+    "not_applied", "after_client_fix"],
+  CLIENT_CONFIG_INVALID: ["Подключение к MODX MCP не настроено.",
+    "Не задан HTTPS-адрес сайта, токен подключения или адрес имеет неверный формат.",
+    "Проверьте MODX_MCP_SITE_URL и MODX_MCP_TOKEN в настройках MCP-клиента. Не передавайте токен в чат.",
     "not_applied", "after_client_fix"],
   CLIENT_OPERATION_FAILED: ["Клиент MODX MCP не смог выполнить команду.",
     "На стороне клиента возникла ошибка подготовки или обработки.",
