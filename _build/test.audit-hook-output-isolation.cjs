@@ -8,8 +8,8 @@ const vm = require("vm");
 const path = require("path");
 const source = fs.readFileSync(path.join(__dirname, "../client/index.js"), "utf8");
 const start = source.indexOf("function runMutationAuditHook(");
-const end = source.indexOf("\nfunction ", start + 10);
-assert(start > 0 && end > start, "audit hook function source");
+const end = source.indexOf("\n}\n\n", start) + 2;
+assert(start > 0 && end > start + 10, "audit hook function source");
 const captured = [];
 let mode = "stdout";
 const mock = {
