@@ -38,7 +38,7 @@
 | Начать работу с компонентом | [Установка и подключение](docs/INSTALL.ru.md) | [Installation & setup](docs/INSTALL.md) |
 | Узнать, что умеет MODX MCP | [Справочник возможностей](docs/CAPABILITIES.ru.md) | [Capabilities](docs/CAPABILITIES.md) |
 | Разрабатывать интеграции | [Технический справочник API: 198 инструмента](docs/API.ru.md) | [API reference](docs/API.md) |
-| Безопасно эксплуатировать | [Безопасность и модель доверия](docs/SECURITY.ru.md) | [Security](docs/SECURITY.md) |
+| Безопасно эксплуатировать | [Безопасность и модель доверия](docs/SECURITY.ru.md) · [Ограничения 1.2.8 Beta](docs/SECURITY-LIMITATIONS-1.2.8.ru.md) | [Security](docs/SECURITY.md) |
 | Системные настройки | [Все 16 настроек](docs/SETTINGS.ru.md) | [System settings](docs/SETTINGS.md) |
 
 Дополнительные документы: [разработка](DEVELOPMENT.ru.md), [архитектура сборки](docs/BUILD-ARCHITECTURE.ru.md), [результаты проверки](docs/VALIDATION.ru.md).
