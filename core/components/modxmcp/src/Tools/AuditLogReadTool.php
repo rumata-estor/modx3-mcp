@@ -32,10 +32,14 @@ class AuditLogReadTool implements ToolInterface
             if ($line === '') { return null; }
             $entry = json_decode($line, true);
             if (!is_array($entry)) { return null; }
-            if ($filterAction !== '' && (!isset($entry['action']) || $entry['action'] !== $filterAction)) {
+            // RU: Сначала нормализуем устаревшие записи: в старых payload
+            // RU: могут быть секреты без узнаваемых имён ключей.
+            // EN: Never expose arbitrary free-form values from legacy audit logs.
+            $safe = AuditSupport::safeEntry($entry);
+            if ($filterAction !== '' && $safe['action'] !== $filterAction) {
                 return null;
             }
-            return \ModxMcp\Security\SecretRedactor::value($entry);
+            return \ModxMcp\Security\SecretRedactor::value($safe);
         }, $metadata);
         return array_merge(array('total' => count($entries), 'entries' => $entries), $metadata);
     }
