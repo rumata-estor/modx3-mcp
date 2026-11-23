@@ -11,7 +11,7 @@ namespace ModxMcp\Tools {
         public static function processorBase($type){return 'element/';}
     }
     class ProcessorSupport {
-        public static function error($response){return 'injected processor error';}
+        public static function error($response){return 'SENSITIVE_NATIVE_PROCESSOR_TOKEN';}
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileWriteSupport.php';
@@ -62,7 +62,9 @@ try {
             true,$absolute,'NEW'
         );
     } catch(ModxMCPClientException $e) {
-        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
+        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'SENSITIVE_NATIVE_PROCESSOR_TOKEN')===false
+            && $e->getPrevious()===null;
     }
     if(!$uncertain || file_get_contents($absolute)!=='NEW'
         || $ctx->platform->calls!==1) {
