@@ -15,6 +15,9 @@ final class MutationPreflight
      */
     public static function assertAllowed($context, $action, array $data)
     {
+        // Reject forbidden hidden ACL/credential fields before CAS revision
+        // reservation, while retaining identical processor-level checks.
+        ProcessorMutationTool::assertAclMutationFields($action, $data);
         if (in_array($action, array(
             'create_context_setting', 'update_context_setting',
             'delete_context_setting'
