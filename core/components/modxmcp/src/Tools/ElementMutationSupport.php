@@ -376,8 +376,15 @@ class ElementMutationSupport
         if (is_link($rootPath)) {
             throw new \ModxMCPClientException('make_static: unsafe symlink root.');
         }
-        if (!is_dir($rootPath) && !@mkdir($rootPath, 0755, false)) {
-            throw new \ModxMCPClientException('make_static: cannot create static root.');
+        if (!is_dir($rootPath)) {
+            // RU: strict не создаёт core/elements по непроверенному PHP пути.
+            // EN: Never create the static root via PHP before strict dirfd I/O.
+            if (StaticFileWriteSupport::usesStrict($context)
+                || !@mkdir($rootPath, 0755, false)) {
+                throw new \ModxMCPClientException(
+                    'make_static: static root missing or cannot be created safely.'
+                );
+            }
         }
         ElementContentSupport::assertSafeStaticPath($context, $absolute);
         if ($type === 'tv') {
@@ -390,10 +397,8 @@ class ElementMutationSupport
                 );
             }
         }
-        $directory = dirname($absolute);
-        if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-            throw new \ModxMCPClientException("make_static: cannot create directory {$directory}");
-        }
+        // RU: Вложенный каталог создаёт backend; strict — только через dirfd.
+        // EN: Backend owns subdirectory creation, strict via anchored dirfd.
         $fileBody = (string)$element->get($item['field']);
         // RU: Одна файловая граница для TV, chunks, plugins и остальных
         // RU: элементов. TV создаётся эксклюзивно без частичного xb/fwrite.
