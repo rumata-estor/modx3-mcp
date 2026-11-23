@@ -1,7 +1,8 @@
 <?php
 /* MODX MCP SOURCE / ИСХОДНИК MODX MCP
  * RU: Переносимая атомарная замена static-файла без внешних зависимостей.
- * EN: Portable atomic replacement for static files without external dependencies.
+ * EN: Portable atomic replacement. Existing-file overwrites require a
+ * EN: metadata inspection helper; unavailable inspection fails closed.
  */
 namespace ModxMcp\Tools;
 
@@ -115,7 +116,8 @@ final class StaticFileWriteSupport
         );
         $process = @proc_open(
             array($python, $script, $core, $relative, $action,
-                $action === 'read' ? '-' : (string)strlen((string)$payload)),
+                ($action === 'read' || $action === 'inspect')
+                    ? '-' : (string)strlen((string)$payload)),
             $descriptors, $pipes, null, null, array('bypass_shell' => true)
         );
         if (!is_resource($process)) {
@@ -147,10 +149,12 @@ final class StaticFileWriteSupport
             throw new \ModxMCPClientException(
                 $action === 'read'
                     ? 'STATIC_READ_FAILED: strict static file read refused.'
-                    : 'MUTATION_OUTCOME_UNCERTAIN: strict static file write refused; inspect before retry.'
+                    : ($action === 'inspect'
+                        ? 'SECURE_STATIC_IO_UNAVAILABLE: existing static file metadata inspection refused.'
+                        : 'MUTATION_OUTCOME_UNCERTAIN: strict static file write refused; inspect before retry.')
             );
         }
-        if ($action === 'read') {
+        if ($action === 'read' || $action === 'inspect') {
             return (string)$stdout;
         }
         if (!ctype_digit(trim((string)$stdout))
@@ -182,6 +186,28 @@ final class StaticFileWriteSupport
     private static function sameIdentity($a, $b)
     {
         return $a === $b;
+    }
+
+    /**
+     * RU: POSIX rename заменяет inode и может уничтожить ACL/xattrs.
+     * RU: Portable не может предполагать отсутствие метаданных без проверки.
+     * EN: An inode replacement loses ACL/xattrs. Refuse existing-file writes
+     * EN: if a descriptor-anchored inspection is unavailable or finds any.
+     * EN: For a hostile local writer, choose strict for the entire operation.
+     */
+    private static function assertPortableMetadataSafe($context, $absolute)
+    {
+        try {
+            if (trim(self::strictIo($context, $absolute, 'inspect', null)) === 'CLEAN') {
+                return;
+            }
+        } catch (\Throwable $e) {
+            // Never silently fall back to an unchecked portable replacement.
+        }
+        throw new \ModxMCPClientException(
+            'SECURE_STATIC_IO_UNAVAILABLE: portable replacement cannot verify'
+            . ' existing file ACL/xattrs; use strict static I/O mode.'
+        );
     }
 
     /**
@@ -243,6 +269,9 @@ final class StaticFileWriteSupport
             && is_writable($absolute)) {
             throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
         }
+        if ($target !== null) {
+            self::assertPortableMetadataSafe($context, $absolute);
+        }
         $temp = $directory . DIRECTORY_SEPARATOR . '.modxmcp-' . bin2hex(random_bytes(12)) . '.tmp';
         $handle = @fopen($temp, 'xb');
         if ($handle === false) {
@@ -303,6 +332,12 @@ final class StaticFileWriteSupport
                 throw new \ModxMCPClientException(
                     'MUTATION_OUTCOME_UNCERTAIN: static file changed concurrently; inspect before retry.'
                 );
+            }
+            // Recheck immediately before publication: metadata may change
+            // after the first inspection. Portable retains its documented
+            // final TOCTOU interval; strict is required for hostile writers.
+            if ($target !== null) {
+                self::assertPortableMetadataSafe($context, $absolute);
             }
             if ($exclusive) {
                 if (!@link($temp, $absolute)) {
