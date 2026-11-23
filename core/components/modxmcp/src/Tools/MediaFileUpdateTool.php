@@ -41,6 +41,12 @@ class MediaFileUpdateTool implements ToolInterface
                 'MANUAL_REVIEW_REQUIRED: media source could not read file for CAS.'
             );
         }
+        // MODX core returns an object description array with 'content';
+        // some custom drivers return raw bytes directly. Accept only the
+        // documented payload shapes; fail closed on all other forms.
+        if (is_array($actual) && array_key_exists('content', $actual)) {
+            $actual = $actual['content'];
+        }
         if (!is_string($actual)) {
             throw new \ModxMCPClientException(
                 'MANUAL_REVIEW_REQUIRED: media source returned no verifiable file contents.'
