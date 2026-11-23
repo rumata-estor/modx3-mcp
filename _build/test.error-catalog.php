@@ -35,4 +35,9 @@ checkError(ErrorCatalog::codeFromLegacy('AUTH_DENIED: failed') === 'AUTH_DENIED'
     'auth alias');
 checkError(ErrorCatalog::fields('anything', 'INTERNAL_ERROR', 'modxmcp_test')['outcome']
     === 'unknown', 'internal outcome');
+// RU: Сбой журнала не должен скрывать исходную ошибку и рвать ответ.
+class ThrowingDiagnosticLog {
+    public function log($level, $line) { throw new RuntimeException('disk unavailable'); }
+}
+ErrorCatalog::safeLog(new ThrowingDiagnosticLog(), 3, 'MCP safe log');
 echo 'ERROR_CATALOG_SAFE_RU_OK cases=' . count($cases) . PHP_EOL;
