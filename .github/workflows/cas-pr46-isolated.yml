@@ -252,6 +252,8 @@ jobs:
             tail -60 "$RUNNER_TEMP/normal-http-server.log" || true
             exit 1
           fi
+      - name: Uncertain mutation outcome reports fail-closed without replay or secret leak
+        run: php _build/test.mutation-outcome-guard.php
       - name: Detached Ed25519 permits verify on MODX2 and MODX3 PHP runtimes
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'
@@ -368,6 +370,24 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cas-mutation-gates.php
+      # RU: Два разных локальных flock при общей БД + падение PHP под блокировкой.
+      # EN: Separate local flock paths, shared DB, SIGKILL and recovery.
+      - name: Cross-host CAS serialization and killed worker recovery (disposable)
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-cross-host-lock.php
+      # RU: Потеря DB-сессии, подтверждение нового подключения и реальный deadlock.
+      # EN: KILL CONNECTION, independent recovery and an actual InnoDB deadlock.
+      - name: MariaDB disconnect, fresh CAS and deadlock failure injection (disposable)
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-db-session-faults.php
       # RU: Независимая запись Manager при прежней ревизии MCP: user, role, group.
       # EN: Reject stale target fingerprints after Manager edits user, role, group.
       # RU: Индекс добавляется только в одноразовую БД для эксперимента P0.

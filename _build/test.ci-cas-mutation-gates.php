@@ -96,6 +96,29 @@ try {
             // RU: Детерминированный запрет сильнее отказа CAS-резерва.
             // EN: Independent master-switch denial precedes CAS reservation.
             $preflightDenied[$action]='disabled by administrator';
+        } elseif ($action==='reorder_resources'
+            && strpos($message, 'reorder_resources: "items"')!==false) {
+            // A missing batch is now rejected before CAS, not after it.
+            $preflightDenied[$action]='missing reorder batch';
+        } elseif ($action==='bulk_resources'
+            && strpos($message, 'bulk_resources: operation must be one of')!==false) {
+            $preflightDenied[$action]='missing bulk operation';
+        } elseif ($action==='replace_across'
+            && strpos($message, 'replace_across: "find" is required.')!==false) {
+            $preflightDenied[$action]='missing search query';
+        } elseif ($action==='make_static'
+            && strpos($message, 'make_static: unsupported type')!==false) {
+            $preflightDenied[$action]='missing static element type';
+        } elseif (in_array($action, array(
+            'create_media_file','update_media_file','delete_media_file',
+            'rename_media_file','create_media_folder','delete_media_folder'
+        ), true) && preg_match(
+            '/(Unsafe media|Path traversal|Media path must identify|unsupported path field)/i',
+            $message
+        )) {
+            // Invalid paths are now rejected BEFORE any CAS revision shift,
+            // a stronger guarantee than the injected revision fault.
+            $preflightDenied[$action]='unsafe/missing media path';
         } elseif(preg_match('/(not supported|unsupported|not available|requires (?:.*? )?integration|integration .*? not installed|MIGX is not installed|Could not load miniShop2 service|Could not find VirtualPage component core path|Could not load VersionX service)/i',$message)){
             $unsupported[$action]=substr($message,0,100);
         }else{
@@ -117,6 +140,7 @@ foreach($failed as $a=>$why)echo 'CAS_GATE_UNEXPECTED '.$a.' '.$why.PHP_EOL;
 if($failed)throw new RuntimeException('Mutating endpoints not fail-closed: '.implode(',',array_keys($failed)));
 if(count($gated)+count($preflightDenied)+count($unsupported)!==count($expected))
     throw new RuntimeException('Missing CAS endpoint classifications');
-if(count($gated)<70)
-    throw new RuntimeException('Insufficient available CAS-gated endpoints: '.count($gated));
+if(count($gated)+count($preflightDenied)<70)
+    throw new RuntimeException('Insufficient fail-closed available endpoints: '
+        .(count($gated)+count($preflightDenied)));
 echo 'CAS_EXTERNAL_ALL_AVAILABLE_MUTATIONS_FAIL_CLOSED_OK'.PHP_EOL;

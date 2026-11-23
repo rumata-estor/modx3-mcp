@@ -12,7 +12,8 @@ class BulkResourcesTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
-    public function execute($context, array $data)
+    /** Read-only complete target validation, repeated during execution. */
+    public static function validateBatch($context, array $data)
     {
         $operation = isset($data['operation']) ? (string)$data['operation'] : '';
         $operations = array('publish', 'unpublish', 'set_template', 'move', 'delete');
@@ -101,15 +102,10 @@ class BulkResourcesTool implements ToolInterface
         }
 
         $dryRun = !empty($data['dry_run']);
-        $results = array();
         $resourceClass = $context->platform()->className('resource');
-
         if (!$dryRun) {
-            // RU: Если один из ID отсутствует, не начинаем менять другие.
-            // RU: Предварительная проверка не заменяет CAS, но исключает
-            // RU: заведомо частичное выполнение запроса с ошибочным списком.
-            // EN: Reject an already-incomplete target set before the first
-            // EN: mutation. Preflight does not replace mandatory CAS checks.
+            // Validate every target without writes. This is repeated under
+            // the protected dispatcher after the shared preflight, too.
             foreach ($ids as $candidateId) {
                 if (!$context->modx()->getObject($resourceClass, $candidateId)) {
                     throw new \ModxMCPClientException(
@@ -119,6 +115,22 @@ class BulkResourcesTool implements ToolInterface
                 }
             }
         }
+        return array(
+            'operation'=>$operation,
+            'ids'=>$ids,
+            'dry_run'=>$dryRun,
+            'resourceClass'=>$resourceClass,
+        );
+    }
+
+    public function execute($context, array $data)
+    {
+        $validated = self::validateBatch($context, $data);
+        $operation = $validated['operation'];
+        $ids = $validated['ids'];
+        $dryRun = $validated['dry_run'];
+        $resourceClass = $validated['resourceClass'];
+        $results = array();
         $attemptedWrites = 0;
         foreach ($ids as $id) {
             $resource = $context->modx()->getObject($resourceClass, $id);

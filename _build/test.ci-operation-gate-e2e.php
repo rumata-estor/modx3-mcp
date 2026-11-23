@@ -22,7 +22,7 @@ $api=new modxMCP($modx);
 $site='ci-idempotency-'.bin2hex(random_bytes(5));
 $private=getenv('RUNNER_TEMP').'/ci-idempotency-key-'.bin2hex(random_bytes(5));
 $node=__DIR__.'/test.ci-ed25519-controller.cjs';
-$created=false;$enabled=false;$resourceId=0;$uncertainResourceId=0;$checks=0;
+$created=false;$enabled=false;$resourceId=0;$uncertainResourceId=0;$killResourceId=0;$checks=0;
 function opE2eCheck($ok,$msg){
     global $checks;
     if(!$ok)throw new RuntimeException('OPERATION_GATE_E2E_FAIL '.$msg);
@@ -213,10 +213,155 @@ try{
     } finally {
         if($triggerArmed)$modx->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');
     }
+    // Real SIGKILL after a native resource commit, before the signed
+    // operation journal can mark SUCCEEDED. Disposable CLI child only.
+    $killMarker=bin2hex(random_bytes(6));
+    $killData=array(
+        'type'=>'resource','name'=>'CI_SIGKILL_'.$killMarker,
+        'alias'=>'ci-sigkill-'.$killMarker,
+        'content'=>'SIGKILL_COMMITTED_READBACK',
+        'published'=>0,'hidemenu'=>1,'template'=>0,'parent'=>0,
+        '_operation_id'=>opE2eId(),
+        '_runtime_preconditions'=>opE2eGuard()
+    );
+    $killBefore=(int)$killData['_runtime_preconditions']['observed_site_revision'];
+    $killDigest=\ModxMcp\Security\MutationOperationLedger::requestDigest(
+        $site.'|test','create_element','',$killData
+    );
+    $killRaw=json_encode(array('action'=>'create_element','type'=>'','data'=>$killData),
+        JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+    $killPermit=json_decode(
+        opE2eNode(array('sign',$private,$site,'create_element','resource'),$killRaw),
+        true
+    );
+    opE2eCheck(is_array($killPermit),'signed kill-worker request');
+    $killRequest=getenv('RUNNER_TEMP').'/ci-sigkill-mcp-'.bin2hex(random_bytes(6)).'.json';
+    $killTrigger='ci_operation_sigkill_'.bin2hex(random_bytes(5));
+    $killTriggerArmed=false;
+    $killProcess=null;
+    $killPipes=array();
+    try {
+        opE2eCheck(file_put_contents($killRequest, json_encode(array(
+            'action'=>'create_element',
+            'raw_body'=>$killRaw,'data'=>$killData,'permit'=>$killPermit
+        ), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE))!==false,
+            'create disposable signed worker envelope');
+        chmod($killRequest,0600);
+        // SUCCEEDED is attempted after the business object was saved.
+        // Hold that update in a transient CI-only SQL trigger.
+        $q=chr(39); $bt=chr(96);
+        $sql='CREATE TRIGGER '.$bt.$killTrigger.$bt.' BEFORE UPDATE ON '
+            .$bt.$table.$bt
+            .' FOR EACH ROW BEGIN IF NEW.state='.$q.'SUCCEEDED'.$q
+            .' THEN DO SLEEP(30); END IF; END';
+        opE2eCheck($modx->exec($sql)!==false,'installed disposable sleep trigger');
+        $killTriggerArmed=true;
+        $killProcess=proc_open(
+            array(PHP_BINARY,__DIR__.'/test.ci-operation-gate-kill-worker.php',$killRequest),
+            array(0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w')),
+            $killPipes
+        );
+        opE2eCheck(is_resource($killProcess),'started separate killable PHP process');
+        fclose($killPipes[0]);
+        $seenPending=false;
+        $deadline=microtime(true)+16;
+        while(microtime(true)<$deadline) {
+            $status=proc_get_status($killProcess);
+            if(!$status['running'])break;
+            try {
+                $seenPending=$ledger->get($killData['_operation_id'],$killDigest)['state']
+                    ==='PENDING';
+                if($seenPending) {
+                    $rows=$api->processRequest('list_resources','',array(
+                        'query'=>$killData['alias'],'limit'=>50
+                    ));
+                    foreach(($rows['results']??array()) as $row) {
+                        if(($row['alias']??'')===$killData['alias']) {
+                            $killResourceId=(int)$row['id'];
+                            break;
+                        }
+                    }
+                }
+            } catch (Throwable $pollError) {
+                // Claim is absent until the worker starts; do not infer failure.
+            }
+            if($seenPending&&$killResourceId>0)break;
+            usleep(100000);
+        }
+        opE2eCheck($seenPending&&$killResourceId>0,
+            'business write committed while operation intent remains PENDING');
+        $committed=$api->processRequest('get_element','',array(
+            'type'=>'resource','id'=>$killResourceId
+        ));
+        opE2eCheck(($committed['content']??'')==='SIGKILL_COMMITTED_READBACK'
+            && (int)($committed['published']??1)===0,
+            'real resource independently visible through MCP before SIGKILL');
+        opE2eCheck(proc_get_status($killProcess)['running'],
+            'worker still blocked before response');
+        opE2eCheck(proc_terminate($killProcess,9),
+            'send SIGKILL to disposable PHP worker only');
+        $killExit=proc_close($killProcess);
+        $killProcess=null;
+        opE2eCheck($killExit!==0,'PHP worker did not report normal success');
+        $pendingAfter=$ledger->get($killData['_operation_id'],$killDigest)['state'];
+        opE2eCheck($pendingAfter==='PENDING',
+            'SIGKILL leaves durable PENDING rather than false SUCCEEDED');
+        $killReplayBlocked=false;
+        $killReplayCode='NONE';
+        try { opE2eRequest('create_element',$killData); }
+        catch(ModxMCPClientException $e) {
+            $message=$e->getMessage();
+            $killReplayBlocked=strpos($message,
+                'OPERATION_REPLAY_BLOCKED: prior state=')===0;
+            // Never include the native error text or secrets in CI logs.
+            if(preg_match('/\A([A-Z_]+):/', $message,$code)) {
+                $killReplayCode=$code[1];
+            } else {
+                $killReplayCode='OTHER';
+            }
+        }
+        opE2eCheck($killReplayBlocked,
+            'new signed permit cannot re-execute after real SIGKILL code='.$killReplayCode);
+        opE2eCheck(
+            (int)$api->processRequest('get_site_state','',array())['site_revision']
+                ===$killBefore+1,
+            'SIGKILL replay does not advance CAS revision');
+        $readAgain=$api->processRequest('list_resources','',array(
+            'query'=>$killData['alias'],'limit'=>50
+        ));
+        $matches=0;
+        foreach(($readAgain['results']??array()) as $row) {
+            if(($row['alias']??'')===$killData['alias'])++$matches;
+        }
+        opE2eCheck($matches===1,'real SIGKILL did not cause duplicate resource');
+        echo 'SIGNED_OPERATION_REAL_SIGKILL_MODX'.($is2?'2':'3')
+            .'_OK state=PENDING duplicate=0'.PHP_EOL;
+    } finally {
+        if(is_resource($killProcess)) {
+            @proc_terminate($killProcess,9);
+            @proc_close($killProcess);
+        }
+        if($killTriggerArmed) $modx->exec('DROP TRIGGER IF EXISTS '
+            .chr(96).$killTrigger.chr(96));
+        @unlink($killRequest);
+    }
     echo 'SIGNED_OPERATION_FINISH_FAILURE_MODX'.($is2?'2':'3')
         .'_OK state=PENDING duplicate=0'.PHP_EOL;
     echo 'SIGNED_OPERATION_REPLAY_MODX'.($is2?'2':'3').'_OK checks='.$checks.PHP_EOL;
 } finally {
+    if($killResourceId>0 && $enabled) {
+        try {
+            $state=$api->processRequest('get_site_state','',array(
+                'read_set'=>array(array('type'=>'resource','id'=>$killResourceId))
+            ));
+            $del=array('type'=>'resource','id'=>$killResourceId,'dry_run'=>false,
+                '_runtime_preconditions'=>array(
+                    'observed_site_revision'=>(int)$state['site_revision'],
+                    'strict_site_revision'=>true,'read_set'=>$state['read_set']
+                ));
+            opE2eRequest('delete_element',$del);
+        } catch(Throwable $ignored) {}
+    }
     if($uncertainResourceId>0 && $enabled){
         try {
             $del=array('type'=>'resource','id'=>$uncertainResourceId,

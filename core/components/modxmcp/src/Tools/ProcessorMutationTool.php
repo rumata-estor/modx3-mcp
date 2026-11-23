@@ -24,6 +24,52 @@ class ProcessorMutationTool implements ToolInterface
         return $context && $context->modx() && $context->platform();
     }
 
+    /** Deterministic field-policy denials shared by preflight and processor. */
+    public static function assertAclMutationFields($action, array $data)
+    {
+            if (in_array($action, array('create_user', 'update_user'), true)) {
+                $deniedFields = array(
+                    'sudo', 'is_sudo', 'groups', 'primary_group', 'primarygroup',
+                    'class_key', 'classkey', 'remotedata', 'remote_data',
+                );
+                if ($action === 'update_user') {
+                    $deniedFields = array_merge($deniedFields, array(
+                        'password', 'newpassword', 'specifiedpassword',
+                        'confirmpassword', 'passwordgenmethod',
+                        'passwordnotifymethod',
+                    ));
+                }
+                foreach (array_keys($data) as $field) {
+                    if (!is_string($field)) { continue; }
+                    if (in_array(strtolower(trim($field)), $deniedFields, true)) {
+                        throw new \ModxMCPClientException(
+                            'AUTH_DENIED: privileged user field requires a dedicated admin workflow.'
+                        );
+                    }
+                }
+            }
+            if ($action === 'create_resource_group') {
+                // RU: MODX автоматически создаёт ACL/группы при указании
+                // RU: access_admin/access_anon/access_parallel и смежных полей.
+                // RU: Такие побочные полномочия требуют отдельных MCP-действий.
+                // EN: Core create_resource_group can auto-grant policies and
+                // EN: create user groups via hidden access_* properties.
+                // EN: Require separately authorized ACL actions instead.
+                $hiddenGrantFields = array(
+                    'automatic_access', 'access_admin', 'access_anon',
+                    'access_parallel', 'access_contexts', 'access_usergroups',
+                );
+                foreach (array_keys($data) as $field) {
+                    if (is_string($field)
+                        && in_array(strtolower(trim($field)), $hiddenGrantFields, true)) {
+                        throw new \ModxMCPClientException(
+                            'AUTH_DENIED: resource-group auto-access requires dedicated ACL actions.'
+                        );
+                    }
+                }
+            }
+    }
+
     public function execute($context, array $data)
     {
         $route = isset($this->spec['route']) ? $this->spec['route'] : '';
@@ -40,47 +86,7 @@ class ProcessorMutationTool implements ToolInterface
             // EN: groups mutates role memberships, class_key selects a
             // EN: custom processor, sudo elevates privileges, and newpassword
             // EN: changes credentials. Keep those behind dedicated workflows.
-            if (in_array($this->toolName, array('create_user', 'update_user'), true)) {
-                $deniedFields = array(
-                    'sudo', 'is_sudo', 'groups', 'primary_group', 'primarygroup',
-                    'class_key', 'classkey', 'remotedata', 'remote_data',
-                );
-                if ($this->toolName === 'update_user') {
-                    $deniedFields = array_merge($deniedFields, array(
-                        'password', 'newpassword', 'specifiedpassword',
-                        'confirmpassword', 'passwordgenmethod',
-                        'passwordnotifymethod',
-                    ));
-                }
-                foreach (array_keys($props) as $field) {
-                    if (!is_string($field)) { continue; }
-                    if (in_array(strtolower(trim($field)), $deniedFields, true)) {
-                        throw new \ModxMCPClientException(
-                            'AUTH_DENIED: privileged user field requires a dedicated admin workflow.'
-                        );
-                    }
-                }
-            }
-            if ($this->toolName === 'create_resource_group') {
-                // RU: MODX автоматически создаёт ACL/группы при указании
-                // RU: access_admin/access_anon/access_parallel и смежных полей.
-                // RU: Такие побочные полномочия требуют отдельных MCP-действий.
-                // EN: Core create_resource_group can auto-grant policies and
-                // EN: create user groups via hidden access_* properties.
-                // EN: Require separately authorized ACL actions instead.
-                $hiddenGrantFields = array(
-                    'automatic_access', 'access_admin', 'access_anon',
-                    'access_parallel', 'access_contexts', 'access_usergroups',
-                );
-                foreach (array_keys($props) as $field) {
-                    if (is_string($field)
-                        && in_array(strtolower(trim($field)), $hiddenGrantFields, true)) {
-                        throw new \ModxMCPClientException(
-                            'AUTH_DENIED: resource-group auto-access requires dedicated ACL actions.'
-                        );
-                    }
-                }
-            }
+            self::assertAclMutationFields($this->toolName, $props);
             if ($this->toolName === 'update_user') {
                 $this->preserveUserFlags($context, $props);
             }

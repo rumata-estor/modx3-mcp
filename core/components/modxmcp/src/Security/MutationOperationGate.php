@@ -120,7 +120,11 @@ final class MutationOperationGate
             } catch (\Throwable $journalFailure) {
                 // Keep the PENDING claim durable and deny any automatic retry.
             }
-            throw $error;
+            // Once the signed journal has claimed this operation, an error
+            // cannot safely be interpreted as proof that no effect occurred.
+            // A second signed permit must not turn an uncertain claim into
+            // a blind repeat, and raw processor messages must not leak.
+            throw MutationOutcomeGuard::uncertain();
         }
         try {
             $ledger->finish($operationId,$fingerprint,'SUCCEEDED');

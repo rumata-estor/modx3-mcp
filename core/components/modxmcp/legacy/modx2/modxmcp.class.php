@@ -190,6 +190,22 @@ class modxMCP {
                             \ModxMcp\Tools\MutationPreflight::assertAllowed(
                                 $runtimeContext, $action, $toolData
                             );
+                            // Exact stale-CAS semantics take priority over
+                            // deterministic static-file conflicts. Optional
+                            // signed replay IDs must still reach the journal
+                            // so a duplicate request is reported as replay.
+                            if ($action === 'make_static' && $operationId === null
+                                && !(isset($toolData['items'])
+                                    && is_array($toolData['items']))) {
+                                \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                    $runtimeContext, $runtimePreconditions
+                                );
+                                \ModxMcp\Tools\ElementMutationSupport::preflightMakeStatic(
+                                    $runtimeContext,
+                                    isset($toolData['type']) ? (string)$toolData['type'] : '',
+                                    isset($toolData['id']) ? (int)$toolData['id'] : 0
+                                );
+                            }
                             $atomicTv = $tool instanceof
                                 \ModxMcp\Tools\ResourceTvUpdateTool;
                             $atomicDatabase = \ModxMcp\Tools\StateSupport::supportsAtomicRevision(
@@ -271,9 +287,15 @@ class modxMCP {
                                     }
                                 );
                                 if ($atomicTv) {
-                                    $tool->afterCommittedRevision(
-                                        $runtimeContext,
-                                        $toolData
+                                    // DB commit succeeded; a post-commit failure
+                                    // cannot be presented as an unapplied mutation.
+                                    \ModxMcp\Security\MutationOutcomeGuard::run(
+                                        function () use ($tool, $runtimeContext, $toolData) {
+                                            return $tool->afterCommittedRevision(
+                                                $runtimeContext,
+                                                $toolData
+                                            );
+                                        }
                                     );
                                 }
                                 return $result;
@@ -294,7 +316,13 @@ class modxMCP {
                                 $reservedRevision = \ModxMcp\Tools\StateSupport::incrementRevision(
                                     $runtimeContext
                                 );
-                                $result = $tool->execute($runtimeContext, $toolData);
+                                // Revision was already reserved. A native processor may
+                                // have written before throwing; never report not_applied.
+                                $result = \ModxMcp\Security\MutationOutcomeGuard::run(
+                                    function () use ($tool, $runtimeContext, $toolData) {
+                                        return $tool->execute($runtimeContext, $toolData);
+                                    }
+                                );
                                 if (is_array($result)) {
                                     $result['_site_revision'] = $reservedRevision;
                                 }

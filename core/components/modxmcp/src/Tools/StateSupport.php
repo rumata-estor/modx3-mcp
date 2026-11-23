@@ -246,7 +246,51 @@ class StateSupport
             if (!flock($handle, LOCK_EX)) {
                 throw new \RuntimeException('Cannot acquire MODX MCP mutation lock.');
             }
-            return call_user_func($callback);
+            // RU: flock локален; общая БД сериализует независимые web-узлы.
+            // EN: flock is host-local; a session-scoped DB mutex spans PHP hosts.
+            // No new table, daemon, distributed state or Site Agent dependency.
+            // Works only when every MCP node uses the SAME MySQL/MariaDB writer.
+            try {
+                $databaseResult = $modx->query('SELECT DATABASE()');
+                $database = $databaseResult ? $databaseResult->fetchColumn() : false;
+                $table = $modx->getTableName(
+                    $context->platform()->className('system_setting')
+                );
+                if (!is_string($database) || $database === ''
+                    || !is_string($table) || $table === '') {
+                    throw new \RuntimeException('Unable to identify mutation lock scope.');
+                }
+                // Stable across hosts sharing a schema and MODX table prefix.
+                $lockName = 'modxmcp:'.substr(
+                    hash('sha256', $database."\0".$table), 0, 56
+                );
+                $acquire = $modx->prepare('SELECT GET_LOCK(?, 5)');
+                if (!$acquire || !$acquire->execute(array($lockName))
+                    || (string)$acquire->fetchColumn() !== '1') {
+                    throw new \RuntimeException('Shared mutation lock busy.');
+                }
+            } catch (\Throwable $e) {
+                // No business effect begins without the shared DB mutex.
+                throw new \ModxMCPClientException(
+                    'CAS_LOCK_UNAVAILABLE: shared MODX mutation lock not acquired.'
+                );
+            }
+            try {
+                return call_user_func($callback);
+            } finally {
+                // MySQL automatically frees GET_LOCK on disconnect / SIGKILL.
+                // If RELEASE_LOCK is unconfirmed, never report a definite
+                // outcome after potentially successful business effects.
+                try {
+                    $release = $modx->prepare('SELECT RELEASE_LOCK(?)');
+                    if (!$release || !$release->execute(array($lockName))
+                        || (string)$release->fetchColumn() !== '1') {
+                        throw new \RuntimeException('Shared lock release not confirmed.');
+                    }
+                } catch (\Throwable $e) {
+                    throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+                }
+            }
         } finally {
             @flock($handle, LOCK_UN);
             @fclose($handle);
@@ -403,10 +447,14 @@ class StateSupport
             throw new \RuntimeException('Cannot start CAS revision transaction.');
         }
         self::$transactionCallbacks[$key] = array();
+        $commitAttempted = false;
         try {
             $result = call_user_func($callback);
+            // RU: COMMIT мог записать данные до потери ответа.
+            // EN: COMMIT may persist data before its response is lost.
+            $commitAttempted = true;
             if ($modx->commit() === false) {
-                throw new \RuntimeException('CAS revision transaction commit failed.');
+                throw new \RuntimeException('CAS revision transaction commit not confirmed.');
             }
             $callbacks = self::$transactionCallbacks[$key];
             unset(self::$transactionCallbacks[$key]);
@@ -418,7 +466,26 @@ class StateSupport
             foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
                 if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
             }
-            $modx->rollback();
+            $rollbackConfirmed = false;
+            try {
+                $rollbackConfirmed = $modx->rollback() !== false;
+            } catch (\Throwable $rollbackFailure) {
+                // A failed rollback does not prove that the write was undone.
+            }
+            // RU: Известный отказ CAS/авторизации до эффектов можно вернуть.
+            // RU: Любой другой сбой внутри транзакции, включая PDO deadlock
+            // RU: или silent execute()=false у xPDO, не доказывает отмену
+            // RU: побочных эффектов PHP-плагинов, файлов и сторонних сервисов.
+            // EN: Preserve only explicit pre-effect guard denials. A rollback
+            // EN: cannot undo plugin/filesystem effects or prove no side effect.
+            $guardDenied = $e instanceof \ModxMCPClientException
+                && preg_match(
+                    '/\A(?:CAS_REQUIRED|STALE_STATE|AUTH_DENIED|NOT_FOUND|VALIDATION_ERROR)(?:[: ]|$)/D',
+                    $e->getMessage()
+                ) === 1;
+            if ($commitAttempted || !$rollbackConfirmed || !$guardDenied) {
+                throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+            }
             throw $e;
         }
         // The DB commit is complete. Side effects must not falsely turn a

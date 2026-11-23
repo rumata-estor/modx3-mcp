@@ -12,7 +12,8 @@ class ResourceReorderTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
-    public function execute($context, array $data)
+    /** Complete read-only validation, repeated inside execute() for race safety. */
+    public static function validateBatch($context, array $data)
     {
         $items = isset($data['items']) && is_array($data['items'])
             ? $data['items']
@@ -75,6 +76,13 @@ class ResourceReorderTool implements ToolInterface
                 );
             }
         }
+
+        return $items;
+    }
+
+    public function execute($context, array $data)
+    {
+        $items = self::validateBatch($context, $data);
 
         $results = array();
         foreach ($items as $item) {
