@@ -119,6 +119,34 @@ try {
     // EN: Stale signed user creation must be rejected BEFORE the MODX processor.
     // EN: This adversarial test runs only on the disposable CI installation.
     $modx->setOption('modxmcp.disabled_groups','');
+    // RU: Даже действительная подпись для неверного пакета не расходует nonce.
+    // EN: Reject signed malformed package selectors before nonce reservation.
+    $nonceTable=\ModxMcp\Security\ProtectedAuthorization::ledgerTable($modx);
+    $countNonces=function()use($modx,$nonceTable) {
+        $query=$modx->query('SELECT COUNT(*) FROM `'.$nonceTable.'`');
+        if(!$query)throw new RuntimeException('Could not read disposable nonce ledger');
+        return (int)$query->fetchColumn();
+    };
+    securitySetting('modxmcp.permit_allowed_actions',
+        'create_element,update_element,delete_element,update_system_setting,'
+        .'install_package,uninstall_package');
+    foreach(array(
+        array('install_package',array('package'=>array('unexpected'))),
+        array('uninstall_package',array('signature'=>array('unexpected'))),
+    ) as $case) {
+        $badAction=$case[0];
+        $badData=$case[1];
+        $badData['_runtime_preconditions']=guardNow();
+        $beforeNonce=$countNonces();
+        $beforeRevision=(int)$api->processRequest('get_site_state','',array())['site_revision'];
+        $signedBad=signedCall($badAction,'',$badData);
+        mustDeny($badAction,'',$badData,$signedBad);
+        must($countNonces()===$beforeNonce,
+            'signed malformed '.$badAction.' does not consume nonce');
+        must((int)$api->processRequest('get_site_state','',array())['site_revision']
+            ===$beforeRevision,'signed malformed '.$badAction.' does not shift CAS');
+    }
+    echo 'SIGNED_PACKAGE_INPUT_PRE_NONCE_DENIAL_OK'.PHP_EOL;
     securitySetting('modxmcp.permit_allowed_actions',
         'create_element,update_element,delete_element,update_system_setting,create_user');
     $blockedUsername='CAS_DENIED_USER_'.bin2hex(random_bytes(8));

@@ -247,6 +247,15 @@ final class ProtectedAuthorization
                 self::readSetting($modx, 'modxmcp.privileged_processors')
             );
         }
+        // RU: Неверные параметры пакета отклоняем ПОСЛЕ проверки
+        // RU: подписи и политики сайта, но ДО одноразового nonce.
+        // EN: A signed but malformed package request must not consume the
+        // EN: controller's one-use permit before its deterministic rejection.
+        if ($action === 'install_package') {
+            \ModxMcp\Tools\PackageInstallTool::validateInput($data);
+        } elseif ($action === 'uninstall_package') {
+            \ModxMcp\Tools\PackageUninstallTool::validateInput($data);
+        }
         $nonce=$permit['claims']['nonce'];
         $issued=(int)$permit['claims']['issued_at'];
         $expires=(int)$permit['claims']['expires_at'];
