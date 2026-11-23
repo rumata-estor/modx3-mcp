@@ -67,6 +67,14 @@ final class MutationPreflight
         if ($action === 'run_processor') {
             RunProcessorTool::assertDispatchAllowed($context, $data);
         }
+        // RU: Пакетные процессоры могут менять файлы/БД. Неверный тип
+        // RU: параметров — отказ до CAS, подписанного nonce и скачивания.
+        // EN: Reject malformed package selectors before CAS/nonce/provider I/O.
+        if ($action === 'install_package') {
+            PackageInstallTool::validateInput($data);
+        } elseif ($action === 'uninstall_package') {
+            PackageUninstallTool::validateInput($data);
+        }
         if ($action === 'reorder_resources') {
             ResourceReorderTool::validateBatch($context, $data);
         }
