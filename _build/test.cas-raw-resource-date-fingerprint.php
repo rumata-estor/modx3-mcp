@@ -26,11 +26,28 @@ class CasRawDateModel {
         return '';
     }
 }
+class CasRawDateStatement {
+    private $modx;
+    private $id;
+    public function __construct($modx){$this->modx=$modx;}
+    public function execute($args){$this->id=$args[0];return true;}
+    public function fetch($mode=null){
+        if((int)$this->id!==21 || !$this->modx->resource)return false;
+        return array(
+            'id'=>21,'pagetitle'=>'Disposable','content'=>'ABC',
+            'published'=>1,'pub_date'=>'','unpub_date'=>'',
+            'publishedon'=>$this->modx->resource->date,
+        );
+    }
+}
 class CasRawDateModx {
     public $resource;
     public function __construct(){$this->resource=new CasRawDateModel();}
-    public function getObject($class,$id){
-        return $class==='modResource' && (int)$id===21?$this->resource:null;
+    public function getTableName($class){return 'modx_site_content';}
+    public function prepare($sql){
+        if(strpos($sql,'SELECT * FROM modx_site_content')!==0)
+            throw new \RuntimeException('EXPECTED_PERSISTED_RESOURCE_QUERY');
+        return new CasRawDateStatement($this);
     }
 }
 class CasRawDatePlatform {
