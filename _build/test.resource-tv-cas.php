@@ -68,6 +68,10 @@ namespace ModxMcp\Tools {
       return null;
     }
     public function getValue($resourceId = 0) {
+      if ($this->modx && $this->modx->raceName === $this->name
+          && ++$this->modx->raceReads === 2) {
+        return 'MANAGER_CHANGED';
+      }
       return $this->modx && isset($this->modx->resource->values[$this->name])
         ? $this->modx->resource->values[$this->name] : $this->loadedValue;
     }
@@ -91,6 +95,8 @@ namespace ModxMcp\Tools {
     public $cacheManager;
     public $linked = array('primary'=>1,'secondary'=>2);
     public $assigned = array(1,2);
+    public $raceName = null;
+    public $raceReads = 0;
     private $saved;
     public $rollbackCount=0;
     public $commitCount=0;
@@ -170,5 +176,20 @@ namespace {
   mustFail(function()use($tool,$ctx){
     $tool->execute($ctx,array('resource_id'=>1,'tvs'=>array('primary'=>777)));
   },'string values');
+  // A Manager-like out-of-band change seen on the final read must stop
+  // before setTVValue; do not claim any guaranteed global serialization.
+  $modx->resource->failName=null;
+  $modx->raceName='primary';
+  $modx->raceReads=0;
+  $before=$modx->resource->values;
+  $fresh=array('observed_site_revision'=>6,'strict_site_revision'=>true,
+      'expected_tvs'=>array('primary'=>$before['primary']));
+  mustFail(function()use($tool,$ctx,$fresh){
+    $tool->execute($ctx,array('resource_id'=>1,
+        'tvs'=>array('primary'=>'ATTEMPTED_OVERWRITE'),
+        '_runtime_preconditions'=>$fresh));
+  },'STALE_STATE');
+  demand($modx->resource->values===$before,'racing TV changed after refusal');
+  demand($modx->raceReads===2,'must recheck before write');
   echo "RESOURCE_TV_PHP_CONTRACT_OK\n";
 }
