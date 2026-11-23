@@ -130,8 +130,12 @@ final class ErrorCatalog
         $modxClass = get_class($modx);
         $levelKey = $modxClass . '::LOG_LEVEL_ERROR';
         $level = defined($levelKey) ? constant($levelKey) : 3;
-        $modx->log($level, sprintf('[%s] MCP endpoint refused. code=%s http_status=%d',
-            $fields['error_id'], $fields['code'], (int)$httpStatus));
+        // RU: Тестовые минимальные MODX-дублёры не имеют API журналирования.
+        // EN: Lightweight bootstrap test doubles do not implement MODX logging.
+        if (method_exists($modx, 'log')) {
+            $modx->log($level, sprintf('[%s] MCP endpoint refused. code=%s http_status=%d',
+                $fields['error_id'], $fields['code'], (int)$httpStatus));
+        }
         http_response_code((int)$httpStatus);
         echo json_encode(array_merge(array(
             'success' => false,
