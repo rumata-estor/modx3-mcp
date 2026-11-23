@@ -275,9 +275,6 @@ try {
     $response = array_merge($response,
         \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
             'INTERNAL_ERROR', $errorId));
-    $response = array_merge($response,
-        \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
-            'INTERNAL_ERROR', $errorId));
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     $errorId = \ModxMcp\Diagnostics\ErrorCatalog::newId();
@@ -301,5 +298,8 @@ try {
         'error' => 'Internal Server Error',
         'error_id' => $errorId,
     ];
+    $response = array_merge($response,
+        \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
+            'INTERNAL_ERROR', $errorId));
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 }
