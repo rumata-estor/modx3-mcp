@@ -37,6 +37,19 @@ $modx->setOption('cache_path',$cache);
 // EN: local container path without modifying any persisted MODX setting.
 $modx->setOption('modxmcp.core_path',MODX_CORE_PATH.'components/modxmcp/');
 $modx->setOption('modxmcp.disabled_groups','');
+// This standalone CI endpoint is not the production API bootstrap.
+$source=MODX_CORE_PATH.'components/modxmcp/src/';
+$autoload=$source.'Autoloader.php';
+if(!is_file($autoload)) {
+    error_log('CI_FPM_MCP_AUTOLOAD_FILE_MISSING');
+    http_response_code(500);exit;
+}
+require_once $autoload;
+\ModxMcp\Autoloader::register($source);
+if(!class_exists('ModxMcp\\Core\\Runtime')) {
+    error_log('CI_FPM_MCP_RUNTIME_CLASS_MISSING');
+    http_response_code(500);exit;
+}
 require_once MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
 $api=new modxMCP($modx);
 $lock=\ModxMcp\Tools\StateSupport::class;
