@@ -9,14 +9,15 @@
  */
 if (PHP_SAPI!=='cli' || getenv('MODXMCP_DISPOSABLE_CI')!=='1'
     || strpos((string)getenv('MODX_CONFIG_CORE'),'/home/runner/')!==0
-    || !is_file((string)getenv('MODX_CONFIG_CORE')) || $argc!==7) {
+    || !is_file((string)getenv('MODX_CONFIG_CORE')) || $argc!==8) {
     fwrite(STDERR,"Disposable CI worker only\n");exit(3);
 }
 $path=$argv[1];$revision=(int)$argv[2];$before=$argv[3];
-$after=$argv[4];$ready=$argv[5];$gate=$argv[6];
+$after=$argv[4];$ready=$argv[5];$gate=$argv[6];$expectedHash=$argv[7];
 if (!preg_match('#^cas-fault-[a-f0-9]{14}/renamed[.]txt$#',$path)
     || $revision<0 || strpos($ready,'/home/runner/')!==0
-    || strpos($gate,'/home/runner/')!==0) exit(3);
+    || strpos($gate,'/home/runner/')!==0
+    || !preg_match('/^[a-f0-9]{64}$/D',$expectedHash)) exit(3);
 require_once getenv('MODX_CONFIG_CORE');
 $is2=!is_file(MODX_CORE_PATH . 'src/Revolution/modX.php');
 if ($is2) {
@@ -36,6 +37,7 @@ if (!is_file($gate)) {fwrite(STDERR,"CAS_RACE_GATE_TIMEOUT\n");exit(4);}
 try {
     $result=$api->processRequest('update_media_file','',array(
         'source'=>1,'path'=>$path,'content'=>$after,
+        'expected_sha256'=>$expectedHash,
         '_runtime_preconditions'=>array(
             'observed_site_revision'=>$revision,
             'strict_site_revision'=>true,
