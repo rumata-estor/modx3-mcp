@@ -106,6 +106,9 @@ try {
         } elseif ($action==='replace_across'
             && strpos($message, 'replace_across: "find" is required.')!==false) {
             $preflightDenied[$action]='missing search query';
+        } elseif ($action==='make_static'
+            && strpos($message, 'make_static: unsupported type')!==false) {
+            $preflightDenied[$action]='missing static element type';
         } elseif (in_array($action, array(
             'create_media_file','update_media_file','delete_media_file',
             'rename_media_file','create_media_folder','delete_media_folder'
