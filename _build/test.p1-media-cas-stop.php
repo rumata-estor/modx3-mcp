@@ -4,6 +4,9 @@
  * EN: Native-only media CAS: refuse before updateObject on mismatch.
  */
 namespace ModxMcp\Tools {
+    class ProcessorMutationTool {
+        public static function assertAclMutationFields($action,array $data){}
+    }
     interface ToolInterface {
         public function name(); public function group(); public function isMutation();
         public function supports($context); public function execute($context,array $data);
