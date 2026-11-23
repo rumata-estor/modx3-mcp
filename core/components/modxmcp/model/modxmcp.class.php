@@ -304,7 +304,7 @@ class modxMCP {
                                 if ($atomicTv) {
                                     // DB commit succeeded; a post-commit failure
                                     // cannot be presented as an unapplied mutation.
-                                    \\ModxMcp\\Security\\MutationOutcomeGuard::run(
+                                    \ModxMcp\Security\MutationOutcomeGuard::run(
                                         function () use ($tool, $runtimeContext, $toolData) {
                                             return $tool->afterCommittedRevision(
                                                 $runtimeContext,
@@ -333,7 +333,7 @@ class modxMCP {
                                 );
                                 // Revision was already reserved. A native processor may
                                 // have written before throwing; never report not_applied.
-                                $result = \\ModxMcp\\Security\\MutationOutcomeGuard::run(
+                                $result = \ModxMcp\Security\MutationOutcomeGuard::run(
                                     function () use ($tool, $runtimeContext, $toolData) {
                                         return $tool->execute($runtimeContext, $toolData);
                                     }
