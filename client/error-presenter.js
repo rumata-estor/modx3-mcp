@@ -150,14 +150,22 @@ function record(code, operation, options = {}) {
       ? options.network_code : null,
   };
 }
-function fromHttp(body, status, operation) {
+function fromHttp(body, status, operation, isReadOnly = false) {
   const payload = body && typeof body === "object" && !Array.isArray(body) ? body : {};
   const code = safeCode(payload.code) || legacyCode(payload.error)
     || (status >= 500 ? "INTERNAL_ERROR" : "OPERATION_REFUSED");
-  return record(code, operation, {
+  const result = record(code, operation, {
     ...payload, structured: safeCode(payload.code) !== null,
     http_status: status, stage: "http",
   });
+  if (isReadOnly && result.outcome === "unknown") {
+    // RU: Запрос чтения не мог сам внести запись.
+    // EN: Read-only HTTP calls must not suggest that this call wrote data.
+    result.outcome = "not_applied";
+    result.retry_policy = "after_admin_check";
+    result.next_action_ru = "Проверьте доступность сайта и повторите чтение после устранения причины.";
+  }
+  return result;
 }
 function fromNetwork(error, operation, isReadOnly) {
   const result = record("CONNECTION_FAILED", operation, {
