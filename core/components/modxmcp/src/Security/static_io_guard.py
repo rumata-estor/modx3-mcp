@@ -38,9 +38,16 @@ def guard_file(fd):
 
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         raise UnsafePath("incorrect arguments")
-    core, rel, action = sys.argv[1:]
+    core, rel, action, expected_bytes = sys.argv[1:]
+    if action == "read":
+        if expected_bytes != "-":
+            raise UnsafePath("incorrect read length")
+    elif (not expected_bytes.isascii() or not expected_bytes.isdecimal()
+          or (len(expected_bytes)>1 and expected_bytes[0]=="0")
+          or len(expected_bytes)>9 or int(expected_bytes)>MAX_CONTENT):
+        raise UnsafePath("incorrect write length")
     if action not in ("read", "write", "create"):
         raise UnsafePath("unsupported action")
     if not os.path.isabs(core) or os.path.realpath(core) != core:
@@ -83,6 +90,8 @@ def main():
                     payload = sys.stdin.buffer.read(MAX_CONTENT + 1)
                     if len(payload) > MAX_CONTENT:
                         raise UnsafePath("write size limit")
+                    if len(payload) != int(expected_bytes):
+                        raise UnsafePath("incomplete payload before publish")
                     # RU: Путь цели держится через dirfd. Не truncate до
                     # RU: завершения временной записи. Небезопасного fallback нет.
                     # EN: Use a private same-directory inode, fsync then atomic
@@ -155,9 +164,10 @@ def main():
                                    existing.st_size, existing.st_mtime_ns)
                         ):
                             raise UnsafePath("target changed during write")
-                        if action == "create":
-                            # Exclusive publication; cannot overwrite an
-                            # attacker-created target in the same directory.
+                        if action == "create" or existing is None:
+                            # Exclusive publication for all new paths, even
+                            # a normal write that races with a new file.
+                            # Cannot overwrite another writer's new target.
                             os.link(temp_name, leaf, src_dir_fd=parent,
                                     dst_dir_fd=parent, follow_symlinks=False)
                         else:
