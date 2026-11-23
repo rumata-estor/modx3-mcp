@@ -53,7 +53,7 @@ $modx->initialize('mgr');
 $table=$modx->getTableName($memberClass);
 $groupTable=$modx->getTableName($groupClass);
 foreach(array($table,$groupTable) as $id) {
-    if(!is_string($id) || !preg_match('/\A`A-Za-z0-9_`+\z/D',$id)) {
+    if(!is_string($id) || !preg_match('/\A(?:`[A-Za-z0-9_]+`|[A-Za-z0-9_]+)\z/D',$id)) {
         throw new RuntimeException('ACL_INDEX_MIGRATION_DENIED: unsafe table identifier');
     }
 }
