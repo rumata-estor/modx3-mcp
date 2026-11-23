@@ -297,6 +297,25 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-operation-gate-e2e.php
+      # RU: Реальный MODX MCP + неизменяемый код Site Agent: потерянный ответ
+      # RU: после коммита не должен вызвать автоматический retry/rollback.
+      # EN: Native MCP commit, lost response, real Executor fail-closed.
+      - name: Site Agent Executor interoperability against real disposable MODX MCP
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+          BUILD_PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          AGENT_PIN="68f97be992c65bb81bde82c78adfc3c8fefd1362"
+          git clone --quiet --filter=blob:none \
+            https://github.com/rumata-estor/site-agent-runtime.git \
+            "$RUNNER_TEMP/site-agent-runtime"
+          git -C "$RUNNER_TEMP/site-agent-runtime" checkout --quiet --detach "$AGENT_PIN"
+          test "$(git -C "$RUNNER_TEMP/site-agent-runtime" rev-parse HEAD)" = "$AGENT_PIN"
+          php -l _build/test.ci-siteagent-mcp-worker.php
+          python3 -m py_compile _build/test.ci-siteagent-cross-repo.py
+          python3 _build/test.ci-siteagent-cross-repo.py
       - name: Protected Ed25519 HTTP endpoint token, TLS, replay, CAS and mutation lifecycle
         env:
           MODXMCP_DISPOSABLE_CI: '1'
