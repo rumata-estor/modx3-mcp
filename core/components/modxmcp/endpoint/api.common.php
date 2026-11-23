@@ -230,11 +230,17 @@ try {
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
     // RU: Успех = ответ обработчика; повторное чтение не подразумевается.
     // EN: API acknowledgment does not imply independent readback verification.
-    echo json_encode(['success' => true, 'data' => $result, 'caps' => $caps,
+    $encoded = json_encode(['success' => true, 'data' => $result, 'caps' => $caps,
         'outcome' => 'completed',
         'operation_code' => 'OPERATION_COMPLETED',
         'message_ru' => 'MODX подтвердил выполнение запроса. Повторная проверка объекта не выполнялась.',
-    ], JSON_UNESCAPED_UNICODE);
+    ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if (!is_string($encoded)) {
+        // RU: Успешная мутация могла выполниться до сбоя сериализации.
+        // EN: A mutation may already be applied before serialization fails.
+        throw new \RuntimeException('MCP response serialization failed');
+    }
+    echo $encoded;
 } catch (ModxMCPClientException $e) {
     // Authorization failures are 403, never confused with routine input errors.
     // Do not reveal whether a signature, site, key or nonce was wrong.
@@ -246,15 +252,16 @@ try {
     // RU: Корреляция без исходных параметров, исключений и секретов.
     // EN: Correlation without raw parameters, exception text or credentials.
     $safeAction = is_string($action) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($action, 0, 80)) : 'invalid';
-    $modx->log($modxmcpLogLevelError, sprintf('[%s] MCP request rejected. code=%s action=%s',
-        $fields['error_id'], $fields['code'], $safeAction));
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog($modx, $modxmcpLogLevelError,
+        sprintf('[%s] MCP request rejected. code=%s action=%s',
+            $fields['error_id'], $fields['code'], $safeAction));
     echo json_encode(array_merge(['success' => false,
         'error' => \ModxMcp\Security\SecretRedactor::text($message),
-        'caps' => $caps], $fields), JSON_UNESCAPED_UNICODE);
+        'caps' => $caps], $fields), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 } catch (Exception $e) {
     $errorId = \ModxMcp\Diagnostics\ErrorCatalog::newId();
-    $modx->log(
-        $modxmcpLogLevelError,
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog(
+        $modx, $modxmcpLogLevelError,
         sprintf(
             '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
@@ -276,11 +283,11 @@ try {
     $response = array_merge($response,
         \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
             'INTERNAL_ERROR', $errorId));
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 } catch (Throwable $e) {
     $errorId = \ModxMcp\Diagnostics\ErrorCatalog::newId();
-    $modx->log(
-        $modxmcpLogLevelError,
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog(
+        $modx, $modxmcpLogLevelError,
         sprintf(
             '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
@@ -302,5 +309,5 @@ try {
     $response = array_merge($response,
         \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
             'INTERNAL_ERROR', $errorId));
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 }
