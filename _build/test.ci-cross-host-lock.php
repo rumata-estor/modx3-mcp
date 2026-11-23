@@ -63,14 +63,39 @@ if ($mode==='mutate') {
     file_put_contents($work.'/result-'.$node.'.json',json_encode($out));
     exit(0);
 }
-if ($mode==='hold' || $mode==='probe') {
+if ($mode==='update') {
+    $config=json_decode((string)file_get_contents($work.'/update-config.json'),true);
+    file_put_contents($work.'/ready-update-'.$node,(string)getmypid());
+    $deadline=microtime(true)+18;
+    while (!is_file($work.'/go-update') && microtime(true)<$deadline) usleep(10000);
+    if (!is_file($work.'/go-update')) exit(6);
+    try {
+        $api->processRequest('update_element','',array(
+            'type'=>'chunk','id'=>(int)$config['id'],
+            'content'=>'crosshost-update-'.$node,
+            '_runtime_preconditions'=>array(
+                'observed_site_revision'=>(int)$config['revision'],
+                'strict_site_revision'=>true,
+                'read_set'=>$config['read_set']
+            )
+        ));
+        $out=array('state'=>'success');
+    } catch (\Throwable $error) {
+        $message=$error->getMessage();
+        $out=array('state'=>strpos($message,'STALE_STATE')!==false?'stale':'error',
+            'code'=>substr($message,0,55));
+    }
+    file_put_contents($work.'/result-update-'.$node.'.json',json_encode($out));
+    exit(0);
+}
+if ($mode==='hold' || $mode==='probe' || $mode==='timeout') {
     $runtime=new \ModxMcp\Core\Runtime($modx,$api);
     $ctx=$runtime->context();
     $lock=\ModxMcp\Tools\StateSupport::class;
     try {
         $lock::withMutationLock($ctx,function()use($mode,$work,$lock,$ctx) {
-            if ($mode==='probe') {
-                file_put_contents($work.'/probe-acquired','yes');
+            if ($mode==='probe' || $mode==='timeout') {
+                file_put_contents($work.'/'.$mode.'-acquired','yes');
                 return;
             }
             // RU: Только собственная ревизия, без изменения данных сайта.
@@ -82,6 +107,11 @@ if ($mode==='hold' || $mode==='probe') {
             });
         });
     } catch (\Throwable $error) {
+        if ($mode==='timeout' && strpos($error->getMessage(),
+            'CAS_LOCK_UNAVAILABLE:')===0) {
+            file_put_contents($work.'/timeout-denied','yes');
+            exit(0);
+        }
         fwrite(STDERR,"CROSSHOST_WORKER_FAILURE ".substr($error->getMessage(),0,120)."\n");
         exit(9);
     }
@@ -146,8 +176,7 @@ try {
             if ($id>0) $createdIds[]=$id;
         }
     }
-    // Drop the delay before the independent readback and cleanup.
-    $pdo->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');$trigger=null;
+    // Keep the fault-injection delay for the same-target update race.
     $states=array_column($results,'state');
     sort($states);
     crossCheck($states===array('stale','success'),
@@ -160,10 +189,52 @@ try {
     crossCheck(strpos((string)($read['name']??''),$config['prefix'])===0,
         'independent MCP readback of winning chunk');
     echo 'CROSSHOST_TWO_ISOLATED_FLOCKS_SINGLE_CAS_WINNER_OK'.PHP_EOL;
+    // RU: Два узла редактируют один чанк с одним снимком id/fingerprint.
+    // EN: Two hosts race on one existing target using the same CAS fingerprint.
+    $snapshot=$api->processRequest('get_site_state','',array('read_set'=>array(
+        array('role'=>'target','type'=>'chunk','id'=>$createdIds[0])
+    )));
+    file_put_contents($work.'/update-config.json',json_encode(array(
+        'id'=>$createdIds[0],
+        'revision'=>(int)$snapshot['site_revision'],
+        'read_set'=>$snapshot['read_set']
+    )));
+    foreach(array('a','b') as $node) $jobs[$node]=crossStart('update',$work,$node);
+    crossWait($work.'/ready-update-a');crossWait($work.'/ready-update-b');
+    file_put_contents($work.'/go-update','start');
+    crossWait($work.'/result-update-a.json');crossWait($work.'/result-update-b.json');
+    $updateResults=array();
+    foreach(array('a','b') as $node) {
+        $out=crossClose($jobs[$node]);unset($jobs[$node]);
+        crossCheck($out[0]===0,'update worker '.$node.' failed '.$out[2]);
+        $updateResults[$node]=json_decode(
+            file_get_contents($work.'/result-update-'.$node.'.json'),true);
+    }
+    $updateStates=array_column($updateResults,'state');sort($updateStates);
+    crossCheck($updateStates===array('stale','success'),
+        'two writers to same chunk must give one stale and one successful update: '
+        .json_encode($updateResults));
+    $winner=($updateResults['a']['state']==='success')?'a':'b';
+    $updated=$api->processRequest('get_element','',
+        array('type'=>'chunk','id'=>$createdIds[0]));
+    crossCheck((string)($updated['snippet']??($updated['content']??''))
+        ==='crosshost-update-'.$winner,'same-target winner content readback');
+    crossCheck((int)$api->processRequest('get_site_state','',array())['site_revision']
+        ===$revision+2,'two contention rounds produced only two CAS increments');
+    echo 'CROSSHOST_SAME_TARGET_FINGERPRINT_ONE_WRITER_OK'.PHP_EOL;
+    // Drop fault-injection trigger before testing clean crash recovery.
+    $pdo->exec('DROP TRIGGER IF EXISTS `'.$trigger.'`');$trigger=null;
     // Crash while holding the session lock and an uncommitted revision update.
     $baseline=(int)$api->processRequest('get_site_state','',array())['site_revision'];
     $jobs['hold']=crossStart('hold',$work,'a');
     crossWait($work.'/hold-acquired');
+    // A blocked host must fail closed within the finite GET_LOCK timeout.
+    $jobs['timeout']=crossStart('timeout',$work,'b');
+    crossWait($work.'/timeout-denied',10);
+    $timeoutExit=crossClose($jobs['timeout']);unset($jobs['timeout']);
+    crossCheck($timeoutExit[0]===0 && !is_file($work.'/timeout-acquired'),
+        'lock timeout must refuse mutation before callback');
+    echo 'CROSSHOST_LOCK_TIMEOUT_FAILS_CLOSED_OK'.PHP_EOL;
     $jobs['probe']=crossStart('probe',$work,'b');
     usleep(400000);
     crossCheck(!is_file($work.'/probe-acquired'),
