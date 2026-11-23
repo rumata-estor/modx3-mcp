@@ -59,7 +59,7 @@ class AuditSupport
         $ts = isset($entry['ts']) && is_string($entry['ts'])
             && preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+[+-][0-9:]+\z/D',
                 $entry['ts']) ? $entry['ts'] : null;
-        return array(
+        $safe = array(
             'ts' => $ts,
             'action' => self::safeLabel(isset($entry['action']) ? $entry['action'] : null),
             'type' => self::safeLabel(isset($entry['type']) ? $entry['type'] : null),
@@ -68,6 +68,13 @@ class AuditSupport
             'payload' => self::safePayload(isset($entry['payload'])
                 && is_array($entry['payload']) ? $entry['payload'] : array()),
         );
+        // RU: Сохраняем старый числовой id, но не произвольный текстовый.
+        // EN: Preserve numeric legacy entry IDs without exposing free-form values.
+        if (isset($entry['id']) && (is_int($entry['id'])
+            || (is_string($entry['id']) && preg_match('/\\A[0-9]{1,18}\\z/D', $entry['id'])))) {
+            $safe['id'] = (int)$entry['id'];
+        }
+        return $safe;
     }
 
     public static function log($context, $action, $type, array $payload = array())
