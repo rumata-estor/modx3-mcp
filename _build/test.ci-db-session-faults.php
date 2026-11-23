@@ -130,9 +130,14 @@ try{
  $cleanup=(int)$x['id'];echo 'MCP_DB_FRESH_OPERATION_AFTER_RECONNECT_OK'.PHP_EOL;
  // SQL setup is a random throwaway lock-inversion table, not CMS data.
  $pdo->exec('CREATE TABLE '.$table.' (id INT PRIMARY KEY,v INT NOT NULL) ENGINE=InnoDB');$created=true;
- $pdo->exec('INSERT INTO '.$table.' VALUES (1,0),(2,0)');
+ $rows=array();for($i=1;$i<=100;$i++)$rows[]='('.$i.',0)';
+ $pdo->exec('INSERT INTO '.$table.' VALUES '.implode(',',$rows));
  file_put_contents($work.'/table',$table);
- $pdo->beginTransaction();$pdo->exec('UPDATE '.$table.' SET v=v+1 WHERE id=2');
+ // RU: Большая транзакция внешнего Manager чаще остаётся, MCP — жертва deadlock.
+ // EN: Make the external transaction expensive so the MCP worker is the victim.
+ $pdo->beginTransaction();
+ $pdo->exec('UPDATE '.$table.' SET v=v+1 WHERE id>=3');
+ $pdo->exec('UPDATE '.$table.' SET v=v+1 WHERE id=2');
  $jobs['deadlock']=spawnDb('deadlock',$work);waitDb($work.'/deadlock-ready');
  file_put_contents($work.'/deadlock-go','yes');waitDb($work.'/deadlock-attempt');
  usleep(90000);$externalDeadlock=false;
@@ -144,7 +149,8 @@ try{
  $done=closeDb($jobs['deadlock']);unset($jobs['deadlock']);
  checkDb($done[0]===0,'deadlock worker '.$done[2]);
  checkDb($externalDeadlock||$d==='unknown'||$d==='raw-sql','actual deadlock required '.$d);
- checkDb($d!=='raw-sql','native SQLSTATE leaked to MCP');
+ checkDb($d==='unknown',
+  'deadlock must fail closed inside MCP transaction, no raw SQL or silent commit; result='.$d);
  echo 'MCP_DB_INNODB_DEADLOCK_SAFE_CLASSIFICATION_OK'.PHP_EOL;
  @unlink($work.'/probe-ok');$jobs['probe2']=spawnDb('probe',$work);
  waitDb($work.'/probe-ok');$done=closeDb($jobs['probe2']);unset($jobs['probe2']);
