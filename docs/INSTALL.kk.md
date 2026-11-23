@@ -11,7 +11,7 @@ MODX MCP стандартты MCP-үйлесімді ЖИ клиентіне **M
 - **MODX 2.8.x:** `modx2mcp-1.2.7-pl.transport.zip`.
 - **MODX 3.x:** `modx3mcp-1.2.7-pl.transport.zip`.
 
-> **Мәртебе:** 1.2.7 бастапқы коды дайын, бірақ transport ZIP пакеттері әлі жарияланбаған. Орнату үшін [1.2.4 нұсқасын](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.4) пайдаланыңыз.
+> **Тұрақты нұсқа:** 1.2.7 transport ZIP пакеттері [GitHub Release v1.2.7](https://github.com/rumata-estor/modx3-mcp/releases/tag/v1.2.7) бетінде жарияланған. 1.2.8 Beta бөлек сыналады.
 
 Екі нұсқа да бірдей жария құралдар келісімшартын және Node.js клиентін пайдаланады. Тиісті пакетті [GitHub Releases](https://github.com/rumata-estor/modx3-mcp/releases) бетінен немесе қолдау көрсетілетін MODX пакет провайдерінен жүктеңіз.
 
@@ -54,7 +54,7 @@ https://example.com/assets/components/modxmcp/api.php
       "command": "npx",
       "args": [
         "-y",
-        "github:rumata-estor/modx3-mcp#v1.2.4"
+        "github:rumata-estor/modx3-mcp#v1.2.7"
       ],
       "env": {
         "MODX_MCP_SITE_URL": "https://example.com/assets/components/modxmcp/api.php",
