@@ -44,10 +44,14 @@ try {
             exit(6);
         }
         $state = $api->processRequest('get_site_state','',array());
+        if (!isset($input['observed_site_revision'])
+            || !is_int($input['observed_site_revision'])) {
+            exit(14);
+        }
         $created = $api->processRequest('create_element','',array(
             'type'=>'chunk','name'=>$name,'content'=>$input['content'],
             '_runtime_preconditions'=>array(
-                'observed_site_revision'=>(int)$state['site_revision'],
+                'observed_site_revision'=>(int)$input['observed_site_revision'],
                 'strict_site_revision'=>true,'read_set'=>array()
             )
         ));
