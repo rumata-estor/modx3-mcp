@@ -151,12 +151,9 @@ class ElementContentSupport
             // RU: Повторная проверка после чтения: симлинк мог измениться.
             // EN: Revalidate before writes; a symlink may change after read.
             self::assertSafeStaticPath($context, $absolute);
-            $directory = dirname($absolute);
-            if (!is_dir($directory) && !@mkdir($directory, 0755, true)) {
-                throw new \ModxMCPClientException(
-                    'cannot create directory ' . $directory
-                );
-            }
+            // RU: Создание каталогов только через выбранный backend:
+            // RU: строгий режим использует dirfd, не mkdir по имени.
+            // EN: The selected backend owns directory creation.
             // RU: Не усекать исходный файл до завершения записи.
             // EN: Write a same-directory temporary file before replacing original.
             $written = StaticFileWriteSupport::replace($context, $absolute, $content);
