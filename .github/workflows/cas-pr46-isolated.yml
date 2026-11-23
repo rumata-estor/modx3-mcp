@@ -407,7 +407,16 @@ jobs:
         run: |
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
-          php _build/test.ci-acl-index-fixture.php
+          # RU: Явная миграция на старой схеме, только одноразовая БД.
+          # EN: Real old-schema migration, no production or installer DDL.
+          php _build/migrate-acl-index.php --check
+          if php _build/migrate-acl-index.php --apply; then
+            echo "Migration unexpectedly ran without confirmations" >&2
+            exit 1
+          fi
+          php _build/migrate-acl-index.php --apply --ci-disposable
+          php _build/migrate-acl-index.php --check
+          php _build/migrate-acl-index.php --apply --ci-disposable
       - name: ACL membership writes fail closed at READ COMMITTED
         env:
           MODXMCP_DISPOSABLE_CI: '1'
