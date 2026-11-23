@@ -252,6 +252,8 @@ jobs:
             tail -60 "$RUNNER_TEMP/normal-http-server.log" || true
             exit 1
           fi
+      - name: Uncertain mutation outcome reports fail-closed without replay or secret leak
+        run: php _build/test.mutation-outcome-guard.php
       - name: Detached Ed25519 permits verify on MODX2 and MODX3 PHP runtimes
         run: |
           php -r 'if (!function_exists("sodium_crypto_sign_verify_detached")) exit(1);'
