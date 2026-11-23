@@ -51,7 +51,7 @@ elif op=='remove': os.removexattr(path,attr)
 else: raise RuntimeError('invalid operation')
 PY;
     $result=metadataProcess(array('/usr/bin/python3','-c',$script,$operation,$path));
-    metadataCheck($result[0]===0,'python '+$operation.' failed '.$result[2]);
+    metadataCheck($result[0]===0,'python '.$operation.' failed '.$result[2]);
     return $result[1];
 }
 function metadataDenied($ctx,$target,$payload,$label) {
