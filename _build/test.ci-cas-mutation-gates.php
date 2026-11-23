@@ -96,6 +96,10 @@ try {
             // RU: Детерминированный запрет сильнее отказа CAS-резерва.
             // EN: Independent master-switch denial precedes CAS reservation.
             $preflightDenied[$action]='disabled by administrator';
+        } elseif ($action==='reorder_resources'
+            && strpos($message, 'reorder_resources: "items"')!==false) {
+            // A missing batch is now rejected before CAS, not after it.
+            $preflightDenied[$action]='missing reorder batch';
         } elseif (in_array($action, array(
             'create_media_file','update_media_file','delete_media_file',
             'rename_media_file','create_media_folder','delete_media_folder'
