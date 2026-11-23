@@ -118,7 +118,7 @@ jobs:
           zip="$RUNNER_TEMP/modx-site/core/packages/${old}mcp-1.2.7-pl.transport.zip"
           test -s "$zip"
           php "$RUNNER_TEMP/stage-127/_build/install.transport.php" \
-            --signature="$old"mcp-1.2.7-pl"
+            --signature="${old}mcp-1.2.7-pl"
           MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
       - name: Build a separate unpublished 1.2.8 transport on the disposable MODX
         env:
@@ -147,11 +147,11 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           php "$RUNNER_TEMP/stage-128/_build/build.transport.php"
-          zip="$RUNNER_TEMP/modx-site/core/packages/$BUILD_PLATFORM"mcp-1.2.8-pl.transport.zip"
+          zip="$RUNNER_TEMP/modx-site/core/packages/${BUILD_PLATFORM}mcp-1.2.8-pl.transport.zip"
           test -s "$zip"
           unzip -t "$zip" | tail -3
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" \
-            --signature="$BUILD_PLATFORM"mcp-1.2.8-pl"
+            --signature="${BUILD_PLATFORM}mcp-1.2.8-pl"
       - name: Verify token settings CAS and legacy read compatibility
         env:
           MODXMCP_DISPOSABLE_CI: '1'
