@@ -33,7 +33,7 @@ class ErrorLogReadTool implements ToolInterface
             '/\\A(?:modxmcp_[a-f0-9]{16,64}|mcpnode_[a-f0-9]{24})\\z/D',
             $errorId
         )) {
-            throw new \\ModxMCPClientException('INVALID_REQUEST: invalid diagnostic identifier.');
+            throw new \ModxMCPClientException('INVALID_REQUEST: invalid diagnostic identifier.');
         }
         $filter = null;
         if ($errorId !== '') {
