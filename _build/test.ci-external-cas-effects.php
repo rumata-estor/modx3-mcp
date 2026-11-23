@@ -301,8 +301,8 @@ try {
             && (strpos($failure,'Path traversal')!==false
                 || strpos($failure,'Unsafe media')!==false),
             'MCP must reject unsafe '.$case[0].': '.(string)$failure);
-        requireCas(rev()===$revision+1,
-            'invalid external request consumes one conservative revision');
+        requireCas(rev()===$revision,
+            'invalid media path is denied before CAS revision reservation');
         requireCas(getFile($renamed)==='beta-'.$key,
             'unsafe '.$case[0].' did not modify valid media file');
     }
