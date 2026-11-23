@@ -125,6 +125,44 @@ Galera/multi-primary, перенос MySQL-сессии через proxy, а т�
 отдельной координации всех узлов; независимое прочтение состояния и новое
 решение пользователя остаются обязательными при unknown.
 
+## Реальные контейнеры PHP-FPM / nginx / MariaDB (23.11.2026)
+
+Дополнительно к моделированию отдельных узлов через PHP CLI проверены **два
+настоящих контейнера** PHP 8.2-FPM с разными mount/network namespaces,
+двумя копиями установленного disposable MODX 3.2.4 и изолированными
+`cache_path`/`flock`, обслуживаемые nginx по HTTP. Оба узла используют
+**один** внешний по отношению к ним экземпляр MariaDB 10.11 (один writer).
+Тест существует только в `_build/test.ci-fpm-cross-node-endpoint.php`,
+`_build/test.ci-run-real-fpm-containers.sh`,
+`_build/test.ci-fpm-two-containers.py` и не попадает в transport.
+
+**[Зелёная полная матрица 45148897281](https://github.com/rumata-estor/modx3-mcp/actions/runs/45148897281)**:
+12/12, включая реальный PHP-FPM-случай со следующими отдельными
+подтверждениями из логов:
+
+- `FPM_TWO_SEPARATE_CONTAINERS_ONE_DB_WRITER_OK` — разные hostnames,
+  общий текущий CAS revision через HTTP.
+- `FPM_TWO_CONTAINERS_SINGLE_CAS_WINNER_OK` — одновременное создание:
+  один успех, другой `STALE_STATE`, ровно одна ревизия.
+- `FPM_TWO_CONTAINERS_SAME_TARGET_CAS_FINGERPRINT_OK` — независимый
+  read_set для одного чанка, две конкурентные записи, один победитель,
+  независимое чтение окончательного содержимого.
+- `FPM_TWO_CONTAINERS_LOCK_TIMEOUT_FAILS_CLOSED_OK` — узел Б не получил
+  право исполнения во время удержания DB-замка узлом А.
+- `FPM_CONTAINER_SIGKILL_RELEASES_DB_LOCK_AND_ROLLS_BACK_OK` — реальный
+  SIGKILL контейнера А освободил сессионную блокировку, узел Б получил
+  новую блокировку, незакоммиченная ревизия отсутствует.
+- `FPM_REAL_TWO_CONTAINER_CAS_MATRIX_OK` — весь цикл прошёл,
+  временный чанк удалён через MCP.
+
+**Не путать с двумя физическими серверами.** Контейнеры изолированы, но
+размещены на одном GitHub runner; nginx использует внутренний HTTP.
+Внешний TLS/Node Bridge/балансировщик, прокси, переживающий reconnection
+с иным DB connection ID, отдельные физические хосты, MariaDB cluster и
+mixed-version rolling upgrade остаются отдельными границами развёртывания.
+Этот тест не гарантирует защиту при Galera/multi-primary и несогласованных
+операциях через MODX Manager.
+
 ## Release gate
 
 - [x] Реально воспроизведён дефект без DB lock, 12/12 красных.
@@ -140,9 +178,11 @@ Galera/multi-primary, перенос MySQL-сессии через proxy, а т�
   COMMIT: unknown при подтверждённо увеличившейся ревизии; InnoDB
   deadlock: unknown и отсутствие сырых SQL-ошибок.
   [45130314583](https://github.com/rumata-estor/modx3-mcp/actions/runs/45130314583), 12/12.
-- [ ] Проверить **реальные** два PHP-FPM/host/container процесса
-  через HTTP/TLS/Node bridge, network reconnect/pooling/proxy и
-  горизонтальное развёртывание (в CI — отдельные PHP-процессы и DB-сессии).
+- [x] Два отдельных PHP-FPM контейнера с собственными файловыми
+  системами и HTTP/nginx + единым DB writer; гонка CAS, ожидание, SIGKILL,
+  независимое readback: 12/12, [45148897281](https://github.com/rumata-estor/modx3-mcp/actions/runs/45148897281).
+- [ ] Физически разные хосты, внешний TLS/Node Bridge, сетевой DB proxy
+  с переподключением/connection pooling, horizontal mixed-version upgrade.
 - [ ] Подтвердить требования к целевым базам данных и режим
   безопасного одновременного обновления всех MCP-узлов.
 - [ ] Ревью и окончательная приёмка в тестовую 1.2.8.
