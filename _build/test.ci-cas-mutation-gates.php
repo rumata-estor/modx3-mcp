@@ -109,6 +109,16 @@ try {
         } elseif ($action==='make_static'
             && strpos($message, 'make_static: unsupported type')!==false) {
             $preflightDenied[$action]='missing static element type';
+        } elseif ($action==='install_package'
+            && strpos($message,
+                'INVALID_INPUT: install_package requires a nonempty package name string.')===0) {
+            // Invalid package name must never contact a provider or consume CAS.
+            $preflightDenied[$action]='missing package name';
+        } elseif ($action==='uninstall_package'
+            && strpos($message,
+                'INVALID_INPUT: uninstall_package requires a nonempty signature string.')===0) {
+            // Invalid uninstall selector must never reach a package processor.
+            $preflightDenied[$action]='missing package signature';
         } elseif (in_array($action, array(
             'create_media_file','update_media_file','delete_media_file',
             'rename_media_file','create_media_folder','delete_media_folder'
