@@ -84,6 +84,28 @@ final class MutationPreflight
         if ($action === 'replace_across') {
             ReplaceAcrossTool::validateSelection($context, $data);
         }
+        // RU: Даже прямой HTTP-клиент не сможет обойти защиту перезаписи.
+        // EN: Reject unversioned media overwrites before site CAS reservation.
+        if ($action === 'update_media_file') {
+            $digest = isset($data['expected_sha256'])
+                && is_string($data['expected_sha256'])
+                ? $data['expected_sha256'] : '';
+            if (!preg_match('/^[a-fA-F0-9]{64}$/D', $digest)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: read and compare the current media file'
+                    . ' before supplying expected_sha256.'
+                );
+            }
+            // Use MODX Media Source API only. A second check inside the tool
+            // closes most ordinary delays between preflight and publication.
+            $source = MediaSourceMutationSupport::resolveForFileOperation(
+                $context, $data
+            );
+            $path = MediaSourceMutationSupport::relativePath(
+                isset($data['path']) ? $data['path'] : ''
+            );
+            MediaFileUpdateTool::assertFresh($source, $path, $data);
+        }
         // Paths/names are deterministic and must be rejected BEFORE
         // reserving a CAS revision or an operation ID. The media driver
         // revalidates these inputs before its actual filesystem effect.
