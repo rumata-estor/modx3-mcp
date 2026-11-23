@@ -86,9 +86,11 @@ try {
     echo 'CAS_POLICY_CREATE_EVIDENCE_OK platform='.($is2?'modx2':'modx3').PHP_EOL;
     // RU: Изменяем только описание отдельной, никому не выданной политики.
     // EN: Update only an unassigned disposable policy description.
-    $updateState=casCreateRpc('get_site_state');
+    $updateState=casCreateRpc('get_site_state',array('read_set'=>array(
+        array('role'=>'target','type'=>'access_policy','id'=>$policyId)
+    )));
     $updateGuard=array('observed_site_revision'=>(int)$updateState['site_revision'],
-        'strict_site_revision'=>true,'read_set'=>array());
+        'strict_site_revision'=>true,'read_set'=>$updateState['read_set']);
     $updateRequest=array('id'=>$policyId,'name'=>$name,
         'description'=>'modified disposable policy',
         '_runtime_preconditions'=>$updateGuard);
@@ -112,10 +114,12 @@ try {
 
     // RU: Удаление с фиксированным CAS и повтором по старой ревизии.
     // EN: Delete under fixed CAS then reject stale replay.
-    $deleteState=casCreateRpc('get_site_state');
+    $deleteState=casCreateRpc('get_site_state',array('read_set'=>array(
+        array('role'=>'target','type'=>'access_policy','id'=>$policyId)
+    )));
     $deleteRequest=array('id'=>$policyId,'_runtime_preconditions'=>array(
         'observed_site_revision'=>(int)$deleteState['site_revision'],
-        'strict_site_revision'=>true,'read_set'=>array()));
+        'strict_site_revision'=>true,'read_set'=>$deleteState['read_set']));
     casCreateRpc('delete_access_policy',$deleteRequest);
     $policyId=0;
     $afterDelete=casCreateRpc('get_site_state');
@@ -140,5 +144,14 @@ try {
     }
     echo 'CAS_POLICY_DELETE_EVIDENCE_OK'.PHP_EOL;
 }finally {
-    if($policyId>0)casCreateRpc('delete_access_policy',array('id'=>$policyId));
+    if($policyId>0) {
+        $cleanup=casCreateRpc('get_site_state',array('read_set'=>array(
+            array('role'=>'target','type'=>'access_policy','id'=>$policyId)
+        )));
+        casCreateRpc('delete_access_policy',array('id'=>$policyId,
+            '_runtime_preconditions'=>array(
+                'observed_site_revision'=>(int)$cleanup['site_revision'],
+                'strict_site_revision'=>true,'read_set'=>$cleanup['read_set']
+            )));
+    }
 }
