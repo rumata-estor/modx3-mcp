@@ -1,4 +1,4 @@
-# MODX MCP 1.2.8 Beta 1 — community test plan
+# MODX MCP 1.2.8 Beta 2 — community test plan
 
 **Status: candidate, not a stable release.** The MODX 2/3 transport archives and matching Node client are built on disposable CI instances. Nothing is automatically published to the official MODX Extras provider, and production deployments are out of scope.
 
@@ -10,13 +10,19 @@ Read the explicit [1.2.8 security limitations](SECURITY-LIMITATIONS-1.2.8.md) be
 
 | Target | Expected file |
 | --- | --- |
-| MODX 2.8.x | `modx2mcp-1.2.8-beta1.transport.zip` |
-| MODX 3.x | `modx3mcp-1.2.8-beta1.transport.zip` |
-| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.1.tgz` |
+| MODX 2.8.x | `modx2mcp-1.2.8-beta2.transport.zip` |
+| MODX 3.x | `modx3mcp-1.2.8-beta2.transport.zip` |
+| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.2.tgz` |
 
-The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
+The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128-rc2.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
 
-For the matching local Node client: `npm install -g ./modx3-mcp-1.2.8-beta.1.tgz`. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
+For the matching local Node client: `npm install -g ./modx3-mcp-1.2.8-beta.2.tgz`. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
+
+## Changes from Beta 1
+
+Beta 1 was the earlier candidate. **Do not mix Beta 1 and Beta 2 packages.** Beta 2 additionally addresses FINDING-006 (component source read through pinned descriptors and `O_NOFOLLOW`) and FINDING-007 (accurate opt-in ledger documentation). The Node client now uses **audited pinned dependencies** and ships `npm-shrinkwrap.json` to preserve the validated transitive dependency graph on installation. Without Python 3 / PHP `proc_open`, component-file reads explicitly refuse instead of falling back to a race-prone path read.
+
+See the [1.2.8 release readiness register](RELEASE-READINESS-1.2.8.ru.md) for exact scope and remaining risks.
 
 ## Scope
 
