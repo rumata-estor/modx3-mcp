@@ -472,9 +472,18 @@ class StateSupport
             } catch (\Throwable $rollbackFailure) {
                 // A failed rollback does not prove that the write was undone.
             }
-            if ($commitAttempted || !$rollbackConfirmed) {
-                // RU: Нельзя сообщать об откате после неподтверждённого COMMIT/ROLLBACK.
-                // EN: Never report rollback after an unconfirmed COMMIT/ROLLBACK.
+            // RU: Известный отказ CAS/авторизации до эффектов можно вернуть.
+            // RU: Любой другой сбой внутри транзакции, включая PDO deadlock
+            // RU: или silent execute()=false у xPDO, не доказывает отмену
+            // RU: побочных эффектов PHP-плагинов, файлов и сторонних сервисов.
+            // EN: Preserve only explicit pre-effect guard denials. A rollback
+            // EN: cannot undo plugin/filesystem effects or prove no side effect.
+            $guardDenied = $e instanceof \ModxMCPClientException
+                && preg_match(
+                    '/\A(?:CAS_REQUIRED|STALE_STATE|AUTH_DENIED|NOT_FOUND|VALIDATION_ERROR)(?:[: ]|$)/D',
+                    $e->getMessage()
+                ) === 1;
+            if ($commitAttempted || !$rollbackConfirmed || !$guardDenied) {
                 throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
             }
             throw $e;
