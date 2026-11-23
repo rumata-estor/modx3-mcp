@@ -102,9 +102,21 @@ class BulkResourcesTool implements ToolInterface
         }
 
         $dryRun = !empty($data['dry_run']);
+        $resourceClass = $context->platform()->className('resource');
+        if (!$dryRun) {
+            // Validate every target without writes. This is repeated under
+            // the protected dispatcher after the shared preflight, too.
+            foreach ($ids as $candidateId) {
+                if (!$context->modx()->getObject($resourceClass, $candidateId)) {
+                    throw new \ModxMCPClientException(
+                        'NOT_FOUND: bulk_resources target ' . $candidateId
+                        . ' does not exist; no batch writes attempted.'
+                    );
+                }
+            }
+        }
         return array(
             'operation'=>$operation,
-            'limit'=>$limit,
             'ids'=>$ids,
             'dry_run'=>$dryRun,
             'resourceClass'=>$resourceClass,
@@ -115,28 +127,10 @@ class BulkResourcesTool implements ToolInterface
     {
         $validated = self::validateBatch($context, $data);
         $operation = $validated['operation'];
-        $limit = $validated['limit'];
         $ids = $validated['ids'];
         $dryRun = $validated['dry_run'];
         $resourceClass = $validated['resourceClass'];
         $results = array();
-        $resourceClass = $context->platform()->className('resource');
-
-        if (!$dryRun) {
-            // RU: Если один из ID отсутствует, не начинаем менять другие.
-            // RU: Предварительная проверка не заменяет CAS, но исключает
-            // RU: заведомо частичное выполнение запроса с ошибочным списком.
-            // EN: Reject an already-incomplete target set before the first
-            // EN: mutation. Preflight does not replace mandatory CAS checks.
-            foreach ($ids as $candidateId) {
-                if (!$context->modx()->getObject($resourceClass, $candidateId)) {
-                    throw new \ModxMCPClientException(
-                        'NOT_FOUND: bulk_resources target ' . $candidateId
-                        . ' does not exist; no batch writes attempted.'
-                    );
-                }
-            }
-        }
         $attemptedWrites = 0;
         foreach ($ids as $id) {
             $resource = $context->modx()->getObject($resourceClass, $id);
