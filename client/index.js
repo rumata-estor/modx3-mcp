@@ -376,12 +376,12 @@ async function modxApiRequest(payload) {
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp(response.data, response.status, action));
+        ErrorPresenter.fromHttp(response.data, response.status, action, isReadOnlyApiAction(action)));
     }
     if (!response.data || typeof response.data !== "object"
         || response.data.success !== true) {
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp({ code: "OPERATION_REFUSED" }, response.status, action));
+        ErrorPresenter.fromHttp({ code: "OPERATION_REFUSED" }, response.status, action, isReadOnlyApiAction(action)));
     }
     return response.data;
   } catch (error) {
@@ -390,7 +390,7 @@ async function modxApiRequest(payload) {
       if (error.response.data && typeof error.response.data === "object")
         noteCaps(error.response.data.caps);
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp(error.response.data, error.response.status, action));
+        ErrorPresenter.fromHttp(error.response.data, error.response.status, action, isReadOnlyApiAction(action)));
     }
     throw new DiagnosticMcpError(
       ErrorPresenter.fromNetwork(error, action, isReadOnlyApiAction(action)));
