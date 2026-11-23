@@ -39,7 +39,12 @@ class MediaSourceMutationSupport
      */
     public static function relativePath($path, $allowSourceRoot = false)
     {
-        $raw = (string)$path;
+        // RU: Массив/объект нельзя приводить к имени файла "Array" и т.п.
+        // EN: A malformed path must fail before any driver/filesystem effect.
+        if (!is_string($path)) {
+            throw new \ModxMCPClientException('Media path must be a string.');
+        }
+        $raw = $path;
         if (preg_match('/[\\x00-\\x1F]/', $raw)
             || preg_match('#^[A-Za-z]:[\\\\/]#', $raw)
             || strpos($raw, '\\\\') === 0) {
@@ -54,7 +59,10 @@ class MediaSourceMutationSupport
 
     public static function leafName($name)
     {
-        $raw = (string)$name;
+        if (!is_string($name)) {
+            throw new \ModxMCPClientException('Media name must be a string.');
+        }
+        $raw = $name;
         if ($raw === '' || $raw === '.' || $raw === '..'
             || strpos($raw, '/') !== false
             || strpos($raw, '\\') !== false

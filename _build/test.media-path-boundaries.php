@@ -32,6 +32,22 @@ foreach($invalidNames as $name) {
     if(!$denied)throw new RuntimeException('Unsafe media name allowed: '.bin2hex($name));
     $check++;
 }
+// Malformed JSON values cannot be stringified to "Array", "Object", "1".
+$invalidTypes=array(
+    array('folder'),array('name'=>'secret'),(object)array('path'=>'x'),
+    true,false,null,42
+);
+foreach($invalidTypes as $value) {
+    foreach(array('relativePath','leafName') as $method) {
+        $denied=false;
+        try { M::$method($value); }
+        catch(ModxMCPClientException $e) {$denied=true;}
+        if(!$denied) {
+            throw new RuntimeException('Malformed media path/name accepted: '.gettype($value));
+        }
+        $check++;
+    }
+}
 if(M::relativePath('/folder/sub/')!=='folder/sub'
     || M::relativePath('/',true)!==''
     || M::relativePath('folder\\sub')!=='folder/sub'
