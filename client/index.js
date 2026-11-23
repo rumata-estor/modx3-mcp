@@ -287,18 +287,20 @@ function runMutationAuditHook(name, args, result, backupFiles) {
       env: process.env,
     });
     if (hook.error) {
-      console.error(`modxMCP: audit hook warning: ${redactText(hook.error.message)}`);
+      // RU: Текст ошибки внешней команды может содержать сырые секреты.
+      // EN: Never put arbitrary child-process exception text in MCP stderr.
+      console.error("modxMCP: audit hook failed (exception text withheld)");
       return;
     }
     if (hook.status !== 0) {
-      const err = String(hook.stderr || "").trim();
-      console.error(`modxMCP: audit hook warning: exit ${hook.status}${err ? " — " + redactText(err) : ""}`);
+      const exitCode = Number.isInteger(hook.status) ? hook.status : "unknown";
+      console.error(`modxMCP: audit hook exited unsuccessfully, code=${exitCode} (output withheld)`);
       return;
     }
-    const out = String(hook.stdout || "").trim();
-    if (out) console.error(`modxMCP: audit hook: ${redactText(out)}`);
+    // RU: stdout/stderr внешнего hook не доверяем и не пишем в журнал MCP.
+    // EN: Suppress untrusted hook stdout/stderr, even if they look harmless.
   } catch (e) {
-    console.error(`modxMCP: audit hook warning: ${redactText(e.message)}`);
+    console.error("modxMCP: audit hook failed unexpectedly (details withheld)");
   }
 }
 
@@ -415,7 +417,7 @@ function pruneBackupDirs(root) {
       fs.rmSync(path.join(root, name), { recursive: true, force: true });
     }
   } catch (e) {
-    console.error(`modxMCP: не удалось применить retention резервных копий: ${redactText(e.message)}`);
+    console.error("modxMCP: не удалось применить retention резервных копий (подробности скрыты)");
   }
 }
 
@@ -460,7 +462,7 @@ async function autoBackupElement(type, args, action) {
   };
   fs.writeFileSync(file, JSON.stringify(record, null, 2), "utf8");
   pruneBackupDirs(root);
-  console.error(`modxMCP: safety backup created: ${file}`);
+  console.error("modxMCP: safety backup created (path withheld from stderr)");
   return file;
 }
 
@@ -504,7 +506,7 @@ async function autoBackupResourceTvs(args, action) {
   fs.writeFileSync(file, JSON.stringify(record, null, 2), { encoding: "utf8", mode: 0o600 });
   try { fs.chmodSync(file, 0o600); } catch (_) {}
   pruneBackupDirs(root);
-  console.error(`modxMCP: TV safety backup created: ${file}`);
+  console.error("modxMCP: safety backup created (path withheld from stderr)");
   return file;
 }
 
@@ -565,7 +567,7 @@ async function autoBackupAllTvValues(args, action) {
   fs.writeFileSync(file, JSON.stringify(record, null, 2), { encoding: "utf8", mode: 0o600 });
   try { fs.chmodSync(file, 0o600); } catch (_) {}
   pruneBackupDirs(root);
-  console.error(`modxMCP: stored TV values safety backup created: ${file}`);
+  console.error("modxMCP: safety backup created (path withheld from stderr)");
   return file;
 }
 
@@ -608,7 +610,7 @@ async function autoBackupSystemSetting(args, action) {
   fs.writeFileSync(file, JSON.stringify(record, null, 2), { encoding: "utf8", mode: 0o600 });
   try { fs.chmodSync(file, 0o600); } catch (_) {}
   pruneBackupDirs(root);
-  console.error(`modxMCP: system-setting safety backup created: ${file}`);
+  console.error("modxMCP: safety backup created (path withheld from stderr)");
   return file;
 }
 
