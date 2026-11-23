@@ -122,5 +122,35 @@ $m=new TxFakeModx();$c=new TxFakeContext($m);$fired=0;
     \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function()use(&$fired){$fired++;});
 });
 txRequire($fired===1&&$m->commitCalls===1&&$m->rollbackCalls===0&&count($m->logs)===1,'after commit fault isolated');$checks++;
+// DB deadlock may throw PDOException, or xPDO::execute can return false.
+// Even a confirmed DB rollback cannot undo a plugin or filesystem effect.
+foreach (array(
+    new \RuntimeException('SENSITIVE_NATIVE_EXECUTE_FALSE'),
+    new \PDOException('SQLSTATE[40001]: SENSITIVE_NATIVE_DEADLOCK'),
+) as $fault) {
+    $m=new TxFakeModx();$c=new TxFakeContext($m);
+    $err=txExpectThrow(function()use($c,$fault){
+        \ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function()use($fault){
+            throw $fault;
+        });
+    },'unknown native transaction error');
+    txRequire($err instanceof ModxMCPClientException
+        && strpos($err->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+        && strpos($err->getMessage(),'SENSITIVE_NATIVE')===false
+        && $err->getPrevious()===null
+        && $m->rollbackCalls===1 && $m->commitCalls===0,
+        'deadlock/native failure sanitized and never replayed');
+    $checks++;
+}
+$m=new TxFakeModx();$c=new TxFakeContext($m);
+$err=txExpectThrow(function()use($c){
+    \ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function(){
+        throw new ModxMCPClientException('STALE_STATE: target was changed');
+    });
+},'deterministic CAS refusal');
+txRequire($err instanceof ModxMCPClientException
+    && strpos($err->getMessage(),'STALE_STATE:')===0
+    && $m->rollbackCalls===1, 'CAS preflight refusal preserved');
+$checks++;
 echo 'TX_REVISION_FAULT_MATRIX_OK checks='.$checks.PHP_EOL;
 }
