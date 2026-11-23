@@ -40,6 +40,11 @@ $modx->setOption('modxmcp.disabled_groups', '');
     'path' => 'UNLABELED_SENSITIVE_TEXT_8462',
 ));
 if (!is_file($auditFile)) throw new RuntimeException('Audit file not written');
+clearstatcache(true, $auditFile);
+if ((fileperms($auditFile) & 0777) !== 0600)
+    throw new RuntimeException('Audit log is not owner-only');
+if ((fileperms(dirname($auditFile)) & 0777) !== 0700)
+    throw new RuntimeException('Audit directory is not owner-only');
 $written = file_get_contents($auditFile, false, null, $priorAuditSize);
 if (strpos($written, $secret) !== false) throw new RuntimeException('Audit file contains secret');
 if (strpos($written, 'UNLABELED_SENSITIVE_TEXT_8462') !== false)
