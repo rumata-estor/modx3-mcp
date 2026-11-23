@@ -31,7 +31,7 @@ namespace ModxMcp\Tools {
         public function getObjectContents($path){
             $this->reads++;
             if($this->changeOnRead===$this->reads) $this->contents='EXTERNAL';
-            return $this->contents;
+            return array('content'=>$this->contents,'path'=>$path);
         }
         public function updateObject($path,$content){
             $this->updates++;
