@@ -6,6 +6,7 @@ const assert = require("assert");
 const presenter = require("../client/error-presenter");
 const cases = [
   { code: "AUTH_DENIED", outcome: "not_applied", retry_policy: "after_authorization" },
+  { code: "MANUAL_REVIEW_REQUIRED", outcome: "not_applied", retry_policy: "after_review" },
   { code: "CAS_REQUIRED", outcome: "not_applied", retry_policy: "after_refresh" },
   { code: "STALE_STATE", outcome: "not_applied", retry_policy: "after_review" },
   { code: "MUTATION_OUTCOME_UNCERTAIN", outcome: "unknown",

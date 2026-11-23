@@ -96,6 +96,19 @@ try {
             // RU: Детерминированный запрет сильнее отказа CAS-резерва.
             // EN: Independent master-switch denial precedes CAS reservation.
             $preflightDenied[$action]='disabled by administrator';
+        } elseif (in_array($action, array(
+            'update_access_policy', 'delete_access_policy',
+            'update_access_policy_template', 'delete_access_policy_template'
+        ), true) && strpos($message,
+            'CAS_REQUIRED: protected element write requires numeric id and type.')===0) {
+            // RU: При отсутствии id/snapshot политика останавливается раньше
+            // RU: чем инъекция отказа DB revision — это правильный preflight.
+            // EN: A missing policy ID/snapshot fails before reservation.
+            $preflightDenied[$action]='missing policy target snapshot';
+        } elseif ($action==='update_media_file'
+            && strpos($message, 'MANUAL_REVIEW_REQUIRED:')===0) {
+            // An unversioned media overwrite is refused before external I/O.
+            $preflightDenied[$action]='missing verified media digest';
         } elseif ($action==='reorder_resources'
             && strpos($message, 'reorder_resources: "items"')!==false) {
             // A missing batch is now rejected before CAS, not after it.

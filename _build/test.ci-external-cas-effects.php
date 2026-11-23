@@ -63,6 +63,13 @@ function getFile($path) {
         throw $e;
     }
 }
+function fileDigest($path) {
+    $item=rpc('read_media_source_file',array('id'=>1,'path'=>$path));
+    requireCas(isset($item['sha256']) && is_string($item['sha256'])
+        && preg_match('/^[a-f0-9]{64}$/D',$item['sha256']),
+        'full verified media SHA256 required before overwrite');
+    return $item['sha256'];
+}
 function folderPresent($name) {
     $list=rpc('list_media_source_files',array('id'=>1,'path'=>''));
     foreach ($list['entries'] as $row) {
@@ -127,7 +134,8 @@ try {
         array('source'=>1,'path'=>$dir,'name'=>'must-not-exist.txt','content'=>'no'),
         'create_media_file',function() use($created){return getFile($created);},null);
     absentAtRevisionFault('update_media_file',
-        array('source'=>1,'path'=>$base,'content'=>'bad'),
+        array('source'=>1,'path'=>$base,'content'=>'bad',
+              'expected_sha256'=>fileDigest($base)),
         'update_media_file',function() use($base){return getFile($base);},'alpha-'.$key);
     absentAtRevisionFault('rename_media_file',
         array('source'=>1,'path'=>$base,'new_name'=>'renamed.txt'),
@@ -177,7 +185,8 @@ try {
     // Positive controls: the same media tools DO modify the fixture after
     // the fault injector is removed, and each increases revision once.
     $prev=rev();
-    rpc('update_media_file',array('source'=>1,'path'=>$base,'content'=>'beta-'.$key));
+    rpc('update_media_file',array('source'=>1,'path'=>$base,'content'=>'beta-'.$key,
+        'expected_sha256'=>fileDigest($base)));
     requireCas(getFile($base)==='beta-'.$key,'MCP update success readback');
     requireCas(rev()===$prev+1,'MCP update revision increment once');
 
@@ -212,6 +221,7 @@ try {
     // revision increment. Both candidates change only this disposable file.
     $raceRevision=rev();
     $beforeRace=getFile($renamed);
+    $raceHash=fileDigest($renamed);
     $raceWorkers=array();
     $raceGate=getenv('RUNNER_TEMP').'/cas-ext-'.$key.'.gate';
     for($i=0;$i<2;$i++){
@@ -220,7 +230,7 @@ try {
         $cmd=array(
             PHP_BINARY,__DIR__.'/test.ci-external-cas-worker.php',
             $renamed,(string)$raceRevision,(string)$beforeRace,
-            $nextValue,$readyFile,$raceGate,
+            $nextValue,$readyFile,$raceGate,$raceHash,
         );
         $pipes=array();
         $proc=proc_open($cmd,array(
@@ -256,6 +266,7 @@ try {
     requireCas(in_array($winner,array($raceWorkers[0][3],$raceWorkers[1][3]),true),
         'external race persisted exactly one writer');
     rpc('update_media_file',array('source'=>1,'path'=>$renamed,'content'=>$beforeRace,
+        'expected_sha256'=>fileDigest($renamed),
         '_runtime_preconditions'=>array(
             'observed_site_revision'=>$raceRevision+1,
             'strict_site_revision'=>true,'read_set'=>array(),
@@ -269,10 +280,13 @@ try {
         rpc('update_media_file',array(
             'source'=>1,'path'=>$dir.'/does-not-exist.txt','content'=>'wrong'));
     } catch (\Throwable $e){$failure=$e->getMessage();}
-    requireCas($failure!==null,'post-reservation tool error is reported');
-    requireCas(rev()===$prev+1,
-        'post-reservation tool failure consumes revision conservatively');
-    requireCas(getFile($renamed)==='beta-'.$key,'error did not touch unrelated file');
+    requireCas(is_string($failure)
+        && strpos($failure,'MANUAL_REVIEW_REQUIRED:')===0,
+        'unverifiable media overwrite refused before effect');
+    requireCas(rev()===$prev,
+        'manual review preflight does not consume revision');
+    requireCas(getFile($renamed)==='beta-'.$key,
+        'unverifiable overwrite did not touch unrelated file');
     echo 'CAS_EXTERNAL_SUCCESS_AND_FAILURE_PATHS_OK'.PHP_EOL;
 
     // Path traversal and malicious names must be denied by the MCP endpoint,
@@ -282,7 +296,8 @@ try {
         array('create_media_file',array(
             'source'=>1,'path'=>'../','name'=>'escape-'.$key.'.txt','content'=>'no')),
         array('update_media_file',array(
-            'source'=>1,'path'=>$dir.'/../'.$dir.'/renamed.txt','content'=>'no')),
+            'source'=>1,'path'=>$dir.'/../'.$dir.'/renamed.txt',
+            'content'=>'no','expected_sha256'=>fileDigest($renamed))),
         array('rename_media_file',array(
             'source'=>1,'path'=>$renamed,'new_name'=>'../escape.txt')),
         array('delete_media_file',array(

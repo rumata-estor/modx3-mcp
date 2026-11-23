@@ -169,6 +169,21 @@ class ResourceTvUpdateTool implements ToolInterface
         }
         try {
             foreach ($data['tvs'] as $name => $value) {
+                // RU: MODX Manager не использует блокировку MCP. Повторно
+                // RU: сравниваем штатное raw TV непосредственно перед записью.
+                // EN: Manager does not take the MCP lock. Recheck the native
+                // EN: TV raw value immediately before every setTVValue call.
+                // EN: This reduces (but cannot eliminate) the external race.
+                if ($guard !== null) {
+                    $current = method_exists($tvObjects[$name], 'getValue')
+                        ? (string)$tvObjects[$name]->getValue($resourceId)
+                        : (string)$resource->getTVValue($name);
+                    if (!hash_equals($expected[$name], $current)) {
+                        throw new \ModxMCPClientException(
+                            'STALE_STATE: TV changed outside MCP; compare current value in MODX Manager.'
+                        );
+                    }
+                }
                 $written = ($resource->setTVValue($name, $value) !== false);
                 if (!$written) {
                     throw new \ModxMCPClientException('Failed to write TV: ' . $name);

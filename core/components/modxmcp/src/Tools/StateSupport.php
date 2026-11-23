@@ -137,7 +137,8 @@ class StateSupport
                     || !isset($item['type'])
                     || !in_array($item['type'], array(
                         'resource','template','chunk','snippet','plugin','tv',
-                        'category','system_setting','user','user_group','role'
+                        'category','system_setting','user','user_group','role',
+                        'access_policy','access_policy_template'
                     ), true)
                     || (empty($item['id']) && empty($item['name']) && empty($item['key']))) {
                     throw new \ModxMCPClientException(
@@ -752,6 +753,73 @@ class StateSupport
         return $state;
     }
 
+    /**
+     * RU: Полный наблюдаемый снимок политики и её шаблона средствами MODX.
+     * RU: Если разрешения шаблона не читаются, изменение запрещено.
+     * EN: Native MODX objects only; no direct database access or locks.
+     * EN: Fail closed if related policy-template permissions cannot be read.
+     */
+    private static function policyTargetState($context, $type, array $item)
+    {
+        if (!isset($item['id']) || !is_int($item['id']) || $item['id'] < 1) {
+            throw new \ModxMCPClientException(
+                'CAS_REQUIRED: policy fingerprint requires a positive numeric id.'
+            );
+        }
+        $id = $item['id'];
+        $obj = $context->modx()->getObject(
+            $context->platform()->className($type), $id
+        );
+        if (!$obj) {
+            throw new \ModxMCPClientException(
+                'STALE_STATE: access policy object disappeared.'
+            );
+        }
+        $raw = $obj->toArray();
+        if (!is_array($raw) || !isset($raw['id']) || (int)$raw['id'] !== $id) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: access policy state cannot be verified.'
+            );
+        }
+        $state = array(
+            'exists' => true, 'id' => $id,
+            'name' => isset($raw['name']) ? (string)$raw['name'] : '',
+            'persisted_sha256' => self::canonicalHash($raw),
+        );
+        if ($type === 'access_policy_template') {
+            // A template can change through its related permission rows while
+            // the template's own fields remain identical. Always include them.
+            try {
+                $permissions = $obj->getMany('Permissions');
+            } catch (\Throwable $e) {
+                $permissions = null;
+            }
+            if (!is_array($permissions)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: policy template permissions unreadable.'
+                );
+            }
+            $rows = array();
+            foreach ($permissions as $permission) {
+                if (!is_object($permission) || !method_exists($permission, 'toArray')) {
+                    throw new \ModxMCPClientException(
+                        'MANUAL_REVIEW_REQUIRED: policy permission unreadable.'
+                    );
+                }
+                $entry = $permission->toArray();
+                if (!is_array($entry)) {
+                    throw new \ModxMCPClientException(
+                        'MANUAL_REVIEW_REQUIRED: policy permission invalid.'
+                    );
+                }
+                $rows[] = self::canonicalHash($entry);
+            }
+            sort($rows, SORT_STRING);
+            $state['permissions_sha256'] = self::canonicalHash($rows);
+        }
+        return $state;
+    }
+
     private static function systemSettingState($context, array $item)
     {
         $key = isset($item['key']) ? trim((string)$item['key']) : '';
@@ -797,6 +865,8 @@ class StateSupport
         )));
         if ($type === 'system_setting') {
             $state = self::systemSettingState($context, $item);
+        } elseif (in_array($type, array('access_policy','access_policy_template'), true)) {
+            $state = self::policyTargetState($context, $type, $item);
         } elseif (in_array($type,array('user','user_group','role'),true)) {
             $state = self::aclTargetState($context, $type, $item);
         } elseif (in_array(
@@ -922,7 +992,8 @@ class StateSupport
                 || !isset($item['type'])
                 || !in_array($item['type'], array(
                     'resource','template','chunk','snippet','plugin','tv',
-                    'category','system_setting','user','user_group','role'
+                    'category','system_setting','user','user_group','role',
+                    'access_policy','access_policy_template'
                 ), true)
                 || !isset($item['fingerprint'])
                 || !is_string($item['fingerprint'])
@@ -959,6 +1030,10 @@ class StateSupport
             'update_user_group' => 'user_group',
             'delete_user_group' => 'user_group',
             'update_role' => 'role', 'delete_role' => 'role',
+            'update_access_policy' => 'access_policy',
+            'delete_access_policy' => 'access_policy',
+            'update_access_policy_template' => 'access_policy_template',
+            'delete_access_policy_template' => 'access_policy_template',
             'add_user_to_group' => 'user_group',
             'update_group_member' => 'user_group',
             'remove_user_from_group' => 'user_group',
@@ -980,7 +1055,8 @@ class StateSupport
         }
         if (!in_array($type, array(
                 'resource','template','chunk','snippet','plugin','tv','category',
-                'user','user_group','role'
+                'user','user_group','role',
+                'access_policy','access_policy_template'
             ), true)
             || !is_int($id) || $id < 1) {
             throw new \ModxMCPClientException(

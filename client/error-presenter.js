@@ -5,7 +5,7 @@
 const crypto = require("crypto");
 
 const SAFE_CODES = new Set([
-  "AUTH_DENIED", "CAS_REQUIRED", "STALE_STATE", "MUTATION_OUTCOME_UNCERTAIN",
+  "AUTH_DENIED", "CAS_REQUIRED", "STALE_STATE", "MANUAL_REVIEW_REQUIRED", "MUTATION_OUTCOME_UNCERTAIN",
   "SECURE_STATIC_IO_UNAVAILABLE", "STATIC_READ_FAILED", "ACL_INDEX_REQUIRED",
   "PROJECT_BUSY", "BACKUP_FAILED", "HTTPS_REQUIRED", "METHOD_NOT_ALLOWED",
   "MCP_DISABLED", "IP_NOT_ALLOWED", "UNAUTHORIZED", "PAYLOAD_TOO_LARGE",
@@ -23,6 +23,10 @@ const FALLBACK = {
   AUTH_DENIED: ["Операция отклонена проверкой доступа.",
     "Не удалось подтвердить разрешение на действие.",
     "Обратитесь к администратору для проверки прав.", "not_applied", "after_authorization"],
+  MANUAL_REVIEW_REQUIRED: ["Операция остановлена: необходимо ручное согласование.",
+    "Внешнее изменение объекта или ограничения драйвера не позволяют подтвердить безопасную запись.",
+    "Проверьте текущий объект в MODX Manager, сравните изменения и согласуйте новый запрос.",
+    "not_applied", "after_review"],
   CAS_REQUIRED: ["Для записи требуется актуальная проверка состояния.",
     "Отсутствуют обязательные CAS-предусловия.",
     "Прочитайте сайт и объект заново и передайте актуальные CAS-предусловия.",

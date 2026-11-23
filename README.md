@@ -38,7 +38,7 @@ Use the manager dashboard to review the API endpoint, manage token access, confi
 | Install and connect | [Installation and setup](docs/INSTALL.md) | [Установка](docs/INSTALL.ru.md) |
 | Explore all features | [Capabilities and tools](docs/CAPABILITIES.md) | [Возможности](docs/CAPABILITIES.ru.md) |
 | Build integrations | [API reference: 198 tools](docs/API.md) | [Справочник API](docs/API.ru.md) |
-| Deploy safely | [Security and trust model](docs/SECURITY.md) | [Безопасность](docs/SECURITY.ru.md) |
+| Deploy safely | [Security and trust model](docs/SECURITY.md) · [1.2.8 Beta limitations](docs/SECURITY-LIMITATIONS-1.2.8.md) | [Безопасность](docs/SECURITY.ru.md) |
 | System settings | [All 16 system settings](docs/SETTINGS.md) | [Все 16 настроек](docs/SETTINGS.ru.md) |
 
 Additional references: [development](DEVELOPMENT.md), [build architecture](docs/BUILD-ARCHITECTURE.md), [validation status](docs/VALIDATION.md).

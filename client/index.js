@@ -1847,8 +1847,8 @@ const toolDefinitions = [
   },
   {
     name: "modx_update_media_file",
-    description: "Overwrite a file's content inside a media source. `source` = id/name, `path` = file path within the source, `content` = new body.",
-    inputSchema: { type: "object", properties: { source: { type: "string" }, path: { type: "string" }, content: { type: "string" } }, required: ["source", "path", "content"] },
+    description: "Overwrite an existing media file only after reading its complete contents. Supply the sha256 returned by modx_read_media_source_file as expected_sha256. If a conflict or unverifiable driver is detected, stop for manual review.",
+    inputSchema: { type: "object", properties: { source: { type: "string" }, path: { type: "string" }, content: { type: "string" }, expected_sha256: { type: "string", pattern: "^[a-fA-F0-9]{64}$", description: "SHA-256 from the last complete verified read; required for overwrite." } }, required: ["source", "path", "content", "expected_sha256"] },
   },
   {
     name: "modx_delete_media_file",

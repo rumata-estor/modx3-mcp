@@ -4,6 +4,8 @@
 
 This guide documents the trust boundary of public **MODX MCP 1.2.5**, its security settings, and important limitations. It does not describe any external agent management infrastructure.
 
+**For the 1.2.8 Beta candidate, see [documented concurrency limitations and safe-stop rules](SECURITY-LIMITATIONS-1.2.8.md).** This document describes the published 1.2.5 interface and must not be mistaken for Beta behavior.
+
 ## The key rule
 
 **Treat the MODX MCP API token as an administrative credential.** Knowledge of the endpoint URL or documented tool names alone does not authorize a request. A valid `X-MCP-Token`, however, can enable broad site changes.

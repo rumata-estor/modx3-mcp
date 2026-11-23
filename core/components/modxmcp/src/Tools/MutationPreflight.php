@@ -13,8 +13,20 @@ final class MutationPreflight
      * EN: Processor-level guards remain defense in depth; shared guard
      * EN: classes are authoritative for each security policy.
      */
-    public static function assertAllowed($context, $action, array $data)
+    public static function assertAllowed($context, $action, array $data, $preconditions = null)
     {
+        // RU: Политики/шаблоны меняем только после снимка цели из MODX.
+        // RU: Даже без protected mode: fail closed до CAS-резерва и процессора.
+        // EN: Mandatory policy/template target snapshot in all security modes.
+        if (in_array($action, array(
+            'update_access_policy', 'delete_access_policy',
+            'update_access_policy_template', 'delete_access_policy_template'
+        ), true)) {
+            StateSupport::requireProtectedTargetReadSet(
+                $action, $data,
+                is_array($preconditions) ? $preconditions : array()
+            );
+        }
         // Reject forbidden hidden ACL/credential fields before CAS revision
         // reservation, while retaining identical processor-level checks.
         ProcessorMutationTool::assertAclMutationFields($action, $data);
@@ -83,6 +95,28 @@ final class MutationPreflight
         }
         if ($action === 'replace_across') {
             ReplaceAcrossTool::validateSelection($context, $data);
+        }
+        // RU: Даже прямой HTTP-клиент не сможет обойти защиту перезаписи.
+        // EN: Reject unversioned media overwrites before site CAS reservation.
+        if ($action === 'update_media_file') {
+            $digest = isset($data['expected_sha256'])
+                && is_string($data['expected_sha256'])
+                ? $data['expected_sha256'] : '';
+            if (!preg_match('/^[a-fA-F0-9]{64}$/D', $digest)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: read and compare the current media file'
+                    . ' before supplying expected_sha256.'
+                );
+            }
+            // Use MODX Media Source API only. A second check inside the tool
+            // closes most ordinary delays between preflight and publication.
+            $source = MediaSourceMutationSupport::resolveForFileOperation(
+                $context, $data
+            );
+            $path = MediaSourceMutationSupport::relativePath(
+                isset($data['path']) ? $data['path'] : ''
+            );
+            MediaFileUpdateTool::assertFresh($source, $path, $data);
         }
         // Paths/names are deterministic and must be rejected BEFORE
         // reserving a CAS revision or an operation ID. The media driver
