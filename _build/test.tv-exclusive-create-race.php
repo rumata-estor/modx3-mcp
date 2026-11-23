@@ -4,13 +4,22 @@
  * EN: Inject a competing TV target creation at exclusive-open time.
  */
 namespace ModxMcp\Tools {
-    function fopen($path,$mode) {
-        if ($mode==='xb' && !empty($GLOBALS['inject_tv_collision'])) {
-            // RU: Конкурент занимает путь после проверки, до fopen(xb).
-            // EN: Competing writer creates the target between check and open.
-            \file_put_contents($path,'OTHER_OWNER');
+    class StaticFileIoSupport {
+        public static function write($context,$file,$content,$createOnly=false) {
+            if ($createOnly && !empty($GLOBALS['inject_tv_collision'])) {
+                // RU: Фикстура занимает путь перед эксклюзивным open.
+                // EN: Fixture occupies target before the exclusive descriptor open.
+                \file_put_contents($file,'OTHER_OWNER');
+            }
+            $h=\fopen($file,$createOnly?'xb':'cb');
+            if ($h===false) throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: exclusive creation failed.'
+            );
+            if (!$createOnly) \ftruncate($h,0);
+            $n=\fwrite($h,$content);
+            \fclose($h);
+            return $n;
         }
-        return \fopen($path,$mode);
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
