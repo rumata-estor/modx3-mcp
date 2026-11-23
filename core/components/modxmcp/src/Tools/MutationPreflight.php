@@ -13,8 +13,20 @@ final class MutationPreflight
      * EN: Processor-level guards remain defense in depth; shared guard
      * EN: classes are authoritative for each security policy.
      */
-    public static function assertAllowed($context, $action, array $data)
+    public static function assertAllowed($context, $action, array $data, $preconditions = null)
     {
+        // RU: Политики/шаблоны меняем только после снимка цели из MODX.
+        // RU: Даже без protected mode: fail closed до CAS-резерва и процессора.
+        // EN: Mandatory policy/template target snapshot in all security modes.
+        if (in_array($action, array(
+            'update_access_policy', 'delete_access_policy',
+            'update_access_policy_template', 'delete_access_policy_template'
+        ), true)) {
+            StateSupport::requireProtectedTargetReadSet(
+                $action, $data,
+                is_array($preconditions) ? $preconditions : array()
+            );
+        }
         // Reject forbidden hidden ACL/credential fields before CAS revision
         // reservation, while retaining identical processor-level checks.
         ProcessorMutationTool::assertAclMutationFields($action, $data);
