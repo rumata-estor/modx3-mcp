@@ -34,11 +34,16 @@ $modx->setOption('modxmcp.disabled_groups', '');
 \ModxMcp\Tools\AuditSupport::log($runtimeContext, $marker, 'redaction_fixture', array(
     'password' => $secret,
     'details' => array('api_token' => $secret, 'message' => 'password=' . $secret),
-    'state' => 'expected'
+    'state' => 'expected',
+    'content' => 'UNLABELED_SENSITIVE_TEXT_8462',
+    'name' => 'UNLABELED_SENSITIVE_TEXT_8462',
+    'path' => 'UNLABELED_SENSITIVE_TEXT_8462',
 ));
 if (!is_file($auditFile)) throw new RuntimeException('Audit file not written');
 $written = file_get_contents($auditFile, false, null, $priorAuditSize);
 if (strpos($written, $secret) !== false) throw new RuntimeException('Audit file contains secret');
+if (strpos($written, 'UNLABELED_SENSITIVE_TEXT_8462') !== false)
+    throw new RuntimeException('Audit persisted arbitrary secret in free-form field');
 $read = (new \ModxMcp\Tools\AuditLogReadTool())->execute($runtimeContext, array('action' => $marker, 'limit' => 5));
 if (empty($read['entries'])) throw new RuntimeException('Audit MCP read returned no entries');
 $serialized = json_encode($read);
