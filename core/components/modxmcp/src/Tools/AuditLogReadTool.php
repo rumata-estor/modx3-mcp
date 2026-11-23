@@ -5,6 +5,10 @@
  */
 namespace ModxMcp\Tools;
 
+// RU: Модульный читатель работает также вне полной автозагрузки в тестах.
+// EN: Reuse the audit sanitizer with or without a runtime autoloader.
+require_once __DIR__ . '/AuditSupport.php';
+
 class AuditLogReadTool implements ToolInterface
 {
     public function name() { return 'read_audit_log'; }
