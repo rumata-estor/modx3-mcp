@@ -36,7 +36,7 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-static-atomic-") as tmp:
     for action,filename in (("write","content.tpl"),("create","new.tpl")):
         try:
             guard.os.write=partial_then_fail
-            sys.argv=[str(path),str(core),"elements/chunks/"+filename,action]
+            sys.argv=[str(path),str(core),"elements/chunks/"+filename,action,"11"]
             sys.stdin=SimpleNamespace(buffer=io.BytesIO(b"NEW_CONTENT"))
             failed=False
             try:guard.main()
@@ -51,10 +51,25 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-static-atomic-") as tmp:
         finally:
             guard.os.write=original_write
             sys.argv,sys.stdin=old_argv,old_stdin
+    # PHP-to-helper pipe sent fewer bytes than promised: reject before
+    # touching the target. This is a real failure of the framing boundary.
+    try:
+        sys.argv=[str(path),str(core),"elements/chunks/content.tpl","write","11"]
+        sys.stdin=SimpleNamespace(buffer=io.BytesIO(b"NE"))
+        failed=False
+        try:guard.main()
+        except guard.UnsafePath:failed=True
+        check(failed,"truncated PHP pipe was accepted")
+        check(target.read_bytes()==b"ORIGINAL_NEVER_TRUNCATED",
+              "truncated PHP pipe replaced original")
+        check(not list(folder.glob(".modxmcp-*.tmp")),
+              "payload length refusal leaked temp file")
+    finally:
+        sys.argv,sys.stdin=old_argv,old_stdin
     # The success path must still replace the old file atomically and
     # keep its mode rather than silently weakening permissions.
     try:
-        sys.argv=[str(path),str(core),"elements/chunks/content.tpl","write"]
+        sys.argv=[str(path),str(core),"elements/chunks/content.tpl","write","7"]
         sys.stdin=SimpleNamespace(buffer=io.BytesIO(b"SUCCESS"))
         guard.main()
     finally:
@@ -62,4 +77,4 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-static-atomic-") as tmp:
     check(target.read_bytes()==b"SUCCESS","successful replacement content")
     check((target.stat().st_mode & 0o777)==0o640,"permissions not retained")
     check(not list(folder.glob(".modxmcp-*.tmp")),"temporary file leaked")
-print("STATIC_DESCRIPTOR_ATOMIC_PRE_RENAME_FAILURE_OK checks=9")
+print("STATIC_DESCRIPTOR_ATOMIC_PRE_RENAME_FAILURE_OK checks=12")
