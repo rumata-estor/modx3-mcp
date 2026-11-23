@@ -65,12 +65,9 @@ class ElementContentSupport
                 if (is_file($absolute)) {
                     // RU: Ошибка чтения не равна пустому содержимому файла.
                     // EN: A read failure must never masquerade as empty content.
-                    $contents = @file_get_contents($absolute);
-                    if ($contents === false) {
-                        throw new \ModxMCPClientException(
-                            'STATIC_READ_FAILED: static element content could not be read.'
-                        );
-                    }
+                    // RU: Единственный backend для portable/strict, включая чтение.
+                    // EN: Shared portable/strict static I/O boundary, including reads.
+                    $contents = StaticFileWriteSupport::read($context, $absolute);
                     return array($contents, true, $absolute);
                 }
             }
