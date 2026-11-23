@@ -141,6 +141,7 @@ jobs:
           php _build/test.static-search-boundary.php
           php _build/test.make-static-symlink-boundary.php
           php _build/test.static-content-postwrite-fault.php
+          php _build/test.static-read-failure.php
           php _build/test.static-portable-replace.php
           php _build/test.static-short-write-fault.php
           php _build/test.replace-across-partial-fault.php
