@@ -403,10 +403,14 @@ class StateSupport
             throw new \RuntimeException('Cannot start CAS revision transaction.');
         }
         self::$transactionCallbacks[$key] = array();
+        $commitAttempted = false;
         try {
             $result = call_user_func($callback);
+            // RU: COMMIT мог записать данные до потери ответа.
+            // EN: COMMIT may persist data before its response is lost.
+            $commitAttempted = true;
             if ($modx->commit() === false) {
-                throw new \RuntimeException('CAS revision transaction commit failed.');
+                throw new \RuntimeException('CAS revision transaction commit not confirmed.');
             }
             $callbacks = self::$transactionCallbacks[$key];
             unset(self::$transactionCallbacks[$key]);
@@ -418,7 +422,17 @@ class StateSupport
             foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
                 if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
             }
-            $modx->rollback();
+            $rollbackConfirmed = false;
+            try {
+                $rollbackConfirmed = $modx->rollback() !== false;
+            } catch (\Throwable $rollbackFailure) {
+                // A failed rollback does not prove that the write was undone.
+            }
+            if ($commitAttempted || !$rollbackConfirmed) {
+                // RU: Нельзя сообщать об откате после неподтверждённого COMMIT/ROLLBACK.
+                // EN: Never report rollback after an unconfirmed COMMIT/ROLLBACK.
+                throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+            }
             throw $e;
         }
         // The DB commit is complete. Side effects must not falsely turn a
