@@ -12,7 +12,8 @@ class ReplaceAcrossTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
-    public function execute($context, array $data)
+    /** Complete read-only search/selection preflight; repeat before writes. */
+    public static function validateSelection($context, array $data)
     {
         $find = isset($data['find']) ? (string)$data['find'] : '';
         if ($find === '') {
@@ -75,9 +76,6 @@ class ReplaceAcrossTool implements ToolInterface
             $hits['results'] = array_slice($hits['results'], 0, $limit);
         }
 
-        $results = array();
-        $totalOccurrences = 0;
-        $attemptedWrites = 0;
         $prepared = array();
 
         // RU: Сначала читаем ВСЕ найденные элементы и проверяем пути.
@@ -107,6 +105,33 @@ class ReplaceAcrossTool implements ToolInterface
             $prepared[] = array($hit, $type, $map, $element,
                 $content, $isStatic, $absolute, $count);
         }
+
+        return array(
+            'find'=>$find,
+            'replacement'=>$replacement,
+            'caseSensitive'=>$caseSensitive,
+            'dryRun'=>$dryRun,
+            'allowed'=>$allowed,
+            'limit'=>$limit,
+            'searchMayBeIncomplete'=>$searchMayBeIncomplete,
+            'prepared'=>$prepared,
+        );
+    }
+
+    public function execute($context, array $data)
+    {
+        $selection = self::validateSelection($context, $data);
+        $find = $selection['find'];
+        $replacement = $selection['replacement'];
+        $caseSensitive = $selection['caseSensitive'];
+        $dryRun = $selection['dryRun'];
+        $allowed = $selection['allowed'];
+        $limit = $selection['limit'];
+        $searchMayBeIncomplete = $selection['searchMayBeIncomplete'];
+        $prepared = $selection['prepared'];
+        $results = array();
+        $totalOccurrences = 0;
+        $attemptedWrites = 0;
 
         // RU: Общая CAS-транзакция может откатить БД, но не статические
         // RU: файлы и события процессоров. После начала пакетной записи
