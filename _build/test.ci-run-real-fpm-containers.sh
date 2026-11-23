@@ -20,7 +20,8 @@ FROM php:8.2-fpm-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends libonig-dev libzip-dev \
  && docker-php-ext-install -j2 pdo_mysql mysqli mbstring zip \
  && rm -rf /var/lib/apt/lists/*
-RUN printf '\nclear_env = no\n' >> /usr/local/etc/php-fpm.d/www.conf
+RUN printf '\nclear_env = no\ncatch_workers_output = yes\ndecorate_workers_output = no\n' >> /usr/local/etc/php-fpm.d/www.conf
+RUN printf 'log_errors=On\ndisplay_errors=Off\nerror_reporting=E_ALL\n' > /usr/local/etc/php/conf.d/ci-security-errors.ini
 DOCKERFILE
 # We only use this image in the runner, never publish it.
 docker build --quiet -t modxmcp-ci-fpm:temporary "$WORK/build"
