@@ -83,24 +83,92 @@ def main():
                     payload = sys.stdin.buffer.read(MAX_CONTENT + 1)
                     if len(payload) > MAX_CONTENT:
                         raise UnsafePath("write size limit")
-                    if action == "create":
-                        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
-                    else:
-                        flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
-                    handle = os.open(leaf, flags, 0o644, dir_fd=parent)
+                    # RU: Путь цели держится через dirfd. Не truncate до
+                    # RU: завершения временной записи. Небезопасного fallback нет.
+                    # EN: Use a private same-directory inode, fsync then atomic
+                    # EN: dirfd-anchored rename/link. No truncate-first loss.
+                    import secrets
+
                     try:
-                        guard_file(handle)
-                        os.ftruncate(handle, 0)
-                        remaining = memoryview(payload)
-                        while remaining:
-                            n = os.write(handle, remaining)
-                            if n < 1:
-                                raise OSError("short write")
-                            remaining = remaining[n:]
-                        os.fsync(handle)
+                        existing = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+                    except FileNotFoundError:
+                        existing = None
+                    if existing is not None:
+                        if not stat.S_ISREG(existing.st_mode) or existing.st_nlink != 1:
+                            raise UnsafePath("target is not a singly-linked regular file")
+                        if action == "create":
+                            raise UnsafePath("exclusive target already exists")
+                        if not os.access(leaf, os.W_OK, dir_fd=parent,
+                                         follow_symlinks=False):
+                            raise UnsafePath("target is read-only")
+                    # A rename of a file owned by another account would
+                    # silently change ownership. Refuse instead of weakening
+                    # the descriptor boundary with in-place fallback.
+                    if existing is not None and (
+                        existing.st_uid != os.geteuid()
+                        or existing.st_gid != os.getegid()
+                    ):
+                        raise UnsafePath("cannot preserve owner of existing file")
+                    temp_name = ".modxmcp-" + secrets.token_hex(12) + ".tmp"
+                    temp = os.open(
+                        temp_name,
+                        os.O_WRONLY | os.O_CREAT | os.O_EXCL
+                        | os.O_NOFOLLOW | os.O_CLOEXEC,
+                        0o600, dir_fd=parent,
+                    )
+                    published = False
+                    try:
+                        try:
+                            guard_file(temp)
+                            remaining = memoryview(payload)
+                            while remaining:
+                                n = os.write(temp, remaining)
+                                if n < 1:
+                                    raise OSError("short temporary write")
+                                remaining = remaining[n:]
+                            target_mode = (
+                                stat.S_IMODE(existing.st_mode) if existing else
+                                0o666 & ~os.umask(os.umask(0))
+                            )
+                            os.fchmod(temp, target_mode)
+                            os.fsync(temp)
+                        finally:
+                            os.close(temp)
+                        # Check target metadata again before the atomic
+                        # replacement. A concurrent rename after this check
+                        # can still change the *target name* but cannot redirect
+                        # file I/O outside the anchored directory.
+                        try:
+                            now = os.stat(leaf, dir_fd=parent, follow_symlinks=False)
+                        except FileNotFoundError:
+                            now = None
+                        if existing is None and now is not None:
+                            raise UnsafePath("target appeared during write")
+                        if existing is not None and (
+                            now is None
+                            or not stat.S_ISREG(now.st_mode) or now.st_nlink != 1
+                            or (now.st_dev, now.st_ino, now.st_size, now.st_mtime_ns)
+                               != (existing.st_dev, existing.st_ino,
+                                   existing.st_size, existing.st_mtime_ns)
+                        ):
+                            raise UnsafePath("target changed during write")
+                        if action == "create":
+                            # Exclusive publication; cannot overwrite an
+                            # attacker-created target in the same directory.
+                            os.link(temp_name, leaf, src_dir_fd=parent,
+                                    dst_dir_fd=parent, follow_symlinks=False)
+                        else:
+                            # Atomic publish relative to an *open parent fd*.
+                            os.replace(temp_name, leaf, src_dir_fd=parent,
+                                       dst_dir_fd=parent)
+                        published = True
+                        os.fsync(parent)
                         sys.stdout.write(str(len(payload)))
                     finally:
-                        os.close(handle)
+                        try:
+                            os.unlink(temp_name, dir_fd=parent)
+                        except FileNotFoundError:
+                            pass
             finally:
                 os.close(parent)
         except Exception:
