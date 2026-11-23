@@ -63,7 +63,15 @@ class ElementContentSupport
             if ($absolute !== null) {
                 self::assertSafeStaticPath($context, $absolute);
                 if (is_file($absolute)) {
-                    return array((string)file_get_contents($absolute), true, $absolute);
+                    // RU: Ошибка чтения не равна пустому содержимому файла.
+                    // EN: A read failure must never masquerade as empty content.
+                    $contents = @file_get_contents($absolute);
+                    if ($contents === false) {
+                        throw new \ModxMCPClientException(
+                            'STATIC_READ_FAILED: static element content could not be read.'
+                        );
+                    }
+                    return array($contents, true, $absolute);
                 }
             }
         }
@@ -174,9 +182,6 @@ class ElementContentSupport
             $data
         );
         if (!$response || $response->isError()) {
-            $detail = $response
-                ? ProcessorSupport::error($response)
-                : 'no response.';
             if ($isStatic && $absolute !== null) {
                 // RU: Файл уже изменён, но процессор MODX мог откатить БД.
                 // RU: Возвращаем неопределённый исход, не безопасный retry.
@@ -184,10 +189,12 @@ class ElementContentSupport
                 // EN: database rollback cannot undo the filesystem effect.
                 throw new \ModxMCPClientException(
                     'MUTATION_OUTCOME_UNCERTAIN: static element file was written '
-                    . 'but MODX processor failed; inspect file and element before retry. '
-                    . $detail
+                    . 'but MODX processor failed; inspect file and element before retry.'
                 );
             }
+            $detail = $response
+                ? ProcessorSupport::error($response)
+                : 'no response.';
             throw new \ModxMCPClientException('element save failed: ' . $detail);
         }
     }
