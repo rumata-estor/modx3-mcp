@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['fix/128-acl-index-migration-20261123', 'feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122', 'test/128-ms2-modx2-scoped-evidence-20261122', 'test/128-ms2-category-assignment-rebased-20261122', 'test/128-ms2-update-category-rebased-20261122', 'test/128-ms2-order-evidence-rebased-20261122', 'test/128-versionx-modx2-revert-evidence-rebased-20261122', 'fix/128-ms2-category-fail-closed-rebased-20261122']
+    branches: ['test/128-real-multicontainer-fpm-20261123', 'fix/128-acl-index-migration-20261123', 'feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'audit/128-*', 'fix/128-static-portable-20261122', 'test/128-idempotency-20261122', 'test/128-idempotency-gate-20261122', 'audit/128-custom-media-source-20261122', 'audit/128-settings-security-20261122', 'test/128-settings-real-e2e-20261122', 'audit/128-auth-bypass-settings-20261122', 'fix/128-auth-deny-before-cas-20261122', 'test/128-auth-signed-concurrency-20261122', 'security/128-ms2-productlink-ids-rebased-20261122', 'fix/128-ms2-order-outcome-uncertain-20261122', 'test/128-real-kill-replay-20261122', 'fix/128-versionx-revert-fail-closed-20261122', 'test/128-ms2-modx2-scoped-evidence-20261122', 'test/128-ms2-category-assignment-rebased-20261122', 'test/128-ms2-update-category-rebased-20261122', 'test/128-ms2-order-evidence-rebased-20261122', 'test/128-versionx-modx2-revert-evidence-rebased-20261122', 'fix/128-ms2-category-fail-closed-rebased-20261122']
 
 permissions:
   contents: read
@@ -379,6 +379,16 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cross-host-lock.php
+      # RU: Два настоящих независимых PHP-FPM контейнера и nginx, единый DB writer.
+      # EN: Separate network+filesystem namespaces, HTTP and same MariaDB.
+      - name: Real two-container PHP-FPM HTTP CAS and SIGKILL (disposable)
+        if: matrix.php_version == '8.2' && (matrix.platform == 'modx2' || (matrix.platform == 'modx3' && matrix.modx_version == '3.2.4'))
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          bash _build/test.ci-run-real-fpm-containers.sh
       # RU: Потеря DB-сессии, подтверждение нового подключения и реальный deadlock.
       # EN: KILL CONNECTION, independent recovery and an actual InnoDB deadlock.
       - name: MariaDB disconnect, fresh CAS and deadlock failure injection (disposable)
