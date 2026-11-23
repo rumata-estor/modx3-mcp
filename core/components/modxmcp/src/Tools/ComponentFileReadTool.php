@@ -38,7 +38,7 @@ class ComponentFileReadTool implements ToolInterface
                     'root_path' => $componentRoot,
                     'path' => $relativePath,
                 ),
-                FilesystemSupport::readFileBounded($modx, $absolutePath, $data)
+                FilesystemSupport::readComponentFileAnchored($modx, $componentRoot, $relativePath, $data)
             );
         }
 

@@ -32,6 +32,12 @@ jobs:
       - name: Client syntax check
         run: node --check client/index.js
 
+      - name: Published Node lockfile dependency audit
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm audit --omit=dev --audit-level=moderate
+
       - name: Architecture and staging tests
         run: |
           python3 _build/test.architecture.py
@@ -147,6 +153,8 @@ jobs:
           php _build/test.p1-media-cas-stop.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
+          php _build/test.component-anchored-read.php
+          python3 _build/test.component-symlink-race.py
           php _build/test.make-static-symlink-boundary.php
           php _build/test.static-content-postwrite-fault.php
           php _build/test.static-read-failure.php
