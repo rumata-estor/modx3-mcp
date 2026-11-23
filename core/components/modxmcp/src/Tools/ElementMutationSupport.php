@@ -299,7 +299,8 @@ class ElementMutationSupport
         );
     }
 
-    public static function makeStatic($context, $type, $id)
+    /** Resolve static output path without creating directories or writing files. */
+    public static function describeStaticTarget($context, $type, $id)
     {
         $map = self::staticMap($context);
         if (!isset($map[$type])) {
@@ -327,6 +328,34 @@ class ElementMutationSupport
             $relative = 'core/elements/' . $item['dir'] . '/' . $slug . '-' . $id . '.' . $item['ext'];
             $absolute = $base . $relative;
         }
+
+        return array(
+            'item'=>$item,
+            'element'=>$element,
+            'relative'=>$relative,
+            'absolute'=>$absolute,
+        );
+    }
+
+    public static function preflightMakeStatic($context, $type, $id)
+    {
+        $target = self::describeStaticTarget($context, $type, $id);
+        if ($type === 'tv'
+            && (file_exists($target['absolute']) || is_link($target['absolute']))) {
+            throw new \ModxMCPClientException(
+                'make_static: TV target already exists; refusing overwrite.'
+            );
+        }
+    }
+
+    public static function makeStatic($context, $type, $id)
+    {
+        $target = self::describeStaticTarget($context, $type, $id);
+        $item = $target['item'];
+        $element = $target['element'];
+        $relative = $target['relative'];
+        $absolute = $target['absolute'];
+        $modx = $context->modx();
 
         // RU: Проверка корня и пути обязательна для ВСЕХ static-элементов.
         // RU: Чистая установка MODX может ещё не иметь core/elements.
