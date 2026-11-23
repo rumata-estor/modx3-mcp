@@ -32,6 +32,12 @@ jobs:
       - name: Client syntax check
         run: node --check client/index.js
 
+      - name: Published Node lockfile dependency audit
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm audit --omit=dev --audit-level=moderate
+
       - name: Architecture and staging tests
         run: |
           python3 _build/test.architecture.py
