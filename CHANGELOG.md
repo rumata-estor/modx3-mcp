@@ -4,6 +4,11 @@
 
 ## Unreleased (1.2.8 isolated branch — NOT a release)
 
+- **Component source read hardening (FINDING-006):** `read_component_file` now reads through pinned POSIX directory descriptors and `O_NOFOLLOW`. It rejects symlinked component paths and returns `MANUAL_REVIEW_REQUIRED` without a race-prone fallback when Python 3 / `proc_open` is unavailable. No SQL locks or file-writing operations are introduced. Symlink-based hosting layouts require a compatibility check.
+- **Operation ledger (FINDING-007):** corrected a stale comment: `MutationOperationGate` already connects the ledger to the dispatcher, but it remains opt-in and requires protected signed authorization and a provisioned table.
+- **Node dependencies:** pinned audited `@modelcontextprotocol/sdk 1.32.2` and `axios 1.21.1` in a reproducible committed `package-lock.json`. CI now checks production dependencies for advisories, instead of relying on the ephemeral Beta artifact to repair the graph.
+- **Release documentation:** nine installation languages point to the published stable v1.2.7; Beta risk disclosures, refusal messages, tested upgrade and community procedure are documented.
+
 - **CAS:** resource fingerprints now read raw `pub_date`, `unpub_date`, and `publishedon` from the MODX resource model **after** the ordinary authorized processor read. The public `get_element` date format remains backward-compatible; Manager date/time formatting and second truncation no longer affect CAS. **Reported by @AgelxNash**, [PR #57](https://github.com/rumata-estor/modx3-mcp/pull/57). Verified across 12 MODX/PHP configurations and a sub-minute drift regression.
 - **Secrets:** MODX 2 and 3 legacy monolithic setting-read fallbacks now fully redact API tokens and other sensitive values regardless of length, matching the modular `[REDACTED]` policy. **Reported by @AgelxNash**, [PR #52](https://github.com/rumata-estor/modx3-mcp/pull/52).
 - **Build:** both transport builders now exit with status 2 if `config.core.php` is missing instead of accidentally reporting success. Previously observed in the project review and independently restated by **@AgelxNash**, [PR #51](https://github.com/rumata-estor/modx3-mcp/pull/51). Added negative CI tests.
