@@ -1,0 +1,162 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: CI-процедура MODX MCP; проверки и сборка не должны менять production.
+# EN: MODX MCP CI workflow; testing and packaging must not modify production.
+name: True 1.2.7 to staged 1.2.8 transport upgrade (disposable only)
+
+# Test-only CI: builds are never uploaded, tagged, or published.
+# We intentionally leave the 1.2.7 signature unchanged until 1.2.8 release preparation.
+on:
+  workflow_dispatch:
+  push:
+    branches: ['feature/1.2.8-cas-pr46-20261121', 'audit/128-upgrade-127-128-20261123']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Disposable ${{ matrix.platform }} / PHP ${{ matrix.php_version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # RU: PHP 8.4 — исследовательский тест, не блокирующий релизную матрицу.
+    # EN: PHP 8.4 is exploratory, not a declared supported release target.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.2', signature: 'modx2mcp-1.2.7-pl'}
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl'}
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: ci-throwaway-only-root
+          MARIADB_DATABASE: modx_build
+          MARIADB_USER: modx_ci
+          MARIADB_PASSWORD: ci-throwaway-only-user
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mysqli, pdo_mysql, sodium, zip, gd, intl, mbstring, xml
+          coverage: none
+      - name: Validate and stage release source
+        run: |
+          set -euo pipefail
+          python3 _build/test.release-staging.py
+          python3 _build/test.capabilities-cas-metadata.py
+          python3 _build/prepare-release.py --platform '${{ matrix.platform }}' --output "$RUNNER_TEMP/modxmcp-stage"
+          grep -Fq "define('PKG_VERSION', '1.2.7');" "$RUNNER_TEMP/modxmcp-stage/_build/build.config.php"
+          grep -Fq "define('PKG_RELEASE', 'pl');" "$RUNNER_TEMP/modxmcp-stage/_build/build.config.php"
+      - name: Install official MODX on disposable CI database
+        env:
+          MODX_VERSION: ${{ matrix.modx_version }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://modx.s3.amazonaws.com/releases/${MODX_VERSION}/modx-${MODX_VERSION}-pl.zip" \
+            -o "$RUNNER_TEMP/modx.zip"
+          mkdir -p "$RUNNER_TEMP/modx-extract" "$RUNNER_TEMP/modx-site"
+          unzip -q "$RUNNER_TEMP/modx.zip" -d "$RUNNER_TEMP/modx-extract"
+          found="$(find "$RUNNER_TEMP/modx-extract" -type f -path '*/setup/index.php' -print -quit)"
+          if [ -z "$found" ]; then echo 'MODX setup missing'; exit 1; fi
+          root="$(dirname "$(dirname "$found")")"
+          cp -a "$root"/. "$RUNNER_TEMP/modx-site/"
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import xml.etree.ElementTree as E
+          site=pathlib.Path(os.environ['RUNNER_TEMP'])/'modx-site'
+          values={
+             'database_type':'mysql','database_server':'127.0.0.1:3306',
+             'database':'modx_build','database_user':'modx_ci',
+             'database_password':'ci-throwaway-only-user',
+             'database_connection_charset':'utf8mb4',
+             'database_charset':'utf8mb4','database_collation':'utf8mb4_unicode_ci',
+             'table_prefix':'modx_', 'inplace':'1', 'unpacked':'0',
+             'language':'en','cmsadmin':'testadmin',
+             'cmspassword':'ci-throwaway-admin-only',
+             'cmsadminemail':'ci@example.invalid',
+             'remove_setup_directory':'0','http_host':'localhost',
+             'context_web_path':str(site)+'/', 'context_web_url':'/',
+             'core_path':str(site/'core')+'/',
+             'context_mgr_path':str(site/'manager')+'/',
+             'context_mgr_url':'/manager/',
+             'context_connectors_path':str(site/'connectors')+'/',
+             'context_connectors_url':'/connectors/',
+             'assets_path':str(site/'assets')+'/', 'assets_url':'/assets/',
+          }
+          parent=E.Element('modx')
+          for key,value in values.items():E.SubElement(parent,key).text=value
+          E.ElementTree(parent).write(site/'setup/config.xml',encoding='utf-8',xml_declaration=True)
+          PY
+          (cd "$RUNNER_TEMP/modx-site/setup" && php ./index.php --installmode=new)
+          test -f "$RUNNER_TEMP/modx-site/config.core.php"
+          test -f "$RUNNER_TEMP/modx-site/core/config/config.inc.php"
+      - name: Build and install the authentic v1.2.7 transport
+        env:
+          BUILD_PLATFORM: '${{ matrix.platform }}'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/source-127"
+          git archive v1.2.7 | tar -x -C "$RUNNER_TEMP/source-127"
+          python3 "$RUNNER_TEMP/source-127/_build/prepare-release.py" \
+            --platform "$BUILD_PLATFORM" --output "$RUNNER_TEMP/stage-127"
+          grep -Fq "define('PKG_VERSION', '1.2.7');" \
+            "$RUNNER_TEMP/stage-127/_build/build.config.php"
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php "$RUNNER_TEMP/stage-127/_build/build.transport.php"
+          old="$BUILD_PLATFORM"
+          zip="$RUNNER_TEMP/modx-site/core/packages/${old}mcp-1.2.7-pl.transport.zip"
+          test -s "$zip"
+          php "$RUNNER_TEMP/stage-127/_build/install.transport.php" \
+            --signature="${old}mcp-1.2.7-pl"
+          MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
+      - name: Build a separate unpublished 1.2.8 transport on the disposable MODX
+        env:
+          BUILD_PLATFORM: '${{ matrix.platform }}'
+        run: |
+          set -euo pipefail
+          python3 _build/prepare-release.py \
+            --platform "$BUILD_PLATFORM" --output "$RUNNER_TEMP/stage-128"
+          python3 - <<'PY'
+          import os,pathlib,re
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'stage-128'
+          changes=[
+             (root/'_build/build.config.php',
+              r"define\('PKG_VERSION',\s*'1\.2\.7'\);",
+              "define('PKG_VERSION', '1.2.8');"),
+             (root/'core/components/modxmcp/model/modxmcp.class.php',
+              r"const VERSION = '1\.2\.7';",
+              "const VERSION = '1.2.8';")
+          ]
+          for path,pattern,replacement in changes:
+              content=path.read_text(encoding='utf-8')
+              updated,count=re.subn(pattern,replacement,content)
+              if count!=1:raise SystemExit('Version marker mismatch: '+str(path))
+              path.write_text(updated,encoding='utf-8')
+          PY
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php "$RUNNER_TEMP/stage-128/_build/build.transport.php"
+          zip="$RUNNER_TEMP/modx-site/core/packages/${BUILD_PLATFORM}mcp-1.2.8-pl.transport.zip"
+          test -s "$zip"
+          unzip -t "$zip" | tail -3
+          php "$RUNNER_TEMP/stage-128/_build/install.transport.php" \
+            --signature="${BUILD_PLATFORM}mcp-1.2.8-pl"
+      - name: Verify token settings CAS and legacy read compatibility
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
+          php _build/test.ci-true-upgrade-127-to-128.php after
