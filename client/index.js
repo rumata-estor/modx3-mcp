@@ -2788,7 +2788,9 @@ function mutationToolResult(result, action) {
   if (result && result.outcome === "completed" && typeof action === "string") {
     content.push({ type: "text", text:
       "Результат: MODX подтвердил завершение операции «" + action
-      + "». Независимая повторная проверка объекта не выполнялась." });
+      + "». Независимая повторная проверка объекта не выполнялась."
+      + " Код результата: " + (result.operation_code === "OPERATION_COMPLETED"
+        ? result.operation_code : "OPERATION_COMPLETED") });
   }
   return { content };
 }
