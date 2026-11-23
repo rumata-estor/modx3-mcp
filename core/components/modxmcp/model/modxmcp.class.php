@@ -218,7 +218,8 @@ class modxMCP {
                             // RU: Запрещённые запросы отклоняются ДО CAS-резерва.
                             // EN: Deterministic security denials precede CAS reservation.
                             \ModxMcp\Tools\MutationPreflight::assertAllowed(
-                                $runtimeContext, $action, $toolData
+                                $runtimeContext, $action, $toolData,
+                                $runtimePreconditions
                             );
                             // Exact stale-CAS semantics take priority over
                             // deterministic static-file conflicts. Optional
