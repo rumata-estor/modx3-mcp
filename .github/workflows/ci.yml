@@ -82,6 +82,9 @@ jobs:
           python3 _build/test.registry-fail-closed.py
           python3 _build/test.security-source-wiring.py
           python3 _build/test.http-error-redaction.py
+          php _build/test.error-catalog.php
+          php _build/test.error-log-lookup.php
+          node _build/test.error-presenter.cjs
 
       - name: Private Controller v4 E2E must refuse non-disposable environments
         run: python3 _build/test.pr50-ci-isolation.py
