@@ -26,9 +26,26 @@ class ErrorLogReadTool implements ToolInterface
             );
         }
         $limit = isset($data['limit']) ? max(1, (int)$data['limit']) : 100;
+        // RU: Поиск по номеру инцидента без чтения всего журнала и выдачи соседних строк.
+        // EN: Filter inside the bounded log tail; retain existing protected ops ACL.
+        $errorId = isset($data['error_id']) ? (string)$data['error_id'] : '';
+        if ($errorId !== '' && !preg_match(
+            '/\\A(?:modxmcp_[a-f0-9]{16,64}|mcpnode_[a-f0-9]{24})\\z/D',
+            $errorId
+        )) {
+            throw new \ModxMCPClientException('INVALID_REQUEST: invalid diagnostic identifier.');
+        }
+        $filter = null;
+        if ($errorId !== '') {
+            $needle = '[' . $errorId . ']';
+            $filter = function ($line) use ($needle) {
+                return strpos($line, $needle) !== false ? $line : null;
+            };
+        }
         $metadata = array();
-        $tail = FilesystemSupport::readTailLines($path, $limit, null, $metadata);
+        $tail = FilesystemSupport::readTailLines($path, $limit, $filter, $metadata);
         $tail = array_map(array('ModxMcp\\Security\\SecretRedactor', 'text'), $tail);
-        return array_merge(array('total' => count($tail), 'lines' => $tail), $metadata);
+        return array_merge(array('total' => count($tail), 'lines' => $tail,
+            'error_id' => $errorId !== '' ? $errorId : null), $metadata);
     }
 }

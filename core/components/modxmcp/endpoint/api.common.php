@@ -25,6 +25,7 @@ $modxmcpLogConstant = $modxmcpClass . '::LOG_LEVEL_ERROR';
 $modxmcpLogLevelError = defined($modxmcpLogConstant) ? constant($modxmcpLogConstant) : 3;
 $modx->setLogLevel($modxmcpLogLevelError);
 require_once dirname(__DIR__) . '/src/Security/SecretRedactor.php';
+require_once dirname(__DIR__) . '/src/Diagnostics/ErrorCatalog.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -56,9 +57,7 @@ if ((bool) $modx->getOption('modxmcp.require_https', null, true)) {
         && strtolower(trim((string) $_SERVER['HTTP_X_FORWARDED_PROTO'])) === 'https';
     $isHttps = $directHttps || $forwardedHttps;
     if (!$isHttps) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'HTTPS required (modxmcp.require_https).'], JSON_UNESCAPED_UNICODE);
-        exit;
+        \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 403, 'HTTPS required (modxmcp.require_https).', 'HTTPS_REQUIRED');
     }
 }
 
@@ -87,17 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
     header('Allow: GET, POST');
-    echo json_encode(['success' => false, 'error' => 'Method Not Allowed'], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 405, 'Method Not Allowed', 'METHOD_NOT_ALLOWED');
 }
 
 $isEnabled = $modx->getOption('modxmcp.enabled', null, false);
 if (!$isEnabled) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'modxMCP is disabled.'], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 403, 'modxMCP is disabled.', 'MCP_DISABLED');
 }
 
 // Optional client-IP allowlist (modxmcp.allowed_ips). Empty = allow all. CSV of exact
@@ -126,9 +121,7 @@ if ($allowedIps !== '') {
         if (($ipLong & $mask) === ($subLong & $mask)) { $ipAllowed = true; break; }
     }
     if (!$ipAllowed) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Forbidden: client IP is not allowed (modxmcp.allowed_ips).'], JSON_UNESCAPED_UNICODE);
-        exit;
+        \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 403, 'Forbidden: client IP is not allowed (modxmcp.allowed_ips).', 'IP_NOT_ALLOWED');
     }
 }
 
@@ -143,27 +136,18 @@ if (isset($headers['x-mcp-token'])) $receivedToken = trim($headers['x-mcp-token'
 elseif (isset($_SERVER['HTTP_X_MCP_TOKEN'])) $receivedToken = trim($_SERVER['HTTP_X_MCP_TOKEN']);
 
 if (empty($expectedToken) || !hash_equals($expectedToken, $receivedToken)) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 401, 'Unauthorized', 'UNAUTHORIZED');
 }
 
 $maxPayloadBytes = (int)$modx->getOption('modxmcp.max_payload_bytes', null, 1024 * 1024);
 $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int)$_SERVER['CONTENT_LENGTH'] : 0;
 if ($maxPayloadBytes > 0 && $contentLength > $maxPayloadBytes) {
-    http_response_code(413);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Payload Too Large',
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 413, 'Payload Too Large', 'PAYLOAD_TOO_LARGE');
 }
 
 $rawInput = file_get_contents('php://input');
 if ($rawInput === false) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Could not read request body'], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 400, 'Could not read request body', 'INVALID_REQUEST');
 }
 if ($maxPayloadBytes > 0 && strlen($rawInput) > $maxPayloadBytes) {
     http_response_code(413);
@@ -177,19 +161,11 @@ if ($maxPayloadBytes > 0 && strlen($rawInput) > $maxPayloadBytes) {
 $input = json_decode($rawInput, true);
 
 if (json_last_error() !== JSON_ERROR_NONE) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invalid JSON encoding. Ensure your payload is strictly UTF-8 encoded.',
-        'json_error' => json_last_error_msg()
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 400, 'Invalid JSON encoding. Ensure your payload is strictly UTF-8 encoded.', 'INVALID_REQUEST');
 }
 
 if (!$input || !isset($input['action'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Bad Request: Missing action.'], JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 400, 'Bad Request: Missing action.', 'INVALID_REQUEST');
 }
 
 // RU: Неизвестные ключи верхнего уровня опасно игнорировать: клиент может
@@ -198,20 +174,14 @@ if (!$input || !isset($input['action'])) {
 // EN: `data` can make a successful HTTP response conceal a no-op mutation.
 $allowedRootKeys = array('action', 'type', 'data', 'name', 'content', 'id');
 if (!is_array($input) || array_keys($input) === range(0, count($input) - 1)) {
-    http_response_code(400);
-    echo json_encode(array('success'=>false,'error'=>'Bad Request: expected JSON object.'), JSON_UNESCAPED_UNICODE);
-    exit;
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 400, 'Bad Request: expected JSON object.', 'INVALID_REQUEST');
 }
 $unknownRootKeys = array_diff(array_keys($input), $allowedRootKeys);
 if (!empty($unknownRootKeys)) {
-    http_response_code(400);
-    echo json_encode(array(
-        'success' => false,
-        'error' => 'Bad Request: unknown top-level field(s): '
+    \ModxMcp\Diagnostics\ErrorCatalog::send($modx, 400,
+        'Bad Request: unknown top-level field(s): '
             . implode(', ', array_slice($unknownRootKeys, 0, 5))
-            . '. Send action parameters in data.',
-    ), JSON_UNESCAPED_UNICODE);
-    exit;
+            . '. Send action parameters in data.', 'INVALID_REQUEST');
 }
 
 $action = $input['action'];
@@ -258,7 +228,19 @@ try {
 
     // 'caps' = capability fingerprint; the client watches it to live-refresh its tool list.
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
-    echo json_encode(['success' => true, 'data' => $result, 'caps' => $caps], JSON_UNESCAPED_UNICODE);
+    // RU: Успех = ответ обработчика; повторное чтение не подразумевается.
+    // EN: API acknowledgment does not imply independent readback verification.
+    $encoded = json_encode(['success' => true, 'data' => $result, 'caps' => $caps,
+        'outcome' => 'completed',
+        'operation_code' => 'OPERATION_COMPLETED',
+        'message_ru' => 'MODX подтвердил выполнение запроса. Повторная проверка объекта не выполнялась.',
+    ], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if (!is_string($encoded)) {
+        // RU: Успешная мутация могла выполниться до сбоя сериализации.
+        // EN: A mutation may already be applied before serialization fails.
+        throw new \RuntimeException('MCP response serialization failed');
+    }
+    echo $encoded;
 } catch (ModxMCPClientException $e) {
     // Authorization failures are 403, never confused with routine input errors.
     // Do not reveal whether a signature, site, key or nonce was wrong.
@@ -266,11 +248,20 @@ try {
     $authDenied = strpos($message, 'AUTH_DENIED:') === 0;
     http_response_code($authDenied ? 403 : 400);
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
-    echo json_encode(['success' => false, 'error' => \ModxMcp\Security\SecretRedactor::text($message), 'caps' => $caps], JSON_UNESCAPED_UNICODE);
+    $fields = \ModxMcp\Diagnostics\ErrorCatalog::fields($message);
+    // RU: Корреляция без исходных параметров, исключений и секретов.
+    // EN: Correlation without raw parameters, exception text or credentials.
+    $safeAction = is_string($action) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($action, 0, 80)) : 'invalid';
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog($modx, $modxmcpLogLevelError,
+        sprintf('[%s] MCP request rejected. code=%s action=%s',
+            $fields['error_id'], $fields['code'], $safeAction));
+    echo json_encode(array_merge(['success' => false,
+        'error' => \ModxMcp\Security\SecretRedactor::text($message),
+        'caps' => $caps], $fields), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 } catch (Exception $e) {
-    $errorId = uniqid('modxmcp_', true);
-    $modx->log(
-        $modxmcpLogLevelError,
+    $errorId = \ModxMcp\Diagnostics\ErrorCatalog::newId();
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog(
+        $modx, $modxmcpLogLevelError,
         sprintf(
             '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
@@ -289,11 +280,14 @@ try {
         'error' => 'Internal Server Error',
         'error_id' => $errorId,
     ];
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    $response = array_merge($response,
+        \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
+            'INTERNAL_ERROR', $errorId));
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 } catch (Throwable $e) {
-    $errorId = uniqid('modxmcp_', true);
-    $modx->log(
-        $modxmcpLogLevelError,
+    $errorId = \ModxMcp\Diagnostics\ErrorCatalog::newId();
+    \ModxMcp\Diagnostics\ErrorCatalog::safeLog(
+        $modx, $modxmcpLogLevelError,
         sprintf(
             '[%s] MCP request failed. action=%s type=%s exception_class=%s',
             $errorId,
@@ -312,5 +306,8 @@ try {
         'error' => 'Internal Server Error',
         'error_id' => $errorId,
     ];
-    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    $response = array_merge($response,
+        \ModxMcp\Diagnostics\ErrorCatalog::fields('Internal Server Error',
+            'INTERNAL_ERROR', $errorId));
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 }

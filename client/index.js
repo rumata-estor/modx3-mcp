@@ -12,6 +12,7 @@ const {
   ListToolsRequestSchema,
 } = require("@modelcontextprotocol/sdk/types.js");
 const axios = require("axios");
+const ErrorPresenter = require("./error-presenter");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -302,25 +303,21 @@ function runMutationAuditHook(name, args, result, backupFiles) {
 }
 
 
+// RU: Ошибка конфигурации не должна обрывать stdio до ответа клиенту.
+// EN: Keep the MCP session alive to return actionable configuration errors.
+let clientConfigError = null;
+let siteUrl = null;
 if (!MODX_SITE_URL) {
-  throw new Error(
-    "MODX_MCP_SITE_URL is required, e.g. https://your-site.com/assets/components/modxmcp/api.php",
-  );
+  clientConfigError = "missing_site_url";
+} else {
+  try { siteUrl = new URL(MODX_SITE_URL); }
+  catch (_) { clientConfigError = "invalid_site_url"; }
+  if (siteUrl && (siteUrl.protocol !== "https:" || !siteUrl.hostname
+      || siteUrl.username || siteUrl.password)) {
+    clientConfigError = "invalid_site_url";
+  }
 }
-let siteUrl;
-try {
-  siteUrl = new URL(MODX_SITE_URL);
-} catch (_) {
-  throw new Error("MODX_MCP_SITE_URL must be a valid absolute https:// URL.");
-}
-if (siteUrl.protocol !== "https:" || !siteUrl.hostname || siteUrl.username || siteUrl.password) {
-  throw new Error("MODX_MCP_SITE_URL must be a valid https:// URL without embedded credentials.");
-}
-if (!API_TOKEN) {
-  throw new Error(
-    "MODX_MCP_TOKEN is required (the modxmcp.api_token system setting value from the target MODX site).",
-  );
-}
+if (!API_TOKEN && !clientConfigError) clientConfigError = "missing_token";
 
 // Identify the server from package.json so the name/version never drift from the release.
 let pkgInfo = { name: "modx-mcp", version: "0.0.0" };
@@ -347,7 +344,26 @@ function noteCaps(caps) {
   }
 }
 
+class DiagnosticMcpError extends Error {
+  constructor(record) {
+    super(record.code);
+    this.record = record;
+  }
+}
+function isReadOnlyApiAction(action) {
+  return PROJECT_LOCK_READ_ONLY_TOOLS.has("modx_" + action)
+    || action === "get_capabilities";
+}
+// RU: Сетевая ошибка после отправки записи = неизвестный результат, не повторять.
+// EN: Network failure during mutation is unknown, not a confirmed rollback.
 async function modxApiRequest(payload) {
+  const action = payload && payload.action || "unknown";
+  if (clientConfigError) {
+    throw new DiagnosticMcpError(ErrorPresenter.fromLocal(
+      { message: "CLIENT_CONFIG_INVALID: " + clientConfigError },
+      action, isReadOnlyApiAction(action),
+    ));
+  }
   try {
     const response = await axios.post(MODX_SITE_URL, payload, {
       headers: {
@@ -359,18 +375,25 @@ async function modxApiRequest(payload) {
     });
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
-      throw new Error(`MODX Error: ${redactText(response.data.error || JSON.stringify(redactValue(response.data)))}`);
+      throw new DiagnosticMcpError(
+        ErrorPresenter.fromHttp(response.data, response.status, action, isReadOnlyApiAction(action)));
+    }
+    if (!response.data || typeof response.data !== "object"
+        || response.data.success !== true) {
+      throw new DiagnosticMcpError(
+        ErrorPresenter.fromHttp({ code: "OPERATION_REFUSED" }, response.status, action, isReadOnlyApiAction(action)));
     }
     return response.data;
   } catch (error) {
-    if (!error.response && String(error.message || "").startsWith("MODX Error:")) {
-      throw error;
-    }
+    if (error instanceof DiagnosticMcpError) throw error;
     if (error.response) {
-      if (error.response.data && typeof error.response.data === "object") noteCaps(error.response.data.caps);
-      throw new Error(`MODX Error: ${JSON.stringify(redactValue(error.response.data))}`);
+      if (error.response.data && typeof error.response.data === "object")
+        noteCaps(error.response.data.caps);
+      throw new DiagnosticMcpError(
+        ErrorPresenter.fromHttp(error.response.data, error.response.status, action, isReadOnlyApiAction(action)));
     }
-    throw new Error(`Network Error: ${redactText(error.message)}`);
+    throw new DiagnosticMcpError(
+      ErrorPresenter.fromNetwork(error, action, isReadOnlyApiAction(action)));
   }
 }
 
@@ -1872,8 +1895,9 @@ const toolDefinitions = [
   },
   {
     name: "modx_read_error_log",
-    description: "Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100).",
-    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+    description: "Read protected MODX diagnostics. Optional `error_id` finds one incident inside the bounded log tail; `limit` defaults to 100.",
+    inputSchema: { type: "object", properties: { limit: { type: "number" },
+      error_id: { type: "string", description: "Incident ID from an MCP error; only matching log entries are returned." } } },
   },
   {
     name: "modx_refresh_uris",
@@ -2757,6 +2781,19 @@ function formatCodeFromResult(resultData) {
   return resultData.snippet || resultData.plugincode || resultData.content || "";
 }
 
+// RU: Первый блок остаётся прежним JSON для совместимости существующих агентов.
+// EN: Preserve original first JSON content block for existing MCP consumers.
+function mutationToolResult(result, action) {
+  const content = [{ type: "text", text: stringifyApiResult(result) }];
+  if (result && result.outcome === "completed" && typeof action === "string") {
+    content.push({ type: "text", text:
+      "Результат: MODX подтвердил завершение операции «" + action
+      + "». Независимая повторная проверка объекта не выполнялась."
+      + " Код результата: OPERATION_COMPLETED." });
+  }
+  return { content };
+}
+
 function stringifyApiResult(result) {
   const value = result && Object.prototype.hasOwnProperty.call(result, "data")
     ? result.data
@@ -2818,7 +2855,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === "modx_update_element_property") {
       const result = await modxApiRequest({action: "update_element_property", type: args.type, data: args});
       runMutationAuditHook(name, args || {}, result, safetyBackups);
-      return {content: [{type: "text", text: stringifyApiResult(result)}]};
+      return mutationToolResult(result, name);
     }
 
     if (
@@ -2833,9 +2870,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         data: args,
       });
       runMutationAuditHook(name, args || {}, result, safetyBackups);
-      return {
-        content: [{ type: "text", text: stringifyApiResult(result) }],
-      };
+      return mutationToolResult(result, name);
     }
 
     if (name.startsWith("modx_")) {
@@ -2845,15 +2880,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         data: args,
       });
       runMutationAuditHook(name, args || {}, result, safetyBackups);
-      return {
-        content: [{ type: "text", text: stringifyApiResult(result) }],
-      };
+      return CAS_MUTATION_ACTIONS.has(action)
+        ? mutationToolResult(result, name)
+        : { content: [{ type: "text", text: stringifyApiResult(result) }] };
     }
 
     throw new Error(`Tool ${name} not found`);
   } catch (error) {
+    const operation = String(name || "unknown").replace(/^modx_/, "");
+    const diagnostic = error instanceof DiagnosticMcpError ? error.record
+      : ErrorPresenter.fromLocal(error, operation, isReadOnlyApiAction(operation));
+    console.error(ErrorPresenter.debugLine(diagnostic));
     return {
-      content: [{ type: "text", text: `Error: ${redactText(error.message)}` }],
+      content: [{ type: "text", text: ErrorPresenter.display(diagnostic) }],
       isError: true,
     };
   } finally {
@@ -2865,6 +2904,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // servers return 405 for GET, which is ignored.
 async function checkServerSkew() {
   try {
+    if (clientConfigError) return;
     const r = await axios.get(MODX_SITE_URL, { timeout: 5000, maxRedirects: 0 });
     const serverVersion = r.data && r.data.version;
     if (serverVersion && serverVersion !== "unknown" && serverVersion !== pkgInfo.version) {
@@ -2885,4 +2925,9 @@ async function main() {
   checkServerSkew();
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  const diagnostic = ErrorPresenter.fromLocal(error, "mcp_startup", true);
+  console.error(ErrorPresenter.display(diagnostic));
+  console.error(ErrorPresenter.debugLine(diagnostic));
+  process.exitCode = 1;
+});
