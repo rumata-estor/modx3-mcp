@@ -12,8 +12,43 @@ class PackageInstallTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
+    /**
+     * RU: Не допускать неявных array/object/bool -> string/int преобразований
+     * RU: до резервирования CAS и опасного обращения к пакетному процессору.
+     * EN: Reject coercion of malformed package/provider payloads before CAS
+     * EN: and before contacting the package provider or install processor.
+     */
+    public static function validateInput(array $data)
+    {
+        if (!isset($data['package']) || !is_string($data['package'])
+            || trim($data['package']) === '') {
+            throw new \ModxMCPClientException(
+                'INVALID_INPUT: install_package requires a nonempty package name string.'
+            );
+        }
+        if (array_key_exists('provider', $data)) {
+            $provider = $data['provider'];
+            if ((!is_int($provider) && !is_string($provider))
+                || !preg_match('/\A[1-9][0-9]*\z/D', (string)$provider)
+                || (int)$provider <= 0
+                || (string)(int)$provider !== (string)$provider) {
+                throw new \ModxMCPClientException(
+                    'INVALID_INPUT: provider must be a positive integer ID.'
+                );
+            }
+        }
+        if (array_key_exists('target_signature', $data)
+            && !is_string($data['target_signature'])) {
+            throw new \ModxMCPClientException(
+                'INVALID_INPUT: target_signature must be a string.'
+            );
+        }
+        return true;
+    }
+
     public function execute($context, array $data)
     {
+        self::validateInput($data);
         $name = isset($data['package'])
             ? trim((string)$data['package'])
             : '';

@@ -12,8 +12,22 @@ class PackageUninstallTool implements ToolInterface
     public function isMutation() { return true; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
+    /** RU: Не приводить массивы/объекты к имени удаляемого пакета.
+     * EN: Reject malformed uninstall package selectors before dispatch. */
+    public static function validateInput(array $data)
+    {
+        if (!isset($data['signature']) || !is_string($data['signature'])
+            || trim($data['signature']) === '') {
+            throw new \ModxMCPClientException(
+                'INVALID_INPUT: uninstall_package requires a nonempty signature string.'
+            );
+        }
+        return true;
+    }
+
     public function execute($context, array $data)
     {
+        self::validateInput($data);
         $signature = isset($data['signature'])
             ? (string)$data['signature']
             : '';
