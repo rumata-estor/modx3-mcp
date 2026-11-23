@@ -50,6 +50,20 @@ final class MutationPreflight
                 $data
             );
         }
+        if ($action === 'create_context') {
+            foreach (array_keys($data) as $field) {
+                if (!is_string($field)
+                    || strtolower(trim($field)) !== 'enableanonymous') {
+                    continue;
+                }
+                if ($field !== 'enableAnonymous'
+                    || !in_array($data[$field], array(false, 0, '0'), true)) {
+                    throw new \ModxMCPClientException(
+                        'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
+                    );
+                }
+            }
+        }
         if ($action === 'run_processor') {
             RunProcessorTool::assertDispatchAllowed($context, $data);
         }
