@@ -4,15 +4,16 @@
  * EN: Inject a competing TV target creation at exclusive-open time.
  */
 namespace ModxMcp\Tools {
-    function fopen($path,$mode) {
-        if ($mode==='xb' && !empty($GLOBALS['inject_tv_collision'])) {
-            // RU: Конкурент занимает путь после проверки, до fopen(xb).
-            // EN: Competing writer creates the target between check and open.
-            \file_put_contents($path,'OTHER_OWNER');
+    function link($temporary,$target) {
+        if (!empty($GLOBALS['inject_tv_collision'])) {
+            // RU: Конкурент занимает путь перед атомарной публикацией link().
+            // EN: Competitor occupies the destination just before atomic link.
+            \file_put_contents($target,'OTHER_OWNER');
         }
-        return \fopen($path,$mode);
+        return \link($temporary,$target);
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileWriteSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
 }
