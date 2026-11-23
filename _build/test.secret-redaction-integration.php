@@ -60,6 +60,11 @@ try {
     ));
     $auditPath=$root.'/components/modxmcp/logs/audit.log';
     if (!file_exists($auditPath)) throw new RuntimeException('audit log absent');
+    clearstatcache(true, $auditPath);
+    if ((fileperms($auditPath) & 0777) !== 0600)
+        throw new RuntimeException('AUDIT_LOG_NOT_PRIVATE');
+    if ((fileperms(dirname($auditPath)) & 0777) !== 0700)
+        throw new RuntimeException('AUDIT_LOG_DIRECTORY_NOT_PRIVATE');
     assertSafe('written audit file',file_get_contents($auditPath));
     if (strpos(file_get_contents($auditPath), 'UNLABELED_SENSITIVE_TEXT_8462') !== false)
         throw new RuntimeException('FREEFORM_AUDIT_LOG_LEAK');
