@@ -1895,8 +1895,9 @@ const toolDefinitions = [
   },
   {
     name: "modx_read_error_log",
-    description: "Read the tail of the MODX error log (core/cache/logs/error.log) for diagnostics. Optional `limit` (lines, default 100).",
-    inputSchema: { type: "object", properties: { limit: { type: "number" } } },
+    description: "Read protected MODX diagnostics. Optional `error_id` finds one incident inside the bounded log tail; `limit` defaults to 100.",
+    inputSchema: { type: "object", properties: { limit: { type: "number" },
+      error_id: { type: "string", description: "Incident ID from an MCP error; only matching log entries are returned." } } },
   },
   {
     name: "modx_refresh_uris",
