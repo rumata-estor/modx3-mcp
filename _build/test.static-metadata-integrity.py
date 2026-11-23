@@ -88,7 +88,7 @@ with tempfile.TemporaryDirectory(prefix="modxmcp-static-metadata-") as tmp:
     check(shutil.which("sudo") is not None,
           "sudo required only for isolated ownership fixture")
     subprocess.run(["sudo", "-n", "chown", "root:root", str(target)], check=True)
-    target.chmod(0o666)
+    subprocess.run(["sudo", "-n", "chmod", "0666", str(target)], check=True)
     owner_before = target.stat()
     try:
         response = request(core, "write", b"WRONG_OWNER")
