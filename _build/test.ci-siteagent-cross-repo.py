@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Одноразовая межрепозиторная проверка Executor и реального MCP; без production.
+# EN: Disposable cross-repo Executor/native MCP integration, never production.
 """Disposable native MODX MCP <-> real Site Agent Executor interop.
 
 The real MODX 2/3 dispatcher commits a uniquely named unpublished CI chunk,
