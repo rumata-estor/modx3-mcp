@@ -232,6 +232,7 @@ try {
     // EN: API acknowledgment does not imply independent readback verification.
     echo json_encode(['success' => true, 'data' => $result, 'caps' => $caps,
         'outcome' => 'completed',
+        'operation_code' => 'OPERATION_COMPLETED',
         'message_ru' => 'MODX подтвердил выполнение запроса. Повторная проверка объекта не выполнялась.',
     ], JSON_UNESCAPED_UNICODE);
 } catch (ModxMCPClientException $e) {
