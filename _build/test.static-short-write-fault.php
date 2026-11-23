@@ -6,9 +6,11 @@
 namespace ModxMcp\Tools {
     class StaticFileIoSupport {
         public static function write($context,$file,$content,$createOnly=false) {
-            // RU: Файловый помощник записал лишь два байта и сообщил об аварии.
-            // EN: The guarded writer left two bytes before reporting failure.
-            \file_put_contents($file,substr((string)$content,0,2));
+            // RU: Авария до атомарной публикации: целевой файл не меняется.
+            // EN: Partial bytes are written only to a disposable temp inode.
+            $temp=dirname($file).'/.modxmcp-injected-short.tmp';
+            \file_put_contents($temp,substr((string)$content,0,2));
+            \unlink($temp);
             throw new \ModxMCPClientException(
                 'MUTATION_OUTCOME_UNCERTAIN: injected short descriptor write.'
             );
@@ -66,8 +68,8 @@ mkdir($root.'/core/elements/chunks',0700,true);
 $ctx=new ShortWriteContext($root);
 $checks=0;
 try {
-    // RU: make_static создал два байта — не разрешаем metadata save.
-    // EN: make_static short write must never proceed to metadata save.
+    // RU: Недописанный временный файл не публикуется и не сохраняет метаданные.
+    // EN: A partial temp file must not be published or save metadata.
     $uncertain=false;
     try {
         \ModxMcp\Tools\ElementMutationSupport::makeStatic($ctx,'chunk',1);
@@ -75,11 +77,11 @@ try {
         $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
     }
     $target=$root.'/core/elements/chunks/shortwrite.tpl';
-    if(!$uncertain || !is_file($target)
-        || \file_get_contents($target)!=='12' || $ctx->m->element->saveCalls!==0) {
+    if(!$uncertain || is_file($target) || $ctx->m->element->saveCalls!==0) {
         throw new \RuntimeException('MAKE_STATIC_SHORT_WRITE_NOT_DETECTED');
     }
     $checks++;
+    \file_put_contents($target,'ORIGINAL');
     // RU: edit_element_lines/replace_across не вызывают процессор после
     // RU: неполной файловой записи.
     // EN: Static content edits must not dispatch a MODX processor after short writes.
@@ -92,7 +94,7 @@ try {
     }catch(ModxMCPClientException $e){
         $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
     }
-    if(!$uncertain || \file_get_contents($target)!=='NE'
+    if(!$uncertain || \file_get_contents($target)!=='ORIGINAL'
         || $ctx->p->processorCalls!==0) {
         throw new \RuntimeException('STATIC_EDIT_SHORT_WRITE_NOT_DETECTED');
     }
