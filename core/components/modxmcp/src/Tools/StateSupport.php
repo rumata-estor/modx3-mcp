@@ -101,6 +101,9 @@ class StateSupport
             'site_revision' => self::revision($context),
             'atomic_preconditions' => true,
             'precondition_version' => 2,
+            // All persisted columns of the base modResource row, not TVs
+            // or addon-specific child tables, participate in full target CAS.
+            'resource_fingerprint_version' => 2,
             'cas_required' => true,
         );
     }
@@ -590,6 +593,10 @@ class StateSupport
                 'searchable', 'deleted', 'richtext', 'cacheable',
                 'pub_date', 'unpub_date', 'content_type', 'content_dispo',
                 'uri', 'uri_override', 'properties', 'publishedon',
+                'privateweb', 'privatemgr', 'link_attributes', 'donthit',
+                'createdon', 'createdby', 'editedon', 'editedby',
+                'deletedon', 'deletedby', 'publishedby',
+                'hide_children_in_tree', 'show_in_tree',
             ),
             'tv' => array(
                 'caption', 'description', 'category', 'type', 'elements',
@@ -608,6 +615,23 @@ class StateSupport
                     $state[$field] = $raw[$field];
                 }
             }
+        }
+
+        if ($type === 'resource') {
+            // Unlike a hand-maintained allowlist, this binds every persisted
+            // column of the base modResource row. Hash each scalar first so
+            // invalid UTF-8 content never breaks canonical JSON encoding.
+            // No raw column values are returned to MCP clients.
+            $persisted = array();
+            foreach ($raw as $column => $value) {
+                if (!is_string($column)
+                    || ($value !== null && !is_scalar($value))) {
+                    throw new \RuntimeException('Invalid persisted resource field.');
+                }
+                $persisted[$column] = $value === null
+                    ? null : hash('sha256', (string)$value);
+            }
+            $state['persisted_modresource_sha256'] = self::canonicalHash($persisted);
         }
 
         foreach (array('content', 'snippet', 'plugincode') as $field) {
@@ -797,27 +821,36 @@ class StateSupport
                 );
             }
             if ($type === 'resource') {
-                // RU: PR #57, находка @AgelxNash: processor resource/get
-                // RU: форматирует даты по настройкам Manager (теряет секунды).
-                // RU: Для CAS перечитываем сырые даты через объект MODX,
-                // RU: но только ПОСЛЕ штатной проверки прав в get_element.
-                // EN: Reported by @AgelxNash, PR #57. The resource/get
-                // EN: processor formats dates using Manager settings. CAS
-                // EN: reads the unformatted model fields after the authorized
-                // EN: processor read, preserving the public get_element format.
+                // RU: После авторизованного get_element считываем свежую
+                // RU: строку БД целиком, минуя форматированные даты и xPDO cache.
+                // EN: An authorized get_element runs first; then read the full
+                // EN: persisted base modResource row directly. A cached xPDO
+                // EN: model or Manager-formatted dates must not hide edits.
                 $resourceId = isset($raw['id']) ? (int)$raw['id'] : 0;
-                $resource = $resourceId > 0
-                    ? $context->modx()->getObject(
-                        $context->platform()->className('resource'), $resourceId
-                    ) : null;
-                if (!$resource) {
+                if ($resourceId < 1) {
                     throw new \ModxMCPClientException(
-                        'STALE_STATE resource raw date read failed.'
+                        'STALE_STATE resource id missing after authorized read.'
                     );
                 }
-                foreach (array('pub_date', 'unpub_date', 'publishedon') as $dateField) {
-                    $raw[$dateField] = $resource->get($dateField);
+                $table = $context->modx()->getTableName(
+                    $context->platform()->className('resource')
+                );
+                $statement = $context->modx()->prepare(
+                    'SELECT * FROM ' . $table . ' WHERE `id` = ? LIMIT 1'
+                );
+                if (!$statement || !$statement->execute(array($resourceId))) {
+                    throw new \ModxMCPClientException(
+                        'STALE_STATE resource persisted read failed.'
+                    );
                 }
+                $stored = $statement->fetch(\PDO::FETCH_ASSOC);
+                if (!is_array($stored) || !isset($stored['id'])
+                    || (int)$stored['id'] !== $resourceId) {
+                    throw new \ModxMCPClientException(
+                        'STALE_STATE resource persisted row missing.'
+                    );
+                }
+                $raw = $stored;
             }
             $state = self::elementState($type, $raw);
         } else {
