@@ -224,6 +224,11 @@ jobs:
         run: |
           set -euo pipefail
           npm ci --ignore-scripts
+          # Fix only compatible dependency versions in the ephemeral build.
+          # Do not --force upgrades outside declared semver ranges.
+          npm audit fix --omit=dev --ignore-scripts
+          npm audit --omit=dev --audit-level=high
+          npm ls @modelcontextprotocol/sdk axios
           # Report exact dependency advisories for the release gate.
           # Audit findings are reviewed separately; do not hide npm warnings.
           npm audit --omit=dev --json > "$RUNNER_TEMP/npm-audit.json" || true
@@ -246,7 +251,13 @@ jobs:
           node _build/test.error-presenter.cjs
           # Only the ephemeral checkout is changed. The public stable
           # package.json / lockfile remain 1.2.7 until an approved release.
+          # Pin the validated direct dependency versions in the Beta tarball
+          # so users do not resolve the known-vulnerable minimum versions.
+          sdk_version="$(node -p 'require("./node_modules/@modelcontextprotocol/sdk/package.json").version')"
+          axios_version="$(node -p 'require("./node_modules/axios/package.json").version')"
           npm pkg set version=1.2.8-beta.1
+          npm pkg set "dependencies.@modelcontextprotocol/sdk=$sdk_version" "dependencies.axios=$axios_version"
+          echo "BETA_NODE_PINNED_DIRECT_DEPS sdk=$sdk_version axios=$axios_version"
           mkdir -p "$RUNNER_TEMP/client-artifacts"
           npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/client-artifacts"
           file="$RUNNER_TEMP/client-artifacts/modx3-mcp-1.2.8-beta.1.tgz"
