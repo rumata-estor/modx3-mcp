@@ -382,7 +382,7 @@ jobs:
       # RU: Два настоящих независимых PHP-FPM контейнера и nginx, единый DB writer.
       # EN: Separate network+filesystem namespaces, HTTP and same MariaDB.
       - name: Real two-container PHP-FPM HTTP CAS and SIGKILL (disposable)
-        if: matrix.platform == 'modx3' && matrix.php_version == '8.2'
+        if: matrix.platform == 'modx3' && matrix.modx_version == '3.2.4' && matrix.php_version == '8.2'
         env:
           MODXMCP_DISPOSABLE_CI: '1'
         run: |
