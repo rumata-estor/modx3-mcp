@@ -39,17 +39,32 @@ foreach(array('migx','minishop2','virtualpage','versionx') as $addon){
     addonCheck(!is_dir(MODX_CORE_PATH.'components/'.$addon.'/'),
         'optional addon not installed '.$addon);
 }
-$fixture=bin2hex(random_bytes(5));
-$cases=array(
-    array('migx_create_config',array('name'=>'mcp_missing_'.$fixture),
-        'MIGX is not installed'),
-    array('ms2_create_link_type',array('name'=>'mcp_missing_'.$fixture),
-        'miniShop2'),
-    array('virtualpage_create_event',array('name'=>'mcp_missing_'.$fixture),
-        'VirtualPage'),
-    array('versionx_revert_version',array('type'=>'resource','content_id'=>99999999,
-        'version_id'=>99999999,'confirm'=>true),'VersionX'),
+// RU: Проверяем все 26 addon-мутаций из канонического реестра.
+// RU: Наличие индивидуального CAS-сценария не отменяет отрицательный
+// RU: тест отсутствующего дополнения на чистом MODX 2/3.
+// EN: All 26 optional-addon mutation entries must fail before side effects
+// EN: on a clean MODX, even if other positive CAS scenarios already exist.
+$inventory=json_decode(file_get_contents(
+    __DIR__.'/cas-mutation-inventory.json'),true);
+addonCheck(isset($inventory['actions'])&&is_array($inventory['actions']),
+    'canonical mutation inventory available');
+$prefixes=array(
+    'migx_'=>'MIGX is not installed',
+    'ms2_'=>'miniShop2',
+    'virtualpage_'=>'VirtualPage',
+    'versionx_'=>'VersionX',
 );
+$cases=array();
+foreach($inventory['actions'] as $action=>$spec) {
+    foreach($prefixes as $prefix=>$dependency) {
+        if(strpos($action,$prefix)===0) {
+            $cases[]=array($action,array(),$dependency);
+            break;
+        }
+    }
+}
+addonCheck(count($cases)===26,
+    'all 26 optional-addon mutations inventoried and exercised');
 foreach($cases as $case){
     $before=addonRpc('get_site_state');
     $refused=false;$message='';
