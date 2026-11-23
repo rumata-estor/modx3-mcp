@@ -4,13 +4,17 @@
  * EN: Simulate short file writes and require fail-closed uncertain outcomes.
  */
 namespace ModxMcp\Tools {
-    function fwrite($stream,$content) {
-        // RU: Первая запись — два байта, затем авария; исходный файл цел.
-        // EN: Two bytes enter only the temporary file, then the write fails.
-        if (!isset($GLOBALS['short_write_calls'])) $GLOBALS['short_write_calls']=0;
-        $GLOBALS['short_write_calls']++;
-        return $GLOBALS['short_write_calls']%2===1
-            ? \fwrite($stream,substr($content,0,2)) : false;
+    class StaticFileIoSupport {
+        public static function write($context,$file,$content,$createOnly=false) {
+            // RU: Авария до атомарной публикации: целевой файл не меняется.
+            // EN: Partial bytes are written only to a disposable temp inode.
+            $temp=dirname($file).'/.modxmcp-injected-short.tmp';
+            \file_put_contents($temp,substr((string)$content,0,2));
+            \unlink($temp);
+            throw new \ModxMCPClientException(
+                'MUTATION_OUTCOME_UNCERTAIN: injected short descriptor write.'
+            );
+        }
     }
     class ElementSupport {
         public static function processorBase($type){return 'element/';}
@@ -19,7 +23,6 @@ namespace ModxMcp\Tools {
         public static function error($response){return 'unexpected';}
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
-    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileWriteSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
 }
@@ -65,8 +68,8 @@ mkdir($root.'/core/elements/chunks',0700,true);
 $ctx=new ShortWriteContext($root);
 $checks=0;
 try {
-    // RU: Аварийная запись не оставляет целевой файл и не сохраняет metadata.
-    // EN: Failed temp write must leave the destination absent and skip metadata.
+    // RU: Недописанный временный файл не публикуется и не сохраняет метаданные.
+    // EN: A partial temp file must not be published or save metadata.
     $uncertain=false;
     try {
         \ModxMcp\Tools\ElementMutationSupport::makeStatic($ctx,'chunk',1);
