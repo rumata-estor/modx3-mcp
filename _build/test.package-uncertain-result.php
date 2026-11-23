@@ -12,10 +12,15 @@ namespace ModxMcp\Tools {
         public static $count=0;
         public static function log($context,$name,$type,$data){self::$count++;}
     }
+    // Isolation stub: package preflight uses the real package validators.
+    class ProcessorMutationTool {
+        public static function assertAclMutationFields($action,array $data){}
+    }
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ProcessorSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/PackageSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/PackageInstallTool.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/PackageUninstallTool.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/MutationPreflight.php';
 }
 namespace {
 class ModxMCPClientException extends \RuntimeException {}
@@ -240,5 +245,60 @@ if(!$uncertainDownload || count($ctx->platform->calls)!==2)
     throw new \RuntimeException('PACKAGE_EMPTY_DOWNLOAD_RESPONSE_NOT_UNCERTAIN');
 if(\ModxMcp\Tools\AuditSupport::$count!==0)
     throw new \RuntimeException('PACKAGE_AUDITED_FAILED_MUTATION');
+// RU: Неверные типы не превращаются в иной provider/имя пакета и
+// RU: не расходуют CAS/nonce — в обоих маршрутах отказ до процессора.
+// EN: Bad types fail in preflight and direct invocation before processor I/O.
+$invalidSelectors=array(
+    array('install_package',array('package'=>array('fixture'))),
+    array('install_package',array('package'=>(object)array('name'=>'fixture'))),
+    array('install_package',array('package'=>true)),
+    array('install_package',array('package'=>'')),
+    array('install_package',array('package'=>'fixture','provider'=>array(1))),
+    array('install_package',array('package'=>'fixture','provider'=>true)),
+    array('install_package',array('package'=>'fixture','provider'=>0)),
+    array('install_package',array('package'=>'fixture','provider'=>'1foo')),
+    array('install_package',array('package'=>'fixture','provider'=>1.5)),
+    array('install_package',array('package'=>'fixture','provider'=>'001')),
+    array('install_package',array('package'=>'fixture','target_signature'=>array('foo'))),
+    array('uninstall_package',array('signature'=>array('fixture'))),
+    array('uninstall_package',array('signature'=>(object)array('x'=>1))),
+    array('uninstall_package',array('signature'=>true)),
+    array('uninstall_package',array('signature'=>'   ')),
+);
+$inputChecks=0;
+foreach ($invalidSelectors as $case) {
+    $action=$case[0];$data=$case[1];$ctx=new PackageContext();
+    $tool=$action==='install_package'
+        ?new \ModxMcp\Tools\PackageInstallTool()
+        :new \ModxMcp\Tools\PackageUninstallTool();
+    foreach(array('preflight','execute') as $route) {
+        $rejected=false;
+        try {
+            if($route==='preflight')
+                \ModxMcp\Tools\MutationPreflight::assertAllowed($ctx,$action,$data);
+            else $tool->execute($ctx,$data);
+        }catch(ModxMCPClientException $e){
+            $rejected=strpos($e->getMessage(),'INVALID_INPUT:')===0
+                && $e->getPrevious()===null;
+        }
+        if(!$rejected || count($ctx->platform->calls)!==0)
+            throw new \RuntimeException('PACKAGE_INVALID_SELECTOR_DISPATCHED '.$action.' '.$route);
+        $inputChecks++;
+    }
+}
+foreach(array(
+    array('package'=>'fixture','provider'=>1,'target_signature'=>'fixture-1.0.0-pl'),
+    array('package'=>'fixture','provider'=>'13'),
+    array('package'=>'fixture')
+) as $data) {
+    if(!\ModxMcp\Tools\PackageInstallTool::validateInput($data))
+        throw new \RuntimeException('VALID_INSTALL_PAYLOAD_REJECTED');
+    $inputChecks++;
+}
+if(!\ModxMcp\Tools\PackageUninstallTool::validateInput(
+    array('signature'=>'fixture-1.0.0-pl')))
+    throw new \RuntimeException('VALID_UNINSTALL_PAYLOAD_REJECTED');
+$inputChecks++;
+echo 'PACKAGE_INPUT_PREFLIGHT_FAIL_CLOSED_OK checks='.$inputChecks.PHP_EOL;
 echo 'PACKAGE_MUTATION_UNCERTAIN_RESULT_OK checks=15'.PHP_EOL;
 }
