@@ -41,14 +41,14 @@ def main():
     if len(sys.argv) != 5:
         raise UnsafePath("incorrect arguments")
     core, rel, action, expected_bytes = sys.argv[1:]
-    if action == "read":
+    if action in ("read", "inspect"):
         if expected_bytes != "-":
-            raise UnsafePath("incorrect read length")
+            raise UnsafePath("incorrect read/inspect length")
     elif (not expected_bytes.isascii() or not expected_bytes.isdecimal()
           or (len(expected_bytes)>1 and expected_bytes[0]=="0")
           or len(expected_bytes)>9 or int(expected_bytes)>MAX_CONTENT):
         raise UnsafePath("incorrect write length")
-    if action not in ("read", "write", "create"):
+    if action not in ("read", "write", "create", "inspect"):
         raise UnsafePath("unsupported action")
     if not os.path.isabs(core) or os.path.realpath(core) != core:
         raise UnsafePath("core root is not canonical")
@@ -66,24 +66,33 @@ def main():
         parent = directory(root, "elements", False)
         try:
             for part in parts[1:-1]:
-                nxt = directory(parent, part, action != "read")
+                nxt = directory(parent, part, action in ("write", "create"))
                 os.close(parent)
                 parent = nxt
             try:
                 leaf = parts[-1]
-                if action == "read":
+                if action in ("read", "inspect"):
                     handle = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=parent)
                     try:
                         guard_file(handle)
-                        result = bytearray()
-                        while True:
-                            chunk = os.read(handle, 65536)
-                            if not chunk:
-                                break
-                            if len(result) + len(chunk) > MAX_CONTENT:
-                                raise UnsafePath("read size limit")
-                            result.extend(chunk)
-                        sys.stdout.buffer.write(result)
+                        if action == "inspect":
+                            # Portable PHP may publish a new inode only when
+                            # doing so cannot silently discard ACL/xattrs.
+                            # Inspect by fd so traversing a substituted
+                            # symlink never escapes the permitted tree.
+                            if os.listxattr(handle):
+                                raise UnsafePath("existing ACL/xattrs detected")
+                            sys.stdout.write("CLEAN")
+                        else:
+                            result = bytearray()
+                            while True:
+                                chunk = os.read(handle, 65536)
+                                if not chunk:
+                                    break
+                                if len(result) + len(chunk) > MAX_CONTENT:
+                                    raise UnsafePath("read size limit")
+                                result.extend(chunk)
+                            sys.stdout.buffer.write(result)
                     finally:
                         os.close(handle)
                 else:
