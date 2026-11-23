@@ -229,10 +229,14 @@ class ElementMutationSupport
         $linkClass = $context->platform()->className('template_var_template');
         $sourceElementClass = $context->platform()->className('media_source_element');
         $tv = $modx->getObject($tvClass, (int)$tvId);
-        if (!$tv) { return; }
+        if (!$tv) {
+            throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+        }
 
         if (isset($data['templates']) && is_array($data['templates'])) {
-            $modx->removeCollection($linkClass, array('tmplvarid' => (int)$tvId));
+            if ($modx->removeCollection($linkClass, array('tmplvarid' => (int)$tvId)) === false) {
+                throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+            }
             foreach ($data['templates'] as $templateId) {
                 if (empty($templateId)) { continue; }
                 $link = $modx->newObject($linkClass);
@@ -242,13 +246,17 @@ class ElementMutationSupport
                     true,
                     true
                 );
-                $link->save();
+                if (!$link->save()) {
+                    throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+                }
             }
         }
 
         if (isset($data['input_properties']) && is_array($data['input_properties'])) {
             $tv->set('input_properties', $data['input_properties']);
-            $tv->save();
+            if (!$tv->save()) {
+                throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+            }
         }
 
         if (isset($data['media_source'])) {
@@ -274,7 +282,9 @@ class ElementMutationSupport
                 );
             }
             $source->set('source', (int)$data['media_source']);
-            $source->save();
+            if (!$source->save()) {
+                throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
+            }
         }
     }
 
