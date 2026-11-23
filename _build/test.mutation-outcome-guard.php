@@ -42,6 +42,21 @@ foreach (array(
     }
     outcomeCheck($attempts===$before+1, 'never re-execute the operation');
 }
+// Model a native processor that has already saved a row before failing.
+$storedWrites = 0;
+$reportedUnknown = false;
+try {
+    MutationOutcomeGuard::run(function () use (&$storedWrites) {
+        ++$storedWrites;
+        throw new RuntimeException('SECRET_AFTER_COMMIT');
+    });
+} catch (ModxMCPClientException $error) {
+    $reportedUnknown = strpos($error->getMessage(),
+        'MUTATION_OUTCOME_UNCERTAIN:') === 0;
+}
+outcomeCheck($reportedUnknown && $storedWrites===1,
+    'post-write exception is unknown, never rolled back or replayed');
+
 // Verify both distributed MODX 2/3 dispatchers use the same safe boundary
 // for non-atomic effects and work performed after a confirmed DB commit.
 foreach (array(
