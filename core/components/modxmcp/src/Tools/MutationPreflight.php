@@ -62,14 +62,6 @@ final class MutationPreflight
         if ($action === 'replace_across') {
             ReplaceAcrossTool::validateSelection($context, $data);
         }
-        if ($action === 'make_static'
-            && !(isset($data['items']) && is_array($data['items']))) {
-            ElementMutationSupport::preflightMakeStatic(
-                $context,
-                isset($data['type']) ? (string)$data['type'] : '',
-                isset($data['id']) ? (int)$data['id'] : 0
-            );
-        }
         // Paths/names are deterministic and must be rejected BEFORE
         // reserving a CAS revision or an operation ID. The media driver
         // revalidates these inputs before its actual filesystem effect.
