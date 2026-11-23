@@ -19,6 +19,21 @@ final class MutationPreflight
         // reservation, while retaining identical processor-level checks.
         ProcessorMutationTool::assertAclMutationFields($action, $data);
         if (in_array($action, array(
+            'create_system_setting','update_system_setting',
+            'delete_system_setting'
+        ), true)) {
+            if ($action === 'create_system_setting' && empty($data['key'])) {
+                throw new \ModxMCPClientException('System setting key is required.');
+            }
+            foreach (array('key','new_key') as $field) {
+                if (array_key_exists($field, $data)) {
+                    \ModxMcp\Security\ProtectedSettingsGuard::assertMutableKey(
+                        (string)$data[$field]
+                    );
+                }
+            }
+        }
+        if (in_array($action, array(
             'create_context_setting', 'update_context_setting',
             'delete_context_setting'
         ), true)) {
