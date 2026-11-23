@@ -261,6 +261,8 @@ jobs:
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           npm shrinkwrap
           npm audit --omit=dev --audit-level=moderate
+          # This package's files allowlist would otherwise omit shrinkwrap.
+          npm pkg set "files[3]=npm-shrinkwrap.json"
           mkdir -p "$RUNNER_TEMP/client-artifacts"
           npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/client-artifacts"
           file="$RUNNER_TEMP/client-artifacts/modx3-mcp-1.2.8-beta.2.tgz"
