@@ -126,9 +126,12 @@ def main():
                                 if n < 1:
                                     raise OSError("short temporary write")
                                 remaining = remaining[n:]
+                            # Preserve the inherited umask for a new file.
+                            current_umask = os.umask(0)
+                            os.umask(current_umask)
                             target_mode = (
                                 stat.S_IMODE(existing.st_mode) if existing else
-                                0o666 & ~os.umask(os.umask(0))
+                                (0o666 & ~current_umask)
                             )
                             os.fchmod(temp, target_mode)
                             os.fsync(temp)
