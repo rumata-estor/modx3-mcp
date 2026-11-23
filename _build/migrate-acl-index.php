@@ -102,6 +102,13 @@ if(!$apply) {
     echo 'ACL_INDEX_MIGRATION_REQUIRED table='.trim($table,chr(96)).PHP_EOL;
     exit(0);
 }
+// RU: Проверка количества строк до/после DDL в окне остановленных записей.
+// EN: Guard the maintenance expectation that membership rows do not change.
+$beforeRows=$modx->query('SELECT COUNT(*) FROM '.$table);
+if(!$beforeRows) {
+    throw new RuntimeException('ACL_INDEX_MIGRATION_DENIED: cannot count members');
+}
+$beforeCount=(int)$beforeRows->fetchColumn();
 if($modx->exec('SET SESSION lock_wait_timeout=5')===false
     || $modx->exec('SET SESSION innodb_lock_wait_timeout=5')===false) {
     throw new RuntimeException('ACL_INDEX_MIGRATION_DENIED: cannot bound wait');
@@ -119,5 +126,10 @@ try {
 list($found,$collision)=aclIndexState($modx,$table);
 if(!$found || $collision) {
     throw new RuntimeException('ACL_INDEX_MIGRATION_OUTCOME_UNCERTAIN: inspect indexes');
+}
+$afterRows=$modx->query('SELECT COUNT(*) FROM '.$table);
+if(!$afterRows || (int)$afterRows->fetchColumn()!==$beforeCount) {
+    throw new RuntimeException('ACL_INDEX_MIGRATION_OUTCOME_UNCERTAIN: membership '
+        .'row count changed; inspect maintenance window');
 }
 echo 'ACL_INDEX_MIGRATION_APPLIED platform='.($is2?'modx2':'modx3').PHP_EOL;
