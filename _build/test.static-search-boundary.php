@@ -5,6 +5,7 @@
  */
 namespace ModxMcp\Tools {
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/StaticFileIoSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementContentSupport.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/SearchSupport.php';
 }
