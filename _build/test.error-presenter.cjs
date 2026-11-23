@@ -48,6 +48,11 @@ assert(presenter.display(timedOut).includes("Автоматический пов
 assert(!presenter.debugLine(timedOut).includes("SUPER_SECRET"));
 const readFailed = presenter.fromNetwork({ code: "ETIMEDOUT" }, "get_element", true);
 assert.strictEqual(readFailed.outcome, "not_applied");
+const readHttp = presenter.fromHttp(
+  { code: "INTERNAL_ERROR", error: "Internal Server Error" },
+  500, "get_element", true);
+assert.strictEqual(readHttp.outcome, "not_applied");
+assert.strictEqual(readHttp.retry_policy, "after_admin_check");
 const config = presenter.fromLocal(
   { message: "CLIENT_CONFIG_INVALID: missing_token" }, "update_element", false);
 assert.strictEqual(config.code, "CLIENT_CONFIG_INVALID");
