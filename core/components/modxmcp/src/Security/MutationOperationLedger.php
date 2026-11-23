@@ -6,10 +6,15 @@
 namespace ModxMcp\Security;
 
 /**
- * Not yet attached to the MODX mutation dispatcher. Do not claim that this
- * class alone makes arbitrary processors or transport packages idempotent.
- * A caller must claim BEFORE any side effect, on a separate autocommit PDO,
- * and never dispatch again after a duplicate claim.
+ * RU: Журнал подключён к диспетчеру через MutationOperationGate,
+ * RU: но работает только при явном включении protected-mode, подписанного
+ * RU: operation_id и существующей отдельной таблицы журнала.
+ * EN: Wired into the dispatcher via MutationOperationGate; opt-in only.
+ * EN: Requires protected signed authorization, an operation ID and its own
+ * EN: provisioned ledger table. This does NOT make arbitrary external
+ * EN: processors or package installers transactional/idempotent.
+ * Claim is durable before side effects on an independent autocommit PDO.
+ * Duplicate claims are never automatically dispatched again.
  */
 final class MutationOperationLedger
 {
