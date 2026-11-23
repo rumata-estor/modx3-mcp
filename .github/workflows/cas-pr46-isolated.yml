@@ -8,7 +8,7 @@ name: CAS PR46 isolated real MODX 2-3 checks (test only)
 on:
   workflow_dispatch:
   push:
-    branches: ['feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'fix/128-static-toctou-20261122']
+    branches: ['fix/128-static-toctou-atomic-20261123', 'feature/1.2.8-cas-pr46-20261121', 'fix/secret-redaction-128-compatible-20261122', 'test/128-package-processor-effects-20261122', 'fix/128-static-toctou-20261122']
 
 permissions:
   contents: read
