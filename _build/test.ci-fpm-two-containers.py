@@ -39,7 +39,14 @@ def rpc(node, data, seconds=50):
     )
     with urllib.request.urlopen(req, timeout=seconds) as response:
         raw = response.read(65536)
-    out = json.loads(raw)
+        content_type = response.headers.get("Content-Type", "")
+    try:
+        out = json.loads(raw)
+    except json.JSONDecodeError:
+        raise RuntimeError(
+            "FPM_HTTP_PROTOCOL_INVALID: bytes=%d content_type=%r "
+            "first_48_bytes=%r" % (len(raw), content_type, raw[:48])
+        ) from None
     check(isinstance(out, dict) and out.get("node") == node,
           "untrusted or mismatched FPM response")
     return out
