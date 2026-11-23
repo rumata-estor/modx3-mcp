@@ -379,6 +379,15 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-cross-host-lock.php
+      # RU: Потеря DB-сессии, подтверждение нового подключения и реальный deadlock.
+      # EN: KILL CONNECTION, independent recovery and an actual InnoDB deadlock.
+      - name: MariaDB disconnect, fresh CAS and deadlock failure injection (disposable)
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-db-session-faults.php
       # RU: Независимая запись Manager при прежней ревизии MCP: user, role, group.
       # EN: Reject stale target fingerprints after Manager edits user, role, group.
       # RU: Индекс добавляется только в одноразовую БД для эксперимента P0.
