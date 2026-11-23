@@ -122,6 +122,19 @@ final class ErrorCatalog
         );
     }
 
+    // RU: Ошибка журналирования не должна обрывать ответ об исходной ошибке.
+    // EN: Logging failure must never mask the original incident or close transport.
+    public static function safeLog($modx, $level, $line)
+    {
+        try {
+            if (is_object($modx) && method_exists($modx, 'log')) {
+                $modx->log($level, $line);
+            }
+        } catch (\Throwable $ignored) {
+            // The response still carries its incident ID and safe explanation.
+        }
+    }
+
     // RU: HTTP-статусы и старое поле error не меняем; анонимным GET диагностику не выдаём.
     // EN: Preserve legacy HTTP error/status while adding safe optional fields.
     public static function send($modx, $httpStatus, $legacy, $code)
@@ -130,17 +143,14 @@ final class ErrorCatalog
         $modxClass = get_class($modx);
         $levelKey = $modxClass . '::LOG_LEVEL_ERROR';
         $level = defined($levelKey) ? constant($levelKey) : 3;
-        // RU: Тестовые минимальные MODX-дублёры не имеют API журналирования.
-        // EN: Lightweight bootstrap test doubles do not implement MODX logging.
-        if (method_exists($modx, 'log')) {
-            $modx->log($level, sprintf('[%s] MCP endpoint refused. code=%s http_status=%d',
+        self::safeLog($modx, $level,
+            sprintf('[%s] MCP endpoint refused. code=%s http_status=%d',
                 $fields['error_id'], $fields['code'], (int)$httpStatus));
-        }
         http_response_code((int)$httpStatus);
         echo json_encode(array_merge(array(
             'success' => false,
             'error' => \ModxMcp\Security\SecretRedactor::text((string)$legacy),
-        ), $fields), JSON_UNESCAPED_UNICODE);
+        ), $fields), JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         exit;
     }
 }
