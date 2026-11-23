@@ -31,6 +31,11 @@ if(!is_dir($cache)&&!mkdir($cache,0770,true)) {
     throw new RuntimeException('Could not create isolated cache');
 }
 $modx->setOption('cache_path',$cache);
+// RU: Копия MODX использует общую БД с исходными настройками путей.
+// RU: Код компонента должен загружаться только из своей файловой системы.
+// EN: DB-stored package path belongs to the source install; force the
+// EN: local container path without modifying any persisted MODX setting.
+$modx->setOption('modxmcp.core_path',MODX_CORE_PATH.'components/modxmcp/');
 $modx->setOption('modxmcp.disabled_groups','');
 require_once MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
 $api=new modxMCP($modx);
