@@ -47,11 +47,12 @@ if ($phase === 'before') {
     $admin = $modx->getObject($userClass, 1);
     oldAclCheck($admin !== null && $admin !== false, 'historical admin account missing');
     $tag = 'MCP_Historical_ACL_' . bin2hex(random_bytes(6));
-    $role = $modx->newObject($roleClass);
-    oldAclCheck((bool)$role, 'cannot create role');
-    $role->set('name', $tag . '_role');
-    $role->set('authority', 9999);
-    oldAclCheck($role->save(), 'cannot save historical role');
+    // RU: Используем существующую роль старой установки, не создавая ACL.
+    // EN: Reuse a genuine pre-existing MODX role instead of changing ACL policy.
+    $roles = $modx->getCollection($roleClass);
+    $role = ($roles && count($roles)) ? reset($roles) : null;
+    oldAclCheck((bool)$role && (int)$role->get('id') > 0,
+        'no pre-existing historical role');
     $group = $modx->newObject($groupClass);
     oldAclCheck((bool)$group, 'cannot create group');
     $group->set('name', $tag . '_group');
