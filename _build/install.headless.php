@@ -357,6 +357,7 @@ $settings = array(
     'modxmcp.audit_log' => array(1, 'combo-boolean', 'modxmcp:main'),
     'modxmcp.debug' => array(0, 'combo-boolean', 'modxmcp:main'),
     'modxmcp.auto_static' => array(0, 'combo-boolean', 'modxmcp:main'),
+    'modxmcp.static_io_mode' => array('portable', 'textfield', 'modxmcp:security'),
     'modxmcp.disabled_groups' => array(
         'versionx,virtualpage,minishop2,migx,access,property_sets,contexts,package_management,namespaces,lexicon',
         'textfield',
