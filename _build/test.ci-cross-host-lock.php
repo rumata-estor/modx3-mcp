@@ -25,7 +25,7 @@ if ($is2) {
     $modx=new modX();
 } else {
     require_once MODX_CORE_PATH.'vendor/autoload.php';
-    $modx=\\MODX\\Revolution\\modX::getInstance();
+    $modx=\MODX\Revolution\modX::getInstance();
 }
 $modx->initialize('mgr');
 $modx->setOption('modxmcp.disabled_groups','');
@@ -55,7 +55,7 @@ if ($mode==='mutate') {
             )
         ));
         $out=array('state'=>'success','id'=>(int)($created['id']??0));
-    } catch (\\Throwable $error) {
+    } catch (\Throwable $error) {
         $message=$error->getMessage();
         $out=array('state'=>strpos($message,'STALE_STATE')!==false?'stale':'error',
             'code'=>substr($message,0,55));
@@ -64,9 +64,9 @@ if ($mode==='mutate') {
     exit(0);
 }
 if ($mode==='hold' || $mode==='probe') {
-    $runtime=new \\ModxMcp\\Core\\Runtime($modx,$api);
+    $runtime=new \ModxMcp\Core\Runtime($modx,$api);
     $ctx=$runtime->context();
-    $lock=\\ModxMcp\\Tools\\StateSupport::class;
+    $lock=\ModxMcp\Tools\StateSupport::class;
     try {
         $lock::withMutationLock($ctx,function()use($mode,$work,$lock,$ctx) {
             if ($mode==='probe') {
@@ -81,7 +81,7 @@ if ($mode==='hold' || $mode==='probe') {
                 sleep(35); // parent SIGKILLs this CI child
             });
         });
-    } catch (\\Throwable $error) {
+    } catch (\Throwable $error) {
         fwrite(STDERR,"CROSSHOST_WORKER_FAILURE ".substr($error->getMessage(),0,120)."\n");
         exit(9);
     }
@@ -125,9 +125,9 @@ try {
     file_put_contents($work.'/config.json',json_encode($config));
     // RU: Расширяем окно гонки CAS->increment, не меняя пользовательские данные.
     // EN: Delay revision update to deterministically expose cross-node CAS races.
-    $pdo=new \\PDO('mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
+    $pdo=new \PDO('mysql:host=127.0.0.1;dbname=modx_build;charset=utf8mb4',
         'modx_ci','ci-throwaway-only-user',
-        array(\\PDO::ATTR_ERRMODE=>\\PDO::ERRMODE_EXCEPTION));
+        array(\PDO::ATTR_ERRMODE=>\PDO::ERRMODE_EXCEPTION));
     $trigger='mcp_crosshost_'.bin2hex(random_bytes(5));
     $pdo->exec('CREATE TRIGGER `'.$trigger.'` BEFORE UPDATE ON `modx_system_settings`'
         .' FOR EACH ROW BEGIN IF NEW.`key`=\'modxmcp.site_revision\' THEN'
