@@ -55,77 +55,197 @@ class FilesystemSupport
     }
 
     /**
-     * RU: Для чтения исходников компонента используем последовательный
-     * RU: openat(O_NOFOLLOW) от корня файловой системы; не открываем файл
-     * RU: по имени после отдельной проверки realpath.
-     * EN: Read component source through pinned dirfds and O_NOFOLLOW.
-     * EN: Missing Python/POSIX support fails closed; no PHP path fallback.
+     * RU: Чтение исходников компонента средствами PHP, без Python и proc_open.
+     * RU: lstat каждого участка + fstat открытого дескриптора + повторная
+     * RU: проверка пути после чтения. Обнаруженный конфликт — отказ.
+     * EN: PHP-only component read: reject path symlinks and compare lstat
+     * EN: snapshots with the opened handle (fstat), then recheck the path.
+     * EN: Unlike openat(O_NOFOLLOW), this does NOT eliminate hostile TOCTOU.
      */
-    public static function readComponentFileAnchored($modx, $componentRoot, $relativePath, array $data)
+    public static function readComponentFileChecked($modx, $componentRoot, $relativePath, array $data)
     {
-        $maxAllowed = (int)$modx->getOption('modxmcp.max_read_bytes', null, 262144);
-        if ($maxAllowed <= 0) { $maxAllowed = 262144; }
-        // Bound JSON/stdout allocations even when the admin raises the limit.
-        $maxAllowed = min($maxAllowed, 4194304);
-        $offset = isset($data['offset']) ? max(0, (int)$data['offset']) : 0;
-        $wanted = isset($data['bytes']) ? (int)$data['bytes']
-            : (isset($data['length']) ? (int)$data['length'] : $maxAllowed);
-        if ($wanted <= 0 || $wanted > $maxAllowed) {
-            $wanted = $maxAllowed;
+        $relativePath = self::normalizeRelativePath($relativePath);
+        if ($relativePath === '' || strpos($relativePath, "\0") !== false) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: invalid component file path.'
+            );
+        }
+        // Resolve the trusted component root from MODX configuration. Symlinks
+        // above that root (common on shared hosting) are not user path entries.
+        clearstatcache(true, (string)$componentRoot);
+        $root = realpath($componentRoot);
+        if ($root === false || !is_dir($root)) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: component code root is unavailable.'
+            );
+        }
+        $root = self::normalizePath($root);
+        $parts = explode('/', $relativePath);
+        $full = $root;
+        $snapshots = array();
+        foreach ($parts as $index => $part) {
+            if ($part === '' || $part === '.' || $part === '..'
+                || strpos($part, "\0") !== false) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: invalid component file path.'
+                );
+            }
+            $full .= DIRECTORY_SEPARATOR . $part;
+            clearstatcache(true, $full);
+            $entry = @lstat($full);
+            $kind = is_array($entry) ? ((int)$entry['mode'] & 0170000) : 0;
+            $last = $index === count($parts) - 1;
+            // Reject *every* symlink inside the requested path, even when the
+            // target is inside the component. Directories/files only.
+            if (!is_array($entry)
+                || $kind !== ($last ? 0100000 : 0040000)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component path is missing, symbolic or unsafe.'
+                );
+            }
+            $snapshots[] = array('path' => $full, 'stat' => $entry);
+        }
+        if (!self::pathStartsWith($full, $root)) {
+            throw new \ModxMCPClientException(
+                'MANUAL_REVIEW_REQUIRED: component path is outside the allowed root.'
+            );
         }
 
-        $helper = dirname(__DIR__) . '/Security/component_read_guard.py';
-        if (!function_exists('proc_open') || !is_file($helper)) {
+        $max = (int)$modx->getOption('modxmcp.max_read_bytes', null, 262144);
+        if ($max <= 0) { $max = 262144; }
+        $max = min($max, 4194304);
+        $offset = isset($data['offset']) ? max(0, (int)$data['offset']) : 0;
+        $wanted = isset($data['bytes']) ? (int)$data['bytes']
+            : (isset($data['length']) ? (int)$data['length'] : $max);
+        if ($wanted <= 0 || $wanted > $max) { $wanted = $max; }
+
+        // No second file-name based content read or MIME probe below this
+        // point. Failed verification must not return any of the read bytes.
+        $fp = @fopen($full, 'rb');
+        if (!is_resource($fp)) {
             throw new \ModxMCPClientException(
-                'MANUAL_REVIEW_REQUIRED: secure component-file reader unavailable;'
-                . ' install Python 3 and enable proc_open.'
+                'MANUAL_REVIEW_REQUIRED: component file cannot be opened safely.'
             );
         }
-        $command = array(
-            'python3', $helper, (string)$componentRoot, (string)$relativePath,
-            (string)$offset, (string)$wanted
-        );
-        $spec = array(
-            0 => array('pipe', 'r'),
-            1 => array('pipe', 'w'),
-            2 => array('pipe', 'w'),
-        );
-        $pipes = array();
         try {
-            $process = @proc_open($command, $spec, $pipes, null, null,
-                array('bypass_shell' => true));
-        } catch (\Throwable $error) {
-            $process = false;
+            $before = @fstat($fp);
+            $expected = $snapshots[count($snapshots) - 1]['stat'];
+            if (!is_array($before)
+                || !self::sameFileIdentity($expected, $before)
+                || (((int)$before['mode'] & 0170000) !== 0100000)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component file changed while opening.'
+                );
+            }
+            $size = (int)$before['size'];
+            if ($size < 0) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component file size is invalid.'
+                );
+            }
+            $offset = min($offset, $size);
+            $count = min($wanted, $size - $offset);
+            $raw = '';
+            if ($count > 0 && @fseek($fp, $offset, SEEK_SET) !== 0) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component file seek failed.'
+                );
+            }
+            while (strlen($raw) < $count) {
+                $chunk = @fread($fp, min(65536, $count - strlen($raw)));
+                if ($chunk === false || $chunk === '') {
+                    throw new \ModxMCPClientException(
+                        'MANUAL_REVIEW_REQUIRED: component file changed during reading.'
+                    );
+                }
+                $raw .= $chunk;
+            }
+            $after = @fstat($fp);
+            if (!is_array($after)
+                || !self::sameFileIdentity($before, $after)
+                || !self::sameFileVersion($before, $after)) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component file changed during reading.'
+                );
+            }
+            foreach ($snapshots as $snapshot) {
+                clearstatcache(true, $snapshot['path']);
+                $now = @lstat($snapshot['path']);
+                if (!is_array($now)
+                    || !self::sameFileIdentity($snapshot['stat'], $now)
+                    || ($snapshot['path'] === $full
+                        && !self::sameFileVersion($expected, $now))) {
+                    throw new \ModxMCPClientException(
+                        'MANUAL_REVIEW_REQUIRED: component path changed during reading.'
+                    );
+                }
+            }
+            clearstatcache(true, (string)$componentRoot);
+            $rootAfter = realpath($componentRoot);
+            if ($rootAfter === false
+                || self::normalizePath($rootAfter) !== $root) {
+                throw new \ModxMCPClientException(
+                    'MANUAL_REVIEW_REQUIRED: component root changed during reading.'
+                );
+            }
+        } finally {
+            fclose($fp);
         }
-        if (!is_resource($process)) {
-            throw new \ModxMCPClientException(
-                'MANUAL_REVIEW_REQUIRED: secure component-file reader cannot start.'
-            );
+
+        // Detect from the already verified bytes, never reopen the path.
+        $extension = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
+        $mime = 'application/octet-stream';
+        if ($extension === 'php' || $extension === 'inc') {
+            $mime = 'application/x-httpd-php';
+        } elseif (function_exists('finfo_open') && function_exists('finfo_buffer')) {
+            $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $detected = @finfo_buffer($finfo, $raw);
+                finfo_close($finfo);
+                if (is_string($detected) && $detected !== '') {
+                    $mime = $detected;
+                }
+            }
         }
-        fclose($pipes[0]);
-        // Python caps raw reads at 4 MiB; JSON/base64 can be larger.
-        $response = stream_get_contents($pipes[1], 8388608);
-        fclose($pipes[1]);
-        // Read/discard stderr; do not reveal paths or internal failures.
-        stream_get_contents($pipes[2], 8192);
-        fclose($pipes[2]);
-        $exit = proc_close($process);
-        $decoded = is_string($response) ? json_decode($response, true) : null;
-        if ($exit !== 0 || !is_array($decoded)
-            || !isset($decoded['size'], $decoded['offset'],
-                $decoded['returned_bytes'], $decoded['encoding'], $decoded['content'])
-            || !array_key_exists('truncated', $decoded)
-            || !is_int($decoded['size']) || !is_int($decoded['offset'])
-            || !is_int($decoded['returned_bytes'])
-            || !is_bool($decoded['truncated'])
-            || !in_array($decoded['encoding'], array('utf-8','base64'), true)
-            || !is_string($decoded['content'])
-        ) {
-            throw new \ModxMCPClientException(
-                'MANUAL_REVIEW_REQUIRED: secure component-file read could not be verified.'
-            );
+        if ($mime === 'application/octet-stream'
+            && in_array($extension, array(
+                'txt', 'md', 'html', 'htm', 'css', 'js', 'json', 'xml',
+                'tpl', 'twig', 'yaml', 'yml', 'ini', 'csv', 'sql'
+            ), true)) {
+            $mime = 'text/plain';
         }
-        return $decoded;
+        $isText = (strpos($mime, 'text/') === 0
+            || strpos($mime, 'json') !== false
+            || strpos($mime, 'xml') !== false
+            || strpos($mime, 'javascript') !== false
+            || strpos($mime, 'svg') !== false
+            || strpos($mime, 'x-httpd-php') !== false)
+            && preg_match('//u', $raw) === 1;
+
+        $returned = strlen($raw);
+        return array(
+            'mime' => $mime,
+            'size' => $size,
+            'offset' => $offset,
+            'returned_bytes' => $returned,
+            'truncated' => ($offset + $returned) < $size,
+            'encoding' => $isText ? 'utf-8' : 'base64',
+            'content' => $isText ? $raw : base64_encode($raw),
+        );
+    }
+
+    private static function sameFileIdentity(array $a, array $b)
+    {
+        return (string)$a['dev'] === (string)$b['dev']
+            && (string)$a['ino'] === (string)$b['ino']
+            && (((int)$a['mode'] & 0170000) === ((int)$b['mode'] & 0170000));
+    }
+
+    private static function sameFileVersion(array $a, array $b)
+    {
+        return (int)$a['size'] === (int)$b['size']
+            && (int)$a['mtime'] === (int)$b['mtime']
+            && (int)$a['ctime'] === (int)$b['ctime'];
     }
 
     public static function readFileBounded($modx, $absolutePath, array $data)
