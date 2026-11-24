@@ -21,7 +21,9 @@ $doc=$ns.'modDocument';$res=$ns.'modResource';$chunk=$ns.'modChunk';
 $setting=$ns.'modSystemSetting';$menu=$ns.'modMenu';$namespace=$ns.'modNamespace';
 $package=$is2?'transport.modTransportPackage':$ns.'Transport\\modTransportPackage';
 $prefix=$is2?'modx2mcp':'modx3mcp';
-$beta=$prefix.'-1.2.8-beta5';$old=$prefix.'-1.2.7-pl';
+$baseline=getenv('BETA5_BASELINE')?:'1.2.7';
+if(!in_array($baseline,array('1.2.4','1.2.7'),true))exit(3);
+$beta=$prefix.'-1.2.8-beta5';$old=$prefix.'-'.$baseline.'-pl';
 $manifest=$temp.'/beta5-lifecycle-fixture.json';$mode=$argv[1]??'';
 function lcCheck($ok,$label){if(!$ok)throw new RuntimeException('BETA5_LIFECYCLE_FAILED: '.$label);}
 function lcRead($modx,$class,$criteria,array $fields){
@@ -86,6 +88,12 @@ if($mode==='seed'){
 $saved=json_decode(file_get_contents($manifest),true,512,JSON_THROW_ON_ERROR);
 foreach($saved['objects'] as $e)lcCheck(lcRead($modx,$e['class'],$e['criteria'],$e['fields'])===$e['state'],
     'unrelated data changed: '.$e['class']);
+if($mode==='baseline'){
+    lcCheck((bool)$modx->getObject($package,array('signature'=>$old)),'baseline package record');
+    $saved['baseline_token_sha256']=lcTokenHash($modx,$setting);
+    file_put_contents($manifest,json_encode($saved,JSON_THROW_ON_ERROR));
+    echo "BETA5_BASELINE_TOKEN_SNAPSHOT_OK\n";exit(0);
+}
 if($mode==='old-record'){
     $p=$modx->getObject($package,array('signature'=>$old));
     $installed=$p?(string)$p->get('installed'):'';
@@ -113,6 +121,7 @@ lcCheck(modxMCP::VERSION==='1.2.8','installed model version');
 $api=new modxMCP($modx);
 if($mode==='installed'){
     $saved['token_sha256']=lcTokenHash($modx,$setting);
+    lcCheck(hash_equals($saved['baseline_token_sha256'],$saved['token_sha256']),'upgrade preserves original token');
     file_put_contents($manifest,json_encode($saved,JSON_THROW_ON_ERROR));
     echo "BETA5_UPGRADED_USER_DATA_PRESERVED_OK\n";exit(0);
 }

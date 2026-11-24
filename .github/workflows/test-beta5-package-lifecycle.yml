@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    name: Disposable ${{ matrix.platform }} / PHP ${{ matrix.php_version }}
+    name: Disposable ${{ matrix.platform }} / PHP ${{ matrix.php_version }} / from ${{ matrix.baseline }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     # RU: PHP 8.4 — исследовательский тест, не блокирующий релизную матрицу.
@@ -24,8 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {platform: modx2, modx_version: '2.8.9', php_version: '8.2', signature: 'modx2mcp-1.2.7-pl'}
-          - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl'}
+          - {platform: modx2, modx_version: '2.8.9', php_version: '8.2', signature: 'modx2mcp-1.2.7-pl', baseline: '1.2.7'}
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.7-pl', baseline: '1.2.7'
+          - {platform: modx3, modx_version: '3.2.4', php_version: '8.2', signature: 'modx3mcp-1.2.4-pl', baseline: '1.2.4'}
+    env:
+      BETA5_BASELINE: ${{ matrix.baseline }}
     services:
       mariadb:
         image: mariadb:10.11
@@ -106,27 +109,30 @@ jobs:
         run: |
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-beta5-package-lifecycle.php seed
-      - name: Build and install the authentic v1.2.7 transport
+      - name: Build and install the authentic baseline transport
         env:
           BUILD_PLATFORM: '${{ matrix.platform }}'
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/source-127"
-          git archive v1.2.7 | tar -x -C "$RUNNER_TEMP/source-127"
+          git archive "v$BETA5_BASELINE" | tar -x -C "$RUNNER_TEMP/source-127"
           python3 "$RUNNER_TEMP/source-127/_build/prepare-release.py" \
             --platform "$BUILD_PLATFORM" --output "$RUNNER_TEMP/stage-127"
-          grep -Fq "define('PKG_VERSION', '1.2.7');" \
+          grep -Fq "define('PKG_VERSION', '$BETA5_BASELINE');" \
             "$RUNNER_TEMP/stage-127/_build/build.config.php"
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           php "$RUNNER_TEMP/stage-127/_build/build.transport.php"
           old="$BUILD_PLATFORM"
-          zip="$RUNNER_TEMP/modx-site/core/packages/${old}mcp-1.2.7-pl.transport.zip"
+          zip="$RUNNER_TEMP/modx-site/core/packages/${old}mcp-$BETA5_BASELINE-pl.transport.zip"
           test -s "$zip"
           php "$RUNNER_TEMP/stage-127/_build/install.transport.php" \
-            --signature="${old}mcp-1.2.7-pl"
-          MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
-          MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-upgrade-acl-migration.php before
+            --signature="${old}mcp-$BETA5_BASELINE-pl"
+          MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-beta5-package-lifecycle.php baseline
+          if [ "$BETA5_BASELINE" = "1.2.7" ]; then
+            MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
+            MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-upgrade-acl-migration.php before
+          fi
       - name: Build a separate unpublished 1.2.8-beta5 transport on the disposable MODX
         env:
           BUILD_PLATFORM: '${{ matrix.platform }}'
@@ -173,6 +179,7 @@ jobs:
       # RU: Существующие ACL-строки из 1.2.7, явный DDL только в disposable DB.
       # EN: Verify actual historical ACL rows survive new transport and explicit index migration.
       - name: Historical ACL data and explicit index migration on upgraded disposable MODX
+        if: matrix.baseline == '1.2.7'
         env:
           MODXMCP_DISPOSABLE_CI: '1'
         run: |
@@ -195,7 +202,9 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
-          php _build/test.ci-true-upgrade-127-to-128.php after
+          if [ "$BETA5_BASELINE" = "1.2.7" ]; then
+            php _build/test.ci-true-upgrade-127-to-128.php after
+          fi
           php -d disable_functions=proc_open,exec,shell_exec,system _build/test.static-portable-replace.php
           php -d disable_functions=proc_open,exec,shell_exec,system _build/test.media-assets-policy.php
           # Verify the installed portable implementation matches tested source.
@@ -212,7 +221,7 @@ jobs:
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           sig="${BUILD_PLATFORM}mcp-1.2.8-beta5"
-          old="${BUILD_PLATFORM}mcp-1.2.7-pl"
+          old="${BUILD_PLATFORM}mcp-$BETA5_BASELINE-pl"
           archive="$RUNNER_TEMP/modx-site/core/packages/$sig.transport.zip"
           cp "$archive" "$RUNNER_TEMP/beta5-lifecycle.transport.zip"
           sha256sum "$RUNNER_TEMP/beta5-lifecycle.transport.zip"
