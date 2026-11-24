@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'без посилань';
 $_lang['modxmcp_graph_from'] = 'із';
 $_lang['modxmcp_graph_no_broken'] = 'Пошкоджених посилань немає.';
 $_lang['modxmcp_graph_all_used'] = 'На всі елементи є посилання.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Аналіз неповний: частина статичних елементів недоступна; відсутність залежностей не підтверджена.';
 $_lang['modxmcp_graph_unverified_note'] = 'Вміст ресурсів не перевірено (великий сайт) — перевірте перед видаленням.';
 $_lang['modxmcp_graph_candidate_note'] = 'Це лише кандидати, а не доказ: доповнення може посилатися на них зі своїх таблиць.';
 $_lang['modxmcp_graph_steps'] = 'кроків';

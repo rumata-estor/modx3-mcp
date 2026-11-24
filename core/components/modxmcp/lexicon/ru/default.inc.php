@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'без ссылок';
 $_lang['modxmcp_graph_from'] = 'из';
 $_lang['modxmcp_graph_no_broken'] = 'Битых ссылок нет.';
 $_lang['modxmcp_graph_all_used'] = 'Все элементы используются.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Анализ неполный: часть статических элементов недоступна; отсутствие зависимостей не подтверждено.';
 $_lang['modxmcp_graph_unverified_note'] = 'Не сверялось с контентом ресурсов (сайт большой) — проверьте перед удалением.';
 $_lang['modxmcp_graph_candidate_note'] = 'Кандидаты, не доказательство: аддон может ссылаться из своих таблиц.';
 $_lang['modxmcp_graph_steps'] = 'шагов';

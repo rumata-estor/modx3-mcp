@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'bez odwołań';
 $_lang['modxmcp_graph_from'] = 'z';
 $_lang['modxmcp_graph_no_broken'] = 'Brak uszkodzonych odwołań.';
 $_lang['modxmcp_graph_all_used'] = 'Do wszystkich elementów istnieją odwołania.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Niepełna analiza: część statycznej zawartości jest niedostępna; brak odwołań nie został potwierdzony.';
 $_lang['modxmcp_graph_unverified_note'] = 'Nie sprawdzono treści zasobów (duża witryna) — zweryfikuj przed usunięciem.';
 $_lang['modxmcp_graph_candidate_note'] = 'To tylko potencjalne kandydatury, nie dowód: dodatek może odwoływać się do elementów z własnych tabel.';
 $_lang['modxmcp_graph_steps'] = 'kroków';

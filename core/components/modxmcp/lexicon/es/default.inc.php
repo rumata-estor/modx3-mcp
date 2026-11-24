@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'sin referencias';
 $_lang['modxmcp_graph_from'] = 'desde';
 $_lang['modxmcp_graph_no_broken'] = 'No hay referencias rotas.';
 $_lang['modxmcp_graph_all_used'] = 'Todos los elementos tienen referencias.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Análisis incompleto: parte del contenido estático no está disponible; no se confirma la ausencia de referencias.';
 $_lang['modxmcp_graph_unverified_note'] = 'No se comprobó el contenido de los recursos (sitio grande); verifíquelo antes de eliminar elementos.';
 $_lang['modxmcp_graph_candidate_note'] = 'Son posibles candidatos, no una prueba: un complemento puede utilizarlos desde sus propias tablas.';
 $_lang['modxmcp_graph_steps'] = 'saltos';

@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'sans références';
 $_lang['modxmcp_graph_from'] = 'de';
 $_lang['modxmcp_graph_no_broken'] = 'Aucune référence rompue.';
 $_lang['modxmcp_graph_all_used'] = 'Tous les éléments sont référencés.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Analyse incomplète : certains contenus statiques sont indisponibles ; l’absence de références n’est pas établie.';
 $_lang['modxmcp_graph_unverified_note'] = 'Contenu des ressources non vérifié (site volumineux) — vérifiez avant toute suppression.';
 $_lang['modxmcp_graph_candidate_note'] = 'Ce sont des candidats, pas une preuve : une extension peut les utiliser depuis ses propres tables.';
 $_lang['modxmcp_graph_steps'] = 'niveaux';

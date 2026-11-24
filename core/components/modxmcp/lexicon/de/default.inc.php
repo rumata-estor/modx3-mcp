@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'ohne Verweise';
 $_lang['modxmcp_graph_from'] = 'von';
 $_lang['modxmcp_graph_no_broken'] = 'Keine fehlerhaften Verweise vorhanden.';
 $_lang['modxmcp_graph_all_used'] = 'Alle Elemente werden verwendet.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Unvollständige Analyse: Statische Inhalte sind teilweise nicht verfügbar; fehlende Referenzen sind nicht nachgewiesen.';
 $_lang['modxmcp_graph_unverified_note'] = 'Nicht mit Ressourceninhalten abgeglichen (große Website) – vor dem Löschen überprüfen.';
 $_lang['modxmcp_graph_candidate_note'] = 'Dies sind nur Kandidaten, kein Nachweis: Eine Erweiterung kann Elemente über eigene Tabellen referenzieren.';
 $_lang['modxmcp_graph_steps'] = 'Schritte';

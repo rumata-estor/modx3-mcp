@@ -100,7 +100,7 @@ class DependencyGraphService
                         $unavailableCount++;
                         if (count($unavailable) < 100) {
                             $unavailable[] = array('type'=>$type, 'id'=>(int)$o->get('id'),
-                                'code'=>'STATIC_CONTENT_UNAVAILABLE');
+                                'code'=>ElementContentSupport::analysisFailureCode($e));
                         }
                     }
                 } else {

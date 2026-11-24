@@ -73,7 +73,7 @@ class ElementContentSupport
             }
         }
         if ($isStatic && $requireStaticFile) {
-            throw new \ModxMCPClientException('STATIC_READ_FAILED: static file unavailable for analysis.');
+            throw new \ModxMCPClientException('STATIC_FILE_UNAVAILABLE: static file missing or not a regular file.');
         }
         return array((string)$element->get($map['field']), $isStatic, $absolute);
     }
@@ -83,6 +83,19 @@ class ElementContentSupport
     {
         $map = self::map($context, $type);
         return self::read($context, $element, $map, true);
+    }
+
+    /** Stable, allowlisted diagnostic category; never return the raw exception/path. */
+    public static function analysisFailureCode(\ModxMCPClientException $error)
+    {
+        $message = $error->getMessage();
+        if (strpos($message, 'STATIC_FILE_UNAVAILABLE:') === 0) { return 'STATIC_FILE_UNAVAILABLE'; }
+        if (strpos($message, 'SECURE_STATIC_IO_UNAVAILABLE:') === 0) { return 'SECURE_STATIC_IO_UNAVAILABLE'; }
+        if (strpos($message, 'STATIC_READ_FAILED:') === 0) { return 'STATIC_READ_FAILED'; }
+        if ($message === 'static_file resolves outside core/elements.') { return 'STATIC_PATH_OUTSIDE_ALLOWED_ROOT'; }
+        if ($message === 'static_file hard link or unreadable link metadata is forbidden.') { return 'STATIC_LINK_UNSAFE'; }
+        if ($message === 'Static elements directory is unavailable or unsafe.') { return 'STATIC_ROOT_UNAVAILABLE'; }
+        return 'STATIC_CONTENT_UNAVAILABLE';
     }
 
     /**

@@ -1073,7 +1073,7 @@ const toolDefinitions = [
   {
     name: "modx_delete_element",
     description:
-      "Delete a MODX element. Run with dry_run:true FIRST — it returns what would be deleted plus where the element is still referenced (for resources: child-resource count), without deleting. Review that before the real delete.",
+      "Delete a MODX element. Run with dry_run:true FIRST — it returns what would be deleted plus where the element is still referenced (for resources: child-resource count), without deleting. Review that before the real delete. An incomplete dependency scan blocks element deletion even with valid CAS.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1727,7 +1727,7 @@ const toolDefinitions = [
   {
     name: "modx_search_code",
     description:
-      "Full-text search across element and resource CONTENT (and names). Finds the chunk/snippet/template/plugin/TV/resource that contains a string, including where an element is referenced or mentioned. Matches static elements by reading their static file. Use this to navigate the codebase (e.g. query 'header' finds the header chunk and everything that uses or mentions it). Each content hit returns `id`, `line` (1-based line of the match) and `line_text` (the exact line, verbatim) — so for a one-line change you can go straight to modx_edit_element_lines using `line` as start_line/end_line and `line_text` as `expect`, with no separate read. For multi-line context, open a window with modx_view_element around `line`.",
+      "Full-text search across element and resource CONTENT (and names). Finds the chunk/snippet/template/plugin/TV/resource that contains a string, including where an element is referenced or mentioned. Matches static elements by reading their static file. Check analysis_complete; unreadable sources or a filled result limit make absence of matches inconclusive. Use this to navigate the codebase (e.g. query 'header' finds the header chunk and everything that uses or mentions it). Each content hit returns `id`, `line` (1-based line of the match) and `line_text` (the exact line, verbatim) — so for a one-line change you can go straight to modx_edit_element_lines using `line` as start_line/end_line and `line_text` as `expect`, with no separate read. For multi-line context, open a window with modx_view_element around `line`.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1746,7 +1746,7 @@ const toolDefinitions = [
   {
     name: "modx_find_usages",
     description:
-      "Find where an element is used: content matches for its name across all code, plus — if it is a template — the resources assigned to that template. Use before renaming/deleting an element.",
+      "Find where an element is used: content matches for its name across all code, plus — if it is a template — the resources assigned to that template. Use before renaming/deleting an element. Check analysis_complete and unavailable_elements; no matches in a partial scan do not establish safety.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1792,7 +1792,7 @@ const toolDefinitions = [
   {
     name: "modx_dependency_graph",
     description:
-      "Map how the site's elements WIRE TOGETHER, in one call: which template pulls which chunk/snippet/TV, which snippet renders which chunk, where each TV is attached. Returns `nodes` (elements, with in/out reference degree) + `edges` ([from_index, to_index, kind]) — plus `missing` (tags pointing at a chunk/snippet that does NOT exist — broken references) and `orphans` (elements nothing references — safe-to-delete candidates). Detects references in MODX tags, `&tpl=`chunk`` properties, `$modx->getChunk()/runSnippet()` in PHP, MIGX `inputTV`/`renderchunktpl`, and template↔TV attachments. Token-safe: it scales with the number of ELEMENTS, never with content (resources are counts, not nodes). USE IT: to understand an unfamiliar site's code structure after modx_project_overview; with `focus` before editing or deleting an element, to see exactly what depends on it (cheaper and more precise than modx_find_usages, which is a text search); with format:\"summary\" as a fast health check for broken/dead elements.",
+      "Map how the site's elements WIRE TOGETHER, in one call: which template pulls which chunk/snippet/TV, which snippet renders which chunk, where each TV is attached. Returns `nodes` (elements, with in/out reference degree) + `edges` ([from_index, to_index, kind]) — plus `missing` (tags pointing at a chunk/snippet that does NOT exist — broken references) and `orphans` (elements nothing references — unreferenced candidates, never proof of safe deletion). Detects references in MODX tags, `&tpl=`chunk`` properties, `$modx->getChunk()/runSnippet()` in PHP, MIGX `inputTV`/`renderchunktpl`, and template↔TV attachments. If analysis_complete is false, some static content could not be inspected and orphan candidates are withheld. Token-safe: it scales with the number of ELEMENTS, never with content (resources are counts, not nodes). USE IT: to understand an unfamiliar site's code structure after modx_project_overview; with `focus` before editing or deleting an element, to see exactly what depends on it (cheaper and more precise than modx_find_usages, which is a text search); with format:\"summary\" as a fast health check for broken/dead elements.",
     inputSchema: {
       type: "object",
       properties: {

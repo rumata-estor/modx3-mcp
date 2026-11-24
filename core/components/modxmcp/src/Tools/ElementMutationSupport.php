@@ -436,6 +436,17 @@ class ElementMutationSupport
         );
     }
 
+    // Used before reservation, and again before processor dispatch.
+    public static function assertCompleteDeleteAnalysis($context, $type, $id)
+    {
+        $preview = self::previewDelete($context, $type, $id);
+        if (empty($preview['analysis_complete'])) {
+            throw new \ModxMCPClientException(
+                'VALIDATION_ERROR: dependency analysis incomplete; deletion refused.'
+            );
+        }
+    }
+
     public static function previewDelete($context, $type, $id)
     {
         $modx = $context->modx();

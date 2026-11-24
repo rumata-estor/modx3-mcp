@@ -93,6 +93,13 @@ final class MutationPreflight
         if ($action === 'bulk_resources') {
             BulkResourcesTool::validateBatch($context, $data);
         }
+        if ($action === 'delete_element' && empty($data['dry_run'])) {
+            $type = ElementSupport::type($data);
+            if ($type !== 'resource' && $type !== 'category') {
+                $id = ElementSupport::resolveId($context, $type, $data);
+                ElementMutationSupport::assertCompleteDeleteAnalysis($context, $type, $id);
+            }
+        }
         if ($action === 'replace_across') {
             ReplaceAcrossTool::validateSelection($context, $data);
         }

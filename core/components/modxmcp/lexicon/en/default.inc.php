@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'unreferenced';
 $_lang['modxmcp_graph_from'] = 'from';
 $_lang['modxmcp_graph_no_broken'] = 'No broken references.';
 $_lang['modxmcp_graph_all_used'] = 'All elements are referenced.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Incomplete analysis: some static content is unavailable; absence of references is not established.';
 $_lang['modxmcp_graph_unverified_note'] = 'Not checked against resource content (large site); verify before deleting.';
 $_lang['modxmcp_graph_candidate_note'] = 'These are candidates, not proof: an add-on may reference them from its own tables.';
 $_lang['modxmcp_graph_steps'] = 'hops';

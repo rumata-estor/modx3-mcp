@@ -76,7 +76,7 @@ class SearchSupport
                         $unavailableCount++;
                         if (count($unavailable) < 100) {
                             $unavailable[] = array('type'=>$type, 'id'=>(int)$object->get('id'),
-                                'code'=>'STATIC_CONTENT_UNAVAILABLE');
+                                'code'=>ElementContentSupport::analysisFailureCode($e));
                         }
                         continue;
                     }

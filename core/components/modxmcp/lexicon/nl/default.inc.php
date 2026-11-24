@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'zonder verwijzingen';
 $_lang['modxmcp_graph_from'] = 'van';
 $_lang['modxmcp_graph_no_broken'] = 'Geen verbroken verwijzingen.';
 $_lang['modxmcp_graph_all_used'] = 'Naar alle elementen wordt verwezen.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Onvolledige analyse: statische inhoud is deels niet beschikbaar; afwezigheid van verwijzingen is niet vastgesteld.';
 $_lang['modxmcp_graph_unverified_note'] = 'Niet vergeleken met de inhoud van resources (grote site) — controleer dit vóór het verwijderen.';
 $_lang['modxmcp_graph_candidate_note'] = 'Dit zijn alleen kandidaten, geen bewijs: een uitbreiding kan er vanuit eigen tabellen naar verwijzen.';
 $_lang['modxmcp_graph_steps'] = 'stappen';

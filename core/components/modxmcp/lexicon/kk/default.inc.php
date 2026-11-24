@@ -134,6 +134,7 @@ $_lang['modxmcp_graph_orphan_unit'] = 'сілтемесіз';
 $_lang['modxmcp_graph_from'] = 'келесі элементтен';
 $_lang['modxmcp_graph_no_broken'] = 'Жарамсыз сілтемелер жоқ.';
 $_lang['modxmcp_graph_all_used'] = 'Барлық элементтерге сілтеме жасалған.';
+$_lang['modxmcp_graph_partial_analysis'] = 'Талдау толық емес: кейбір статикалық мазмұн қолжетімсіз; сілтемелердің жоқтығы расталмаған.';
 $_lang['modxmcp_graph_unverified_note'] = 'Ресурстардың мазмұнымен салыстырылмады (сайт үлкен) — жоймас бұрын тексеріңіз.';
 $_lang['modxmcp_graph_candidate_note'] = 'Бұлар тек ықтимал үміткерлер: қосымша компонент оларға өз кестелерінен сілтеме жасауы мүмкін.';
 $_lang['modxmcp_graph_steps'] = 'қадам';

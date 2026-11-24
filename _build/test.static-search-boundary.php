@@ -105,7 +105,7 @@ try{
         'query'=>'SAFE_SEARCH_NEEDLE','types'=>array('chunk'),'case_sensitive'=>true),true);
     searchAssert($partial['analysis_complete']===false && $partial['unavailable_count']===4,'coverage unavailable');
     searchAssert($partial['count']===1 && $partial['results'][0]['id']===81,'later safe hit retained');
-    searchAssert($partial['unavailable_elements'][0]===array('type'=>'chunk','id'=>77,'code'=>'STATIC_CONTENT_UNAVAILABLE'),'bounded safe diagnostic');
+    searchAssert($partial['unavailable_elements'][0]===array('type'=>'chunk','id'=>77,'code'=>'STATIC_PATH_OUTSIDE_ALLOWED_ROOT'),'bounded safe diagnostic');
     searchAssert(strpos(json_encode($partial),'PRIVATE_SEARCH_NEEDLE')===false && strpos(json_encode($partial),$root)===false,'no secret or path leak');
     $missing=\ModxMcp\Tools\SearchSupport::search($ctx,array('query'=>'DB_FALLBACK','types'=>array('chunk')),true);
     searchAssert($missing['count']===0 && !$missing['analysis_complete'],'no false hit from stale DB fallback');

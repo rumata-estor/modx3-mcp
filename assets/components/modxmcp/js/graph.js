@@ -222,7 +222,7 @@ Ext.onReady(function () {
         }
         var unused = 0;
         N.forEach(function (n) {
-            n.vendorUnused = !!(n.src && n.src.vendor) && !seen[n.i];
+            n.vendorUnused = raw.analysis_complete !== false && !!(n.src && n.src.vendor) && !seen[n.i];
             if (n.vendorUnused) { unused++; }
         });
         return unused;
@@ -348,7 +348,8 @@ Ext.onReady(function () {
         stat.textContent = (shown === total ? (total + ' ' + TXT.nodes_unit) : (shown + ' ' + TXT.of + ' ' + total + ' ' + TXT.nodes_unit))
             + ' · ' + visL.length + ' ' + TXT.links_unit
             + (s.missing ? ' · ' + s.missing + ' ' + TXT.broken_unit : '')
-            + (s.orphans ? ' · ' + s.orphans + ' ' + TXT.orphan_unit : '');
+            + (s.orphans ? ' · ' + s.orphans + ' ' + TXT.orphan_unit : '')
+            + (raw.analysis_complete === false ? ' · ' + TXT.partial_analysis : '');
     }
 
     // ---- sidebar ----------------------------------------------------------------------
@@ -390,7 +391,7 @@ Ext.onReady(function () {
             mh += '<li data-go="' + (idx === undefined ? '' : idx) + '">' + dot('missing')
                + '<span><b>' + esc(m.name) + '</b><br><span class="t">' + esc(TXT.from) + ' ' + esc(m.from) + '</span></span></li>';
         });
-        $('g-miss').innerHTML = mh || '<li class="g-empty-note">' + esc(TXT.no_broken) + '</li>';
+        $('g-miss').innerHTML = mh || '<li class="g-empty-note">' + esc(raw.analysis_complete === false ? TXT.partial_analysis : TXT.no_broken) + '</li>';
 
         var oh = '';
         orph.forEach(function (o) {
@@ -398,12 +399,13 @@ Ext.onReady(function () {
             oh += '<li data-go="' + (idx === undefined ? '' : idx) + '">' + dot(o.type)
                + '<span>' + esc(o.name) + '<br><span class="t">' + esc(reasonText(o.reason)) + '</span></span></li>';
         });
-        $('g-orph').innerHTML = oh || '<li class="g-empty-note">' + esc(TXT.all_used) + '</li>';
+        $('g-orph').innerHTML = oh || '<li class="g-empty-note">' + esc(raw.analysis_complete === false ? TXT.partial_analysis : TXT.all_used) + '</li>';
 
         $('g-nvendor').textContent = vendorUnusedCount;
         $('g-norph2').textContent = orph.length;
 
-        $('g-orph-note').textContent = (raw.stats && raw.stats.orphans_verified === false)
+        $('g-orph-note').textContent = raw.analysis_complete === false ? TXT.partial_analysis
+            : (raw.stats && raw.stats.orphans_verified === false)
             ? TXT.unverified_note
             : TXT.candidate_note;
 
