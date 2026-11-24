@@ -5,8 +5,9 @@
  */
 namespace ModxMcp\Tools {
     function fwrite($stream,$content) {
-        // RU: Первая запись — два байта, затем авария; исходный файл цел.
-        // EN: Two bytes enter only the temporary file, then the write fails.
+        // RU: Первая порция — два байта, затем сбой: для существующего
+        // RU: inode частичная запись возможна и должна быть объявлена.
+        // EN: Two bytes then failure: an existing inode may be partially modified.
         if (!isset($GLOBALS['short_write_calls'])) $GLOBALS['short_write_calls']=0;
         $GLOBALS['short_write_calls']++;
         return $GLOBALS['short_write_calls']%2===1
@@ -79,9 +80,9 @@ try {
     }
     $checks++;
     \file_put_contents($target,'ORIGINAL');
-    // RU: edit_element_lines/replace_across не вызывают процессор после
-    // RU: неполной файловой записи.
-    // EN: Static content edits must not dispatch a MODX processor after short writes.
+    // RU: При неполной in-place записи исход неопределён: содержимое может
+    // RU: измениться, но процессор MODX запускать нельзя.
+    // EN: In-place partial writes may change bytes; no MODX processor follows.
     $uncertain=false;
     try {
         \ModxMcp\Tools\ElementContentSupport::write(
@@ -91,7 +92,7 @@ try {
     }catch(ModxMCPClientException $e){
         $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0;
     }
-    if(!$uncertain || \file_get_contents($target)!=='ORIGINAL'
+    if(!$uncertain || \file_get_contents($target)!=='NEIGINAL'
         || $ctx->p->processorCalls!==0) {
         throw new \RuntimeException('STATIC_EDIT_SHORT_WRITE_NOT_DETECTED');
     }
