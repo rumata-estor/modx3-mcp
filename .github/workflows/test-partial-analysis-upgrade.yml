@@ -9,6 +9,8 @@ on:
     paths:
       - 'core/**'
       - 'assets/**'
+      - '_build/platform/**'
+      - 'client/**'
       - '_build/test.ci-partial-analysis-upgrade.php'
       - '.github/workflows/test-partial-analysis-upgrade.yml'
 permissions:
