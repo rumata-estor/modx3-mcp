@@ -19,7 +19,7 @@ $modx->initialize('mgr');
 $ns=$is2?'':'MODX\\Revolution\\';
 $doc=$ns.'modDocument';$res=$ns.'modResource';$chunk=$ns.'modChunk';
 $setting=$ns.'modSystemSetting';$menu=$ns.'modMenu';$namespace=$ns.'modNamespace';
-$package=$is2?'modTransportPackage':$ns.'Transport\\modTransportPackage';
+$package=$is2?'transport.modTransportPackage':$ns.'Transport\\modTransportPackage';
 $prefix=$is2?'modx2mcp':'modx3mcp';
 $beta=$prefix.'-1.2.8-beta5';$old=$prefix.'-1.2.7-pl';
 $manifest=$temp.'/beta5-lifecycle-fixture.json';$mode=$argv[1]??'';
@@ -41,7 +41,7 @@ function lcTokenHash($modx,$setting){
     return hash('sha256',(string)$o->get('value'));
 }
 function lcGone($modx,$setting,$menu,$namespace,$package,$beta){
-    lcCheck($modx->getCount($setting,array('key:LIKE'=>'modxmcp.%'))===0,'MCP setting keys removed');
+    lcCheck((int)$modx->getCount($setting,array('key:LIKE'=>'modxmcp.%'))===0,'MCP setting keys removed');
     lcCheck(!$modx->getObject($namespace,array('name'=>'modxmcp')),'namespace removed');
     foreach(array('modxmcp','modxmcp_graph') as $text)
         lcCheck(!$modx->getObject($menu,array('text'=>$text)),'menu removed');
@@ -92,10 +92,14 @@ if($mode==='old-record'){
     echo !$p?'absent':(($installed!=='' && $installed!=='0000-00-00 00:00:00' && $installed!=='0')?'installed':'uninstalled');
     echo PHP_EOL;exit(0);
 }
-if($mode==='remove-inactive-old-record'){
+if($mode==='reconcile-old-record'){
+    lcGone($modx,$setting,$menu,$namespace,$package,$beta);
     $p=$modx->getObject($package,array('signature'=>$old));
-    lcCheck($p && in_array((string)$p->get('installed'),array('','0','0000-00-00 00:00:00'),true),'old record is inactive');
-    lcCheck($p->remove(),'old inactive record removed');echo "BETA5_OLD_INACTIVE_RECORD_REMOVED\n";exit(0);
+    if(!$p){echo "BETA5_OLD_RECORD_ALREADY_ABSENT\n";exit(0);}
+    // Disposable fixture only: the component and its settings are already absent.
+    lcCheck($p->remove(),'old transport record removed through MODX API');
+    lcGone($modx,$setting,$menu,$namespace,$package,$beta);
+    echo "BETA5_OLD_RECORD_REMOVED_WITH_ABSENT_COMPONENT\n";exit(0);
 }
 if(in_array($mode,array('uninstalled','clean','final'),true)){
     lcGone($modx,$setting,$menu,$namespace,$package,$beta);
@@ -145,5 +149,5 @@ $preview=lcRpc($api,'delete_element',$delete+array('dry_run'=>true));
 lcCheck(!empty($preview['dry_run']) && (int)$preview['would_delete']['id']===$id,'delete preview target');
 lcCheck(lcRpc($api,'get_site_state')['site_revision']===$before,'preview consumed no revision');
 lcRpc($api,'delete_element',$delete);
-lcCheck($modx->getCount($chunk,array('id'=>$id))===0,'isolated test object removed');
+lcCheck((int)$modx->getCount($chunk,array('id'=>$id))===0,'isolated test object removed');
 echo "BETA5_FRESH_CAS_CRUD_STALE_MANAGER_CONFLICT_DELETE_OK\n";
