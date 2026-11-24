@@ -131,10 +131,8 @@ class modxMCP {
                     $toolData['type'] = $elementType;
                 }
                 $runtimePreconditions = null;
-                if (
-                    isset($toolData['_runtime_preconditions'])
-                    && is_array($toolData['_runtime_preconditions'])
-                ) {
+                $hasRuntimePreconditions = array_key_exists('_runtime_preconditions', $toolData);
+                if ($hasRuntimePreconditions) {
                     $runtimePreconditions = $toolData['_runtime_preconditions'];
                     unset($toolData['_runtime_preconditions']);
                 }
@@ -154,9 +152,13 @@ class modxMCP {
                     $operationId = array_key_exists('_operation_id', $toolData)
                         ? $toolData['_operation_id'] : null;
                     unset($toolData['_operation_id']);
-                    $runtimePreconditions = \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
-                        $action, $runtimePreconditions
-                    );
+                    // Existing clients may omit CAS in ordinary mode. Explicit
+                    // preconditions must never be discarded or synthesized.
+                    if ($hasRuntimePreconditions) {
+                        $runtimePreconditions = \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
+                            $action, $runtimePreconditions
+                        );
+                    }
                     $runtimeContext = $this->modularRuntime->context();
                     $originalRequestData = is_array($data) ? $data : array();
                     $dryRunActions = array(
@@ -193,6 +195,9 @@ class modxMCP {
                                     $runtimeContext->modx()
                                 );
                                 if ($protected) {
+                                    \ModxMcp\Tools\StateSupport::requireMutationPreconditions(
+                                        $action, $runtimePreconditions
+                                    );
                                     \ModxMcp\Tools\StateSupport::requireProtectedTargetReadSet(
                                         $action,
                                         $toolData,
@@ -228,9 +233,11 @@ class modxMCP {
                             if ($action === 'make_static' && $operationId === null
                                 && !(isset($toolData['items'])
                                     && is_array($toolData['items']))) {
-                                \ModxMcp\Tools\StateSupport::assertPreconditions(
-                                    $runtimeContext, $runtimePreconditions
-                                );
+                                if ($runtimePreconditions !== null) {
+                                    \ModxMcp\Tools\StateSupport::assertPreconditions(
+                                        $runtimeContext, $runtimePreconditions
+                                    );
+                                }
                                 \ModxMcp\Tools\ElementMutationSupport::preflightMakeStatic(
                                     $runtimeContext,
                                     isset($toolData['type']) ? (string)$toolData['type'] : '',
