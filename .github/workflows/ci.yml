@@ -150,6 +150,7 @@ jobs:
           php _build/test.media-path-boundaries.php
           php _build/test.media-folder-path-contract.php
           php _build/test.media-custom-driver-boundary.php
+          php -d disable_functions=proc_open,exec,shell_exec,system _build/test.media-assets-policy.php
           php _build/test.p1-media-cas-stop.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
@@ -160,6 +161,7 @@ jobs:
           php _build/test.static-content-postwrite-fault.php
           php _build/test.static-read-failure.php
           php _build/test.static-portable-replace.php
+          php -d disable_functions=proc_open,exec,shell_exec,system _build/test.static-portable-replace.php
           php _build/test.static-short-write-fault.php
           php _build/test.replace-across-partial-fault.php
           php _build/test.bulk-resources-partial-fault.php

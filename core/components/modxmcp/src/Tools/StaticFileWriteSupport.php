@@ -1,15 +1,15 @@
 <?php
 /* MODX MCP SOURCE / ИСХОДНИК MODX MCP
- * RU: Переносимая атомарная замена static-файла без внешних зависимостей.
- * EN: Portable atomic replacement. Existing-file overwrites require a
- * EN: metadata inspection helper; unavailable inspection fails closed.
+ * RU: PHP-only запись статических файлов: новый файл создаётся атомарно,
+ * RU: существующий обновляется без замены inode; ограничения документированы.
+ * EN: PHP-only static I/O: exclusive create, existing-inode update; non-atomic.
  */
 namespace ModxMcp\Tools;
 
 /**
- * Temp file + same-directory rename avoids truncate-first corruption and
- * following a symlink at the final path. This does NOT provide dirfd/openat
- * security against a hostile process replacing parent directories mid-call.
+ * Exclusive creation stages new bytes first; existing-file writes preserve
+ * inode metadata but are not atomic. PHP cannot eliminate hostile TOCTOU
+ * without descriptor-relative native OS filesystem APIs.
  */
 final class StaticFileWriteSupport
 {
@@ -189,30 +189,87 @@ final class StaticFileWriteSupport
     }
 
     /**
-     * RU: POSIX rename заменяет inode и может уничтожить ACL/xattrs.
-     * RU: Portable не может предполагать отсутствие метаданных без проверки.
-     * EN: An inode replacement loses ACL/xattrs. Refuse existing-file writes
-     * EN: if a descriptor-anchored inspection is unavailable or finds any.
-     * EN: For a hostile local writer, choose strict for the entire operation.
+     * RU: Существующий файл меняется через исходный inode: PHP-only.
+     * RU: Владение, режим, ACL и xattrs не теряются из-за замены inode.
+     * RU: Запись НЕ атомарна; при сбое — неопределённый исход и ручная сверка.
+     * EN: Update the existing inode using plain PHP. This retains owner,
+     * EN: mode, ACL and xattrs, but is NOT an atomic content replacement.
+     * EN: A partial write requires independent inspection before any retry.
      */
-    private static function assertPortableMetadataSafe($context, $absolute)
+    private static function overwriteExisting($context, $absolute, $content, array $expected)
     {
-        try {
-            if (trim(self::strictIo($context, $absolute, 'inspect', null)) === 'CLEAN') {
-                return;
-            }
-        } catch (\Throwable $e) {
-            // Never silently fall back to an unchecked portable replacement.
+        ElementContentSupport::assertSafeStaticPath($context, $absolute);
+        $fp = @fopen($absolute, 'cb');
+        if (!is_resource($fp)) {
+            throw new \ModxMCPClientException(
+                'SECURE_STATIC_IO_UNAVAILABLE: existing static file cannot be opened for writing.'
+            );
         }
-        throw new \ModxMCPClientException(
-            'SECURE_STATIC_IO_UNAVAILABLE: portable replacement cannot verify'
-            . ' existing file ACL/xattrs; use strict static I/O mode.'
-        );
+        $began = false;
+        try {
+            if (!@flock($fp, LOCK_EX)) {
+                throw new \ModxMCPClientException(
+                    'SECURE_STATIC_IO_UNAVAILABLE: existing static file lock unavailable.'
+                );
+            }
+            $opened = @fstat($fp);
+            ElementContentSupport::assertSafeStaticPath($context, $absolute);
+            if (!is_array($opened)
+                || (int)$opened['nlink'] !== 1
+                || ((int)$opened['mode'] & 0170000) !== 0100000
+                || (string)$opened['dev'] !== $expected['dev']
+                || (string)$opened['ino'] !== $expected['ino']
+                || !self::sameIdentity(self::fingerprint($absolute), $expected)) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: static file path changed while opening; inspect before retry.'
+                );
+            }
+            if (@fseek($fp, 0, SEEK_SET) !== 0) {
+                throw new \ModxMCPClientException(
+                    'SECURE_STATIC_IO_UNAVAILABLE: existing static file seek failed.'
+                );
+            }
+            $began = true;
+            $length = strlen($content);
+            $offset = 0;
+            while ($offset < $length) {
+                $count = @fwrite($fp, substr($content, $offset, 65536));
+                if ($count === false || $count < 1) {
+                    throw new \ModxMCPClientException(
+                        'MUTATION_OUTCOME_UNCERTAIN: static write incomplete; inspect before retry.'
+                    );
+                }
+                $offset += $count;
+            }
+            if (!@ftruncate($fp, $length) || !@fflush($fp)) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: static write flush or truncate failed; inspect before retry.'
+                );
+            }
+            $after = @fstat($fp);
+            if (!is_array($after)
+                || (string)$after['dev'] !== $expected['dev']
+                || (string)$after['ino'] !== $expected['ino']
+                || !self::sameIdentity(self::fingerprint($absolute), $expected)) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: static file changed during write; inspect before retry.'
+                );
+            }
+            return $length;
+        } finally {
+            @flock($fp, LOCK_UN);
+            if (!@fclose($fp) && $began) {
+                // The file may already have changed; never declare success.
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: static file close failed; inspect before retry.'
+                );
+            }
+        }
     }
 
     /**
-     * RU: Реальный файл заменяется только после полной записи временного.
-     * EN: Replace destination only after a complete same-directory write.
+     * RU: Новый файл публикуется после полной записи временного.
+     * EN: Stage new files before exclusive publication; existing files retain inode.
      */
     public static function replace($context, $absolute, $content, $exclusive = false)
     {
@@ -254,24 +311,14 @@ final class StaticFileWriteSupport
                 'make_static: TV exclusive creation failed; target already exists.'
             );
         }
-        // RU: Windows rename поверх существующего файла отличается от Unix.
-        // RU: Там оставляем прежний способ, не вводя новые требования.
-        // EN: Windows rename-replace is not equivalent to POSIX rename;
-        // EN: keep legacy behavior rather than break existing installations.
-        if (DIRECTORY_SEPARATOR === '\\' && !$exclusive) {
-            throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
+        // RU: Штатный PHP не нуждается ни в Python, ни в праве создавать
+        // RU: соседние временные файлы при изменении существующего файла.
+        // EN: No external helper or writable parent directory is required
+        // EN: for existing-file writes (same-inode best-effort update).
+        if ($target !== null && !$exclusive) {
+            return self::overwriteExisting($context, $absolute, $content, $target);
         }
-        // RU: Некоторые хостинги разрешают запись в файл, но запрещают
-        // RU: создание соседних файлов. До 1.2.8 этот случай работал.
-        // EN: Preserve pre-1.2.8 behavior when directories deny creation.
-        // EN: Never enable this compatibility path for new files.
-        if (!$exclusive && $target !== null && !is_writable($directory)
-            && is_writable($absolute)) {
-            throw new \ModxMCPClientException('SECURE_STATIC_IO_UNAVAILABLE: unsafe compatibility write refused.');
-        }
-        if ($target !== null) {
-            self::assertPortableMetadataSafe($context, $absolute);
-        }
+
         $temp = $directory . DIRECTORY_SEPARATOR . '.modxmcp-' . bin2hex(random_bytes(12)) . '.tmp';
         $handle = @fopen($temp, 'xb');
         if ($handle === false) {
@@ -332,12 +379,6 @@ final class StaticFileWriteSupport
                 throw new \ModxMCPClientException(
                     'MUTATION_OUTCOME_UNCERTAIN: static file changed concurrently; inspect before retry.'
                 );
-            }
-            // Recheck immediately before publication: metadata may change
-            // after the first inspection. Portable retains its documented
-            // final TOCTOU interval; strict is required for hostile writers.
-            if ($target !== null) {
-                self::assertPortableMetadataSafe($context, $absolute);
             }
             if ($exclusive) {
                 if (!@link($temp, $absolute)) {

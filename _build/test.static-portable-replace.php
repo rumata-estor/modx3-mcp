@@ -80,20 +80,19 @@ try {
     },'parent symlink denied');
     pcheck(file_get_contents($outside)==='PRIVATE_UNCHANGED','parent symlink external intact');
     unlink($root.'/core/elements/outlink');
-    // RU: Без временного файла прямая запись запрещена, старые байты целы.
-    // EN: No unsafe in-place fallback if directory cannot create temp files.
+    // RU: Существующий inode обновляется даже без права создавать файлы рядом.
+    // EN: Existing inode remains writable without writable parent directory.
     file_put_contents($target,'LEGACY_OLD');
     chmod($target,0666);
     chmod($dir,0555);
     try {
         pcheck(!is_writable($dir) && is_writable($target),
             'restricted hosting fixture');
-        denied(function()use($ctx,$target){
-            \ModxMcp\Tools\StaticFileWriteSupport::replace(
-                $ctx,$target,'LEGACY_NEW'
-            );
-        },'restricted host must refuse unsafe legacy fallback');
-        pcheck(file_get_contents($target)==='LEGACY_OLD','restricted host unchanged');
+        pcheck(\ModxMcp\Tools\StaticFileWriteSupport::replace(
+            $ctx,$target,'LEGACY_NEW'
+        )===10,'restricted host PHP-only update');
+        pcheck(file_get_contents($target)==='LEGACY_NEW',
+            'restricted host writes existing inode');
     } finally {
         chmod($dir,0700);
     }
