@@ -144,6 +144,14 @@ class MediaSourceSupport
             || $classKey === 'MODX\\Revolution\\Sources\\modFileMediaSource';
     }
 
+    /**
+     * RU: Обычный локальный Media Source внутри assets доступен без
+     * RU: глобального разрешения читать файловую систему сайта.
+     * EN: Stock local sources inside canonical assets may be read without
+     * EN: granting site-root or arbitrary filesystem browsing.
+     *
+     * Returns the approved root so the caller does not resolve it again.
+     */
     public static function assertLocalReadAllowed($context, $source)
     {
         if (!self::isBuiltinLocalFileSource($source)) {
@@ -152,20 +160,62 @@ class MediaSourceSupport
                 . 'Direct filesystem browsing is not supported; use a supported local MODX file source.'
             );
         }
-        self::assertReadAllowed($context, $source);
+        return self::assertReadAllowed($context, $source);
+    }
+
+    private static function canonicalRoot($path)
+    {
+        if (!is_string($path) || $path === '' || strpos($path, "\0") !== false) {
+            return false;
+        }
+        $canonical = realpath($path);
+        if ($canonical === false || !is_dir($canonical)) {
+            return false;
+        }
+        return rtrim($canonical, DIRECTORY_SEPARATOR) ?: DIRECTORY_SEPARATOR;
+    }
+
+    private static function pathWithin($path, $root)
+    {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            return strcasecmp($path, $root) === 0
+                || stripos($path, rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) === 0;
+        }
+        return $path === $root
+            || strpos($path, rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR) === 0;
     }
 
     public static function assertReadAllowed($context, $source)
     {
-        if (self::isFilesystem($source)) {
-            $allow = (bool) $context->modx()->getOption('modxmcp.allow_root_filesystem_read', null, false);
-            if (!$allow) {
-                throw new \ModxMCPClientException(
-                    'Filesystem media source browsing is disabled by modxmcp.allow_root_filesystem_read. '
-                    . 'Use component read tools for installed package code.'
-                );
-            }
+        $modx = $context->modx();
+        $root = self::rootPath($context, $source);
+        // RU: Администраторский opt-in сохраняет прежний расширенный доступ.
+        // EN: Explicit opt-in keeps the previous extended local read behavior.
+        if ((bool)$modx->getOption('modxmcp.allow_root_filesystem_read', null, false)) {
+            return $root;
         }
+
+        $assets = self::canonicalRoot((string)$modx->getOption('assets_path'));
+        $sourceRoot = self::canonicalRoot($root);
+        $site = self::canonicalRoot((string)$modx->getOption('base_path'));
+        $core = self::canonicalRoot((string)$modx->getOption('core_path'));
+
+        // RU: Отказ при неизвестном корне, при assets == корень сайта или
+        // RU: при попадании источника в core/за пределы assets.
+        // EN: Do not silently grant root/core/external access on a broken
+        // EN: installation or when assets itself resolves to the site root.
+        if ($assets !== false && $sourceRoot !== false
+            && $assets !== DIRECTORY_SEPARATOR
+            && ($site === false || $assets !== $site)
+            && self::pathWithin($sourceRoot, $assets)
+            && ($site === false || $sourceRoot !== $site)
+            && ($core === false || !self::pathWithin($sourceRoot, $core))) {
+            return $sourceRoot;
+        }
+        throw new \ModxMCPClientException(
+            'Filesystem media source browsing is disabled by modxmcp.allow_root_filesystem_read '
+            . 'outside canonical assets_path. Only stock local sources inside assets are readable by default.'
+        );
     }
 
     private static function isFilesystem($source)
