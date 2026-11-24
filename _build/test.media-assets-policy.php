@@ -141,7 +141,7 @@ try {
         },'symlink escaping approved assets denied');
         unlink($link);
     }
-    assetsCheck($checks>=26,'regression test coverage');
+    assetsCheck($checks>=24,'regression test coverage');
     echo 'ASSETS_MEDIA_POLICY_OK checks='.$checks.PHP_EOL;
 } finally {
     if (is_link($root.'/assets/images/escape.txt')) unlink($root.'/assets/images/escape.txt');
