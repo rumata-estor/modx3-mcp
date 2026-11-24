@@ -1,7 +1,7 @@
 <?php
 /* MODX MCP SOURCE / ИСХОДНИК MODX MCP
- * RU: Portable отказывает до rename при ACL/xattrs или недоступном инспекторе.
- * EN: Portable fails closed before rename for ACL/xattrs or absent inspector.
+ * RU: PHP сохраняет inode, ACL и xattrs при записи без внешнего помощника.
+ * EN: PHP-only in-place writes retain inode metadata and need no runtime helper.
  */
 namespace ModxMcp\Tools {
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/FilesystemSupport.php';
@@ -54,19 +54,17 @@ PY;
     metadataCheck($result[0]===0,'python '.$operation.' failed '.$result[2]);
     return $result[1];
 }
-function metadataDenied($ctx,$target,$payload,$label) {
-    $old=file_get_contents($target);
+function metadataUpdate($ctx,$target,$payload,$label) {
     $ino=fileinode($target);
-    $refused=false;
-    try {
-        \ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,$payload);
-    } catch(ModxMCPClientException $e) {
-        $refused=strpos($e->getMessage(),'SECURE_STATIC_IO_UNAVAILABLE:')===0;
-    }
+    $owner=fileowner($target);
+    $group=filegroup($target);
+    $written=\ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,$payload);
     clearstatcache(true,$target);
-    metadataCheck($refused,$label.' did not refuse');
-    metadataCheck(file_get_contents($target)===$old,$label.' changed bytes');
-    metadataCheck(fileinode($target)===$ino,$label.' replaced inode');
+    metadataCheck($written===strlen($payload),$label.' update failed');
+    metadataCheck(file_get_contents($target)===$payload,$label.' bytes mismatch');
+    metadataCheck(fileinode($target)===$ino,$label.' changed inode');
+    metadataCheck(fileowner($target)===$owner && filegroup($target)===$group,
+        $label.' changed owner or group');
 }
 $root=sys_get_temp_dir().'/modxmcp-portable-meta-'.bin2hex(random_bytes(6));
 $folder=$root.'/core/elements/chunks';
@@ -77,17 +75,14 @@ chmod($target,0640);
 $ctx=new PortableMetadataContext($root);
 try {
     if(isset($argv[1]) && $argv[1]==='--no-helper') {
-        metadataDenied($ctx,$target,'DO_NOT_WRITE','missing helper');
+        metadataUpdate($ctx,$target,'PHP_ONLY','disabled process functions');
         echo 'PORTABLE_METADATA_NO_HELPER_OK'.PHP_EOL;
     } else {
-        metadataCheck(
-            \ModxMcp\Tools\StaticFileWriteSupport::replace($ctx,$target,'NORMAL')===6,
-            'clean file overwrite denied');
-        metadataCheck(file_get_contents($target)==='NORMAL','clean bytes incorrect');
+        metadataUpdate($ctx,$target,'NORMAL','clean file');
         metadataPython('set',$target);
-        metadataDenied($ctx,$target,'DROP_XATTR','user xattr');
+        metadataUpdate($ctx,$target,'KEEP_XATTR','user xattr');
         metadataCheck(metadataPython('get',$target)==='RETAIN_ME',
-                      'user xattr was lost');
+            'user xattr lost during PHP-only update');
         metadataPython('remove',$target);
 
         $setfacl=metadataProcess(array('setfacl','-m','u:nobody:r--',$target));
@@ -95,18 +90,18 @@ try {
         $before=metadataProcess(array('getfacl','-cp',$target));
         metadataCheck($before[0]===0 && strpos($before[1],'user:nobody:r--')!==false,
             'named ACL fixture missing');
-        metadataDenied($ctx,$target,'DROP_ACL','named ACL');
+        metadataUpdate($ctx,$target,'KEEP_ACL','named ACL');
         $after=metadataProcess(array('getfacl','-cp',$target));
         metadataCheck($after[0]===0 && $after[1]===$before[1],'ACL changed');
         metadataCheck(metadataProcess(array('setfacl','-b',$target))[0]===0,
             'ACL cleanup failed');
         metadataCheck(count(glob($folder.'/.modxmcp-*.tmp'))===0,
-            'temp files remained after refused write');
+            'unexpected temp files');
 
         $noHelper=metadataProcess(array(PHP_BINARY,'-d',
-            'disable_functions=proc_open',__FILE__,'--no-helper'));
-        metadataCheck($noHelper[0]===0,'missing helper not fail closed '.$noHelper[2]);
-        echo 'STATIC_PORTABLE_METADATA_OK checks=9'.PHP_EOL;
+            'disable_functions=proc_open,exec,shell_exec,system',__FILE__,'--no-helper'));
+        metadataCheck($noHelper[0]===0,'PHP-only update with disabled process functions failed '.$noHelper[2]);
+        echo 'STATIC_PORTABLE_METADATA_OK'.PHP_EOL;
     }
 } finally {
     if(is_file($target))unlink($target);
