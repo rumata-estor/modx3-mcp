@@ -19,14 +19,16 @@ class FindUsagesTool implements ToolInterface
             throw new \ModxMCPClientException('find_usages: "name" is required.');
         }
         $limit = isset($data['limit']) ? max(1, min((int)$data['limit'], 500)) : 100;
-        $search = SearchSupport::search($context, array('query' => $name, 'limit' => $limit));
+        $search = SearchSupport::search($context, array('query' => $name, 'limit' => $limit), true);
         $usages = $search['results'];
+        $coverage = array_intersect_key($search, array_flip(array('analysis_complete',
+            'limit_reached', 'unavailable_count', 'unavailable_elements', 'warning')));
         $modx = $context->modx();
         $templateClass = $context->platform()->className('template');
         $resourceClass = $context->platform()->className('resource');
         $template = $modx->getObject($templateClass, array('templatename' => $name));
         if (!$template) {
-            return array('name' => $name, 'content_matches' => $usages);
+            return array('name' => $name, 'content_matches' => $usages) + $coverage;
         }
 
         $templateId = (int)$template->get('id');
@@ -41,12 +43,16 @@ class FindUsagesTool implements ToolInterface
                 'uri' => $resource->get('uri'),
             );
         }
+        if ($total > count($resources)) {
+            $coverage['analysis_complete'] = false;
+            $coverage['warning'] = 'Incomplete search: resource listing reached its limit.';
+        }
         return array(
             'name' => $name,
             'content_matches' => $usages,
             'template_id' => $templateId,
             'resources_using_template_total' => (int)$total,
             'resources_using_template' => $resources,
-        );
+        ) + $coverage;
     }
 }

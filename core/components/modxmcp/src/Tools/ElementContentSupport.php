@@ -40,7 +40,7 @@ class ElementContentSupport
         return array($element, $type, $id, $map);
     }
 
-    public static function read($context, $element, array $map)
+    public static function read($context, $element, array $map, $requireStaticFile = false)
     {
         $isStatic = (bool)$element->get('static');
         $absolute = null;
@@ -72,7 +72,17 @@ class ElementContentSupport
                 }
             }
         }
+        if ($isStatic && $requireStaticFile) {
+            throw new \ModxMCPClientException('STATIC_READ_FAILED: static file unavailable for analysis.');
+        }
         return array((string)$element->get($map['field']), $isStatic, $absolute);
+    }
+
+    /** Read for a whole-site scan without trusting stale DB fallback bytes. */
+    public static function readForAnalysis($context, $element, $type)
+    {
+        $map = self::map($context, $type);
+        return self::read($context, $element, $map, true);
     }
 
     /**

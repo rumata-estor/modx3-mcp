@@ -18,14 +18,15 @@ class SearchFakeQuery {
 }
 class SearchFakeChunk {
     public $file;
+    public $id;
     public $getContentCalls=0;
-    public function __construct($file){$this->file=$file;}
+    public function __construct($file,$id=77){$this->file=$file;$this->id=$id;}
     public function get($name){
         switch($name){
             case 'static':return 1;
             case 'static_file':return $this->file;
             case 'name':return 'static-fixture';
-            case 'id':return 77;
+            case 'id':return $this->id;
             case 'snippet':return 'DB_FALLBACK';
         }
         return null;
@@ -49,7 +50,7 @@ class SearchFakeModx {
         if($class!=='FakeChunk')return array();
         foreach($query->conditions as $condition){
             if(is_array($condition) && ($condition['static']??null)===1){
-                return array($this->chunk);
+                return is_array($this->chunk)?$this->chunk:array($this->chunk);
             }
         }
         return array();
@@ -93,8 +94,27 @@ try{
     ));}catch(ModxMCPClientException $e){$denied=true;}
     searchAssert($denied,'external symlink was read by static search');
     searchAssert($chunk->getContentCalls===0,'unsafe getContent invoked after path failure');
-    echo 'STATIC_SEARCH_BOUNDARY_OK checks=4'.PHP_EOL;
+    $hard=$root.'/core/elements/chunks/hard.tpl';
+    link($root.'/outside/secret.txt',$hard);
+    $ctx->m->chunk=array($chunk,
+        new SearchFakeChunk('core/elements/chunks/hard.tpl',78),
+        new SearchFakeChunk('core/elements/chunks/missing.tpl',79),
+        new SearchFakeChunk('assets/external.tpl',80),
+        new SearchFakeChunk('core/elements/chunks/safe.tpl',81));
+    $partial=\ModxMcp\Tools\SearchSupport::search($ctx,array(
+        'query'=>'SAFE_SEARCH_NEEDLE','types'=>array('chunk'),'case_sensitive'=>true),true);
+    searchAssert($partial['analysis_complete']===false && $partial['unavailable_count']===4,'coverage unavailable');
+    searchAssert($partial['count']===1 && $partial['results'][0]['id']===81,'later safe hit retained');
+    searchAssert($partial['unavailable_elements'][0]===array('type'=>'chunk','id'=>77,'code'=>'STATIC_CONTENT_UNAVAILABLE'),'bounded safe diagnostic');
+    searchAssert(strpos(json_encode($partial),'PRIVATE_SEARCH_NEEDLE')===false && strpos(json_encode($partial),$root)===false,'no secret or path leak');
+    $missing=\ModxMcp\Tools\SearchSupport::search($ctx,array('query'=>'DB_FALLBACK','types'=>array('chunk')),true);
+    searchAssert($missing['count']===0 && !$missing['analysis_complete'],'no false hit from stale DB fallback');
+    $limited=\ModxMcp\Tools\SearchSupport::search(new SearchFakeContext($root,new SearchFakeChunk('core/elements/chunks/safe.tpl')),array('query'=>'SAFE_SEARCH_NEEDLE','types'=>array('chunk'),'limit'=>1),true);
+    searchAssert($limited['limit_reached'] && !$limited['analysis_complete'],'filled limit not proof of completeness');
+    unlink($hard);
+    echo 'STATIC_SEARCH_BOUNDARY_OK checks=10'.PHP_EOL;
 }finally{
+    @unlink($root.'/core/elements/chunks/hard.tpl');
     unlink($root.'/core/elements/chunks/escape');
     unlink($root.'/core/elements/chunks/safe.tpl');
     unlink($root.'/outside/secret.txt');

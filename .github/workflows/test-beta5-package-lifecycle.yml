@@ -8,7 +8,7 @@ name: Test MODX MCP Beta 5 transport lifecycle (disposable)
 on:
   workflow_dispatch:
   push:
-    branches: ['test/beta5-package-lifecycle-20261124']
+    branches: ['test/beta5-package-lifecycle-20261124', 'fix/beta5-partial-dependency-analysis-20261124']
 
 permissions:
   contents: read

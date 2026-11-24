@@ -34,6 +34,17 @@ class ElementDeleteTool implements ToolInterface
             return ElementMutationSupport::previewDelete($context, $type, $id);
         }
 
+        // An explicitly selected object and valid CAS do not prove that
+        // unreadable reference sources are safe to ignore. Keep this gate
+        // on the server even when an older client disregards preview warnings.
+        if ($type !== 'resource') {
+            $preview = ElementMutationSupport::previewDelete($context, $type, $id);
+            if (empty($preview['analysis_complete'])) {
+                throw new \ModxMCPClientException(
+                    'VALIDATION_ERROR: dependency analysis incomplete; deletion refused.'
+                );
+            }
+        }
         $action = $type === 'resource' ? 'delete' : 'remove';
         $response = $context->platform()->runProcessor(
             $context->modx(),

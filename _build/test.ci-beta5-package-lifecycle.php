@@ -152,6 +152,53 @@ $row=$modx->getObject($chunk,$id);$row->set('snippet','MANAGER_EDIT');lcCheck($r
 lcCheck(lcRpc($api,'get_site_state')['site_revision']===$managerGuard['observed_site_revision'],'Manager edit independent of site revision');
 lcDenied($api,'update_element',array('type'=>'chunk','id'=>$id,'content'=>'STALE','_runtime_preconditions'=>$managerGuard),'STALE_STATE');
 lcCheck($content($get())==='MANAGER_EDIT','complete fingerprint preserves Manager data');
+// Simulate legacy Manager-created static metadata exclusively in the disposable database.
+$root=rtrim(MODX_CORE_PATH,'/').'/elements/chunks';
+if(!is_dir($root))lcCheck(mkdir($root,0700,true),'fixture directory');
+$outside=$temp.'/legacy-static-'.$saved['tag'].'.tpl';
+$secret='PRIVATE_CI_SENTINEL_'.$saved['tag'];
+file_put_contents($outside,$secret);
+$prefix='legacy-'.$saved['tag'];
+$badLink=$root.'/'.$prefix.'-link.tpl';$hard=$root.'/'.$prefix.'-hard.tpl';
+$safe=$root.'/'.$prefix.'-safe.tpl';$missing=$root.'/'.$prefix.'-missing.tpl';
+symlink($outside,$badLink);link($outside,$hard);
+file_put_contents($safe,'[[$'.$name.']]');
+$fixtureRows=array();
+try {
+    foreach(array($badLink,$hard,$missing,$outside,$safe) as $i=>$path){
+        $fixtureRows[]=lcObject($modx,$chunk,array('name'=>$prefix.'-'.$i,
+            'static'=>1,'static_file'=>$path,'snippet'=>'STALE_DB_FALLBACK'));
+    }
+    $before=lcRpc($api,'get_site_state')['site_revision'];
+    $search=lcRpc($api,'search_code',array('query'=>$name,'types'=>array('chunk')));
+    lcCheck($search['analysis_complete']===false && $search['unavailable_count']===4,'search partial on legacy static metadata');
+    lcCheck(in_array((int)$fixtureRows[4]->get('id'),array_column($search['results'],'id')),'valid static reference retained');
+    $usage=lcRpc($api,'find_usages',array('name'=>$name));
+    lcCheck($usage['analysis_complete']===false && $usage['unavailable_count']===4,'find usages partial');
+    foreach(array(array('format'=>'summary'),array('focus'=>'chunk:'.$name,'direction'=>'in'),array()) as $args){
+        $graph=lcRpc($api,'dependency_graph',$args);
+        lcCheck($graph['analysis_complete']===false && $graph['unavailable_count']===4,'graph partial across formats');
+        lcCheck(empty($graph['orphans']) && $graph['stats']['orphans_verified']===false,'no false orphan claim');
+        lcCheck(strpos(json_encode($graph),$secret)===false && strpos(json_encode($graph),$outside)===false,'no denied bytes or path in graph');
+    }
+    $secretSearch=lcRpc($api,'search_code',array('query'=>$secret,'types'=>array('chunk')));
+    lcCheck($secretSearch['count']===0 && !$secretSearch['analysis_complete'],'no external content returned');
+    $d=array('type'=>'chunk','id'=>$id,'_runtime_preconditions'=>lcGuard($api,$sel));
+    $preview=lcRpc($api,'delete_element',$d+array('dry_run'=>true));
+    lcCheck($preview['analysis_complete']===false && !empty($preview['warning']),'delete preview explicitly incomplete');
+    lcDenied($api,'delete_element',$d,'VALIDATION_ERROR');
+    lcCheck($content($get())==='MANAGER_EDIT','incomplete deletion preserved target');
+    lcCheck(lcRpc($api,'get_site_state')['site_revision']===$before,'read-only and refusals preserve revision');
+    lcCheck(file_get_contents($outside)===$secret,'legacy external fixture bytes unchanged');
+    echo "BETA5_PARTIAL_ANALYSIS_FAIL_CLOSED_OK\n";
+} finally {
+    // Manager-owned legacy fixtures require administrator remediation; never
+    // remove an unknown unsafe static path through the component.
+    foreach($fixtureRows as $row){$row->set('static',0);$row->set('static_file','');lcCheck($row->save(),'fixture reset');lcCheck($row->remove(),'fixture cleanup');}
+    foreach(array($badLink,$hard,$safe,$outside) as $path){if(is_link($path)||is_file($path))unlink($path);}
+}
+$recovered=lcRpc($api,'find_usages',array('name'=>$name));
+lcCheck($recovered['analysis_complete']===true,'complete analysis restored after fixture cleanup');
 $delete=array('type'=>'chunk','id'=>$id,'_runtime_preconditions'=>lcGuard($api,$sel));
 $before=lcRpc($api,'get_site_state')['site_revision'];
 $preview=lcRpc($api,'delete_element',$delete+array('dry_run'=>true));

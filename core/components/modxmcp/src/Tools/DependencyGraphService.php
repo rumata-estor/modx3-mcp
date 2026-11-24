@@ -57,6 +57,8 @@ class DependencyGraphService
         $nodeByTypeId = array(); // type => element id => node index
         $edges = array();   // "from|to|kind" => array(from, to, kind)
         $missing = array(); // "from|kind|name" => row
+        $unavailable = array();
+        $unavailableCount = 0;
         $sources = array(); // node index => list of refs found in its source
 
         // --- Nodes: every element is a node (structure, not content). ---
@@ -90,10 +92,17 @@ class DependencyGraphService
                 // EN: Static file paths are untrusted even during read-only
                 // EN: graph analysis; use the common safe-read boundary.
                 if ($o->get('static')) {
-                    $contentMap = ElementContentSupport::map($context, $type);
-                    list($raw) = ElementContentSupport::read(
-                        $context, $o, $contentMap
-                    );
+                    try {
+                        list($raw) = ElementContentSupport::readForAnalysis($context, $o, $type);
+                    } catch (\ModxMCPClientException $e) {
+                        $raw = '';
+                        $nodes[$i]['content_unavailable'] = true;
+                        $unavailableCount++;
+                        if (count($unavailable) < 100) {
+                            $unavailable[] = array('type'=>$type, 'id'=>(int)$o->get('id'),
+                                'code'=>'STATIC_CONTENT_UNAVAILABLE');
+                        }
+                    }
                 } else {
                     $raw = (string)$o->get($m['content']);
                 }
@@ -310,6 +319,13 @@ class DependencyGraphService
                 'reason' => ($n['type'] === 'tv') ? 'not attached to any template and never referenced' : 'never referenced',
             );
         }
+        // Missing outgoing edges could make ANY other node look orphaned.
+        // Do not present false orphan candidates when a source was unreadable.
+        if ($unavailableCount > 0) { $orphans = array(); }
+        $coverage = array('analysis_complete'=>$unavailableCount === 0,
+            'unavailable_count'=>$unavailableCount, 'unavailable_elements'=>$unavailable,
+            'warning'=>$unavailableCount > 0
+                ? 'Incomplete dependency graph: references may be missing; orphan candidates withheld.' : null);
         $missing = array_values($missing);
 
         $byType = array();
@@ -329,7 +345,7 @@ class DependencyGraphService
             'vendor'  => $vendorCount,
             // false => orphans were NOT cross-checked against resource content, so the list may
             // include chunks/TVs that are only used inside pages. Re-run with verify_orphans:true.
-            'orphans_verified' => $verified,
+            'orphans_verified' => $verified && $unavailableCount === 0,
         );
 
         // Orphans are candidates, not proof: an add-on may reference an element from its own
@@ -343,7 +359,7 @@ class DependencyGraphService
         if ($format === 'summary') {
             return array('stats' => $stats, 'missing' => $missing, 'orphans' => $orphans,
                 'orphans_note' => $orphanNote,
-                'note' => 'Health summary only. Call again without format:"summary" for the nodes/edges graph.');
+                'note' => 'Health summary only. Call again without format:"summary" for the nodes/edges graph.') + $coverage;
         }
 
         // --- Optional focus: keep only what is within `depth` hops of one element. ---
@@ -400,7 +416,7 @@ class DependencyGraphService
             $result['orphans'] = $orphans;
             if ($orphans) { $result['orphans_note'] = $orphanNote; }
         }
-        return $result;
+        return $result + $coverage;
     }
 
     /** BFS `depth` hops out of / into a focus node. `focus` is "name" or "type:name". */

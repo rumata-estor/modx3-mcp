@@ -492,17 +492,21 @@ class ElementMutationSupport
         $count = isset($usages['content_matches'])
             ? count($usages['content_matches'])
             : 0;
+        $complete = $type === 'category' || !empty($usages['analysis_complete']);
         return array(
             'dry_run' => true,
+            'analysis_complete' => $complete,
             'would_delete' => array(
                 'type' => $type,
                 'id' => (int)$id,
                 'name' => $name,
             ),
             'usages' => $usages,
-            'warning' => $count > 0
-                ? "Name '{$name}' is referenced in {$count} place(s) (and possibly more) — deleting may break them."
-                : null,
+            'warning' => !$complete
+                ? 'Dependency analysis incomplete; deletion safety cannot be confirmed.'
+                : ($count > 0
+                    ? "Name '{$name}' is referenced in {$count} place(s) (and possibly more) — deleting may break them."
+                    : null),
         );
     }
 

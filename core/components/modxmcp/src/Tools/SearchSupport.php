@@ -20,7 +20,7 @@ class SearchSupport
         );
     }
 
-    public static function search($context, array $data)
+    public static function search($context, array $data, $allowPartial = false)
     {
         $query = isset($data['query']) ? trim((string)$data['query']) : '';
         if ($query === '') {
@@ -36,6 +36,8 @@ class SearchSupport
             : array('chunk', 'snippet', 'template', 'plugin', 'tv', 'resource');
         $modx = $context->modx();
         $results = array();
+        $unavailable = array();
+        $unavailableCount = 0;
 
         foreach ($types as $type) {
             if (!isset($map[$type]) || count($results) >= $limit) { continue; }
@@ -67,10 +69,17 @@ class SearchSupport
                     // RU: и иметь побочные эффекты. Проверяем реальный путь.
                     // EN: Do not use getContent() for static search: validate
                     // EN: filesystem boundaries without potential write effects.
-                    $contentMap = ElementContentSupport::map($context, $type);
-                    list($content) = ElementContentSupport::read(
-                        $context, $object, $contentMap
-                    );
+                    try {
+                        list($content) = ElementContentSupport::readForAnalysis($context, $object, $type);
+                    } catch (\ModxMCPClientException $e) {
+                        if (!$allowPartial) { throw $e; }
+                        $unavailableCount++;
+                        if (count($unavailable) < 100) {
+                            $unavailable[] = array('type'=>$type, 'id'=>(int)$object->get('id'),
+                                'code'=>'STATIC_CONTENT_UNAVAILABLE');
+                        }
+                        continue;
+                    }
                     $name = (string)$object->get($m['name']);
                     $haystack = $caseSensitive ? ($content . "\n" . $name) : strtolower($content . "\n" . $name);
                     if (strpos($haystack, $needle) !== false) {
@@ -80,7 +89,14 @@ class SearchSupport
             }
         }
 
-        return array('query' => $query, 'count' => count($results), 'results' => $results);
+        // A filled limit cannot certify that all sources were inspected.
+        $limitReached = count($results) >= $limit;
+        return array('query' => $query, 'count' => count($results), 'results' => $results,
+            'analysis_complete' => !$limitReached && $unavailableCount === 0,
+            'limit_reached' => $limitReached,
+            'unavailable_count' => $unavailableCount, 'unavailable_elements' => $unavailable,
+            'warning' => ($limitReached || $unavailableCount > 0)
+                ? 'Incomplete search: absence of a match is not proof of absence.' : null);
     }
 
     private static function hit($type, $object, array $map, $query, $content, $caseSensitive)
