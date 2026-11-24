@@ -24,9 +24,11 @@ For access policies, use `get_site_state` with a `read_set` target selector such
 
 ## Component file reads and filesystem trust
 
-`read_component_file` uses Python 3 on POSIX systems with `openat`/`O_NOFOLLOW`, opening the requested file through pinned directory descriptors (no check-then-reopen by pathname). Returned payloads are capped at 4 MiB. Any symlink in the requested component path is rejected, even one pointing inside the permitted tree. When Python 3, `proc_open`, or the required POSIX primitives are missing, the operation returns `MANUAL_REVIEW_REQUIRED` rather than falling back to a race-prone PHP pathname read. **Validate nonstandard/symlinked hosting layouts before upgrading.**
+`read_component_file` uses **PHP only**; there is no Python 3, `proc_open`, shell or new server dependency. Once the trusted MODX component root is resolved, every relative path segment is inspected with `lstat` (symlinks below that root are rejected), the opened regular file is compared by `fstat` with its expected device/inode, and the path and handle are checked again after a bounded read (at most 4 MiB). MIME detection uses already-read bytes or extensions, without reopening the filename. Detected swaps return `MANUAL_REVIEW_REQUIRED` without disclosing the payload. A symlink in the **configured trusted root** is supported when it resolves to an allowed component directory, but symlinks **within** the requested path are rejected.
 
-The reader is **read-only** and adds no SQL locks. It does not make every Media Source or file-read operation immune to hostile local writers; these retain their documented limitations.
+**Security limitation:** portable PHP does not provide a true atomic dirfd-based `openat(O_NOFOLLOW)`. A hostile local writer may theoretically race between checks; `lstat`/`fstat` reduce and detect common swaps but cannot prove absence of TOCTOU or all disclosures. Where untrusted users can modify these directories, isolate OS file permissions/hosting rather than treating PHP checks as a complete boundary.
+
+This is **read-only**, adds no SQL locks, and does not automatically harden other Media Source or file reads.
 
 ## Stop and report
 
