@@ -1,69 +1,94 @@
 #!/usr/bin/env python3
 # MODX MCP SOURCE / ИСХОДНИК MODX MCP
-# RU: На одноразовом дереве проверяем гонку симлинка при чтении компонентов.
-# EN: Verify concurrent symlink swaps cannot escape a pinned component root.
+# RU: В CI меняем симлинки конкурентно, читает только штатный PHP.
+# EN: CI-only adversarial swaps; the runtime being tested is PHP-only.
+"""Best-effort hostile writer regression, NOT proof of atomic no-TOCTOU.
+
+Python orchestrates a CI race only. The installed MODX component does not
+ship or call Python. A transient swap may remain undetectable in portable PHP.
+"""
 import json
 import os
 from pathlib import Path
 import subprocess
-import sys
 import tempfile
 import threading
 
-HELPER = Path(__file__).resolve().parents[1] / (
-    'core/components/modxmcp/src/Security/component_read_guard.py'
+READER = Path(__file__).resolve().parents[1] / (
+    'core/components/modxmcp/src/Tools/FilesystemSupport.php'
 )
+PHP_DRIVER = r"""<?php
+class ModxMCPClientException extends RuntimeException {}
+require_once $argv[1];
+class RaceModx {
+    public function getOption($name, $options=null, $default=null) {
+        return $name === 'modxmcp.max_read_bytes' ? 262144 : $default;
+    }
+}
+try {
+    $data = ModxMcp\Tools\FilesystemSupport::readComponentFileChecked(
+        new RaceModx(), $argv[2], $argv[3], array('bytes'=>256)
+    );
+    echo json_encode($data);
+} catch (Throwable $e) {
+    fwrite(STDERR, 'EXPECTED_COMPONENT_READ_REFUSAL');
+    exit(3);
+}
+"""
 
-with tempfile.TemporaryDirectory(prefix='mcp-component-race-') as tmp:
+with tempfile.TemporaryDirectory(prefix='mcp-component-php-race-') as tmp:
     top = Path(tmp)
     component = top / 'components'
     private = top / 'private'
     component.mkdir()
     private.mkdir()
+    driver = top / 'driver.php'
+    driver.write_text(PHP_DRIVER, encoding='utf8')
     (private / 'secret.txt').write_text('UNREADABLE_PRIVATE_MARKER', encoding='utf8')
     victim = component / 'target.txt'
     victim.write_text('ALLOWED_COMPONENT_CONTENT', encoding='utf8')
     stop = threading.Event()
-    races = [0]
+    swaps = [0]
 
     def adversary():
         while not stop.is_set():
-            staged = component / 'stage-symlink'
+            staged = component / 'swap-file'
             try:
                 staged.symlink_to(private / 'secret.txt')
                 os.replace(staged, victim)
                 staged.write_text('ALLOWED_COMPONENT_CONTENT', encoding='utf8')
                 os.replace(staged, victim)
-                races[0] += 1
+                swaps[0] += 1
             except FileExistsError:
                 try:
                     staged.unlink()
                 except FileNotFoundError:
                     pass
 
-    attack = threading.Thread(target=adversary, daemon=True)
-    attack.start()
-    observed = {'safe': 0, 'refused': 0}
+    attacker = threading.Thread(target=adversary, daemon=True)
+    attacker.start()
+    seen = {'safe': 0, 'refused': 0}
     try:
-        for _ in range(45):
+        for _ in range(60):
             cp = subprocess.run(
-                [sys.executable, str(HELPER), str(component), 'target.txt', '0', '256'],
-                capture_output=True, text=True, timeout=5
+                ['php', str(driver), str(READER), str(component), 'target.txt'],
+                capture_output=True, text=True, timeout=6
             )
             if 'UNREADABLE_PRIVATE_MARKER' in cp.stdout:
-                raise RuntimeError('COMPONENT_SYMLINK_RACE_SECRET_LEAK')
+                raise RuntimeError('COMPONENT_PHP_SYMLINK_RACE_SECRET_LEAK')
             if cp.returncode == 0:
-                row = json.loads(cp.stdout)
-                if row['content'] != 'ALLOWED_COMPONENT_CONTENT':
-                    raise RuntimeError('COMPONENT_SYMLINK_RACE_UNEXPECTED_CONTENT')
-                observed['safe'] += 1
+                result = json.loads(cp.stdout)
+                if result['content'] != 'ALLOWED_COMPONENT_CONTENT':
+                    raise RuntimeError('COMPONENT_PHP_SYMLINK_RACE_UNEXPECTED_CONTENT')
+                seen['safe'] += 1
             elif cp.returncode == 3:
-                observed['refused'] += 1
+                seen['refused'] += 1
             else:
-                raise RuntimeError('COMPONENT_SYMLINK_RACE_BAD_EXIT ' + str(cp.returncode))
+                raise RuntimeError('COMPONENT_PHP_SYMLINK_RACE_BAD_EXIT '
+                                   + str(cp.returncode) + ' ' + cp.stderr[:200])
     finally:
         stop.set()
-        attack.join(timeout=4)
-    if sum(observed.values()) != 45:
-        raise RuntimeError('COMPONENT_SYMLINK_RACE_MISSING_RESULT')
-    print('COMPONENT_SYMLINK_RACE_BOUNDARY_OK', observed, 'swaps', races[0])
+        attacker.join(timeout=5)
+    if sum(seen.values()) != 60 or swaps[0] == 0:
+        raise RuntimeError('COMPONENT_PHP_SYMLINK_RACE_INCOMPLETE')
+    print('COMPONENT_PHP_SYMLINK_RACE_BEST_EFFORT_OK', seen, 'swaps', swaps[0])

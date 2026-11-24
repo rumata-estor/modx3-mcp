@@ -153,7 +153,8 @@ jobs:
           php _build/test.p1-media-cas-stop.php
           php _build/test.static-element-content-boundaries.php
           php _build/test.static-search-boundary.php
-          php _build/test.component-anchored-read.php
+          php _build/test.component-php-read.php
+          php -d disable_functions=proc_open,exec,shell_exec,system _build/test.component-php-read.php
           python3 _build/test.component-symlink-race.py
           php _build/test.make-static-symlink-boundary.php
           php _build/test.static-content-postwrite-fault.php
