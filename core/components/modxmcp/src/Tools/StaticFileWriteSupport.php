@@ -221,7 +221,7 @@ final class StaticFileWriteSupport
                 || (string)$opened['ino'] !== $expected['ino']
                 || !self::sameIdentity(self::fingerprint($absolute), $expected)) {
                 throw new \ModxMCPClientException(
-                    'MANUAL_REVIEW_REQUIRED: existing static file changed before writing.'
+                    'MUTATION_OUTCOME_UNCERTAIN: static file path changed while opening; inspect before retry.'
                 );
             }
             if (@fseek($fp, 0, SEEK_SET) !== 0) {
