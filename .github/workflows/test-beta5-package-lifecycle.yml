@@ -236,6 +236,14 @@ jobs:
           cmp "$RUNNER_TEMP/beta5-lifecycle.transport.zip" "$archive"
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" --signature="$sig"
           php _build/test.ci-beta5-package-lifecycle.php reinstalled
+          php _build/test.ci-cas-required.php
+          php _build/test.mutation-outcome-guard.php
+          php _build/test.ci-permit-nonce-ledger.php
+          php _build/provision.protected-nonce-ledger.php
+          php _build/test.ci-protected-auth.php
+          php _build/test.ci-protected-context-cas.php
+          php _build/test.ci-operation-gate-e2e.php
+          python3 _build/test.ci-protected-http.py
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" --signature="$sig" --action=uninstall
           php _build/test.ci-beta5-package-lifecycle.php final
           # HTTP requests are local to the disposable runner.
