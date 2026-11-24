@@ -1,4 +1,4 @@
-# MODX MCP 1.2.8 Beta 3 — community test plan
+# MODX MCP 1.2.8 Beta 5 — community test plan
 
 **Status: candidate, not a stable release.** The MODX 2/3 transport archives and matching Node client are built on disposable CI instances. Nothing is automatically published to the official MODX Extras provider, and production deployments are out of scope.
 
@@ -10,23 +10,23 @@ Read the explicit [1.2.8 security limitations](SECURITY-LIMITATIONS-1.2.8.md) be
 
 | Target | Expected file |
 | --- | --- |
-| MODX 2.8.x | `modx2mcp-1.2.8-beta3.transport.zip` |
-| MODX 3.x | `modx3mcp-1.2.8-beta3.transport.zip` |
-| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.3.tgz` |
+| MODX 2.8.x | `modx2mcp-1.2.8-beta5.transport.zip` |
+| MODX 3.x | `modx3mcp-1.2.8-beta5.transport.zip` |
+| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.5.tgz` |
 
-The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128-rc3.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
+The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128-rc5.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
 
-For the matching local Node client: `npm install -g ./modx3-mcp-1.2.8-beta.3.tgz`. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
+Only if you already use the Node bridge, update it using the matching local package: `npm install -g ./modx3-mcp-1.2.8-beta.5.tgz`. Direct HTTP users do not need Node, but must provide mandatory CAS on writes. Default portable requires no Python or proc_open; experimental strict remains opt-in. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
 
-## Changes from Beta 2
+## Changes since Beta 3
 
-**Beta 2 was the previous candidate and introduced Python 3 / enabled `proc_open` for `read_component_file`. Beta 3 removes that new server requirement.** Reads now use PHP-only `lstat/fstat` checks before and after the bounded read; detected swaps and symlinks below the requested root are refused. Portable PHP cannot provide the atomic guarantees of `openat(O_NOFOLLOW)`, so residual hostile local TOCTOU is explicitly documented. **Do not mix Beta 2 and Beta 3 files.** The Node package continues to use audited pinned dependencies and includes `npm-shrinkwrap.json`.
+Beta 4 fixed portable static writes (native PHP, existing inode) and stock local media sources under assets_path without opening the site root. Beta 5 retains the verified Beta 4 runtime; experimental CAS relaxations are excluded.
 
 See the [1.2.8 release readiness register](RELEASE-READINESS-1.2.8.ru.md) for exact scope and remaining risks.
 
 ## Scope
 
-This Beta strengthens mandatory CAS, conflict detection on TV writes, verified media overwrite via `expected_sha256`, full target fingerprints for access policies and templates, secure stops for unverifiable changes, and file metadata checks before portable static overwrites.
+This Beta strengthens mandatory CAS, conflict detection on TV writes, verified media overwrite via `expected_sha256`, full target fingerprints for access policies and templates, secure stops for unverifiable changes, and native PHP portable static overwrites preserving the existing inode (not atomic).
 
 A MODX Manager change or external writer **can still race** after the final check. A media source that cannot provide verifiable content fails closed. A protected site should keep its independent backup strategy. Treat `MUTATION_OUTCOME_UNCERTAIN` as an unknown outcome requiring explicit review — never retry or compensate blindly. `MANUAL_REVIEW_REQUIRED` means the operation was refused before the hazardous write.
 
@@ -34,7 +34,7 @@ A MODX Manager change or external writer **can still race** after the final chec
 
 1. Clone a disposable MODX 2 or MODX 3 installation; back up both database and files. Never begin on production.
 2. Install the matching MODX transport through **Package Management**; when upgrading from 1.2.7, confirm the token and admin-modified settings remain unchanged.
-3. Update the Node client. Start with `modx_get_site_state` and other read-only commands.
+3. If you use the Node client, update it. Start with `modx_get_site_state` and other read-only commands.
 4. Make a change to a dedicated unpublished disposable object using a freshly obtained CAS snapshot. Confirm the result using an independent MCP read. Confirm stale replay is refused.
 5. Change a dedicated resource TV in MODX Manager after the initial snapshot; verify conflict refusal when detected.
 6. Test a disposable media file with no hash (must refuse), a freshly verified hash (may write), and a stale hash (must refuse).

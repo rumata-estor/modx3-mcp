@@ -46,3 +46,10 @@ The goal is to materially reduce the risk of lost updates, catch common conflict
 **Release gate:** MODX 2/3 integration and diagnostic regressions must pass, and residual TOCTOU limitations must be documented. Green tests do not transform best-effort checks into a mathematical guarantee.
 
 This describes the **1.2.8 Beta candidate**. It does not imply publication in a stable release.
+
+
+## Portable static updates and client compatibility
+
+The default portable mode updates existing files in place using native PHP, preserving the inode and ordinary metadata. No Python, proc_open or additional server software is required. Existing-file writes are not atomic; crashes, disk exhaustion or external writers can leave partial content. On MUTATION_OUTCOME_UNCERTAIN, verify actual state before retrying. Experimental strict mode remains opt-in and requires its own Python backend.
+
+Mandatory CAS is retained. Existing Node bridge users may need to update the bridge; direct HTTP users do not need to install Node but must comply with CAS. Missing or unverifiable preconditions are refused, not silently synthesized. No automatic ACL-index migration is performed; affected operations may be refused until the administrator deliberately resolves the prerequisite.
