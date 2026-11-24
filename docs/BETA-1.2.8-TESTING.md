@@ -1,4 +1,4 @@
-# MODX MCP 1.2.8 Beta 2 — community test plan
+# MODX MCP 1.2.8 Beta 3 — community test plan
 
 **Status: candidate, not a stable release.** The MODX 2/3 transport archives and matching Node client are built on disposable CI instances. Nothing is automatically published to the official MODX Extras provider, and production deployments are out of scope.
 
@@ -10,17 +10,17 @@ Read the explicit [1.2.8 security limitations](SECURITY-LIMITATIONS-1.2.8.md) be
 
 | Target | Expected file |
 | --- | --- |
-| MODX 2.8.x | `modx2mcp-1.2.8-beta2.transport.zip` |
-| MODX 3.x | `modx3mcp-1.2.8-beta2.transport.zip` |
-| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.2.tgz` |
+| MODX 2.8.x | `modx2mcp-1.2.8-beta3.transport.zip` |
+| MODX 3.x | `modx3mcp-1.2.8-beta3.transport.zip` |
+| Matching Node MCP client (Node.js 18+) | `modx3-mcp-1.2.8-beta.3.tgz` |
 
-The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128-rc2.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
+The [Beta verification workflow](https://github.com/rumata-estor/modx3-mcp/actions/workflows/build-beta-128-rc3.yml) generates separate downloadable Actions artifacts, each with a `SHA256SUMS` and `SOURCE_COMMIT.txt`. No GitHub Release or tag is created automatically.
 
-For the matching local Node client: `npm install -g ./modx3-mcp-1.2.8-beta.2.tgz`. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
+For the matching local Node client: `npm install -g ./modx3-mcp-1.2.8-beta.3.tgz`. Use a current client: older clients without mandatory CAS can still perform reads but will have mutations refused.
 
-## Changes from Beta 1
+## Changes from Beta 2
 
-Beta 1 was the earlier candidate. **Do not mix Beta 1 and Beta 2 packages.** Beta 2 additionally addresses FINDING-006 (component source read through pinned descriptors and `O_NOFOLLOW`) and FINDING-007 (accurate opt-in ledger documentation). The Node client now uses **audited pinned dependencies** and ships `npm-shrinkwrap.json` to preserve the validated transitive dependency graph on installation. Without Python 3 / PHP `proc_open`, component-file reads explicitly refuse instead of falling back to a race-prone path read.
+**Beta 2 was the previous candidate and introduced Python 3 / enabled `proc_open` for `read_component_file`. Beta 3 removes that new server requirement.** Reads now use PHP-only `lstat/fstat` checks before and after the bounded read; detected swaps and symlinks below the requested root are refused. Portable PHP cannot provide the atomic guarantees of `openat(O_NOFOLLOW)`, so residual hostile local TOCTOU is explicitly documented. **Do not mix Beta 2 and Beta 3 files.** The Node package continues to use audited pinned dependencies and includes `npm-shrinkwrap.json`.
 
 See the [1.2.8 release readiness register](RELEASE-READINESS-1.2.8.ru.md) for exact scope and remaining risks.
 
@@ -45,7 +45,7 @@ ACL-index migration may require deliberate administrator action on older install
 
 ### Component read security gate (FINDING-006)
 
-On a disposable installation, first read a regular component source file with `modx_read_component_file`, then attempt to read a symlink pointing outside its allowed component root. The latter must refuse and never reveal external contents. Python 3 with POSIX `O_NOFOLLOW` and PHP `proc_open` is required for this secure read. Hosts with symlinked component roots should verify this deliberately stricter behavior before upgrading.
+On a disposable installation, read a regular component file with `modx_read_component_file` and then attempt to read a symlink below that root pointing outside. The symlink must refuse without revealing content. **Ordinary reads must still work when Python 3 is unavailable and PHP `proc_open` is disabled.** An admin-configured trusted root may itself be a symlink if it resolves to an allowed component directory. Local hostile path replacement remains a documented non-atomic TOCTOU risk.
 
 Report observations in [GitHub Issues](https://github.com/rumata-estor/modx3-mcp/issues) with MODX/PHP versions, package, source commit, action, error code and a sanitized reproduction. Do **not** publish API tokens, private keys, personal records, or unredacted logs.
 
