@@ -32,7 +32,8 @@ function componentReject($callback,$label){
     try {$callback();}
     catch(ModxMCPClientException $e) {
         componentAssert(strpos($e->getMessage(),'MANUAL_REVIEW_REQUIRED:')===0
-            || strpos($e->getMessage(),'Resolved path is outside')!==false,
+            || strpos($e->getMessage(),'Resolved path is outside')!==false
+            || strpos($e->getMessage(),'Path traversal is not allowed')!==false,
             $label.' wrong error: '.$e->getMessage());
         return;
     }
