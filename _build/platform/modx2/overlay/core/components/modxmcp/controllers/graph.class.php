@@ -73,7 +73,7 @@ class ModxmcpGraphManagerController extends modExtraManagerController {
             'missing_singular', 'kind_tag', 'kind_attached', 'kind_property', 'kind_php', 'kind_migx',
             'kind_binding', 'kind_link', 'kind_template', 'kind_missing', 'empty_response', 'build_failed',
             'error', 'nodes_unit', 'of', 'links_unit', 'broken_unit', 'orphan_unit',
-            'from', 'no_broken', 'all_used', 'unverified_note', 'candidate_note', 'steps',
+            'from', 'no_broken', 'all_used', 'partial_analysis', 'unverified_note', 'candidate_note', 'steps',
             'all', 'uses', 'used_in', 'disabled', 'static_flag', 'broken_title',
             'snippet_cap', 'chunk_cap', 'missing_explanation', 'unreferenced_title', 'deletion_warning', 'used_externally',
             'system_setting', 'order_status', 'edit', 'isolate', 'resources_on_template', 'events',
