@@ -1,0 +1,124 @@
+# RU: Однократная публикация проверенного Beta 4; не изменяет main или MODX Extras.
+# EN: Publish only the exact verified Beta 4 build as a GitHub prerelease.
+name: Publish verified MODX MCP 1.2.8 Beta 4
+on:
+  push:
+    branches: ['release/1.2.8-beta4-publish-20261124']
+    paths: ['.github/workflows/publish-beta-128-rc4.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BUILD_SHA: 2f6cde7125e245327d4b5cb197818296ec57156c
+      TEST_SHA: 7670437e68df1a230ebb8e3af5c4c22b33529c86
+      BUILD_RUN: '45336212361'
+      TAG: v1.2.8-beta4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 2f6cde7125e245327d4b5cb197818296ec57156c
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify exact source and successful runs before publication
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = rumata-estor/modx3-mcp
+          test "$(git rev-parse HEAD)" = "$BUILD_SHA"
+          git merge-base --is-ancestor "$TEST_SHA" "$BUILD_SHA"
+          for run in 45335981960 45335975641 45335975637 "$BUILD_RUN"; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run" > "$RUNNER_TEMP/run-$run.json"
+            expected="$TEST_SHA"
+            if [ "$run" = "$BUILD_RUN" ]; then expected="$BUILD_SHA"; fi
+            jq -e --arg sha "$expected" '.head_sha == $sha and .status == "completed" and .conclusion == "success"' "$RUNNER_TEMP/run-$run.json" >/dev/null
+          done
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to replace it.' >&2
+            exit 1
+          fi
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            echo 'Tag already exists; refusing to replace it.' >&2
+            exit 1
+          fi
+      - name: Download and verify the exact three artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/downloaded" "$RUNNER_TEMP/release"
+          gh run download "$BUILD_RUN" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/downloaded"
+          for spec in \
+            'modx2mcp-1.2.8-beta4-VERIFIED:modx2mcp-1.2.8-beta4.transport.zip' \
+            'modx3mcp-1.2.8-beta4-VERIFIED:modx3mcp-1.2.8-beta4.transport.zip' \
+            'modx-mcp-client-1.2.8-beta4-VERIFIED:modx3-mcp-1.2.8-beta.4.tgz'; do
+            name="${spec%%:*}"
+            file="${spec#*:}"
+            dir="$RUNNER_TEMP/downloaded/$name"
+            test "$(cat "$dir/SOURCE_COMMIT.txt")" = "$BUILD_SHA"
+            test -s "$dir/$file"
+            (cd "$dir" && sha256sum -c SHA256SUMS)
+            cp "$dir/$file" "$RUNNER_TEMP/release/"
+          done
+          for platform in modx2 modx3; do
+            zip="$RUNNER_TEMP/release/${platform}mcp-1.2.8-beta4.transport.zip"
+            unzip -t "$zip" > /dev/null
+            unzip -Z1 "$zip" > "$RUNNER_TEMP/$platform-manifest"
+            for file in StaticFileWriteSupport.php MediaSourceSupport.php; do
+              member="$(grep -E "(^|/)$file$" "$RUNNER_TEMP/$platform-manifest")"
+              test "$(printf '%s\n' "$member" | wc -l)" -eq 1
+              unzip -p "$zip" "$member" | cmp - "core/components/modxmcp/src/Tools/$file"
+            done
+          done
+          tar -tzf "$RUNNER_TEMP/release/modx3-mcp-1.2.8-beta.4.tgz" > "$RUNNER_TEMP/client-manifest"
+          grep -Fxq 'package/npm-shrinkwrap.json' "$RUNNER_TEMP/client-manifest"
+          grep -Fxq 'package/client/index.js' "$RUNNER_TEMP/client-manifest"
+          cd "$RUNNER_TEMP/release"
+          sha256sum *.zip *.tgz > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          printf '%s\n' "$BUILD_SHA" > SOURCE_COMMIT.txt
+      - name: Create bilingual prerelease notes
+        run: |
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          ## MODX MCP 1.2.8 Beta 4 — public testing / общественное тестирование
+
+          **Prerelease, not a stable release. Install on test sites only; back up files and database first.**
+
+          ### Что изменено
+          - Штатная запись существующих статических файлов теперь выполняется средствами PHP, без обязательных Python, proc_open, новых расширений или настройки сервера. Сохраняется inode и его обычные метаданные.
+          - Стандартные локальные Media Sources внутри канонического assets_path доступны без включения глобального доступа к корню сайта; custom/remote drivers и внешние пути по умолчанию не открываются.
+          - Сохранены CAS-предусловия, проверка SHA-256 медиа и защитные проверки файловых путей.
+          - Исправления прошли CI 4/4, матрицу MODX 2/3 12/12, обновление с 1.2.7 2/2, сборку 3/3.
+
+          ### Установка
+          Выберите транспортный ZIP для MODX 2 или MODX 3, установите на тестовом сайте через менеджер пакетов. Для существующих установок проверяйте сохранность настроек и токена. Если используется Node MCP-клиент, обновите его из соответствующего tarball: старый клиент без обязательных CAS-предусловий может получать CAS_REQUIRED. Никаких дополнительных серверных программ для штатного portable-режима не требуется.
+
+          ### Честно об ограничениях
+          Запись существующего файла в portable не атомарна: авария может оставить частичные данные; внешние процессы не обязаны соблюдать блокировку. Не обещаем устранения всех TOCTOU. При MUTATION_OUTCOME_UNCERTAIN остановитесь и проверьте фактическое состояние; не повторяйте запись автоматически. Экспериментальный strict — отдельная необязательная настройка с Python-зависимым backend, не требуется для обычной работы. Это не полная обратная совместимость произвольных старых клиентов. Не используйте бета-версию на production.
+
+          ### English
+          Default portable static-file updates now use native PHP on the existing inode, retaining ordinary file metadata without requiring Python, proc_open, additional extensions or server configuration. Standard local media sources under canonical assets_path work without enabling site-root browsing. CAS and path validation remain in place.
+
+          Install the appropriate MODX transport on a disposable or test site. Update the matching Node client if you use it: older clients without mandatory CAS preconditions may be rejected with CAS_REQUIRED. Existing-file writes are not fully atomic; crashes or concurrent external writers can leave partial data. On MUTATION_OUTCOME_UNCERTAIN, inspect actual state before retrying. The optional experimental strict mode still has a Python-dependent backend and is not required for normal portable operation.
+
+          Report issues with MODX/PHP versions, operation, error, expected and actual behavior, and SOURCE_COMMIT.txt. Do not include tokens, credentials, private data or unredacted logs.
+
+          Verified build: https://github.com/rumata-estor/modx3-mcp/actions/runs/45336212361
+          CI: https://github.com/rumata-estor/modx3-mcp/actions/runs/45335981960
+          MODX matrix: https://github.com/rumata-estor/modx3-mcp/actions/runs/45335975637
+          Upgrade: https://github.com/rumata-estor/modx3-mcp/actions/runs/45335975641
+
+          No MODX Extras or npm registry publication. Stable 1.2.7 remains unchanged.
+          NOTES
+      - name: Publish only a new GitHub prerelease
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" "$RUNNER_TEMP/release/"* \
+            --repo "$GITHUB_REPOSITORY" --target "$BUILD_SHA" \
+            --title "MODX MCP 1.2.8 Beta 4" --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --prerelease --latest=false
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isPrerelease,isDraft,url,assets \
+            --jq '{tagName,isPrerelease,isDraft,url,assets: [.assets[].name]}'
