@@ -4,7 +4,7 @@
 
 ## Unreleased (1.2.8 isolated branch — NOT a release)
 
-- **Component source read hardening (FINDING-006):** `read_component_file` now reads through pinned POSIX directory descriptors and `O_NOFOLLOW`. It rejects symlinked component paths and returns `MANUAL_REVIEW_REQUIRED` without a race-prone fallback when Python 3 / `proc_open` is unavailable. No SQL locks or file-writing operations are introduced. Symlink-based hosting layouts require a compatibility check.
+- **Ordinary PHP hosting compatibility / FINDING-006:** `read_component_file` no longer spawns Python 3 or needs `proc_open`. PHP checks path segments, compares the opened `fstat` with expected `lstat`, and rechecks after bounded reads; symlinks below the resolved trusted root are rejected. Detected swaps return `MANUAL_REVIEW_REQUIRED`. Unlike `openat(O_NOFOLLOW)`, this is explicitly **best-effort mitigation with residual TOCTOU**, not atomic protection. Removed the server Python helper and added negative/race regressions.
 - **Operation ledger (FINDING-007):** corrected a stale comment: `MutationOperationGate` already connects the ledger to the dispatcher, but it remains opt-in and requires protected signed authorization and a provisioned table.
 - **Node dependencies:** pinned audited `@modelcontextprotocol/sdk 1.32.2` and `axios 1.21.1` in a reproducible committed `package-lock.json`. CI now checks production dependencies for advisories, instead of relying on the ephemeral Beta artifact to repair the graph.
 - **Release documentation:** nine installation languages point to the published stable v1.2.7; Beta risk disclosures, refusal messages, tested upgrade and community procedure are documented.
