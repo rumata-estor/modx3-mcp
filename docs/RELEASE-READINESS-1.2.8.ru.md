@@ -28,7 +28,7 @@ P1 считаются принятыми **только в согласован�
 - [x] FINDING-006/007 и `package-lock.json`: объединён [PR #182](https://github.com/rumata-estor/modx3-mcp/pull/182); основной CI [4/4](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260810009), одноразовая матрица MODX 2/3 [12/12](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260796333), upgrade [2/2](https://github.com/rumata-estor/modx3-mcp/actions/runs/45260796315), SHA `b21300f71659332c15c09eb725109afe6358bab4`.
 - [x] Отдельная сборка **1.2.8-beta2** (не переименование beta1): [GitHub Actions 3/3](https://github.com/rumata-estor/modx3-mcp/actions/runs/45261191704) включает ZIP для MODX 2/3, Node tarball с `npm-shrinkwrap.json`, `SHA256SUMS`, `SOURCE_COMMIT.txt` и upgrade 1.2.7→Beta на одноразовом MODX.
 - [ ] Подтвердить после установки: прежний токен и индивидуальные настройки сохранены, старые небезопасные mutating-клиенты получают `CAS_REQUIRED`, свежие клиенты могут читать и изменять собственные неопубликованные тестовые объекты.
-- [ ] Проверить `read_component_file` на обычном каталоге и симлинках; при отсутствии Python 3/`proc_open` убедиться в понятном отказе без содержимого файла.
+- [ ] Проверить новую PHP-only реализацию `read_component_file`: штатный текст/бинарные данные, строгая граница симлинков, атака параллельной подмены, работа с **отключённым `proc_open`** и отсутствующим Python. Отказ только при небезопасном пути или обнаруженной гонке; отсутствие Python — НЕ причина отказа.
 - [ ] Решение владельца о публикации GitHub Release как `prerelease`. **Не** загружать в MODX Extras и **не** объявлять стабильным 1.2.8-pl без отдельной приёмки.
 
 ## Что не блокирует Beta, но требует честного сообщения
