@@ -1,62 +1,42 @@
-<!-- MODX MCP — Security Policy / Политика безопасности -->
-# Security Policy / Политика безопасности
+# Поддержка безопасности (Security Policy)
 
-## RU: Как сообщить об уязвимости
+## Поддерживаемые версии
 
-**Не публикуйте уязвимость в открытом PR, issue или обсуждении.**
+Исправления безопасности выпускаются для актуальной линии и тестовой 1.2.8. Пожалуйста, убедитесь, что вы используете свежий релиз.
 
-Приоритетный канал — **приватные отчёты GitHub («Report a vulnerability»)**, вкладка
-**Security → Advisories → Report a vulnerability** в этом репозитории. Отчёт остаётся
-конфиденциальным до выпуска исправления.
+| Версия проекта | Поддерживается |
+| -------------- | -------------- |
+| `main` (стабильная 1.2.x) | :white_check_mark: |
+| `release/1.2.8-*` (тестовая) | :white_check_mark: приоритетно |
+| Старые релизы | :x: |
 
-Что приложить к отчёту:
+## Как сообщить об уязвимости
 
-- затронутый инструмент/эндпоинт MCP и версию компонента (`system_info → modxmcp_version`);
-- минимальные шаги воспроизведения (payload, параметры);
-- оценку влияния и требуемые привилегии (manager / authenticated / anonymous);
-- при наличии — предложенный вариант исправления.
+Я очень серьёзно отношусь к безопасности компонента. Если вы нашли уязвимость или проблему с безопасностью в `modx3-mcp`, пожалуйста, **не создавайте публичный PR/issue** (issues в репозитории отключены в том числе поэтому), чтобы деталь эксплойта не стала публичной до выпуска патча.
 
-Ожидаемый срок первичного ответа — 7 дней. Отчёту присваивается статус:
-принят / требует уточнения / не является уязвимостью. Автора указываем
-в CHANGELOG и релизных записях по его желанию (credit).
+Вместо этого я прошу вас:
 
-## EN: Reporting a vulnerability
+1. Использовать механизм **GitHub Security Advisories**: вкладка **Security → Advisories → "Report a vulnerability"** в этом репозитории — отчёт остаётся приватным до релиза исправления.
+2. Альтернативно — написать мне напрямую (контакты доступны в моём GitHub-профиле).
 
-**Do not disclose vulnerabilities in public PRs, issues, or discussions.**
+В отчёте помогут: затронутый инструмент MCP, версия компонента (`system_info → modxmcp_version`), минимальные шаги воспроизведения и требуемые привилегии (manager / authenticated / anonymous).
 
-The preferred channel is **GitHub private vulnerability reporting**: the
-**Security → Advisories → Report a vulnerability** tab of this repository.
-Reports stay confidential until a fix is released.
+**Процесс обработки:**
 
-Please include: affected MCP tool/endpoint, component version
-(`system_info → modxmcp_version`), minimal reproduction steps, impact
-assessment and required privileges. Expect a first response within 7 days;
-authors are credited in the changelog upon request.
+- Я постараюсь подтвердить получение отчёта в течение 48 часов.
+- Дам оценку проблемы и примерные сроки исправления.
+- После релиза патча упомяну вас в CHANGELOG и релизной записи, если вы этого хотите.
 
-<!-- TODO(maintainer): при желании добавить прямой канал связи (email/Telegram) после включения
-     приватного репортинга; без включённого «Private vulnerability reporting» этот файл не работает. -->
+**Важно включить:** приватный канал «Report a vulnerability» работает только при включённом **Private vulnerability reporting** в Settings → Code security этого репозитория (см. [документацию GitHub](https://docs.github.com/ru/code-security/getting-started/github-security-features)).
 
-## Поддерживаемые версии / Supported versions
+## Граница модели угроз
 
-| Ветка / Version | Поддержка / Support |
-| --- | --- |
-| 1.2.x (stable, `main`) | :white_check_mark: исправления безопасности / security fixes |
-| 1.2.8-beta (`release/1.2.8-*`) | :white_check_mark: приоритетно / priority |
-| < 1.2.0 | :x: не поддерживается / unsupported |
+Компонент защищает собственную поверхность MCP: авторизацию, CAS, изоляцию настроек `modxmcp.*`, границы static-файлов. Он **не защищает** от скомпрометированного ядра MODX, Manager-аккаунта или прямого доступа к БД — с такими правами namespace, настройки и процессоры меняются в обход MCP.
 
-## Граница модели угроз / Threat model boundary
+## Раскрытие
 
-Компонент защищает **собственную поверхность MCP** (авторизация, CAS,
-изоляция настроек `modxmcp.*`, границы static-файлов). Он не защищает от
-скомпрометированного ядра MODX, Manager-аккаунта или доступа к БД: атакующий
-с такими правами может менять namespace, настройки и процессоры в обход MCP.
+Исправление готовится приватно и выходит в ближайшем патч-релизе; публичное раскрытие — после релиза (coordinated disclosure). Для CVE используется GitHub Security Advisory.
 
-The component protects **its own MCP surface** (authorization, CAS, `modxmcp.*`
-setting isolation, static file boundaries). It does not protect against a
-compromised MODX core, manager account, or database access.
+---
 
-## Политика раскрытия / Disclosure policy
-
-1. Исправление готовится приватно и выпускается в ближайшем патч-релизе.
-2. Публичное раскрытие — после релиза исправления (coordinated disclosure).
-3. Для CVE используется GitHub Security Advisory (CVE-запрос через GitHub).
+*EN summary: do not report vulnerabilities publicly; use Security → Advisories → "Report a vulnerability" (or the maintainer's profile contacts). First response within 48 hours; coordinated disclosure; CVE via GitHub Security Advisory. The component protects the MCP surface only — not a compromised MODX core, manager account, or DB.*
