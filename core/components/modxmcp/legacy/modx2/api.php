@@ -1,4 +1,10 @@
 <?php
+/* MODX MCP SOURCE / ИСХОДНИК MODX MCP
+ * RU: Лёгкий health/version-проб для клиента: GET без авторизации,
+ * RU: только несензитивные данные (имя компонента, версия, включён ли).
+ * EN: Lightweight unauthenticated GET health/version probe; returns
+ * EN: non-sensitive data only (component name, version, enabled flag).
+ */
 require_once dirname(dirname(dirname(dirname(__FILE__)))) . '/config.core.php';
 require_once MODX_CORE_PATH . 'model/modx/modx.class.php';
 
