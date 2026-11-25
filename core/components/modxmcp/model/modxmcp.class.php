@@ -3083,12 +3083,20 @@ class modxMCP {
 
         if ($isList) {
             $decoded = json_decode($response->getResponse(), true);
+            $results = $this->stripNoiseFields(isset($decoded['results']) ? $decoded['results'] : array());
+            if (in_array($action, array('list_context_settings', 'get_context_setting'), true)) {
+                $results = $this->redactSettingResponse($results);
+            }
             return array(
                 'total'   => isset($decoded['total']) ? (int) $decoded['total'] : 0,
-                'results' => $this->stripNoiseFields(isset($decoded['results']) ? $decoded['results'] : array()),
+                'results' => $results,
             );
         }
-        return $this->normalizeProcessorResponse($response);
+        $normalized = $this->normalizeProcessorResponse($response);
+        if (in_array($action, array('list_context_settings', 'get_context_setting'), true)) {
+            $normalized = $this->redactSettingResponse($normalized);
+        }
+        return $normalized;
     }
 
     /**
@@ -5549,15 +5557,81 @@ class modxMCP {
         return null;
     }
 
+    /**
+     * RU: Распознаём чувствительные ключи настроек: сегменты secret/token/
+     * RU: password и слитные camelCase-имена, плюс любые modxmcp.*.
+     * RU: Публичный ключ проверки подписи не является закрытым секретом.
+     * EN: Detect sensitive setting keys: secret/token/password segments,
+     * EN: concatenated camelCase names, and any modxmcp.* key. The public
+     * EN: signature verification key is intentionally readable.
+     */
+    private function isSensitiveSettingKey($key) {
+        if (!is_string($key)) { return false; }
+        $key = strtolower(trim($key));
+        if ($key === '') { return false; }
+        if (strpos($key, 'modxmcp.') === 0 && $key !== 'modxmcp.permit_public_key') { return true; }
+        if (preg_match(
+            '/(?:\A|[._-])(?:password|passwd|token|secret|credentials|'
+            . 'private_key|api_key|access_key|client_secret)(?:[._-]|\z)/iD',
+            $key
+        )) { return true; }
+        $canonical = preg_replace('/[^a-z0-9]/', '', $key);
+        return (bool) preg_match(
+            '/(?:password|passwd|(?:api|access|refresh|auth|session)?token|secret|'
+            . 'privatekey|apikey|credentials|credential|authorization|'
+            . 'connectionstring|clientkey|accesskey|cachepwd|dbpwd)$/D',
+            $canonical
+        );
+    }
+
+    /**
+     * RU: Полностью скрываем значение чувствительной настройки: превью 6+4
+     * RU: позволяет восстановить короткие токены, поэтому возвращаем [REDACTED].
+     * EN: Fully redact sensitive values: a 6+4 preview lets short tokens be
+     * EN: reconstructed, so return [REDACTED] without any preview.
+     */
+    private function redactSettingRow(array $row) {
+        $key = isset($row['key']) && is_string($row['key'])
+            ? $row['key']
+            : (isset($row['name']) && is_string($row['name']) ? $row['name'] : '');
+        if (!$this->isSensitiveSettingKey($key)) { return $row; }
+        foreach (array('value', 'default', 'default_value', 'context_values') as $field) {
+            if (array_key_exists($field, $row)) {
+                if ($field === 'context_values' && is_array($row[$field])) {
+                    foreach ($row[$field] as $context => $v) { $row[$field][$context] = '[REDACTED]'; }
+                } else {
+                    $row[$field] = '[REDACTED]';
+                }
+            }
+        }
+        return $row;
+    }
+
+    /**
+     * RU: Рекурсивно применяем маскирование к ответам процессоров настроек:
+     * RU: MODX может вернуть одну строку, results или вложенный объект.
+     * EN: Apply redaction recursively to setting processor responses: MODX
+     * EN: may return a single row, results, or a nested object.
+     */
+    private function redactSettingResponse($value, $depth = 0) {
+        if (!is_array($value)) { return $value; }
+        if ($depth > 12) { return array('redacted' => 'Maximum settings nesting exceeded.'); }
+        $value = $this->redactSettingRow($value);
+        foreach ($value as $k => $item) {
+            if (is_array($item)) { $value[$k] = $this->redactSettingResponse($item, $depth + 1); }
+        }
+        return $value;
+    }
+
     private function normalizeSystemSetting(modSystemSetting $setting) {
-        return [
+        return $this->redactSettingRow([
             'id' => $setting->get('id'),
             'key' => $setting->get('key'),
             'value' => $setting->get('value'),
             'xtype' => $setting->get('xtype'),
             'namespace' => $setting->get('namespace'),
             'area' => $setting->get('area'),
-        ];
+        ]);
     }
 
     private function resolveMediaSource(array $data) {
