@@ -50,10 +50,19 @@ final class ProtectedAuthorization
         $mode=self::readSetting($modx,self::MODE_SETTING);
         if ($mode==='0') return false;
         if ($mode==='1') return true;
-        // Missing/invalid configuration must not silently disable an
-        // explicitly staged protected component. New installs ship mode=0.
+        if ($mode===null) {
+            // RU: Настройка отсутствует только при апгрейде in-place с 1.2.7
+            // RU: (там защищённого режима не было). Свежие установки 1.2.8
+            // RU: создают mode=0, поэтому "нет строки" эквивалентно "выключено".
+            // EN: A missing row only happens on an in-place upgrade from 1.2.7,
+            // EN: where protected mode did not exist. Fresh 1.2.8 installs ship
+            // EN: mode=0, so "no row" is equivalent to "disabled".
+            return false;
+        }
+        // Invalid stored values still fail closed: the administrator wrote
+        // an explicit policy mode that cannot be interpreted.
         throw new \RuntimeException(
-            'Protected authorization: missing or invalid policy mode.'
+            'Protected authorization: invalid policy mode.'
         );
     }
 
