@@ -142,8 +142,8 @@ jobs:
               r"const VERSION = '1\.2\.7';",
               "const VERSION = '1.2.8';"),
              (root/'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
-              r"const VERSION = '1\.2\.8-beta\.5';",
-              "const VERSION = '1.2.8';"))
+              r"const VERSION = '1\.2\.7';",
+              "const VERSION = '1.2.8';")
           ]
           for path,pattern,replacement in changes:
               content=path.read_text(encoding='utf-8')
