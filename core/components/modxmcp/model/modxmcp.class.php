@@ -2305,6 +2305,60 @@ class modxMCP {
 
     /** Read the element's EFFECTIVE content: from the static file if static, else the DB field.
      *  Returns [content, isStatic, staticAbsPath|null]. */
+    /**
+     * RU: Сохранённый static_file нельзя считать доверенным: он мог быть изменён
+     * RU: через Manager или другой компонент после проверки ввода. Требуем,
+     * RU: чтобы реальный путь (или ближайший существующий родитель) лежал
+     * RU: внутри core/elements, без traversal и внешних симлинков/hard links.
+     * EN: Stored static_file is untrusted: Manager or plugins can modify it.
+     * EN: Require the resolved path (or nearest existing parent) to stay
+     * EN: inside core/elements, with no traversal, symlinks or hard links.
+     */
+    private function assertStaticPathSafe($absolute) {
+        $root = $this->normalizeFilesystemPath($this->modx->getOption('core_path')) . DIRECTORY_SEPARATOR . 'elements';
+        // RU: core/elements не должен быть симлинком на внешний каталог;
+        // RU: штатный симлинк самого core_path хостинга допускается.
+        // EN: core/elements must not be a symlink to an external directory;
+        // EN: hosting's own core_path may legitimately resolve via symlink.
+        if (is_link($root)) {
+            throw new ModxMCPClientException('Static elements directory is unavailable or unsafe.');
+        }
+        $rootReal = realpath($root);
+        if ($rootReal === false || !is_dir($rootReal)) {
+            throw new ModxMCPClientException('Static elements directory is unavailable or unsafe.');
+        }
+        $absolute = (string) $absolute;
+        // RU: Traversal отбрасываем до разрешения существующих родителей.
+        // EN: Reject traversal before resolving any existing ancestor.
+        $slashPath = str_replace('\\', '/', $absolute);
+        if (preg_match('#(?:^|/)\.\.(?:/|$)#', $slashPath)) {
+            throw new ModxMCPClientException('static_file traversal is forbidden.');
+        }
+        $candidate = $absolute;
+        while (!file_exists($candidate) && !is_link($candidate)) {
+            $parent = dirname($candidate);
+            if ($parent === $candidate) {
+                throw new ModxMCPClientException('Cannot resolve static_file parent.');
+            }
+            $candidate = $parent;
+        }
+        $real = realpath($candidate);
+        if ($real === false
+            || ($real !== $rootReal && strpos($real, $rootReal . DIRECTORY_SEPARATOR) !== 0)) {
+            throw new ModxMCPClientException('static_file resolves outside the static elements directory.');
+        }
+        // RU: realpath() не видит hard link: файл внутри elements может делить
+        // RU: inode с секретным файлом вне дерева.
+        // EN: realpath() cannot detect hard links; reject multiply linked files.
+        if (is_file($absolute)) {
+            clearstatcache(true, $absolute);
+            $stat = @stat($absolute);
+            if ($stat === false || !isset($stat['nlink']) || (int) $stat['nlink'] !== 1) {
+                throw new ModxMCPClientException('static_file hard link or unreadable link metadata is forbidden.');
+            }
+        }
+    }
+
     private function readEffectiveContent($el, $m) {
         $isStatic = (bool) $el->get('static');
         $staticAbs = null;
@@ -2315,6 +2369,9 @@ class modxMCP {
                 $staticAbs = $this->isAbsolutePath($rel)
                     ? $rel
                     : rtrim($this->modx->getOption('base_path'), '/\\') . '/' . ltrim($rel, '/\\');
+            }
+            if ($staticAbs !== null) {
+                $this->assertStaticPathSafe($staticAbs);
             }
             if ($staticAbs !== null && is_file($staticAbs)) {
                 return array((string) file_get_contents($staticAbs), $isStatic, $staticAbs);
@@ -2328,6 +2385,7 @@ class modxMCP {
         // For a static element the file is the source of truth — write it FIRST so that when the
         // save event fires below, getContent() (which VersionX reads) already sees the new content.
         if ($isStatic && $staticAbs !== null) {
+            $this->assertStaticPathSafe($staticAbs);
             $dir = dirname($staticAbs);
             if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
                 throw new ModxMCPClientException("cannot create directory {$dir}");
