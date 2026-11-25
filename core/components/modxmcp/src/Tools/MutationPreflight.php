@@ -68,8 +68,11 @@ final class MutationPreflight
                     || strtolower(trim($field)) !== 'enableanonymous') {
                     continue;
                 }
-                if ($field !== 'enableAnonymous'
-                    || !in_array($data[$field], array(false, 0, '0'), true)) {
+                if (!in_array($data[$field], array(false, 0, '0'), true)) {
+                    // RU: Явное включение анонимного доступа (true/'1') — только
+                    // RU: через ACL; любое написание поля принимается одинаково.
+                    // EN: Explicitly enabling anonymous access requires an ACL
+                    // EN: grant; the field name is accepted in any casing.
                     throw new \ModxMCPClientException(
                         'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
                     );
