@@ -1,5 +1,7 @@
 # MODX MCP
 
+[![rumata-estor/modx3-mcp MCP server](https://glama.ai/mcp/servers/rumata-estor/modx3-mcp/badges/score.svg)](https://glama.ai/mcp/servers/rumata-estor/modx3-mcp)
+
 [English](README.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Українська](README.uk.md) · [Қазақша](README.kk.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md)
 
 [Documentation in 9 languages](docs/LANGUAGES.md) / [Документация на 9 языках](docs/LANGUAGES.md)
