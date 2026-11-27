@@ -34,6 +34,10 @@ class ElementCreateTool implements ToolInterface
             );
         }
 
+        if ($type === 'resource') {
+            ElementMutationSupport::validateResourceFields($context, $prepared, $prepared);
+        }
+
         $createData = $prepared;
         unset(
             $createData['events'],

@@ -55,6 +55,9 @@ class ElementUpdateTool implements ToolInterface
         }
 
         $updateData = array_merge($current->getObject(), $prepared);
+        if ($type === 'resource') {
+            ElementMutationSupport::validateResourceFields($context, $prepared, $updateData);
+        }
         unset(
             $updateData['events'],
             $updateData['templates'],

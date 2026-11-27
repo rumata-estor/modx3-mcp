@@ -9,7 +9,10 @@ class ElementMutationSupport
 {
     public static function prepare($context, $type, array $data, $action)
     {
-        if (empty($data['id']) && !empty($data['name'])) {
+        if ($type === 'resource' && $action === 'create_element' && array_key_exists('id', $data)) {
+            throw new \ModxMCPClientException('Resource creation must not specify an existing ID.');
+        }
+        if (!($type === 'resource' && $action === 'create_element') && empty($data['id']) && !empty($data['name'])) {
             $resolved = ElementSupport::resolveId($context, $type, $data);
             if ($resolved > 0) { $data['id'] = $resolved; }
         }
@@ -59,6 +62,61 @@ class ElementMutationSupport
         return $data;
     }
 
+    // Validate the requested properties, not unrelated persisted values.
+    public static function validateResourceFields($context, array $requested, array $effective)
+    {
+        $modx = $context->modx();
+        $platform = $context->platform();
+        foreach (array('searchable','cacheable','richtext','uri_override') as $key) {
+            if (array_key_exists($key, $requested) && !in_array($requested[$key], array(0,1,false,true), true)) {
+                throw new \ModxMCPClientException('Invalid resource flag: ' . $key);
+            }
+        }
+        if (array_key_exists('content_type', $requested)) {
+            $id = $requested['content_type'];
+            if (!is_int($id) || $id < 1 || !$modx->getObject($platform->className('content_type'), $id)) {
+                throw new \ModxMCPClientException('Invalid resource content_type.');
+            }
+        }
+        if (array_key_exists('context_key', $requested) || array_key_exists('parent', $requested)
+            || array_key_exists('uri', $requested) || array_key_exists('uri_override', $requested)) {
+            $key = isset($effective['context_key']) ? $effective['context_key'] : 'web';
+            if (!is_string($key) || $key === '' || $key === 'mgr'
+                || !$modx->getObject($platform->className('context'), $key)) {
+                throw new \ModxMCPClientException('Invalid target resource context.');
+            }
+            $parent = isset($effective['parent']) ? (int)$effective['parent'] : 0;
+            if ($parent > 0) {
+                $row = $modx->getObject($platform->className('resource'), $parent);
+                if (!$row || $row->get('deleted') || (string)$row->get('context_key') !== $key) {
+                    throw new \ModxMCPClientException('Resource parent must belong to the target context and not be deleted.');
+                }
+            }
+        }
+        if (array_key_exists('uri', $requested)) {
+            $uri = $requested['uri'];
+            if (empty($effective['uri_override']) || !is_string($uri) || $uri === ''
+                || strlen($uri) > 255 || strpos($uri, chr(92)) !== false || preg_match('~[\x00-\x20\x7f?#:%]~', $uri)
+                || $uri[0] === '/' || preg_match('~(?:^|/)\.{1,2}(?:/|$)~', $uri)
+                || strpos($uri, '//') !== false) {
+                throw new \ModxMCPClientException('Fixed URI must be a safe relative resource path with uri_override enabled.');
+            }
+        }
+        if ((!empty($requested['uri_override']) || array_key_exists('uri', $requested))
+            && !empty($effective['uri_override'])) {
+            $uri = isset($effective['uri']) ? $effective['uri'] : '';
+            if ($uri === '') {
+                throw new \ModxMCPClientException('Fixed URI requires a nonempty URI.');
+            }
+            $existing = $modx->getObject($platform->className('resource'), array(
+                'context_key' => $effective['context_key'], 'uri' => $uri, 'deleted' => 0,
+            ));
+            if ($existing && (int)$existing->get('id') !== (int)($effective['id'] ?? 0)) {
+                throw new \ModxMCPClientException('Resource URI already exists in the target context.');
+            }
+        }
+    }
+
     public static function filterData($type, array $data)
     {
         $allowed = array(
@@ -69,7 +127,7 @@ class ElementMutationSupport
             // RU: обновлении. Особенно важны richtext/searchable/cacheable.
             // EN: Preserve existing fields on partial updates, especially
             // EN: richtext/searchable/cacheable and editing/publishing flags.
-            'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'richtext', 'searchable', 'cacheable', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
+            'resource' => array('id', 'pagetitle', 'longtitle', 'description', 'alias', 'parent', 'template', 'content', 'published', 'context_key', 'class_key', 'isfolder', 'hidemenu', 'introtext', 'menutitle', 'menuindex', 'richtext', 'searchable', 'cacheable', 'uri', 'uri_override', 'content_type', 'article', 'price', 'old_price', 'weight', 'remains', 'vendor', 'made_in', 'new', 'popular', 'favorite', 'tags', 'color', 'size'),
             'tv' => array('id', 'name', 'caption', 'description', 'category', 'type', 'elements', 'display', 'default_text', 'rank', 'static', 'static_file', 'source'),
             'category' => array('id', 'category', 'parent', 'rank'),
             'plugin' => array('id', 'name', 'description', 'plugincode', 'category', 'disabled', 'static', 'static_file', 'source', 'property_preprocess'),

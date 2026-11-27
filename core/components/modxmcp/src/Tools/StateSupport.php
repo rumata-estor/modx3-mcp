@@ -104,6 +104,7 @@ class StateSupport
             // All persisted columns of the base modResource row, not TVs
             // or addon-specific child tables, participate in full target CAS.
             'resource_fingerprint_version' => 2,
+            'resource_context_fields_v1' => true,
             'cas_required' => true,
         );
     }
