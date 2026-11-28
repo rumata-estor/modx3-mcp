@@ -1006,8 +1006,13 @@ const toolDefinitions = [
         size: { type: "string" },
         events: { type: "array", items: { type: "string" } },
         caption: { type: "string" },
-        field_type: { type: "string" },
-        templates: { type: "array", items: { type: "number" } },
+        description: { type: "string" },
+        rank: { type: "integer", description: "TV or category sort rank (nonnegative)." },
+        field_type: { type: "string", description: "TV input type, e.g. listbox-multiple or checkbox." },
+        elements: { type: "string", description: "TV input options in native MODX syntax, e.g. Label==value||Other==other." },
+        default_text: { type: "string", description: "TV default value, raw MODX syntax." },
+        display: { type: "string", description: "TV output renderer." },
+        templates: { type: "array", items: { type: "integer", minimum: 1 }, description: "TV template IDs. Replaces links if supplied; omit to preserve; [] detaches all." },
         _runtime_preconditions: {
           type: "object",
           description:
@@ -1055,8 +1060,13 @@ const toolDefinitions = [
         size: { type: "string" },
         events: { type: "array", items: { type: "string" } },
         caption: { type: "string" },
-        field_type: { type: "string" },
-        templates: { type: "array", items: { type: "number" } },
+        description: { type: "string" },
+        rank: { type: "integer", description: "TV or category sort rank (nonnegative)." },
+        field_type: { type: "string", description: "TV input type, e.g. listbox-multiple or checkbox." },
+        elements: { type: "string", description: "TV input options in native MODX syntax, e.g. Label==value||Other==other." },
+        default_text: { type: "string", description: "TV default value, raw MODX syntax." },
+        display: { type: "string", description: "TV output renderer." },
+        templates: { type: "array", items: { type: "integer", minimum: 1 }, description: "TV template IDs. Replaces links if supplied; omit to preserve; [] detaches all." },
         _runtime_preconditions: {
           type: "object",
           description:

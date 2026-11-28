@@ -206,9 +206,14 @@ Update a MODX element by REPLACING its whole content (send the complete new `con
 | `color` | string | no | — |
 | `size` | string | no | — |
 | `events` | array of string | no | — |
-| `caption` | string | no | — |
-| `field_type` | string | no | — |
-| `templates` | array of number | no | — |
+| `caption` | string | no | TV caption. |
+| `description` | string | no | Element description. |
+| `rank` | integer | no | TV/category sort rank (nonnegative). |
+| `field_type` | string | no | TV input type. |
+| `elements` | string | no | Native MODX TV input options. |
+| `default_text` | string | no | Raw default value. |
+| `display` | string | no | TV output renderer. |
+| `templates` | array of integer | no | Existing positive template IDs; replaces links when supplied; omit to preserve, [] to detach. |
 | `_runtime_preconditions` | object | no | Internal external infrastructure CAS preconditions. Not intended for manual model-authored calls. |
 | `media_source` | number | no | — |
 | `input_properties` | object | no | — |
@@ -247,9 +252,14 @@ Create a new MODX element.
 | `color` | string | no | — |
 | `size` | string | no | — |
 | `events` | array of string | no | — |
-| `caption` | string | no | — |
-| `field_type` | string | no | — |
-| `templates` | array of number | no | — |
+| `caption` | string | no | TV caption. |
+| `description` | string | no | Element description. |
+| `rank` | integer | no | TV/category sort rank (nonnegative). |
+| `field_type` | string | no | TV input type. |
+| `elements` | string | no | Native MODX TV input options. |
+| `default_text` | string | no | Raw default value. |
+| `display` | string | no | TV output renderer. |
+| `templates` | array of integer | no | Existing positive template IDs; replaces links when supplied; omit to preserve, [] to detach. |
 | `_runtime_preconditions` | object | no | Internal external infrastructure CAS preconditions. Not intended for manual model-authored calls. |
 | `media_source` | number | no | — |
 | `input_properties` | object | no | — |

@@ -9,6 +9,9 @@ class ElementMutationSupport
 {
     public static function prepare($context, $type, array $data, $action)
     {
+        if ($type === 'tv') {
+            $data = self::validateTvFields($context, $data);
+        }
         if (empty($data['id']) && !empty($data['name'])) {
             $resolved = ElementSupport::resolveId($context, $type, $data);
             if ($resolved > 0) { $data['id'] = $resolved; }
@@ -55,6 +58,55 @@ class ElementMutationSupport
             if ($type === 'plugin') {
                 $data['plugincode'] = $data['content'];
             }
+        }
+        return $data;
+    }
+
+    /**
+     * RU: Проверяем типы и существование шаблонов до изменения TV.
+     * EN: Validate field types and template existence before TV mutation.
+     */
+    public static function validateTvFields($context, array $data)
+    {
+        foreach (array('caption', 'description', 'elements', 'default_text', 'display', 'field_type') as $field) {
+            if (array_key_exists($field, $data) && !is_string($data[$field])) {
+                throw new \ModxMCPClientException('VALIDATION_ERROR: TV '.$field.' must be a string.');
+            }
+        }
+        if (isset($data['field_type']) && trim($data['field_type']) === '') {
+            throw new \ModxMCPClientException('VALIDATION_ERROR: TV field_type must not be empty.');
+        }
+        if (array_key_exists('rank', $data)) {
+            $rank = $data['rank'];
+            if (!(is_int($rank) || (is_string($rank) && preg_match('/^[0-9]+$/D', $rank)))
+                || (float)$rank < 0 || (float)$rank > 2147483647) {
+                throw new \ModxMCPClientException('VALIDATION_ERROR: TV rank must be a nonnegative integer.');
+            }
+            $data['rank'] = (int)$rank;
+        }
+        if (array_key_exists('input_properties', $data) && !is_array($data['input_properties'])) {
+            throw new \ModxMCPClientException('VALIDATION_ERROR: TV input_properties must be an object.');
+        }
+        if (array_key_exists('templates', $data)) {
+            $ids = array();
+            if (!is_array($data['templates'])) {
+                throw new \ModxMCPClientException('VALIDATION_ERROR: TV templates must be a list of existing template IDs.');
+            }
+            foreach ($data['templates'] as $index => $id) {
+                if ($index !== count($ids)
+                    || !(is_int($id) || (is_string($id) && preg_match('/^[0-9]+$/D', $id)))
+                    || (float)$id < 1 || (float)$id > PHP_INT_MAX
+                    || in_array((int)$id, $ids, true)) {
+                    throw new \ModxMCPClientException('VALIDATION_ERROR: TV templates must contain unique positive integer IDs.');
+                }
+                $ids[] = (int)$id;
+            }
+            foreach ($ids as $id) {
+                if (!$context->modx()->getObject($context->platform()->className('template'), $id)) {
+                    throw new \ModxMCPClientException('VALIDATION_ERROR: TV template ID does not exist.');
+                }
+            }
+            $data['templates'] = $ids;
         }
         return $data;
     }

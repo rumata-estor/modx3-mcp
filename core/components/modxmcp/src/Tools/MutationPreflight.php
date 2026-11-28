@@ -15,6 +15,10 @@ final class MutationPreflight
      */
     public static function assertAllowed($context, $action, array $data, $preconditions = null)
     {
+        if (in_array($action, array('create_element', 'update_element'), true)
+            && isset($data['type']) && $data['type'] === 'tv') {
+            ElementMutationSupport::validateTvFields($context, $data);
+        }
         if (in_array($action, array('create_property_set', 'update_property_set'), true)) {
             PropertySetValidation::validateData($data);
         }
