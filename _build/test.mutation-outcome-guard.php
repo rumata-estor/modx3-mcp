@@ -42,6 +42,19 @@ foreach (array(
     }
     outcomeCheck($attempts===$before+1, 'never re-execute the operation');
 }
+// Preserve only the exact first-party hint, without changing uncertain outcome.
+$fixed = new ModxMCPClientException(MutationOutcomeGuard::MEDIA_TPL_MESSAGE);
+foreach (array($fixed, new ModxMCPClientException(MutationOutcomeGuard::MEDIA_TPL_MESSAGE.' SECRET')) as $fault) {
+    try {
+        MutationOutcomeGuard::run(function () use ($fault) { throw $fault; });
+        throw new RuntimeException('Expected uncertain outcome');
+    } catch (ModxMCPClientException $error) {
+        $expected = $fault === $fixed ? MutationOutcomeGuard::MEDIA_TPL_MESSAGE : MutationOutcomeGuard::UNKNOWN_MESSAGE;
+        outcomeCheck($error->getMessage()===$expected && $error->getPrevious()===null,'only fixed tpl hint survives');
+        outcomeCheck(MutationOutcomeGuard::uncertain($error)->getMessage()===$expected,'signed gate preserves the same fixed hint');
+    }
+}
+
 // Model a native processor that has already saved a row before failing.
 $storedWrites = 0;
 $reportedUnknown = false;
@@ -69,7 +82,7 @@ foreach (array(
         'non-atomic and post-commit boundaries wired: '.basename($dispatcher));
 }
 $gate = file_get_contents(__DIR__.'/../core/components/modxmcp/src/Security/MutationOperationGate.php');
-outcomeCheck(strpos($gate, 'throw MutationOutcomeGuard::uncertain();')!==false,
+outcomeCheck(strpos($gate, 'throw MutationOutcomeGuard::uncertain($error);')!==false,
     'signed operation journal also fails closed after a thrown operation');
 
 echo 'MUTATION_OUTCOME_GUARD_OK attempts='.$attempts.PHP_EOL;

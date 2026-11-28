@@ -112,7 +112,9 @@ const invalid = presenter.fromHttp({error:"VALIDATION_ERROR: secret=SUPER_SECRET
 assert.strictEqual(invalid.code,"VALIDATION_ERROR");
 assert.strictEqual(invalid.outcome,"not_applied");
 assert(!presenter.display(invalid).includes("SUPER_SECRET"));
-const tpl=presenter.fromHttp({error:"MEDIA_TPL_WRITE_REFUSED: password=SUPER_SECRET"},400,"create_media_file");
+const tpl=presenter.fromHttp({error:"MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: password=SUPER_SECRET"},400,"create_media_file");
+assert.strictEqual(tpl.code,"MUTATION_OUTCOME_UNCERTAIN");
+assert.strictEqual(tpl.detail_code,"MEDIA_TPL_WRITE_REFUSED");
 assert.strictEqual(tpl.outcome,"unknown");
 assert.strictEqual(tpl.retry_policy,"verify_before_retry");
 assert(tpl.reason_ru.includes("upload_files"));
