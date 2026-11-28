@@ -378,6 +378,7 @@ $settings = array(
     'modxmcp.max_payload_bytes' => array(1048576, 'textfield', 'modxmcp:limits'),
     'modxmcp.max_read_bytes' => array(262144, 'textfield', 'modxmcp:limits'),
     'modxmcp.allow_root_filesystem_read' => array(0, 'combo-boolean', 'modxmcp:security'),
+    'modxmcp.allow_native_tv_rendering' => array(0, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.require_https' => array(1, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.trust_proxy_https' => array(0, 'combo-boolean', 'modxmcp:security'),
     'modxmcp.trusted_proxy_ips' => array('', 'textfield', 'modxmcp:security'),
