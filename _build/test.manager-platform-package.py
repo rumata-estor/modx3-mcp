@@ -33,4 +33,6 @@ with tempfile.TemporaryDirectory() as d:
             assert "hasPermission('settings')" in content and "isAuthenticated('mgr')" in content
             assert ('extends modProcessor' in content) == (plat=='modx2')
             assert ('extends Processor' in content) == (plat=='modx3')
+        if plat == 'modx2':
+            subprocess.run(['php', str(R/'_build/test.manager-modx2-token.php'), str(core)], check=True)
         print('MANAGER_PLATFORM_STAGE_OK',plat,'dashboard, graph, 2 processors, CSS/JS')
