@@ -640,11 +640,13 @@ class ElementMutationSupport
     {
         if (StateSupport::inRevisionTransaction($context)) {
             StateSupport::afterRevisionCommit($context, function () use ($context) {
-                self::refreshCache($context);
+                return self::refreshCache($context);
             });
             return;
         }
         $manager = $context->modx()->getCacheManager();
-        if ($manager) { $manager->refresh(); }
+        if ($manager && $manager->refresh() === false) {
+            throw new \RuntimeException("Cache refresh failed.");
+        }
     }
 }
