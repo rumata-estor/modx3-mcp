@@ -13,6 +13,7 @@ const {
 } = require("@modelcontextprotocol/sdk/types.js");
 const axios = require("axios");
 const ErrorPresenter = require("./error-presenter");
+const SafetyPolicy = require("./safety-policy");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -616,17 +617,8 @@ async function autoBackupSystemSetting(args, action) {
 
 async function autoBackupForMutation(name, args) {
   if (SKIP_AUTO_BACKUP) return [];
-
-  if (name === "modx_create_element" && ["chunk","snippet","template"].includes(String(args.type))) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_ELEMENT_CREATE !== "1") {
-      throw new Error("Safety: direct element creation is disabled. Use the safe element creation workflow.");
-    }
-  }
-  if (name === "modx_create_element" && String(args.type) === "plugin") {
-    if (process.env.MODX_MCP_ALLOW_SAFE_PLUGIN_CREATE !== "1") {
-      throw new Error("Safety: direct plugin creation is disabled. Use the safe plugin workflow.");
-    }
-  }
+  const gate = SafetyPolicy.deniedGate(name, args);
+  if (gate) throw new DiagnosticMcpError(ErrorPresenter.safetyRefusal(gate, name.replace(/^modx_/, "")));
 
   if (name === "modx_assign_element_category") {
     return [await autoBackupElement(args.type, {id:args.id}, name)];
@@ -634,140 +626,17 @@ async function autoBackupForMutation(name, args) {
   if (name === "modx_update_category" || (name === "modx_delete_category" && args.dry_run === false)) {
     return [await autoBackupElement("category", {id:args.id}, name)];
   }
-
-  if (name === "modx_update_element_property") {
+  if (name === "modx_update_element_property" || name === "modx_update_element" || name === "modx_edit_element_lines") {
     return [await autoBackupElement(args.type, args, name)];
   }
-  if (name === "modx_update_element" || name === "modx_edit_element_lines") {
-    return [await autoBackupElement(args.type, args, name)];
-  }
-
   if (name === "modx_delete_element" && !args.dry_run) {
     if (args.type === "tv") {
-      if (process.env.MODX_MCP_ALLOW_STAGED_TV_DELETE !== "1") {
-        throw new Error("Safety: direct TV deletion is disabled. Use the staged TV deletion workflow.");
-      }
       return [
         await autoBackupElement(args.type, args, name),
         await autoBackupAllTvValues({tv_id:args.id,tv_name:args.name}, name),
       ];
     }
-    if (["chunk","snippet","template"].includes(String(args.type))) {
-      if (process.env.MODX_MCP_ALLOW_STAGED_ELEMENT_DELETE !== "1") {
-        throw new Error("Safety: direct element deletion is disabled. Use the staged element deletion workflow.");
-      }
-    }
-    if (String(args.type) === "resource") {
-      if (process.env.MODX_MCP_ALLOW_STAGED_RESOURCE_DELETE !== "1") {
-        throw new Error("Safety: direct resource deletion is disabled. Use the staged resource deletion workflow.");
-      }
-    }
-    if (String(args.type) === "plugin") {
-      if (process.env.MODX_MCP_ALLOW_STAGED_PLUGIN_DELETE !== "1") {
-        throw new Error("Safety: direct plugin deletion is disabled. Use the staged plugin workflow.");
-      }
-    }
     return [await autoBackupElement(args.type, args, name)];
-  }
-
-  if (name === "modx_bulk_resources" && args.dry_run !== true) {
-    if (String(args.operation) === "delete") {
-      if (process.env.MODX_MCP_ALLOW_STAGED_BULK_RESOURCE_DELETE !== "1") {
-        throw new Error("Safety: bulk resource deletion is disabled. Use the staged bulk resource workflow.");
-      }
-    } else if (process.env.MODX_MCP_ALLOW_SAFE_BULK_RESOURCES !== "1") {
-      throw new Error("Safety: direct bulk resource mutation is disabled. Run preview and use the safe bulk workflow.");
-    }
-  }
-
-  if (name === "modx_empty_recycle_bin") {
-    if (process.env.MODX_MCP_ALLOW_RECYCLE_PURGE !== "1") {
-      throw new Error("Safety: emptying the recycle bin is disabled. Use the dedicated purge workflow.");
-    }
-  }
-
-  if (["modx_install_package","modx_uninstall_package"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_PACKAGE_CHANGE !== "1") {
-      throw new Error("Safety: direct package install/uninstall is disabled. Use the dedicated package workflow with full file+database backup.");
-    }
-  }
-
-  if (["modx_create_system_setting","modx_update_system_setting","modx_delete_system_setting"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_SYSTEM_SETTING !== "1") {
-      throw new Error("Safety: direct system-setting mutation is disabled. Use the safe system-setting workflow.");
-    }
-  }
-
-  if (name === "modx_update_element" && String(args.type) === "plugin" && Object.prototype.hasOwnProperty.call(args, "events")) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_PLUGIN_EVENTS !== "1") {
-      throw new Error("Safety: direct plugin event mutation is disabled. Use the safe plugin-events workflow.");
-    }
-  }
-
-  if (["modx_create_media_source","modx_update_media_source","modx_delete_media_source"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_MEDIA_SOURCE !== "1") {
-      throw new Error("Safety: direct Media Source mutation is disabled. Use the safe Media Source workflow.");
-    }
-  }
-
-  if ([
-    "modx_create_context","modx_update_context","modx_delete_context",
-    "modx_create_context_setting","modx_update_context_setting","modx_delete_context_setting"
-  ].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_CONTEXTS !== "1") {
-      throw new Error("Safety: direct context/context-setting mutation is disabled. Use the safe context workflow.");
-    }
-  }
-
-  if (["modx_clientconfig_create_setting","modx_clientconfig_update_setting","modx_clientconfig_delete_setting"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_CLIENTCONFIG !== "1") {
-      throw new Error("Safety: direct ClientConfig mutation is disabled. Use the safe ClientConfig workflow.");
-    }
-  }
-
-  if ([
-    "modx_create_property_set","modx_update_property_set","modx_delete_property_set",
-    "modx_assign_property_set","modx_unassign_property_set"
-  ].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_PROPERTY_SET !== "1") {
-      throw new Error("Safety: direct Property Set mutation is disabled. Use the safe Property Set workflow.");
-    }
-  }
-
-  if (["modx_migx_create_config","modx_migx_update_config","modx_migx_delete_config"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_MIGX !== "1") {
-      throw new Error("Safety: direct MIGX config mutation is disabled. Use the safe MIGX workflow.");
-    }
-  }
-
-  if (["modx_create_namespace","modx_update_namespace","modx_delete_namespace","modx_set_lexicon_entry","modx_revert_lexicon_entry"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_NAMESPACE_LEXICON !== "1") {
-      throw new Error("Safety: direct namespace/lexicon mutation is disabled. Use the safe namespace/lexicon workflow.");
-    }
-  }
-
-  if ([
-    "modx_create_user","modx_update_user","modx_delete_user",
-    "modx_create_user_group","modx_update_user_group","modx_delete_user_group",
-    "modx_add_user_to_group","modx_update_group_member","modx_remove_user_from_group",
-    "modx_create_role","modx_update_role","modx_delete_role",
-    "modx_create_access_policy","modx_update_access_policy","modx_delete_access_policy",
-    "modx_create_access_policy_template","modx_update_access_policy_template","modx_delete_access_policy_template",
-    "modx_create_resource_group","modx_update_resource_group","modx_delete_resource_group",
-    "modx_assign_resource_to_group","modx_remove_resource_from_group",
-    "modx_grant_context_access","modx_update_context_access","modx_revoke_context_access",
-    "modx_grant_resourcegroup_access","modx_update_resourcegroup_access","modx_revoke_resourcegroup_access",
-    "modx_flush_permissions"
-  ].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_SAFE_ACCESS !== "1") {
-      throw new Error("Safety: direct ACL mutation is disabled. Use the safe access workflow.");
-    }
-  }
-
-  if (["modx_create_provider","modx_update_provider","modx_delete_provider"].includes(name)) {
-    if (process.env.MODX_MCP_ALLOW_PROVIDER_CHANGE !== "1") {
-      throw new Error("Safety: transport provider mutation is disabled. Use the dedicated provider workflow.");
-    }
   }
 
   if (name === "modx_clear_tv_values" && args.confirm === true) {
@@ -2776,7 +2645,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     if (supported && !supported.has(action)) return false;
     return true;
   });
-  return { tools };
+  return { tools: tools.map(t => SafetyPolicy.describeTool(t)) };
 });
 
 function formatCodeFromResult(resultData) {
