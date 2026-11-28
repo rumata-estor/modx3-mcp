@@ -8,13 +8,16 @@ from pathlib import Path
 import re
 import shutil
 import sys
+from release_version import load_release
 
 root = Path(__file__).resolve().parents[1]
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--platform', choices=('modx2','modx3'), required=True)
 ap.add_argument('--output', required=True)
+ap.add_argument('--candidate', action='store_true', help='Stage target release from release-version.json')
 args = ap.parse_args()
+candidate = load_release() if args.candidate else None
 out = Path(args.output).expanduser().resolve()
 if out == root or root in out.parents:
     raise SystemExit('output must be outside the source repository')
@@ -69,6 +72,13 @@ if platform_root.exists():
 # does not introduce another hard-coded version source.
 build_config = out / '_build/build.config.php'
 build_text = build_config.read_text(encoding='utf-8')
+if candidate:
+    version, release, _ = candidate
+    for key, value in (('PKG_VERSION', version), ('PKG_RELEASE', release)):
+        build_text, count = re.subn(r"define\('" + key + r"',\s*'[^']+'\);", "define('" + key + "', '" + value + "');", build_text)
+        if count != 1:
+            raise SystemExit(f'Invalid {key} marker in {build_config}')
+    build_config.write_text(build_text, encoding='utf-8')
 match = re.search(r"define\('PKG_VERSION',\s*'([^']+)'\)", build_text)
 if not match:
     raise SystemExit(f'PKG_VERSION not found in {build_config}')
@@ -76,12 +86,13 @@ pkg_version = match.group(1)
 
 model = core / 'model/modxmcp.class.php'
 text = model.read_text(encoding='utf-8')
-text = re.sub(
+text, count = re.subn(
     r"const VERSION = '[^']+';",
     "const VERSION = '" + pkg_version + "';",
     text,
-    count=1,
 )
+if count != 1:
+    raise SystemExit(f'Invalid VERSION marker in {model}')
 model.write_text(text, encoding='utf-8')
 
 (out / 'BUILD_PLATFORM').write_text(args.platform + '\n', encoding='utf-8')

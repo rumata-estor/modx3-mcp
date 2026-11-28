@@ -56,7 +56,10 @@ if($mode==='before'){
     echo 'UPGRADE_127_BASELINE_PUBLISHED_PACKAGE_OK'.PHP_EOL;
     exit(0);
 }
-upgradeCheck(modxMCP::VERSION==='1.2.8','new installed package version');
+$expectedVersion = getenv('RELEASE_VERSION');
+// Historical upgrade workflows predate release-version.json.
+if ($expectedVersion === false) { $expectedVersion = '1.2.8'; }
+upgradeCheck(is_string($expectedVersion) && $expectedVersion !== '' && modxMCP::VERSION === $expectedVersion, 'new installed package version');
 $saved=json_decode(file_get_contents($manifest),true);
 upgradeCheck(is_array($saved),'upgrade baseline available');
 $token=(string)upgradeSetting($modx,$settingClass,'modxmcp.api_token')->get('value');

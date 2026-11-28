@@ -1,7 +1,7 @@
 # MODX MCP SOURCE / ИСХОДНИК MODX MCP
 # RU: CI-процедура MODX MCP; проверки и сборка не должны менять production.
 # EN: MODX MCP CI workflow; testing and packaging must not modify production.
-name: Build and verify MODX MCP 1.2.8-beta5 candidates (unpublished)
+name: Build and verify MODX MCP release candidates (unpublished)
 
 # This workflow only builds downloadable Actions artifacts on disposable MODX.
 # It never creates a GitHub release or tag and never accesses production.
@@ -47,10 +47,13 @@ jobs:
           php-version: ${{ matrix.php_version }}
           extensions: mysqli, pdo_mysql, sodium, zip, gd, intl, mbstring, xml
           coverage: none
+      - name: Read target release identity
+        run: python3 _build/release_version.py >> "$GITHUB_ENV"
       - name: Validate and stage release source
         run: |
           set -euo pipefail
           python3 _build/test.release-staging.py
+          python3 _build/test.release-version.py
           python3 _build/test.capabilities-cas-metadata.py
           python3 _build/prepare-release.py --platform '${{ matrix.platform }}' --output "$RUNNER_TEMP/modxmcp-stage"
           grep -Fq "define('PKG_VERSION', '1.2.7');" "$RUNNER_TEMP/modxmcp-stage/_build/build.config.php"
@@ -121,36 +124,13 @@ jobs:
             --signature="${old}mcp-1.2.7-pl"
           MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-true-upgrade-127-to-128.php before
           MODXMCP_DISPOSABLE_CI=1 php _build/test.ci-upgrade-acl-migration.php before
-      - name: Build a separate unpublished 1.2.8-beta5 transport on the disposable MODX
+      - name: Build a separate unpublished candidate transport on the disposable MODX
         env:
           BUILD_PLATFORM: '${{ matrix.platform }}'
         run: |
           set -euo pipefail
-          python3 _build/prepare-release.py \
+          python3 _build/prepare-release.py --candidate \
             --platform "$BUILD_PLATFORM" --output "$RUNNER_TEMP/stage-128"
-          python3 - <<'PY'
-          import os,pathlib,re
-          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'stage-128'
-          changes=[
-             (root/'_build/build.config.php',
-              r"define\('PKG_VERSION',\s*'1\.2\.7'\);",
-              "define('PKG_VERSION', '1.2.8');"),
-             (root/'_build/build.config.php',
-              r"define\('PKG_RELEASE',\s*'pl'\);",
-              "define('PKG_RELEASE', 'beta5');"),
-             (root/'core/components/modxmcp/model/modxmcp.class.php',
-              r"const VERSION = '1\.2\.7';",
-              "const VERSION = '1.2.8';"),
-             (root/'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
-              r"const VERSION = '1\.2\.7';",
-              "const VERSION = '1.2.8';")
-          ]
-          for path,pattern,replacement in changes:
-              content=path.read_text(encoding='utf-8')
-              updated,count=re.subn(pattern,replacement,content)
-              if count!=1:raise SystemExit('Version marker mismatch: '+str(path))
-              path.write_text(updated,encoding='utf-8')
-          PY
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           export MODX_DOCUMENT_ROOT="$RUNNER_TEMP/modx-site"
           # RU: Не допускаем Python-helper в новый транспорт.
@@ -159,15 +139,14 @@ jobs:
             "$RUNNER_TEMP/stage-128/core/components/modxmcp/src/Tools/FilesystemSupport.php"
           test ! -f "$RUNNER_TEMP/stage-128/core/components/modxmcp/src/Security/component_read_guard.py"
           php "$RUNNER_TEMP/stage-128/_build/build.transport.php"
-          zip="$RUNNER_TEMP/modx-site/core/packages/${BUILD_PLATFORM}mcp-1.2.8-beta5.transport.zip"
+          zip="$RUNNER_TEMP/modx-site/core/packages/${BUILD_PLATFORM}mcp-$RELEASE_ID.transport.zip"
           test -s "$zip"
           unzip -t "$zip" | tail -3
-          grep -Fq "define('PKG_VERSION', '1.2.8');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
-          grep -Fq "define('PKG_RELEASE', 'beta5');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
-          grep -Fq "const VERSION = '1.2.8';" "$RUNNER_TEMP/stage-128/core/components/modxmcp/model/modxmcp.class.php"
-          grep -Fq "const VERSION = '1.2.8';" "$RUNNER_TEMP/stage-128/core/components/modxmcp/legacy/modx2/modxmcp.class.php"
+          grep -Fq "define('PKG_VERSION', '$RELEASE_VERSION');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
+          grep -Fq "define('PKG_RELEASE', '$RELEASE_CHANNEL');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
+          grep -Fq "const VERSION = '$RELEASE_VERSION';" "$RUNNER_TEMP/stage-128/core/components/modxmcp/model/modxmcp.class.php"
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" \
-            --signature="${BUILD_PLATFORM}mcp-1.2.8-beta5"
+            --signature="${BUILD_PLATFORM}mcp-$RELEASE_ID"
       # RU: Существующие ACL-строки из 1.2.7, явный DDL только в disposable DB.
       # EN: Verify actual historical ACL rows survive new transport and explicit index migration.
       - name: Historical ACL data and explicit index migration on upgraded disposable MODX
@@ -205,7 +184,7 @@ jobs:
           BUILD_PLATFORM: ${{ matrix.platform }}
         run: |
           set -euo pipefail
-          sig="${BUILD_PLATFORM}mcp-1.2.8-beta5"
+          sig="${BUILD_PLATFORM}mcp-$RELEASE_ID"
           package="$RUNNER_TEMP/modx-site/core/packages/$sig.transport.zip"
           test -s "$package"
           mkdir -p "$RUNNER_TEMP/beta-artifacts"
@@ -219,13 +198,13 @@ jobs:
       - name: Upload verified platform ZIP (never publish a release)
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}mcp-1.2.8-beta5-VERIFIED
+          name: ${{ matrix.platform }}mcp-${{ env.RELEASE_ID }}-VERIFIED
           path: ${{ runner.temp }}/beta-artifacts/
           if-no-files-found: error
           retention-days: 90
 
   client:
-    name: Node MCP client package / Beta 5
+    name: Node MCP client package / candidate
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -234,6 +213,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Read target release identity
+        run: python3 _build/release_version.py >> "$GITHUB_ENV"
       - name: Validate Node client and build isolated prerelease package
         run: |
           set -euo pipefail
@@ -267,7 +248,7 @@ jobs:
           # so users do not resolve the known-vulnerable minimum versions.
           sdk_version="$(node -p 'JSON.parse(require("fs").readFileSync("./node_modules/@modelcontextprotocol/sdk/package.json","utf8")).version')"
           axios_version="$(node -p 'JSON.parse(require("fs").readFileSync("./node_modules/axios/package.json","utf8")).version')"
-          npm pkg set version=1.2.8-beta.5
+          npm pkg set "version=$NODE_RELEASE_VERSION"
           npm pkg set "dependencies.@modelcontextprotocol/sdk=$sdk_version" "dependencies.axios=$axios_version"
           echo "BETA_NODE_PINNED_DIRECT_DEPS sdk=$sdk_version axios=$axios_version"
           # npm pack excludes package-lock.json; shrinkwrap preserves the
@@ -279,7 +260,7 @@ jobs:
           npm pkg set "files[3]=npm-shrinkwrap.json"
           mkdir -p "$RUNNER_TEMP/client-artifacts"
           npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/client-artifacts"
-          file="$RUNNER_TEMP/client-artifacts/modx3-mcp-1.2.8-beta.5.tgz"
+          file="$RUNNER_TEMP/client-artifacts/modx3-mcp-$NODE_RELEASE_VERSION.tgz"
           test -s "$file"
           # Avoid grep -q + pipefail SIGPIPE from tar when the file is found.
           tar -tzf "$file" > "$RUNNER_TEMP/client-manifest.txt"
@@ -294,7 +275,7 @@ jobs:
       - name: Upload matching Node MCP client
         uses: actions/upload-artifact@v4
         with:
-          name: modx-mcp-client-1.2.8-beta5-VERIFIED
+          name: modx-mcp-client-${{ env.RELEASE_ID }}-VERIFIED
           path: ${{ runner.temp }}/client-artifacts/
           if-no-files-found: error
           retention-days: 90
