@@ -255,7 +255,7 @@ trait Connector
                                         $runtimePreconditions
                                     );
                                 }
-                                if ($managed && !$atomicTv) {
+                                if ($managed && !$atomicTv && !($tool instanceof \ModxMcp\Tools\ElementPropertyUpdateTool)) {
                                     \ModxMcp\Tools\StateSupport::markRevisionEffectsStarted($runtimeContext);
                                 }
                                 $result = ($managed && $atomicTv)
