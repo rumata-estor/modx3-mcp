@@ -2507,44 +2507,26 @@ class modxMCP {
         return array('deleted' => true, 'id' => (int) $data['id']);
     }
 
-    private function regenerateToken() {
-        $bytes = false;
-        if (function_exists('random_bytes')) {
-            try {
-                $bytes = random_bytes(32);
-            } catch (Exception $e) {
-                $bytes = false;
-            } catch (Throwable $e) {
-                $bytes = false;
-            }
+    public function regenerateToken() {
+        // RU: Только административная точка входа Manager; MCP API использует CAS.
+        // EN: Manager-only entry point; the MCP API uses the guarded CAS dispatcher.
+        if (!$this->modx->user || !$this->modx->user->isAuthenticated('mgr')
+            || !$this->modx->hasPermission('settings')) {
+            throw new ModxMCPClientException('AUTH_DENIED: Manager settings permission is required.');
         }
-        if ($bytes === false && function_exists('openssl_random_pseudo_bytes')) {
-            $strong = false;
-            $candidate = openssl_random_pseudo_bytes(32, $strong);
-            if ($strong && is_string($candidate) && strlen($candidate) === 32) {
-                $bytes = $candidate;
-            }
+        if ($this->modularRuntime === null) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: modular MODX MCP runtime is unavailable.'
+            );
         }
-        if (!is_string($bytes) || strlen($bytes) !== 32) {
-            throw new ModxMCPClientException('Cannot generate a cryptographically secure API token.');
+        $context = $this->modularRuntime->context();
+        $tool = $this->modularRuntime->registry()->get('regenerate_token');
+        if ($tool === null || !$tool->isMutation() || !$tool->supports($context)) {
+            throw new ModxMCPClientException(
+                'CAS_RUNTIME_REQUIRED: token rotation tool is unavailable.'
+            );
         }
-        $token = bin2hex($bytes);
-        $setting = $this->modx->getObject('modSystemSetting', array('key' => 'modxmcp.api_token'));
-        if (!$setting) {
-            $setting = $this->modx->newObject('modSystemSetting');
-            $setting->fromArray(array(
-                'key'       => 'modxmcp.api_token',
-                'namespace' => 'modxmcp',
-                'area'      => 'modxmcp:main',
-                'xtype'     => 'textfield',
-            ), '', true, true);
-        }
-        $setting->set('value', $token);
-        if (!$setting->save()) { throw new ModxMCPClientException('regenerate_token: could not save the new token.'); }
-        $this->modx->reloadConfig();
-        if ($this->modx->getCacheManager()) { $this->modx->getCacheManager()->refresh(); }
-        $this->logAudit('regenerate_token', 'system', array());
-        return array('token' => $token);
+        return $tool->execute($context, array());
     }
 
     /**
