@@ -72,6 +72,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 _build/test.release-portability.py
+          php _build/test.package-history-resolver.php
           for platform in modx2 modx3; do
             stage="$RUNNER_TEMP/modxmcp-security-$platform"
             python3 _build/prepare-release.py --platform "$platform" --output "$stage"
