@@ -392,7 +392,7 @@ try {
         $renderSetting->set('value','0');requireTrue($renderSetting->save(),'disable native rendering');
         $blocked=false;
         try {rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both'));}
-        catch(ModxMCPClientException $e){$blocked=strpos($e->getMessage(),'SAFETY_CONFIRMATION_REQUIRED:')===0;}
+        catch(ModxMCPClientException $e){$blocked=strpos($e->getMessage(),'TV_RENDERING_DISABLED:')===0;}
         requireTrue($blocked,'native rendering disabled by default');
         $renderSetting->set('value','1');requireTrue($renderSetting->save(),'disposable administrator opt-in');
         $protectedSetting->set('value','0');requireTrue($protectedSetting->save(),'ordinary disposable policy');
@@ -408,7 +408,12 @@ try {
         $empty=rpc('create_element',array('type'=>'tv','name'=>$emptyName,'field_type'=>'text','default_text'=>'','templates'=>array($templateId)));
         $tvs[]=(int)$empty['id'];
         $revision=(int)rpc('get_site_state')['site_revision'];
-        $view=rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both'));
+        $renderGuard=array('observed_site_revision'=>$revision,'strict_site_revision'=>true,'read_set'=>array());
+        $missing=false;
+        try {rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both'));}
+        catch(ModxMCPClientException $e){$missing=strpos($e->getMessage(),'CAS_REQUIRED:')===0;}
+        requireTrue($missing && (int)rpc('get_site_state')['site_revision']===$revision,'render requires prior CAS without side effects');
+        $view=rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both','_runtime_preconditions'=>$renderGuard));
         $rows=array_column($view['tvs'],null,'name');
         requireTrue($rows[$multiName]['value']==='18||19' && $rows[$multiName]['raw']==='18||19'
             && $rows[$multiName]['rendered']==='CUSTOM:18,19' && $rows[$multiName]['render_status']==='rendered','custom rendering distinct from raw multiple');
@@ -416,11 +421,15 @@ try {
         requireTrue(strpos($rows[$inherit]['raw'],'@INHERIT')===0 && $rows[$inherit]['value']===$rows[$inherit]['raw']
             && $rows[$inherit]['rendered']!==$rows[$inherit]['raw'] && $rows[$inherit]['render_status']==='rendered','native inherit distinct from raw');
         requireTrue($rows[$emptyName]['raw']==='' && $rows[$emptyName]['value']==='','empty raw preserved');
-        requireTrue((int)rpc('get_site_state')['site_revision']===$revision,'trusted fixture render did not reserve CAS');
+        requireTrue((int)rpc('get_site_state')['site_revision']===$revision+1 && (int)$view['_site_revision']===$revision+1,'native renderer reserves one CAS revision');
+        $staleRender=false;
+        try {rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both','_runtime_preconditions'=>$renderGuard));}
+        catch(ModxMCPClientException $e){$staleRender=strpos($e->getMessage(),'STALE_STATE')!==false;}
+        requireTrue($staleRender && (int)rpc('get_site_state')['site_revision']===$revision+1,'stale native render rejected');
         $protectedSetting->set('value','1');requireTrue($protectedSetting->save(),'protected policy fixture');
         $blocked=false;
         try {rpc('get_resource_tvs',array('resource_id'=>$rid,'value_mode'=>'both'));}
-        catch(ModxMCPClientException $e){$blocked=strpos($e->getMessage(),'SAFETY_CONFIRMATION_REQUIRED:')===0;}
+        catch(ModxMCPClientException $e){$blocked=strpos($e->getMessage(),'TV_RENDERING_DISABLED:')===0;}
         requireTrue($blocked,'signed mode never executes renderer through read route');
         requireTrue(findTV(rpc('get_resource_tvs',array('resource_id'=>$rid)),$multiName)==='18||19','raw remains available in protected mode');
         echo 'TV_RAW_RENDERED_NATIVE_OK'.PHP_EOL;

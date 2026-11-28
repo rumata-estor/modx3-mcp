@@ -59,7 +59,7 @@ foreach(array('18||19','@INHERIT 0','','0') as $raw){
         $m->settings['modxmcp.external_authorization_required']=$state[0];
         $m->settings['modxmcp.allow_native_tv_rendering']=$state[1];$m->dbFailure=$state[2];
         try{$tool->execute($c,array('resource_id'=>2,'value_mode'=>'both'));throw new LogicException('unexpected render');}
-        catch(ModxMCPClientException $e){tvModeCheck(strpos($e->getMessage(),'SAFETY_CONFIRMATION_REQUIRED:')===0 && !$tv->calls,'native render blocked');}
+        catch(ModxMCPClientException $e){tvModeCheck(strpos($e->getMessage(),'TV_RENDERING_DISABLED:')===0 && !$tv->calls,'native render blocked');}
     }
     $m->settings=array('modxmcp.external_authorization_required'=>'0','modxmcp.allow_native_tv_rendering'=>'1');$m->dbFailure=false;
     foreach(array('both','rendered') as $mode){

@@ -9,7 +9,7 @@ const SAFE_CODES = new Set([
   "SECURE_STATIC_IO_UNAVAILABLE", "STATIC_READ_FAILED", "ACL_INDEX_REQUIRED",
   "PROJECT_BUSY", "BACKUP_FAILED", "HTTPS_REQUIRED", "METHOD_NOT_ALLOWED",
   "MCP_DISABLED", "IP_NOT_ALLOWED", "UNAUTHORIZED", "PAYLOAD_TOO_LARGE",
-  "INVALID_REQUEST", "VALIDATION_ERROR", "INTERNAL_ERROR", "OPERATION_REFUSED", "CONNECTION_FAILED",
+  "INVALID_REQUEST", "VALIDATION_ERROR", "TV_RENDERING_DISABLED", "INTERNAL_ERROR", "OPERATION_REFUSED", "CONNECTION_FAILED",
   "CLIENT_OPERATION_FAILED", "CLIENT_CONFIG_INVALID", "SAFETY_CONFIRMATION_REQUIRED",
 ]);
 const ALLOWED_OUTCOMES = new Set([
@@ -69,6 +69,10 @@ const FALLBACK = {
     "Не удалось проверить параметры запроса.",
     "Проверьте формат и переданные поля; затем отправьте исправленный запрос.",
     "not_applied", "after_client_fix"],
+  TV_RENDERING_DISABLED: ["Штатный рендеринг TV недоступен.",
+    "Рендеринг может запускать PHP; требуется разрешение администратора в обычном режиме.",
+    "Используйте value_mode=raw. Не отключайте защищённый режим ради рендеринга.",
+    "not_applied", "after_admin_check"],
   VALIDATION_ERROR: ["Некорректные параметры операции.",
     "Проверка структуры переданных данных не пройдена до записи.",
     "Проверьте схему инструмента и исправьте поля. Не повторяйте тот же запрос.",

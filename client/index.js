@@ -174,7 +174,12 @@ const PROJECT_LOCK_READ_ONLY_EXACT = new Set([
 
 const PROJECT_LOCK_READ_OPERATION = /(?:^|_)(?:list|get|search|read|view|check|describe|find|suggest)(?:_|$)/;
 
-function isProjectMutationTool(name) {
+function requestsNativeTvRendering(action, args) {
+  return action === "get_resource_tvs" && args && ["both", "rendered"].includes(args.value_mode);
+}
+
+function isProjectMutationTool(name, args) {
+  if (requestsNativeTvRendering(String(name || "").replace(/^modx_/, ""), args)) return true;
   const tool = String(name || "");
   if (!tool.startsWith("modx_")) return false;
   if (PROJECT_LOCK_READ_ONLY_TOOLS.has(tool) || PROJECT_LOCK_READ_ONLY_EXACT.has(tool)) return false;
@@ -182,8 +187,8 @@ function isProjectMutationTool(name) {
   return !PROJECT_LOCK_READ_OPERATION.test(tail);
 }
 
-function acquireProjectLockForTool(name) {
-  if (!isProjectMutationTool(name) || !MANAGER_ROOT) return null;
+function acquireProjectLockForTool(name, args) {
+  if (!isProjectMutationTool(name, args) || !MANAGER_ROOT) return null;
 
   const lockDir = path.join(MANAGER_ROOT, "project.lock");
   const inherited = String(process.env.SITE_PROJECT_LOCK_TOKEN || "").trim();
@@ -353,7 +358,8 @@ class DiagnosticMcpError extends Error {
     this.record = record;
   }
 }
-function isReadOnlyApiAction(action) {
+function isReadOnlyApiAction(action, args) {
+  if (requestsNativeTvRendering(action, args)) return false;
   return PROJECT_LOCK_READ_ONLY_TOOLS.has("modx_" + action)
     || action === "get_capabilities";
 }
@@ -364,7 +370,7 @@ async function modxApiRequest(payload) {
   if (clientConfigError) {
     throw new DiagnosticMcpError(ErrorPresenter.fromLocal(
       { message: "CLIENT_CONFIG_INVALID: " + clientConfigError },
-      action, isReadOnlyApiAction(action),
+      action, isReadOnlyApiAction(action, payload && payload.data),
     ));
   }
   try {
@@ -379,12 +385,12 @@ async function modxApiRequest(payload) {
     if (response.data && typeof response.data === "object") noteCaps(response.data.caps);
     if (response.data && typeof response.data === "object" && response.data.success === false) {
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp(response.data, response.status, action, isReadOnlyApiAction(action)));
+        ErrorPresenter.fromHttp(response.data, response.status, action, isReadOnlyApiAction(action, payload && payload.data)));
     }
     if (!response.data || typeof response.data !== "object"
         || response.data.success !== true) {
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp({ code: "OPERATION_REFUSED" }, response.status, action, isReadOnlyApiAction(action)));
+        ErrorPresenter.fromHttp({ code: "OPERATION_REFUSED" }, response.status, action, isReadOnlyApiAction(action, payload && payload.data)));
     }
     return response.data;
   } catch (error) {
@@ -393,10 +399,10 @@ async function modxApiRequest(payload) {
       if (error.response.data && typeof error.response.data === "object")
         noteCaps(error.response.data.caps);
       throw new DiagnosticMcpError(
-        ErrorPresenter.fromHttp(error.response.data, error.response.status, action, isReadOnlyApiAction(action)));
+        ErrorPresenter.fromHttp(error.response.data, error.response.status, action, isReadOnlyApiAction(action, payload && payload.data)));
     }
     throw new DiagnosticMcpError(
-      ErrorPresenter.fromNetwork(error, action, isReadOnlyApiAction(action)));
+      ErrorPresenter.fromNetwork(error, action, isReadOnlyApiAction(action, payload && payload.data)));
   }
 }
 
@@ -1171,11 +1177,12 @@ const toolDefinitions = [
     },
     {
     name: "modx_get_resource_tvs",
-    description: "Get resource TV values. value and raw always contain unrendered values (for CAS). value_mode:both adds native rendered output only with administrator opt-in in ordinary mode. Rendering may execute site PHP; it is not a safe read-only preview.",
+    description: "Get resource TV values. value and raw always contain unrendered values (for CAS). value_mode:both adds native rendered output only with administrator opt-in in ordinary mode. Rendering may execute site PHP; requires prior CAS snapshot and consumes one site revision. It is not a safe read-only preview.",
     inputSchema: {
       type: "object",
       properties: {
         resource_id: { type: "number" },
+        _runtime_preconditions: { type: "object", description: "Required for both/rendered only: runtime-owned CAS guard from a prior site snapshot. Do not invent manually.", additionalProperties: true },
         value_mode: { type: "string", enum: ["raw", "both", "rendered"], default: "raw", description: "raw is safe default; both/rendered add rendered and render_status, never replace raw value. Administrator opt-in required." },
       },
       required: ["resource_id"],
@@ -2694,7 +2701,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   let safetyBackups = [];
 
   try {
-    if (CAS_MUTATION_ACTIONS.has(name.replace(/^modx_/, ""))) {
+    if (CAS_MUTATION_ACTIONS.has(name.replace(/^modx_/, "")) || requestsNativeTvRendering(name.replace(/^modx_/, ""), args)) {
       const guard = args && args._runtime_preconditions;
       if (!guard || typeof guard !== "object"
           || !Number.isSafeInteger(guard.observed_site_revision)
@@ -2704,7 +2711,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error("CAS_REQUIRED: mutating MCP tools require observed_site_revision, strict_site_revision=true and read_set from the observed snapshot.");
       }
     }
-    projectLock = acquireProjectLockForTool(name);
+    projectLock = acquireProjectLockForTool(name, args);
     safetyBackups = await autoBackupForMutation(name, args || {});
 
     if (name === "modx_list_elements") {
@@ -2775,7 +2782,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   } catch (error) {
     const operation = String(name || "unknown").replace(/^modx_/, "");
     const diagnostic = error instanceof DiagnosticMcpError ? error.record
-      : ErrorPresenter.fromLocal(error, operation, isReadOnlyApiAction(operation));
+      : ErrorPresenter.fromLocal(error, operation, isReadOnlyApiAction(operation, args));
     console.error(ErrorPresenter.debugLine(diagnostic));
     return {
       content: [{ type: "text", text: ErrorPresenter.display(diagnostic) }],

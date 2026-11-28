@@ -12,6 +12,29 @@ class ResourceTvListTool implements ToolInterface
     public function isMutation() { return false; }
     public function supports($context) { return $context && $context->modx() && $context->platform(); }
 
+    public static function requestsNativeRendering(array $data)
+    {
+        $mode = array_key_exists('value_mode', $data) ? $data['value_mode'] : 'raw';
+        if (!is_string($mode) || !in_array($mode, array('raw','both','rendered'), true)) {
+            throw new \ModxMCPClientException('VALIDATION_ERROR: value_mode must be raw, both or rendered.');
+        }
+        return $mode !== 'raw';
+    }
+
+    public static function assertNativeRenderingAllowed($context)
+    {
+        try {
+            $allowed = \ModxMcp\Security\ProtectedAuthorization::nativeTvRenderingEnabled($context->modx());
+        } catch (\Throwable $e) {
+            $allowed = false;
+        }
+        if (!$allowed) {
+            throw new \ModxMCPClientException(
+                'TV_RENDERING_DISABLED: use value_mode=raw; native rendering requires administrator opt-in in ordinary mode.'
+            );
+        }
+    }
+
     public function execute($context, array $data)
     {
         $resourceId = !empty($data['resource_id']) ? (int) $data['resource_id'] : 0;
@@ -19,27 +42,10 @@ class ResourceTvListTool implements ToolInterface
             throw new \ModxMCPClientException('resource_id is required.');
         }
 
-        $mode = array_key_exists('value_mode', $data) ? $data['value_mode'] : 'raw';
-        if (!is_string($mode) || !in_array($mode, array('raw','both','rendered'), true)) {
-            throw new \ModxMCPClientException('VALIDATION_ERROR: value_mode must be raw, both or rendered.');
-        }
+        $render = self::requestsNativeRendering($data);
         $modx = $context->modx();
         $platform = $context->platform();
-        // Rendering runs trusted site PHP, plugins and bindings with the MCP
-        // service identity. It cannot be treated as a CAS-protected mutation.
-        if ($mode !== 'raw') {
-            try {
-                $allowed = \ModxMcp\Security\ProtectedAuthorization::nativeTvRenderingEnabled($modx);
-            } catch (\Throwable $e) {
-                $allowed = false;
-            }
-            if (!$allowed) {
-                throw new \ModxMCPClientException(
-                    'SAFETY_CONFIRMATION_REQUIRED: Native TV rendering is disabled. Use value_mode=raw. '
-                    . 'Only an administrator may authorize native rendering in ordinary mode.'
-                );
-            }
-        }
+        if ($render) self::assertNativeRenderingAllowed($context);
         $resource = $modx->getObject($platform->className('resource'), $resourceId, false);
         if (!$resource) {
             throw new \ModxMCPClientException("Resource not found: {$resourceId}.");
@@ -75,12 +81,14 @@ class ResourceTvListTool implements ToolInterface
             $row = array('id'=>(int)$tv->get('id'), 'name'=>(string)$tv->get('name'),
                 'caption'=>(string)$tv->get('caption'), 'type'=>(string)$tv->get('type'),
                 'value'=>$raw, 'raw'=>$raw);
-            if ($mode !== 'raw') {
+            if ($render) {
                 $row['rendered'] = null;
                 // MODX renderers may alter the current resource. Restore the
                 // original request-local resource and identifier even on error.
                 $previous = $modx->resource;
                 $previousId = $modx->resourceIdentifier;
+                $bufferLevel = ob_get_level();
+                ob_start();
                 try {
                     $modx->resource = $resource;
                     $modx->resourceIdentifier = $resourceId;
@@ -95,12 +103,17 @@ class ResourceTvListTool implements ToolInterface
                     // Never expose native renderer exceptions or claim raw is rendered.
                     $row['render_status'] = 'failed';
                 } finally {
+                    while (ob_get_level() > $bufferLevel) {
+                        if (!@ob_end_clean()) break;
+                    }
                     $modx->resource = $previous;
                     $modx->resourceIdentifier = $previousId;
                 }
             }
             $result[] = $row;
         }
-        return array('resource_id'=>$resourceId, 'template_id'=>$templateId, 'tvs'=>$result);
+        $response = array('resource_id'=>$resourceId, 'template_id'=>$templateId, 'tvs'=>$result);
+        if ($render) $response['render_effects'] = 'not_verified';
+        return $response;
     }
 }

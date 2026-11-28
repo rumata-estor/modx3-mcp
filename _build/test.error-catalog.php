@@ -9,6 +9,7 @@ function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
+    array('TV_RENDERING_DISABLED: raw only', 'TV_RENDERING_DISABLED', 'not_applied', 'after_admin_check'),
     array('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MUTATION_OUTCOME_UNCERTAIN', 'unknown', 'verify_before_retry'),
     array('VALIDATION_ERROR: invalid password=SUPER_SECRET', 'VALIDATION_ERROR', 'not_applied', 'after_client_fix'),
     array('MANUAL_REVIEW_REQUIRED: conflict unknown', 'MANUAL_REVIEW_REQUIRED', 'not_applied', 'after_review'),
