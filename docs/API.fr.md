@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Remarque : cette page est une présentation traduite. Les tableaux complets des paramètres des 198 outils MCP restent disponibles en anglais et en russe.
+> Remarque : cette page est une présentation traduite. Les tableaux complets des paramètres des 199 outils MCP restent disponibles en anglais et en russe.
 Les outils MCP publics commencent par `modx_` ; les actions HTTP PHP utilisent les noms sans ce préfixe. Les tableaux exhaustifs des paramètres et les schémas JSON restent consultables dans la référence anglaise.
 
 ## MCP
@@ -27,7 +27,7 @@ Envoyez un `POST` JSON avec `X-MCP-Token` via HTTPS. `api.php` n’est pas un po
 **Références techniques complètes :** [paramètres API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [sécurité (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [développement (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Les tables techniques détaillées restent en anglais.
 
 
-## Répertoire des 198 outils MCP
+## Répertoire des 199 outils MCP
 
 > Les descriptions sont traduites ; pour les champs requis, types, limites et énumérations, consultez la référence technique anglaise ou russe liée.
 
@@ -111,6 +111,7 @@ Envoyez un `POST` JSON avec `X-MCP-Token` via HTTPS. `api.php` n’est pas un po
 | [modx_get_component_files](API.md#modx_get_component_files) | Liste les fichiers et dossiers d’un composant MODX installé. | Lecture |
 | [modx_read_component_file](API.md#modx_read_component_file) | Lit un fichier d’un composant MODX installé. | Lecture |
 | [modx_check_integrations](API.md#modx_check_integrations) | Indique quelles extensions MODX populaires (miniShop2, MIGX, pdoTools, Tickets, etc.) sont installées sur ce site et ce que modxMCP peut faire avec chacune. | Lecture |
+| [modx_check_template](API.md#modx_check_template) | Vérification syntaxique Fenom limitée ; sans rendu, événements du site, lecture des dépendances ni sauvegarde. | Lecture |
 
 ### Recherche de code et dépendances
 

@@ -52,10 +52,10 @@ with tempfile.TemporaryDirectory() as td:
         build_config = (out / '_build/build.config.php').read_text(
             encoding='utf-8'
         )
-        # list_actions exposes all 199 server actions, including the internal
-        # get_capabilities action. The MCP client exposes 198 public tools.
+        # list_actions exposes all 200 server actions, including the internal
+        # get_capabilities action. The MCP client exposes 199 public tools.
         smoke_script = (out / '_build/smoke.endpoint.php').read_text(encoding='utf-8')
-        if 'if ($actionCount !== 199)' not in smoke_script:
+        if 'if ($actionCount !== 200)' not in smoke_script:
             errors.append(f'{platform}: HTTP smoke test expects the wrong server action count')
 
         if (out / 'core/components/modxmcp/legacy').exists():

@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Uwaga: to przetłumaczony przegląd. Pełne tabele parametrów wszystkich 198 narzędzi MCP są nadal dostępne po angielsku i rosyjsku.
+> Uwaga: to przetłumaczony przegląd. Pełne tabele parametrów wszystkich 199 narzędzi MCP są nadal dostępne po angielsku i rosyjsku.
 Publiczne narzędzia MCP mają prefiks `modx_`; akcje PHP HTTP nie używają tego prefiksu. Pełne tabele parametrów i schematy JSON są dostępne w dokumentacji angielskiej.
 
 ## MCP
@@ -27,7 +27,7 @@ Wysyłaj JSON metodą `POST` z `X-MCP-Token` przez HTTPS. `api.php` nie jest pun
 **Pełne dokumenty techniczne:** [parametry API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [bezpieczeństwo (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [dla programistów (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Szczegółowe tabele techniczne są obecnie dostępne po angielsku.
 
 
-## Katalog 198 narzędzi MCP
+## Katalog 199 narzędzi MCP
 
 > Opisy są przetłumaczone; wymagane pola, typy, limity i wartości wyliczeniowe należy sprawdzać w podlinkowanej dokumentacji technicznej po angielsku lub rosyjsku.
 
@@ -111,6 +111,7 @@ Wysyłaj JSON metodą `POST` z `X-MCP-Token` przez HTTPS. `api.php` nie jest pun
 | [modx_get_component_files](API.md#modx_get_component_files) | Wyświetla pliki i foldery wewnątrz zainstalowanego komponentu MODX. | Odczyt |
 | [modx_read_component_file](API.md#modx_read_component_file) | Odczytuje plik z zainstalowanego komponentu MODX. | Odczyt |
 | [modx_check_integrations](API.md#modx_check_integrations) | Informuje, które popularne dodatki MODX (miniShop2, MIGX, pdoTools, Tickets itd.) są zainstalowane w tej witrynie i co modxMCP potrafi zrobić z każdym z nich. | Odczyt |
+| [modx_check_template](API.md#modx_check_template) | Ograniczona kontrola składni Fenom; bez renderowania, zdarzeń witryny, odczytu zależności i zapisu. | Odczyt |
 
 ### Wyszukiwanie kodu i zależności
 

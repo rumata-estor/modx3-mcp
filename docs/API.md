@@ -1,12 +1,12 @@
 # MODX MCP — API reference
 
-**Development branch (unreleased) · 31 October 2026 · 198 public MCP tools**
+**Development branch (unreleased) · 28 November 2026 · 199 public MCP tools**
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md) · [Installation](INSTALL.md) · [Capabilities](CAPABILITIES.md) · [Security](SECURITY.md)
 
-Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 198 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 199th action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
+Technical reference for developers and MCP agents using **MODX Revolution 2.8.x or 3.x**. The 199 public tools belong to the standard Node.js MCP client and use the `modx_` prefix. The PHP server exposes a 200th action, `get_capabilities`, to negotiate capabilities internally. An installed site may enable fewer tools due to its version, settings, or optional add-ons. No third-party orchestration system is required.
 
-> **Version note:** This reference documents 1.2.5 source. The example below uses the current main branch for review; published v1.2.4 lacks the six category tools. Use a published tagged release in production when its transport ZIPs are available.
+> **Version note:** This reference documents the unreleased 1.2.8 candidate. The main-branch connection example is illustrative; use a matching published tagged client and transport package on production.
 
 ## Connecting an MCP client
 
@@ -614,7 +614,7 @@ Delete a folder (and its contents) inside a media source. `source` = id/name, `p
 | `source` | string | yes | — |
 | `path` | string | yes | — |
 
-## 6. Installed components (4)
+## 6. Installed components (5)
 
 ### `modx_list_installed_components`
 
@@ -647,6 +647,10 @@ Read a file from an installed MODX component.
 Report which popular MODX add-ons (miniShop2, MIGX, pdoTools, Tickets, etc.) are installed on this site and what modxMCP can do with each. Read-only.
 
 **Parameters:** none.
+
+### `modx_check_template`
+
+Check proposed Fenom source, using only the audited installed Fenom 2.12.0 library from the conventional pdoTools vendor directory. No MODX service, site hooks, providers, template rendering, persistence or cache generation. Input: content (string, max 65536 bytes and 1024 opening delimiters). Output: status = syntax_ok / syntax_error / inconclusive / unavailable; reason is a fixed diagnostic code, line is optional, scope is isolated_fenom_2.12. A successful result checks the restricted parser only: dependencies and site-specific extensions are not checked. Include syntax may pass without confirming the target; inheritance/import/insert requiring source returns inconclusive. Unsupported compiler source or unavailable library returns unavailable. This is an optional explicit check; existing writes are not changed.
 
 ## 7. Code search and dependencies (5)
 

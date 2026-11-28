@@ -15,6 +15,7 @@ use ModxMcp\Tools\SystemInfoTool;
 use ModxMcp\Tools\ProjectOverviewTool;
 use ModxMcp\Tools\ResourceListTool;
 use ModxMcp\Tools\CheckIntegrationsTool;
+use ModxMcp\Tools\TemplateCheckTool;
 use ModxMcp\Tools\ClientConfigSettingListTool;
 use ModxMcp\Tools\ClientConfigSettingGetTool;
 use ModxMcp\Tools\ClientConfigSettingCreateTool;
@@ -187,6 +188,7 @@ class Runtime
         $this->registry->register(new ProjectOverviewTool());
         $this->registry->register(new ResourceListTool());
         $this->registry->register(new CheckIntegrationsTool());
+        $this->registry->register(new TemplateCheckTool());
         $this->registry->register(new ClientConfigSettingListTool());
         $this->registry->register(new ClientConfigSettingGetTool());
         $this->registry->register(new ClientConfigSettingCreateTool());
