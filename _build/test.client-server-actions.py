@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 model = (ROOT / "core/components/modxmcp/model/modxmcp.class.php").read_text()
 client = (ROOT / "client/index.js").read_text()
 
-m = re.search(r"private function actionRegistry\(\)\s*\{(.*?)\n    \}\n\n    /\*\* Flatten", model, re.S)
+m = re.search(r"private function actionRegistry\(\)\s*\{(.*?)\n    \}(?=\n)", model, re.S)
 if not m:
     print("Could not isolate actionRegistry()", file=sys.stderr)
     sys.exit(2)
