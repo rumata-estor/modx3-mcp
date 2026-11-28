@@ -9,7 +9,7 @@ const SAFE_CODES = new Set([
   "SECURE_STATIC_IO_UNAVAILABLE", "STATIC_READ_FAILED", "ACL_INDEX_REQUIRED",
   "PROJECT_BUSY", "BACKUP_FAILED", "HTTPS_REQUIRED", "METHOD_NOT_ALLOWED",
   "MCP_DISABLED", "IP_NOT_ALLOWED", "UNAUTHORIZED", "PAYLOAD_TOO_LARGE",
-  "INVALID_REQUEST", "INTERNAL_ERROR", "OPERATION_REFUSED", "CONNECTION_FAILED",
+  "INVALID_REQUEST", "VALIDATION_ERROR", "INTERNAL_ERROR", "OPERATION_REFUSED", "CONNECTION_FAILED",
   "CLIENT_OPERATION_FAILED", "CLIENT_CONFIG_INVALID", "SAFETY_CONFIRMATION_REQUIRED",
 ]);
 const ALLOWED_OUTCOMES = new Set([
@@ -69,6 +69,10 @@ const FALLBACK = {
     "Не удалось проверить параметры запроса.",
     "Проверьте формат и переданные поля; затем отправьте исправленный запрос.",
     "not_applied", "after_client_fix"],
+  VALIDATION_ERROR: ["Некорректные параметры операции.",
+    "Проверка структуры переданных данных не пройдена до записи.",
+    "Проверьте схему инструмента и исправьте поля. Не повторяйте тот же запрос.",
+    "not_applied", "after_client_fix"],
   CLIENT_CONFIG_INVALID: ["Подключение к MODX MCP не настроено.",
     "Не задан HTTPS-адрес сайта, токен подключения или адрес имеет неверный формат.",
     "Проверьте MODX_MCP_SITE_URL и MODX_MCP_TOKEN в настройках MCP-клиента. Не передавайте токен в чат.",
@@ -86,6 +90,41 @@ const FALLBACK = {
     "Передайте номер ошибки разработчику. Перед повторной записью проверьте объект.",
     "unknown", "verify_before_retry"],
 };
+// RU: Только фиксированные подсказки; не выводим значения переменных среды.
+// EN: Fixed guidance only; never expose environment values or user input.
+const SAFETY_GATES = Object.freeze({
+  element_create: ["Создание элемента", "modx_list_elements: проверьте отсутствие элемента. Согласуйте создание и резервную копию с администратором."],
+  plugin_create: ["Создание плагина", "modx_list_elements: проверьте существующие плагины. Согласуйте код и события; администратор должен подтвердить создание."],
+  tv_delete: ["Удаление TV", "modx_delete_element с dry_run:true: проверьте зависимости; modx_list_tv_values: проверьте сохранённые значения. Администратор согласует резервную копию и удаление."],
+  element_delete: ["Удаление элемента", "modx_delete_element с dry_run:true: проверьте зависимости и согласуйте удаление с администратором."],
+  resource_delete: ["Удаление ресурса", "modx_delete_element с dry_run:true: проверьте дочерние ресурсы и согласуйте удаление с администратором."],
+  plugin_delete: ["Удаление плагина", "modx_delete_element с dry_run:true: проверьте зависимости и события. Администратор должен согласовать удаление."],
+  bulk_delete: ["Массовое удаление ресурсов", "modx_bulk_resources с dry_run:true: проверьте список целей. Администратор согласует резервную копию и удаление."],
+  bulk_change: ["Массовое изменение ресурсов", "modx_bulk_resources с dry_run:true: проверьте список целей и согласуйте изменение с администратором."],
+  recycle_purge: ["Очистка корзины", "modx_list_resources с deleted:true: проверьте удалённые ресурсы; окончательную очистку согласуйте с администратором и резервной копией."],
+  package_change: ["Установка или удаление пакета", "modx_search_packages: проверьте целевой пакет; установленные версии уточните в Manager. Администратор согласует резервную копию файлов и БД и работу в Manager."],
+  system_setting: ["Изменение системной настройки", "modx_get_system_setting: прочитайте текущее значение. Администратор согласует изменение в Manager; защищённые настройки MCP нельзя изменять этим инструментом."],
+  plugin_events: ["Изменение событий плагина", "modx_get_element с type:plugin: проверьте текущие события и согласуйте их изменение с администратором."],
+  media_source: ["Изменение источника файлов", "modx_list_media_sources: проверьте источник и его назначение; администратор согласует изменения в Manager."],
+  contexts: ["Изменение контекста или его настроек", "modx_list_contexts и modx_list_context_settings: проверьте текущие данные; администратор согласует изменение в Manager."],
+  clientconfig: ["Изменение ClientConfig", "modx_clientconfig_list_settings: проверьте текущие настройки; администратор согласует изменение в ClientConfig."],
+  property_set: ["Изменение набора свойств", "modx_list_property_sets и modx_get_property_set: проверьте свойства и назначения; администратор согласует изменение в Manager."],
+  migx: ["Изменение конфигурации MIGX", "modx_migx_list_configs: проверьте конфигурацию; администратор согласует изменение в Manager."],
+  namespace_lexicon: ["Изменение namespace или лексикона", "modx_list_namespaces и modx_list_lexicon_entries: проверьте текущие данные; администратор согласует изменение в Manager."],
+  access: ["Изменение прав доступа", "modx_list_users и modx_list_access_policies: проверьте текущие права; уполномоченный администратор согласует изменение и независимую авторизацию."],
+  provider: ["Изменение провайдера пакетов", "modx_list_providers: проверьте текущих провайдеров; администратор согласует изменение в Manager."],
+});
+
+function safetyRefusal(gate, operation) {
+  const entry = Object.prototype.hasOwnProperty.call(SAFETY_GATES, gate) ? SAFETY_GATES[gate] : null;
+  const result = record("SAFETY_CONFIRMATION_REQUIRED", operation, { stage: "client" });
+  if (entry) {
+    result.reason_ru = entry[0] + ": локальная защитная политика клиента не разрешает прямую запись.";
+    result.next_action_ru = entry[1] + " Не меняйте защитные настройки клиента самостоятельно; повтор возможен только через разрешённый администратором сценарий с актуальным CAS.";
+  }
+  return result;
+}
+
 const RESULT = {
   not_applied: "Изменения не внесены.",
   rolled_back: "Выполненные изменения отменены; откат подтверждён.",
@@ -214,4 +253,4 @@ function debugLine(result) {
     + " outcome=" + result.outcome;
 }
 
-module.exports = { fromHttp, fromNetwork, fromLocal, display, debugLine, newId };
+module.exports = { fromHttp, fromNetwork, fromLocal, display, debugLine, newId, safetyRefusal };

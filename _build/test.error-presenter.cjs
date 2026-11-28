@@ -62,4 +62,56 @@ const backup = presenter.fromLocal(
   { message: "Safety backup failed: password=SUPER_SECRET" }, "update_element", false);
 assert.strictEqual(backup.code, "BACKUP_FAILED");
 assert(!presenter.display(backup).includes("SUPER_SECRET"));
-console.log("MCP_ERROR_PRESENTER_RU_OK cases=" + (cases.length + 5));
+// All actual local gate branches use explicit, fixed, non-secret guidance.
+const fs = require("fs");
+const source = fs.readFileSync(require.resolve("../client/index.js"), "utf8");
+const policySource = fs.readFileSync(require.resolve("../client/safety-policy.js"), "utf8");
+const refs = [...policySource.matchAll(/id: "([a-z_]+)"/g)].map(m=>m[1]);
+assert.strictEqual(new Set(refs).size,20);
+const toolNames = new Set([...source.matchAll(/name: "(modx_[a-z_]+)"/g)].map(m=>m[1]));
+for (const gate of refs) {
+  const result = presenter.safetyRefusal(gate,"update_element");
+  assert.strictEqual(result.code,"SAFETY_CONFIRMATION_REQUIRED");
+  assert.strictEqual(result.outcome,"not_applied");
+  assert.strictEqual(result.retry_policy,"after_review");
+  assert(result.reason_ru.includes("локальная защитная политика"));
+  assert(result.next_action_ru.includes("администратор"));
+  const names = result.next_action_ru.match(/modx_[a-z_]+/g) || [];
+  assert(names.length > 0 && names.every(n=>toolNames.has(n)),gate);
+  assert(!presenter.debugLine(result).includes("MODX_MCP_ALLOW"));
+}
+assert(!source.includes("Use the safe "));
+const policy = require("../client/safety-policy");
+assert.strictEqual(policy.deniedGate("modx_update_element",{type:"plugin",events:[]},{}),"plugin_events");
+assert.strictEqual(policy.deniedGate("modx_update_element",{type:"plugin",content:"x"},{}),null);
+assert.strictEqual(policy.deniedGate("modx_delete_element",{type:"tv",dry_run:true},{}),null);
+assert.strictEqual(policy.deniedGate("modx_delete_element",{type:"tv"},{}),"tv_delete");
+assert.strictEqual(policy.deniedGate("modx_bulk_resources",{operation:"delete",dry_run:true},{}),null);
+assert.strictEqual(policy.deniedGate("modx_bulk_resources",{operation:"delete"},{MODX_MCP_ALLOW_STAGED_BULK_RESOURCE_DELETE:"1"}),null);
+assert.strictEqual(policy.deniedGate("modx_empty_recycle_bin",{},{MODX_MCP_ALLOW_RECYCLE_PURGE:"1"}),null);
+assert.strictEqual(policy.deniedGate("modx_create_property_set",{},{MODX_MCP_ALLOW_SAFE_PROPERTY_SET:"0"}),"property_set");
+assert.strictEqual(policy.deniedGate("modx_create_property_set",{},{MODX_MCP_ALLOW_SAFE_PROPERTY_SET:"1"}),null);
+assert.strictEqual(policy.deniedGate("modx_create_property_set",{},{MODX_MCP_SKIP_AUTO_BACKUP:"1"}),null);
+const t={name:"modx_delete_element",description:"Delete element.",inputSchema:{}};
+assert(policy.describeTool(t,{}).description.includes("TV deletion (not preview)"));
+assert(!policy.describeTool(t,{}).description.includes("MODX_MCP_ALLOW"));
+assert.strictEqual(t.description,"Delete element.");
+assert.strictEqual(policy.describeTool({name:"modx_get_element",description:"Read"},{}).description,"Read");
+assert(source.includes("SafetyPolicy.describeTool(t)"));
+assert(source.indexOf("SafetyPolicy.deniedGate(name, args)") < source.indexOf("return [await autoBackupElement(args.type, args, name)]"));
+for (const m of policySource.matchAll(/id: "([a-z_]+)", flag: "([A-Z_]+)", names: (\[[^\]]+\])/g)) {
+  const names=JSON.parse(m[3]);
+  for(const name of names) {
+    assert(toolNames.has(name),name);
+    const tool={name,description:"test",inputSchema:{}};
+    assert(policy.describeTool(tool,{}).description.includes("Local client policy"));
+  }
+}
+
+const invalid = presenter.fromHttp({error:"VALIDATION_ERROR: secret=SUPER_SECRET"},400,"create_property_set");
+assert.strictEqual(invalid.code,"VALIDATION_ERROR");
+assert.strictEqual(invalid.outcome,"not_applied");
+assert(!presenter.display(invalid).includes("SUPER_SECRET"));
+const unknownGate=presenter.safetyRefusal("password=SUPER_SECRET","update_element");
+assert(!presenter.display(unknownGate).includes("SUPER_SECRET"));
+console.log("MCP_ERROR_PRESENTER_RU_OK gates="+refs.length+" cases="+(cases.length+5));
