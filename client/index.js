@@ -2148,12 +2148,12 @@ const toolDefinitions = [
   },
   {
     name: "modx_create_property_set",
-    description: "Create a property set. 'properties' is a JSON object of property definitions.",
+    description: "Create a property set. Properties is a name-keyed object of definitions with scalar value (required), optional type (defaults to textfield), desc, options, lexicon, area.",
     inputSchema: { type: "object", properties: { name: { type: "string" }, description: { type: "string" }, category: { type: "number" }, properties: { type: "object" } }, required: ["name"] },
   },
   {
     name: "modx_update_property_set",
-    description: "Update a property set.",
+    description: "Update a property set. Omit properties to preserve them; supplying properties replaces the complete map; an empty object clears it.",
     inputSchema: { type: "object", properties: { id: { type: "number" }, name: { type: "string" }, description: { type: "string" }, category: { type: "number" }, properties: { type: "object" } }, required: ["id"] },
   },
   {
