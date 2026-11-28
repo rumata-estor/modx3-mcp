@@ -29,8 +29,7 @@ class MediaFileCreateTool implements ToolInterface
         );
         if ($result === false) {
             throw new \ModxMCPClientException(
-                'create_media_file failed: '
-                . MediaSourceMutationSupport::error($source, 'unknown error')
+                MediaSourceMutationSupport::fileWriteError($source, $name, 'create_media_file')
             );
         }
         MediaSourceMutationSupport::refresh($context);

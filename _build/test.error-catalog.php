@@ -9,6 +9,7 @@ function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
+    array('MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MEDIA_TPL_WRITE_REFUSED', 'unknown', 'verify_before_retry'),
     array('VALIDATION_ERROR: invalid password=SUPER_SECRET', 'VALIDATION_ERROR', 'not_applied', 'after_client_fix'),
     array('MANUAL_REVIEW_REQUIRED: conflict unknown', 'MANUAL_REVIEW_REQUIRED', 'not_applied', 'after_review'),
     array('CAS_REQUIRED: revision required', 'CAS_REQUIRED', 'not_applied', 'after_refresh'),
