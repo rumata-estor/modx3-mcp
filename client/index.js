@@ -1171,11 +1171,12 @@ const toolDefinitions = [
     },
     {
     name: "modx_get_resource_tvs",
-    description: "Get a resource's template-variable (TV) values.",
+    description: "Get resource TV values. value and raw always contain unrendered values (for CAS). value_mode:both adds native rendered output only with administrator opt-in in ordinary mode. Rendering may execute site PHP; it is not a safe read-only preview.",
     inputSchema: {
       type: "object",
       properties: {
         resource_id: { type: "number" },
+        value_mode: { type: "string", enum: ["raw", "both", "rendered"], default: "raw", description: "raw is safe default; both/rendered add rendered and render_status, never replace raw value. Administrator opt-in required." },
       },
       required: ["resource_id"],
     },

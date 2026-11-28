@@ -68,6 +68,14 @@ final class ProtectedAuthorization
         return self::readSetting($modx, 'modxmcp.allow_run_processor') === '1';
     }
 
+    // RU: Native TV rendering может выполнять PHP и не является чистым чтением.
+    // EN: Native TV rendering may execute PHP; never permit it in signed mode.
+    public static function nativeTvRenderingEnabled($modx)
+    {
+        return !self::required($modx)
+            && self::readSetting($modx, 'modxmcp.allow_native_tv_rendering') === '1';
+    }
+
     public static function ledgerTable($modx)
     {
         $settingsTable=trim(self::settingsTable($modx),'`');

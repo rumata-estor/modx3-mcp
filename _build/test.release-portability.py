@@ -201,6 +201,7 @@ expected_defaults = {
     "modxmcp.allowed_processors": "",
     "modxmcp.privileged_processors": "",
     "modxmcp.allow_root_filesystem_read": "0",
+    "modxmcp.allow_native_tv_rendering": "0",
     "modxmcp.require_https": "1",
     "modxmcp.trust_proxy_https": "0",
     "modxmcp.debug": "0",

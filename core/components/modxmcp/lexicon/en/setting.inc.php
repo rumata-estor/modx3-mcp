@@ -28,6 +28,8 @@ $_lang['setting_modxmcp.trust_proxy_https_desc'] = 'When enabled, X-Forwarded-Pr
 $_lang['setting_modxmcp.allowed_ips'] = 'Allowed MCP IPs';
 $_lang['setting_modxmcp.allowed_ips_desc'] = 'Optional comma-separated IP/CIDR allowlist. Empty allows any IP with a valid token; the real REMOTE_ADDR is checked and X-Forwarded-For is not trusted.';
 
+$_lang['setting_modxmcp.allow_native_tv_rendering'] = 'Allow native TV rendering';
+$_lang['setting_modxmcp.allow_native_tv_rendering_desc'] = 'OFF by default. Native rendering may run bindings, plugins and custom PHP with the service user privileges. Only for trusted sites in ordinary mode; unavailable in protected mode.';
 $_lang['setting_modxmcp.allow_root_filesystem_read'] = 'Allow root Filesystem read';
 $_lang['setting_modxmcp.allow_root_filesystem_read_desc'] = 'When enabled, MCP may browse and read files through the root Filesystem media source. Keep disabled if you only want safe component-code inspection.';
 

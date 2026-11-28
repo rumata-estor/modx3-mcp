@@ -27,6 +27,7 @@ $defs = array(
     array('modxmcp.max_payload_bytes', 1048576, 'textfield', 'modxmcp:limits'),
     array('modxmcp.max_read_bytes', 262144, 'textfield', 'modxmcp:limits'),
     array('modxmcp.allow_root_filesystem_read', 0, 'combo-boolean', 'modxmcp:security'),
+    array('modxmcp.allow_native_tv_rendering', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.require_https', 1, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.trust_proxy_https', 0, 'combo-boolean', 'modxmcp:security'),
     array('modxmcp.trusted_proxy_ips', '', 'textfield', 'modxmcp:security'),
