@@ -122,4 +122,19 @@ assert(tpl.reason_ru.includes("upload_files"));
 assert(!presenter.display(tpl).includes("SUPER_SECRET"));
 const unknownGate=presenter.safetyRefusal("password=SUPER_SECRET","update_element");
 assert(!presenter.display(unknownGate).includes("SUPER_SECRET"));
+// Never accept arbitrary diagnostic prose or optimistic outcomes from a failed response.
+for (const outcome of ["not_applied","rolled_back","completed","partial","unknown"]) {
+  const unsafe = presenter.fromHttp({code:"MUTATION_OUTCOME_UNCERTAIN",outcome,
+    retry_policy:"after_refresh",message_ru:"SUPER_SECRET",reason_ru:"SUPER_SECRET",
+    next_action_ru:"SUPER_SECRET"},400,"bulk_resources");
+  assert.strictEqual(unsafe.outcome,"unknown");
+  assert.strictEqual(unsafe.retry_policy,"verify_before_retry");
+  assert(!presenter.display(unsafe).includes("SUPER_SECRET"));
+}
+const committed = presenter.fromHttp({code:"MUTATION_OUTCOME_UNCERTAIN",
+  detail_code:"POST_COMMIT_STEP_FAILED",outcome:"completed",retry_policy:"after_refresh"},
+  400,"update_user");
+assert.strictEqual(committed.outcome,"partial");
+assert.strictEqual(committed.retry_policy,"verify_before_retry");
+assert(presenter.display(committed).includes("Коммит базы данных подтверждён"));
 console.log("MCP_ERROR_PRESENTER_RU_OK gates="+refs.length+" cases="+(cases.length+5));

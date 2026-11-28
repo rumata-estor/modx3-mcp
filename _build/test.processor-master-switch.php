@@ -53,6 +53,7 @@ class ProcessorGateFakeModx {
 class ProcessorGateFakeResponse {
     public $fail=false;
     public static $throwAt='';
+    public static $raw='{"success":true}';
     public function __construct($fail=false){$this->fail=$fail;}
     public function isError() {
         if(self::$throwAt==='isError')throw new \RuntimeException('SECRET_RESPONSE_STATUS');
@@ -60,7 +61,7 @@ class ProcessorGateFakeResponse {
     }
     public function getResponse() {
         if(self::$throwAt==='getResponse')throw new \RuntimeException('SECRET_RESPONSE_BODY');
-        return '{"success":true}';
+        return self::$raw;
     }
     public function getMessage() {return 'secret-should-not-appear';}
 }
@@ -186,6 +187,21 @@ foreach(array('isError','getResponse') as $failurePoint) {
     if(!$uncertain)throw new \RuntimeException('PROCESSOR_POST_DISPATCH_FAILURE_LEAK');
 }
 ProcessorGateFakeResponse::$throwAt='';
+foreach(array('not JSON','{"success":false}','{"success":"false"}',
+    '{"success":true,"errors":[{"message":"SECRET_CONTRADICTION"}]}',
+    '{"object":{"id":42}}','null','{}') as $raw){
+    ProcessorGateFakeResponse::$raw=$raw;
+    $before=$ctx->p->called;
+    $unknown=false;
+    try{(new \ModxMcp\Tools\RunProcessorTool())->execute($ctx,array('processor'=>'system/clearcache'));}
+    catch(ModxMCPClientException $e){$unknown=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+        && strpos($e->getMessage(),'SECRET_CONTRADICTION')===false;}
+    if(!$unknown||$ctx->p->called!==$before+1)throw new RuntimeException('PROCESSOR_FALSE_ACKNOWLEDGMENT');
+}
+ProcessorGateFakeResponse::$raw='{"total":0,"results":[]}';
+$list=(new \ModxMcp\Tools\RunProcessorTool())->execute($ctx,array('processor'=>'system/clearcache'));
+if($list!==array('total'=>0,'results'=>array()))throw new RuntimeException('NATIVE_LIST_CONTRACT');
+ProcessorGateFakeResponse::$raw='{"success":true}';
 // RU: В защищённом режиме фактическая политика БД важнее кеша PHP.
 // EN: Protected mode must use persisted policy even when PHP cache disagrees.
 \ModxMcp\Security\ProtectedAuthorization::$protected=true;

@@ -640,11 +640,15 @@ class ElementMutationSupport
     {
         if (StateSupport::inRevisionTransaction($context)) {
             StateSupport::afterRevisionCommit($context, function () use ($context) {
-                self::refreshCache($context);
+                return self::refreshCache($context);
             });
             return;
         }
         $manager = $context->modx()->getCacheManager();
+        // RU: Общий refresh() MODX может вернуть false при пропуске уже
+        // очищенного раздела. Это не доказательство ошибки обязательного шага.
+        // EN: The aggregate native refresh() may return false for an already
+        // cleared partition. Do not infer a failed required step from it.
         if ($manager) { $manager->refresh(); }
     }
 }

@@ -118,7 +118,7 @@ final class ErrorCatalog
         return 'modxmcp_' . bin2hex(random_bytes(12));
     }
 
-    public static function fields($legacy, $code = null, $errorId = null)
+    public static function fields($legacy, $code = null, $errorId = null, $exception = null)
     {
         $entries = self::entries();
         $code = is_string($code) && isset($entries[$code])
@@ -133,6 +133,15 @@ final class ErrorCatalog
                 'Возможная причина — allowedFileTypes источника или системная настройка upload_files; причина не установлена.',
                 'Проверьте фактическое состояние файла. Попросите администратора проверить разрешённые расширения в Media Source и upload_files. Не отключайте защиту ради повтора.',
                 'unknown', 'verify_before_retry');
+        }
+        if ($code === 'MUTATION_OUTCOME_UNCERTAIN'
+            && $exception instanceof \ModxMcp\Security\PostCommitStepException
+            && (string)$legacy === \ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE) {
+            $detail = 'POST_COMMIT_STEP_FAILED';
+            $entry = array('Операция завершилась не полностью.',
+                'Коммит базы данных подтверждён, но обязательный последующий шаг не завершился.',
+                'Проверьте сохранённые объекты и состояние кэша. Не повторяйте запись автоматически; согласуйте дальнейшее действие.',
+                'partial', 'verify_before_retry');
         }
         $result = array(
             'code' => $code,

@@ -117,11 +117,35 @@ $m=new TxFakeModx();$c=new TxFakeContext($m);
 });
 txRequire($m->beginCalls===1&&$m->commitCalls===1,'nested begin blocked');$checks++;
 $m=new TxFakeModx();$c=new TxFakeContext($m);$fired=0;
-\ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function()use($c,&$fired){
-    \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function(){throw new \RuntimeException('after commit fault');});
-    \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function()use(&$fired){$fired++;});
-});
-txRequire($fired===1&&$m->commitCalls===1&&$m->rollbackCalls===0&&count($m->logs)===1,'after commit fault isolated');$checks++;
+$err=txExpectThrow(function()use($c,&$fired){
+    \ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function()use($c,&$fired){
+        \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function(){throw new \RuntimeException('SECRET_AFTER_COMMIT');});
+        \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function()use(&$fired){$fired++;});
+    });
+},'post-commit failure');
+txRequire($err->getMessage()===\ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE
+    && $fired===1 && $m->commitCalls===1 && $m->rollbackCalls===0
+    && count($m->logs)===1 && strpos($m->logs[0],'SECRET')===false,'after commit failure reported safely; remaining callbacks run once');$checks++;
+$m=new TxFakeModx();$c=new TxFakeContext($m);
+$err=txExpectThrow(function()use($c){
+    \ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function()use($c){
+        \ModxMcp\Tools\StateSupport::afterRevisionCommit($c,function(){return false;});
+    });
+},'post-commit false');
+txRequire($err->getMessage()===\ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE
+    && $m->commitCalls===1 && $m->rollbackCalls===0,'false return is also partial');$checks++;
+foreach(array('STALE_STATE','AUTH_DENIED','CAS_REQUIRED','NOT_FOUND','VALIDATION_ERROR') as $code){
+    $m=new TxFakeModx();$c=new TxFakeContext($m);$externalWrites=0;
+    $err=txExpectThrow(function()use($c,$code,&$externalWrites){
+        \ModxMcp\Tools\StateSupport::withRevisionTransaction($c,function()use($c,$code,&$externalWrites){
+            \ModxMcp\Tools\StateSupport::markRevisionEffectsStarted($c);
+            $externalWrites++;
+            throw new ModxMCPClientException($code.': SECRET_AFTER_EXTERNAL_WRITE');
+        });
+    },'misleading guard after effects');
+    txUnknown($err,'misleading guard '.$code);
+    txRequire($externalWrites===1 && $m->rollbackCalls===1 && $m->commitCalls===0,'external effect not replayed or claimed rolled back');$checks++;
+}
 // DB deadlock may throw PDOException, or xPDO::execute can return false.
 // Even a confirmed DB rollback cannot undo a plugin or filesystem effect.
 foreach (array(

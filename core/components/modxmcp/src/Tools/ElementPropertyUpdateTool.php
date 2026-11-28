@@ -90,6 +90,7 @@ class ElementPropertyUpdateTool implements ToolInterface
             $update = ElementMutationSupport::filterData($type, $raw);
             $update['id'] = $id;
             $update['properties'] = $properties;
+            StateSupport::markRevisionEffectsStarted($context);
             $response = $context->platform()->runProcessor(
                 $context->modx(), $base . 'update', $update
             );
@@ -110,7 +111,7 @@ class ElementPropertyUpdateTool implements ToolInterface
                 || !array_key_exists('value', $actual[$name])
                 || (string)$actual[$name]['value'] !== (string)$next
             ) {
-                throw new \ModxMCPClientException('Property verification mismatch; transaction rolled back.');
+                throw new \ModxMCPClientException('Property verification mismatch; inspect actual state before retry.');
             }
             ElementMutationSupport::refreshCache($context);
             AuditSupport::log($context, 'update_element_property', $type,

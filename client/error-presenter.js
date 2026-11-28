@@ -69,6 +69,12 @@ const FALLBACK = {
     "Не удалось проверить параметры запроса.",
     "Проверьте формат и переданные поля; затем отправьте исправленный запрос.",
     "not_applied", "after_client_fix"],
+  ACL_INDEX_REQUIRED: ["Изменение прав доступа остановлено.", "Необходим индекс ACL.", "Попросите администратора проверить миграцию индекса.", "not_applied", "after_admin_check"],
+  HTTPS_REQUIRED: ["Требуется HTTPS.", "Защищённое соединение не подтверждено.", "Проверьте адрес и настройки прокси.", "not_applied", "after_admin_check"],
+  METHOD_NOT_ALLOWED: ["HTTP-метод не поддерживается.", "Запрос отклонён.", "Проверьте конфигурацию клиента.", "not_applied", "after_client_fix"],
+  MCP_DISABLED: ["MODX MCP отключён.", "Администратор отключил компонент.", "Обратитесь к администратору.", "not_applied", "after_admin_check"],
+  IP_NOT_ALLOWED: ["IP-адрес не разрешён.", "Запрос отклонён проверкой доступа.", "Обратитесь к администратору.", "not_applied", "after_admin_check"],
+  PAYLOAD_TOO_LARGE: ["Запрос слишком большой.", "Превышен лимит запроса.", "Уменьшите объём данных.", "not_applied", "after_client_fix"],
   TV_RENDERING_DISABLED: ["Штатный рендеринг TV недоступен.",
     "Рендеринг может запускать PHP; требуется разрешение администратора в обычном режиме.",
     "Используйте value_mode=raw. Не отключайте защищённый режим ради рендеринга.",
@@ -172,22 +178,16 @@ function safeOperation(operation) {
 function record(code, operation, options = {}) {
   code = safeCode(code) || "OPERATION_REFUSED";
   const base = FALLBACK[code] || FALLBACK.OPERATION_REFUSED;
-  const trusted = options.structured === true;
-  // Only accept these fields from the structured, trusted server-side catalog;
-  // never echo a third-party PHP exception or raw HTTP response text.
-  const text = (key, fallback) => trusted && typeof options[key] === "string"
-    && options[key].length > 0 && options[key].length <= 800
-      ? options[key] : fallback;
-  const outcome = trusted && ALLOWED_OUTCOMES.has(options.outcome)
-    ? options.outcome : base[3];
-  const retry = trusted && ALLOWED_RETRY.has(options.retry_policy)
-    ? options.retry_policy : base[4];
+  // RU: Свободный текст чужого ответа может содержать секреты.
+  // EN: Only local fixed text and code-derived outcomes; never trust arbitrary prose.
+  const outcome = base[3];
+  const retry = base[4];
   return {
     code, error_id: safeId(options.error_id),
     operation: safeOperation(operation),
-    message_ru: text("message_ru", base[0]),
-    reason_ru: text("reason_ru", base[1]),
-    next_action_ru: text("next_action_ru", base[2]),
+    message_ru: base[0],
+    reason_ru: base[1],
+    next_action_ru: base[2],
     outcome, retry_policy: retry,
     stage: options.stage === "network" ? "network" :
       options.stage === "client" ? "client" : "http",
@@ -213,6 +213,14 @@ function fromHttp(body, status, operation, isReadOnly = false) {
     result.outcome = "unknown";
     result.retry_policy = "verify_before_retry";
     result.detail_code = "MEDIA_TPL_WRITE_REFUSED";
+  }
+  if (code === "MUTATION_OUTCOME_UNCERTAIN" && payload.detail_code === "POST_COMMIT_STEP_FAILED") {
+    result.detail_code = "POST_COMMIT_STEP_FAILED";
+    result.message_ru = "Операция завершилась не полностью.";
+    result.reason_ru = "Коммит базы данных подтверждён, но обязательный последующий шаг не завершился.";
+    result.next_action_ru = "Проверьте сохранённые объекты и состояние кэша. Согласуйте дальнейшее действие; не повторяйте запись автоматически.";
+    result.outcome = "partial";
+    result.retry_policy = "verify_before_retry";
   }
   if (isReadOnly && result.outcome === "unknown") {
     // RU: Запрос чтения не мог сам внести запись.
@@ -253,7 +261,7 @@ function display(result) {
     "Результат: " + RESULT[result.outcome],
     "Что делать: " + result.next_action_ru,
     "Повтор: " + RETRY[result.retry_policy],
-    "Код: " + result.code + (result.detail_code === "MEDIA_TPL_WRITE_REFUSED" ? " / MEDIA_TPL_WRITE_REFUSED" : ""),
+    "Код: " + result.code + (["MEDIA_TPL_WRITE_REFUSED", "POST_COMMIT_STEP_FAILED"].includes(result.detail_code) ? " / " + result.detail_code : ""),
     "Номер диагностики: " + result.error_id,
   ].join("\n");
 }

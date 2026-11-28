@@ -3,12 +3,16 @@
  * RU: Поля диагностики, безопасные тексты и политика повторов.
  * EN: Error catalog safety, stable codes and conservative retry outcomes.
  */
+class ModxMCPClientException extends RuntimeException {}
+require dirname(__DIR__) . '/core/components/modxmcp/src/Security/MutationOutcomeGuard.php';
 require dirname(__DIR__) . '/core/components/modxmcp/src/Diagnostics/ErrorCatalog.php';
 use ModxMcp\Diagnostics\ErrorCatalog;
 function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
+    array(\ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE,
+        'MUTATION_OUTCOME_UNCERTAIN', 'unknown', 'verify_before_retry'),
     array('TV_RENDERING_DISABLED: raw only', 'TV_RENDERING_DISABLED', 'not_applied', 'after_admin_check'),
     array('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MUTATION_OUTCOME_UNCERTAIN', 'unknown', 'verify_before_retry'),
     array('VALIDATION_ERROR: invalid password=SUPER_SECRET', 'VALIDATION_ERROR', 'not_applied', 'after_client_fix'),
@@ -33,6 +37,9 @@ foreach ($cases as $row) {
     checkError(strpos(json_encode($fields), 'SUPER_SECRET') === false,
         'raw exception must not leak into catalog');
 }
+$post=\ModxMcp\Security\MutationOutcomeGuard::postCommitFailure();
+$fields=ErrorCatalog::fields($post->getMessage(),null,null,$post);
+checkError($fields['outcome']==='partial' && $fields['detail_code']==='POST_COMMIT_STEP_FAILED','typed commit evidence');
 $tpl=ErrorCatalog::fields('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown');
 checkError($tpl['detail_code']==='MEDIA_TPL_WRITE_REFUSED' && strpos($tpl['reason_ru'],'upload_files')!==false,'fixed tpl detail survives');
 checkError(ErrorCatalog::codeFromLegacy('CAS_CONFLICT: stale') === 'STALE_STATE',

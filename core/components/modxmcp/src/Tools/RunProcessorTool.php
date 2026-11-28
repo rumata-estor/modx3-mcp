@@ -135,9 +135,20 @@ class RunProcessorTool implements ToolInterface
             // EN: Response decoding and audit can fail AFTER side effects;
             // EN: never expose raw third-party exception text to the caller.
             $decoded = ProcessorSupport::decodedResponse($response);
-            $result = !empty($decoded)
-                ? $decoded
-                : ProcessorSupport::normalize($response);
+            // Native isError() accepts nonempty string responses, even when
+            // their JSON says success:false. Never manufacture acknowledgment
+            // from an opaque response. Preserve native list envelopes.
+            $hasSuccess = array_key_exists('success', $decoded);
+            $acknowledged = $hasSuccess
+                ? in_array($decoded['success'], array(true, 1, '1'), true)
+                : isset($decoded['results'], $decoded['total'])
+                    && is_array($decoded['results']) && is_numeric($decoded['total']);
+            if (!$acknowledged || !empty($decoded['errors']) || !empty($decoded['error'])) {
+                throw new \ModxMCPClientException(
+                    'MUTATION_OUTCOME_UNCERTAIN: processor acknowledgment absent or contradictory; inspect actual state.'
+                );
+            }
+            $result = $decoded;
             $safeResult = ProcessorSupport::sanitizeProcessorOutput($result);
             AuditSupport::log(
                 $context,

@@ -248,7 +248,7 @@ try {
     $authDenied = strpos($message, 'AUTH_DENIED:') === 0;
     http_response_code($authDenied ? 403 : 400);
     $caps = (string) $modx->getOption('modxmcp.disabled_groups', null, '');
-    $fields = \ModxMcp\Diagnostics\ErrorCatalog::fields($message);
+    $fields = \ModxMcp\Diagnostics\ErrorCatalog::fields($message, null, null, $e);
     // RU: Корреляция без исходных параметров, исключений и секретов.
     // EN: Correlation without raw parameters, exception text or credentials.
     $safeAction = is_string($action) ? preg_replace('/[^a-zA-Z0-9_-]/', '_', substr($action, 0, 80)) : 'invalid';
