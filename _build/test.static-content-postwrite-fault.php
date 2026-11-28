@@ -4,9 +4,7 @@
  * EN: Fault injection: static file changes before MODX processor fails.
  */
 namespace ModxMcp\Tools {
-    class ElementMutationSupport {
-        public static function filterData($type,array $data){return $data;}
-    }
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/ElementMutationSupport.php';
     class ElementSupport {
         public static function processorBase($type){return 'element/';}
     }

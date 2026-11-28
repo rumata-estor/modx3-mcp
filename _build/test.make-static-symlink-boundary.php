@@ -73,6 +73,22 @@ try{
         'valid conversion path changed');
     mstCheck(file_get_contents($base.'/core/elements/chunks/fixture-target.tpl')==='SAFE',
         'valid conversion wrote incorrect bytes');
+    // Already-static conversion must not create a new path after a rename.
+    $context->modx()->element->values['name']='renamed-fixture';
+    $again=\ModxMcp\Tools\ElementMutationSupport::makeStatic($context,'chunk',77);
+    mstCheck($again['status']==='already_static' && $again['static_file']===$converted['static_file']
+        && !file_exists($base.'/core/elements/chunks/renamed-fixture.tpl'),'already-static link preserved');
+    // Both candidate names are occupied: do not overwrite either.
+    $context->modx()->element->values['static']=0;
+    $context->modx()->element->values['name']='fixture-target';
+    $collision=$base.'/core/elements/chunks/fixture-target-77.tpl';
+    file_put_contents($collision,'UNRELATED');
+    $denied=false;
+    try{\ModxMcp\Tools\ElementMutationSupport::makeStatic($context,'chunk',77);}
+    catch(ModxMCPClientException $e){$denied=strpos($e->getMessage(),'already exists')!==false;}
+    mstCheck($denied && file_get_contents($collision)==='UNRELATED'
+        && file_get_contents($base.'/core/elements/chunks/fixture-target.tpl')==='SAFE','both existing files preserved');
+    unlink($collision);
     // RU: Нельзя скрывать неопределённый исход после записи файла.
     // EN: A save failure after a successful filesystem write is uncertain.
     $context->modx()->element->values['name']='save-failed-fixture';
@@ -87,7 +103,7 @@ try{
     mstCheck($uncertain,'failed save did not report uncertain external state');
     mstCheck(file_get_contents($base.'/core/elements/chunks/save-failed-fixture.tpl')==='SAFE',
         'injected save failure did not occur after file write');
-    echo 'MAKE_STATIC_SYMLINK_ESCAPE_OK checks=6'.PHP_EOL;
+    echo 'MAKE_STATIC_SYMLINK_ESCAPE_OK checks=8'.PHP_EOL;
 }finally{
     $failureFile=$base.'/core/elements/chunks/save-failed-fixture.tpl';
     if(is_file($failureFile))unlink($failureFile);

@@ -160,6 +160,7 @@ jobs:
           php -d disable_functions=proc_open,exec,shell_exec,system _build/test.component-php-read.php
           python3 _build/test.component-symlink-race.py
           php _build/test.make-static-symlink-boundary.php
+          php _build/test.static-rename-preservation.php
           php _build/test.static-content-postwrite-fault.php
           php _build/test.static-read-failure.php
           php _build/test.static-portable-replace.php

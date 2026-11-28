@@ -842,7 +842,7 @@ const toolDefinitions = [
   {
     name: "modx_update_element",
     description:
-      "Update a MODX element by REPLACING its whole content (send the complete new `content`). Best for small elements or full rewrites. For a few changes inside a large chunk/snippet/template/plugin, do NOT use this — use modx_view_element + modx_edit_element_lines instead (sends only the changed lines, far fewer tokens, atomic with a safety anchor).",
+      "Update a MODX element by REPLACING its whole content (send the complete new `content`). Renaming a static element retains its file link; if its file reference changes, the response warns about the former reference. No automatic deletion. Best for small elements or full rewrites. For a few changes inside a large chunk/snippet/template/plugin, do NOT use this — use modx_view_element + modx_edit_element_lines instead (sends only the changed lines, far fewer tokens, atomic with a safety anchor).",
     inputSchema: {
       type: "object",
       properties: {

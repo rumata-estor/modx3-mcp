@@ -170,10 +170,12 @@ class ElementContentSupport
         $data = $element->toArray();
         $data[$map['field']] = $content;
         $data = ElementMutationSupport::filterData($type, $data);
-        $response = $context->platform()->runProcessor(
-            $context->modx(),
-            ElementSupport::processorBase($type) . 'update',
-            $data
+        $response = ElementMutationSupport::withoutNativeCleanup(
+            $context, $type, function () use ($context, $type, $data) {
+                return $context->platform()->runProcessor(
+                    $context->modx(), ElementSupport::processorBase($type) . 'update', $data
+                );
+            }
         );
         if (!$response || $response->isError()) {
             if ($isStatic && $absolute !== null) {
