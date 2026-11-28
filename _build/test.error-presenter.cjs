@@ -112,6 +112,11 @@ const invalid = presenter.fromHttp({error:"VALIDATION_ERROR: secret=SUPER_SECRET
 assert.strictEqual(invalid.code,"VALIDATION_ERROR");
 assert.strictEqual(invalid.outcome,"not_applied");
 assert(!presenter.display(invalid).includes("SUPER_SECRET"));
+const tpl=presenter.fromHttp({error:"MEDIA_TPL_WRITE_REFUSED: password=SUPER_SECRET"},400,"create_media_file");
+assert.strictEqual(tpl.outcome,"unknown");
+assert.strictEqual(tpl.retry_policy,"verify_before_retry");
+assert(tpl.reason_ru.includes("upload_files"));
+assert(!presenter.display(tpl).includes("SUPER_SECRET"));
 const unknownGate=presenter.safetyRefusal("password=SUPER_SECRET","update_element");
 assert(!presenter.display(unknownGate).includes("SUPER_SECRET"));
 console.log("MCP_ERROR_PRESENTER_RU_OK gates="+refs.length+" cases="+(cases.length+5));
