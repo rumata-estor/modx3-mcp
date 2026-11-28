@@ -402,8 +402,8 @@ try {
             public function render($value,$params){return 'CUSTOM:'.str_replace('||',',',(string)$value);}
         }
         $nativeMulti=$modx->getObject($tvClass,$multiId,false);
-        requireTrue($nativeMulti && $nativeMulti->registerRenderMethod('mcp_disposable_custom','output','McpDisposableTvOutput'),'registered native custom renderer');
-        rpc('update_element',array('type'=>'tv','id'=>$multiId,'display'=>'mcp_disposable_custom'));
+        requireTrue($nativeMulti && $nativeMulti->registerRenderMethod('mcp_ci_custom','output','McpDisposableTvOutput'),'registered native custom renderer');
+        rpc('update_element',array('type'=>'tv','id'=>$multiId,'display'=>'mcp_ci_custom'));
         $emptyName='empty_'.$fixture;
         $empty=rpc('create_element',array('type'=>'tv','name'=>$emptyName,'field_type'=>'text','default_text'=>'','templates'=>array($templateId)));
         $tvs[]=(int)$empty['id'];
@@ -445,6 +445,9 @@ try {
         . ' revision=' . $r0 . '->' . ($r0 + 1) . '->' . ($r0 + 2)
         . ' checks=' . $checks
         . ' raw_and_inherit=pass stale=2 rollback=pass revision_fault=pass concurrency=pass' . PHP_EOL;
+} catch (\Throwable $failure) {
+    fwrite(STDERR, 'PR46_PRIMARY_FAILURE '.get_class($failure).': '.$failure->getMessage().PHP_EOL);
+    throw $failure;
 } finally {
     // MCP-only cleanup of disposable fixture. It runs after SQL fault
     // injection is removed, including if the CAS regression fails.
@@ -484,7 +487,7 @@ try {
             }
         }
     }
-    if ($cleanupFailed) {
+    if ($cleanupFailed && $success) {
         throw new \RuntimeException(
             'MCP TV cleanup failed for IDs: '.implode(',',$cleanupFailed)
         );

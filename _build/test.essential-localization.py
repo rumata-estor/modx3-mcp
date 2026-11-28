@@ -13,7 +13,7 @@ TOOLS=re.findall(r'^\| \u0060(modx_[a-z0-9_]+)\u0060 \|',REFERENCE,re.M)
 assert len(TOOLS)==198 and len(set(TOOLS))==198
 SETTINGS=re.findall(r'^\| \u0060(modxmcp\.[a-z0-9_]+)\u0060 \|',
                     (ROOT/'docs/SETTINGS.md').read_text(encoding='utf-8'),re.M)
-assert len(SETTINGS)==16 and len(set(SETTINGS))==16
+assert len(SETTINGS)==17 and len(set(SETTINGS))==17
 for lang in LOCALES:
     base=ROOT/'docs'
     files={name:(base/f'{name}.{lang}.md').read_text(encoding='utf-8')
@@ -40,4 +40,4 @@ for lang in LOCALES:
         assert required in files['INSTALL'],(lang,'install configuration',required)
     assert 'dry_run' in files['CAPABILITIES'],(lang,'dangerous actions safeguard')
     assert 'modx_update_element_property' in files['CAPABILITIES'],(lang,'CAS tool')
-print('ESSENTIAL_TRANSLATION_COVERAGE_OK',len(LOCALES),'languages x 198 tools x 16 settings')
+print('ESSENTIAL_TRANSLATION_COVERAGE_OK',len(LOCALES),'languages x 198 tools x 17 settings')
