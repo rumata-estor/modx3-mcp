@@ -16,6 +16,12 @@ final class MutationPreflight
     public static function assertAllowed($context, $action, array $data, $preconditions = null)
     {
         if (in_array($action, array('create_element', 'update_element'), true)
+            && array_key_exists('skip_auto_static', $data)) {
+            ElementMutationSupport::validateAutoStaticOverride(
+                isset($data['type']) ? $data['type'] : '', $data
+            );
+        }
+        if (in_array($action, array('create_element', 'update_element'), true)
             && isset($data['type']) && $data['type'] === 'tv') {
             ElementMutationSupport::validateTvFields($context, $data);
         }
