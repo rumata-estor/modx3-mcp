@@ -1,6 +1,6 @@
 # Возможности MODX MCP — понятный справочник команд
 
-**Версия интерфейса:** 1.2.7 · 20 ноября 2026 года.
+**Версия интерфейса:** тестовая 1.2.8 (стабильная 1.2.7).
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Установка](INSTALL.ru.md) · [API](API.ru.md)
 
@@ -31,7 +31,7 @@
 | Типы TV | 2 |
 | Системные настройки | 5 |
 | Источники медиа, файлы и папки | 13 |
-| Установленные компоненты и их файлы | 4 |
+| Установленные компоненты и их файлы | 5 |
 | Поиск кода и зависимости | 5 |
 | История версий VersionX | 3 |
 | VirtualPage | 17 |

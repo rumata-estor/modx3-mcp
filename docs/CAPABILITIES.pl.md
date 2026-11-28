@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Instalacja](INSTALL.pl.md) · [Dokumentacja API](API.pl.md)
 
-**MODX MCP 1.2.7 · 199 publiczne narzędzia · 19 grup funkcjonalnych · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.8 beta candidate (1.2.7) · 199 publiczne narzędzia · 19 grup funkcjonalnych · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP udostępnia klientowi MCP wyposażonemu w AI nazwane operacje do pracy z danymi i elementami MODX, zamiast wymagać wyrażania każdego zadania za pomocą surowego SQL lub poleceń systemu plików. Obsługuje inspekcję witryny, edycję treści i kodu, wartości TV, pakiety, administrację dostępem oraz wybrane dodatki innych producentów. Rzeczywista lista narzędzi zależy od zainstalowanej kompilacji i włączonych funkcji.
 
@@ -19,7 +19,7 @@ Ten przewodnik odpowiada na pytanie **„Co mogę zrobić za pomocą MODX MCP?�
 | [Typy pól TV](#typy-pól-tv) | 2 |
 | [Ustawienia systemowe](#ustawienia-systemowe) | 5 |
 | [Źródła mediów i pliki](#źródła-mediów-i-pliki) | 13 |
-| [Komponenty i pliki](#komponenty-i-pliki) | 4 |
+| [Komponenty i pliki](#komponenty-i-pliki) | 5 |
 | [Wyszukiwanie kodu i zależności](#wyszukiwanie-kodu-i-zależności) | 5 |
 | [VersionX](#versionx) | 3 |
 | [VirtualPage](#virtualpage) | 17 |

@@ -1846,7 +1846,7 @@ const toolDefinitions = [
   },
   {
     name: "modx_check_template",
-    description: "Explicit read-only Fenom syntax preflight for proposed template/chunk text. Restricted audited installed Fenom 2.12 compiler only; never renders, saves, loads site plugins or resolves dependencies. syntax_ok is not a full site render or runtime safety guarantee. inconclusive/unavailable means no successful validation.",
+    description: "Explicit read-only Fenom syntax preflight for proposed template/chunk text. Call before saving Fenom source; do not claim validation on inconclusive/unavailable. Restricted audited installed Fenom 2.12 compiler only; never renders, saves, loads site plugins or resolves dependencies. syntax_ok is not a full site render or runtime safety guarantee. inconclusive/unavailable means no successful validation.",
     inputSchema: {
       type: "object",
       properties: { content: { type: "string", maxLength: 65536, description: "Proposed Fenom source; max 65536 bytes and 1024 opening delimiters." } },

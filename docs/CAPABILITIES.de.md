@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.7 · 199 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.8 beta candidate (1.2.7) · 199 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP stellt einem KI-fähigen MCP-Client benannte Aktionen für MODX-Daten und Elemente zur Verfügung, ohne jede Aufgabe als SQL- oder Dateisystembefehl ausdrücken zu müssen. Es unterstützt die Seitenprüfung, Inhalts- und Codeänderungen, TV-Werte, Pakete, Rechteverwaltung und ausgewählte Erweiterungen. Die tatsächlich verfügbaren Werkzeuge hängen von der installierten Version und den aktivierten Funktionen ab.
 
@@ -19,7 +19,7 @@ Dieser Leitfaden beantwortet **„Was kann ich mit MODX MCP tun?“**. Alle Feld
 | [TV-Feldtypen](#tv-feldtypen) | 2 |
 | [Systemeinstellungen](#systemeinstellungen) | 5 |
 | [Medienquellen und Dateien](#medienquellen-und-dateien) | 13 |
-| [Komponenten und Dateien](#komponenten-und-dateien) | 4 |
+| [Komponenten und Dateien](#komponenten-und-dateien) | 5 |
 | [Codesuche und Abhängigkeiten](#codesuche-und-abhängigkeiten) | 5 |
 | [VersionX](#versionx) | 3 |
 | [VirtualPage](#virtualpage) | 17 |

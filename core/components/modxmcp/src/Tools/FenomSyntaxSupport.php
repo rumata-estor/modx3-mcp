@@ -110,8 +110,8 @@ final class FenomSyntaxSupport
                 $fenom->removeAccessor($accessor);
             }
             foreach (array('chunk','template','file') as $scheme) $fenom->addProvider($scheme,$provider);
-            // Inert aliases for pdoTools modifiers, never invoked/rendered.
-            foreach (array('chunk','snippet','url','lexicon','config','resource','placeholder','tv','htmlent','html_entity_decode','date','strtotime','number','len','ellipsis','lcase','ucase','isloggedin','haspermission') as $name) {
+            // Inert aliases from pdoTools v2.14.0 _fenom.php, never invoked/rendered.
+            foreach (array('chunk','snippet','url','lexicon','config','resource','placeholder','htmlent','number','len','ellipsis','lcase','ucase','isloggedin','getOption','option','setOption','setPlaceholder','toPlaceholder','fromPlaceholder','toJSON','fromJSON') as $name) {
                 $fenom->addModifier($name,static function(){return '';});
             }
             $raw=$fenom->getRawTemplate();
