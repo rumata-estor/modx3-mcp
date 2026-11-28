@@ -14,6 +14,7 @@ class PropertySetCreateTool implements ToolInterface
 
     public function execute($context, array $data)
     {
+        $data = PropertySetValidation::validateData($data);
         if (empty($data['name'])) {
             throw new \ModxMCPClientException('create_property_set: name is required.');
         }

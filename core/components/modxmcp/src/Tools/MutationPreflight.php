@@ -15,6 +15,9 @@ final class MutationPreflight
      */
     public static function assertAllowed($context, $action, array $data, $preconditions = null)
     {
+        if (in_array($action, array('create_property_set', 'update_property_set'), true)) {
+            PropertySetValidation::validateData($data);
+        }
         // RU: Политики/шаблоны меняем только после снимка цели из MODX.
         // RU: Даже без protected mode: fail closed до CAS-резерва и процессора.
         // EN: Mandatory policy/template target snapshot in all security modes.
