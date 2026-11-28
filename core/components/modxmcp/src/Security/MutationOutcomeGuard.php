@@ -10,6 +10,8 @@ namespace ModxMcp\Security;
  * processor, file, plugin or external operation was rolled back on failure.
  * Do not leak a native exception or imply that nothing was applied.
  */
+final class PostCommitStepException extends \ModxMCPClientException {}
+
 final class MutationOutcomeGuard
 {
     const UNKNOWN_MESSAGE = 'MUTATION_OUTCOME_UNCERTAIN: the operation may have changed state; '
@@ -28,13 +30,17 @@ final class MutationOutcomeGuard
 
     public static function postCommitFailure()
     {
-        return new \ModxMCPClientException(self::POST_COMMIT_MESSAGE);
+        return new PostCommitStepException(self::POST_COMMIT_MESSAGE);
     }
 
     public static function uncertain($error = null)
     {
+        if ($error instanceof PostCommitStepException
+            && $error->getMessage() === self::POST_COMMIT_MESSAGE) {
+            return self::postCommitFailure();
+        }
         if ($error instanceof \ModxMCPClientException
-            && in_array($error->getMessage(), array(self::MEDIA_TPL_MESSAGE, self::POST_COMMIT_MESSAGE), true)) {
+            && $error->getMessage() === self::MEDIA_TPL_MESSAGE) {
             // Reconstruct from a constant; never return or chain the original exception.
             return new \ModxMCPClientException($error->getMessage());
         }

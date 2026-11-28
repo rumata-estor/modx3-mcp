@@ -55,6 +55,13 @@ foreach (array($fixed, new ModxMCPClientException(MutationOutcomeGuard::MEDIA_TP
     }
 }
 
+$post=MutationOutcomeGuard::postCommitFailure();
+outcomeCheck(MutationOutcomeGuard::uncertain($post) instanceof \ModxMcp\Security\PostCommitStepException,
+    'typed postcommit evidence survives journal');
+$fake=new ModxMCPClientException(MutationOutcomeGuard::POST_COMMIT_MESSAGE);
+outcomeCheck(MutationOutcomeGuard::uncertain($fake)->getMessage()===MutationOutcomeGuard::UNKNOWN_MESSAGE,
+    'text alone never proves commit');
+
 // Model a native processor that has already saved a row before failing.
 $storedWrites = 0;
 $reportedUnknown = false;
