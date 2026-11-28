@@ -190,6 +190,7 @@ Update a MODX element by REPLACING its whole content (send the complete new `con
 | `context_key` | string | no | — |
 | `isfolder` | number | no | — |
 | `hidemenu` | number | no | — |
+| `richtext` | integer | no | Resource editor: 0 disabled, 1 enabled. On create, omit for context richtext_default; on update, omit to preserve. |
 | `introtext` | string | no | — |
 | `menutitle` | string | no | — |
 | `article` | string | no | — |
@@ -236,6 +237,7 @@ Create a new MODX element.
 | `context_key` | string | no | — |
 | `isfolder` | number | no | — |
 | `hidemenu` | number | no | — |
+| `richtext` | integer | no | Resource editor: 0 disabled, 1 enabled. On create, omit for context richtext_default; on update, omit to preserve. |
 | `introtext` | string | no | — |
 | `menutitle` | string | no | — |
 | `article` | string | no | — |

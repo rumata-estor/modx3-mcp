@@ -34,6 +34,7 @@ $api = new modxMCP($modx);
 $checks = 0;
 $resourceId = 0;
 $dateResourceId = 0;
+$plainResourceId = 0;
 $chunkId = 0;
 $replaceChunkId = 0;
 $userId = 0;
@@ -154,6 +155,22 @@ try {
     ));
     acceptanceCheck(!empty($dateRead['publishedon']),
         'published date fixture provides nonempty raw publishedon');
+    $webContext=$modx->getContext('web');
+    acceptanceCheck($webContext && (int)$dateRead['richtext']===(int)$webContext->getOption('richtext_default',1),
+        'omitted richtext uses native target context default');
+    $plain=acceptanceRpc('create_element',array(
+        'type'=>'resource','name'=>'MCP plain editor '.$fixture,
+        'alias'=>'mcp-plain-editor-'.$fixture,'published'=>0,'hidemenu'=>1,
+        'template'=>0,'parent'=>0,'richtext'=>0,'content'=>'PLAIN_'.$fixture,
+    ));
+    $plainResourceId=(int)($plain['id']??0);
+    acceptanceCheck($plainResourceId>0,'explicit plain editor fixture created');
+    $plainRead=acceptanceRpc('get_element',array('type'=>'resource','id'=>$plainResourceId));
+    acceptanceCheck(isset($plainRead['richtext']) && (int)$plainRead['richtext']===0,'explicit richtext zero persists');
+    acceptanceRpc('update_element',array('type'=>'resource','id'=>$plainResourceId,'content'=>'PLAIN_UPDATED_'.$fixture));
+    $plainRead=acceptanceRpc('get_element',array('type'=>'resource','id'=>$plainResourceId));
+    acceptanceCheck(isset($plainRead['richtext']) && (int)$plainRead['richtext']===0,'partial update preserves richtext zero');
+    echo 'RESOURCE_RICHTEXT_NATIVE_DEFAULT_AND_EXPLICIT_ZERO_OK'.PHP_EOL;
     $dateSnapshot=acceptanceSnapshot('resource',$dateResourceId);
     try {
         $modx->setOption('manager_date_format','d/m/Y');
@@ -906,6 +923,8 @@ try {
     if ($replaceChunkId>0) acceptanceClean('delete_element',array(
         'type'=>'chunk','id'=>$replaceChunkId));
     if ($chunkId>0) acceptanceClean('delete_element',array('type'=>'chunk','id'=>$chunkId));
+    if ($plainResourceId>0) acceptanceClean('delete_element',array(
+        'type'=>'resource','id'=>$plainResourceId,'dry_run'=>false));
     if ($dateResourceId>0) acceptanceClean('delete_element',array(
         'type'=>'resource','id'=>$dateResourceId,'dry_run'=>false));
     if ($resourceId>0) acceptanceClean('delete_element',array(
