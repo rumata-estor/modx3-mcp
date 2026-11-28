@@ -140,6 +140,9 @@ jobs:
               "define('PKG_RELEASE', 'beta5');"),
              (root/'core/components/modxmcp/model/modxmcp.class.php',
               r"const VERSION = '1\.2\.7';",
+              "const VERSION = '1.2.8';"),
+             (root/'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+              r"const VERSION = '1\.2\.7';",
               "const VERSION = '1.2.8';")
           ]
           for path,pattern,replacement in changes:
@@ -162,6 +165,7 @@ jobs:
           grep -Fq "define('PKG_VERSION', '1.2.8');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
           grep -Fq "define('PKG_RELEASE', 'beta5');" "$RUNNER_TEMP/stage-128/_build/build.config.php"
           grep -Fq "const VERSION = '1.2.8';" "$RUNNER_TEMP/stage-128/core/components/modxmcp/model/modxmcp.class.php"
+          grep -Fq "const VERSION = '1.2.8';" "$RUNNER_TEMP/stage-128/core/components/modxmcp/legacy/modx2/modxmcp.class.php"
           php "$RUNNER_TEMP/stage-128/_build/install.transport.php" \
             --signature="${BUILD_PLATFORM}mcp-1.2.8-beta5"
       # RU: Существующие ACL-строки из 1.2.7, явный DDL только в disposable DB.
