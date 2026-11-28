@@ -108,7 +108,7 @@ class ElementUpdateTool implements ToolInterface
                         $prepared
                     );
                 }
-                if (ElementMutationSupport::shouldAutoStatic($context, $type)) {
+                if (ElementMutationSupport::shouldAutoStatic($context, $type, $prepared)) {
                     ElementMutationSupport::makeStatic($context, $type, $id);
                 }
 

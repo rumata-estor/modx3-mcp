@@ -258,9 +258,27 @@ try {
     acceptanceCheck((string)$read['content']==='AFTER_'.$fixture,
         'stale mutation did not change resource');
 
-    $chunk=acceptanceRpc('create_element',array(
-        'type'=>'chunk','name'=>'MCP_Acceptance_'.$fixture,'content'=>'CHUNK_'.$fixture,
-    ));
+    $autoStaticOriginal=$modx->getOption('modxmcp.auto_static',null,false);
+    $modx->setOption('modxmcp.auto_static',true); // disposable process only
+    try {
+        $chunk=acceptanceRpc('create_element',array(
+            'type'=>'chunk','name'=>'MCP_Acceptance_'.$fixture,'content'=>'CHUNK_'.$fixture,
+            'skip_auto_static'=>true,
+        ));
+        $chunkId=(int)($chunk['id']??0);
+        acceptanceCheck($chunkId>0,'chunk created with per-call auto_static override');
+        $dynamic=acceptanceRpc('get_element',array('type'=>'chunk','id'=>$chunkId));
+        acceptanceCheck(empty($dynamic['static']) && empty($dynamic['static_file']),'explicit skip kept newly created chunk dynamic');
+        acceptanceRpc('update_element',array('type'=>'chunk','id'=>$chunkId,
+            'content'=>'CHUNK_'.$fixture,'skip_auto_static'=>true));
+        $dynamic=acceptanceRpc('get_element',array('type'=>'chunk','id'=>$chunkId));
+        acceptanceCheck(empty($dynamic['static']) && empty($dynamic['static_file'])
+            && $dynamic['content']==='CHUNK_'.$fixture,'explicit skip preserved dynamic chunk on update');
+        acceptanceCheck((bool)$modx->getOption('modxmcp.auto_static',null,false),'site default unchanged by per-call override');
+        echo 'AUTO_STATIC_NATIVE_OVERRIDE_OK'.PHP_EOL;
+    } finally {
+        $modx->setOption('modxmcp.auto_static',$autoStaticOriginal);
+    }
     acceptanceCheck(is_array($chunk) && isset($chunk['id']) && (int)$chunk['id']>0,
         'chunk creation');
     $chunkId=(int)$chunk['id'];

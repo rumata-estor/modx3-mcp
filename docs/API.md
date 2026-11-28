@@ -182,6 +182,7 @@ Update a MODX element by REPLACING its whole content (send the complete new `con
 | `name` | string | no | — |
 | `id` | number | no | — |
 | `content` | string | no | — |
+| `skip_auto_static` | boolean | no | Skip automatic static conversion for this chunk/snippet/template/plugin request only. Does not detach existing static elements or disable normal writes to their file. |
 | `parent` | number | no | — |
 | `template` | number | no | — |
 | `published` | number | no | — |
@@ -229,6 +230,7 @@ Create a new MODX element.
 | `type` | string | yes | Allowed: chunk, snippet, template, resource, tv, category, plugin |
 | `name` | string | yes | — |
 | `content` | string | no | — |
+| `skip_auto_static` | boolean | no | Skip automatic static conversion for this chunk/snippet/template/plugin request only. Does not detach existing static elements or disable normal writes to their file. |
 | `parent` | number | no | — |
 | `template` | number | no | — |
 | `published` | number | no | — |

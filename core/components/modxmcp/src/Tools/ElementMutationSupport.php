@@ -9,6 +9,7 @@ class ElementMutationSupport
 {
     public static function prepare($context, $type, array $data, $action)
     {
+        self::validateAutoStaticOverride($type, $data);
         if ($type === 'tv') {
             $data = self::validateTvFields($context, $data);
         }
@@ -340,8 +341,23 @@ class ElementMutationSupport
         }
     }
 
-    public static function shouldAutoStatic($context, $type)
+    public static function validateAutoStaticOverride($type, array $data)
     {
+        if (!array_key_exists('skip_auto_static', $data)) return;
+        if (!in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)
+            || !is_bool($data['skip_auto_static'])) {
+            throw new \ModxMCPClientException(
+                'VALIDATION_ERROR: skip_auto_static is a boolean for chunk, snippet, template or plugin only.'
+            );
+        }
+    }
+
+    public static function shouldAutoStatic($context, $type, array $data = array())
+    {
+        self::validateAutoStaticOverride($type, $data);
+        if (isset($data['skip_auto_static']) && $data['skip_auto_static'] === true) {
+            return false;
+        }
         if (!in_array($type, array('chunk', 'snippet', 'template', 'plugin'), true)) {
             return false;
         }

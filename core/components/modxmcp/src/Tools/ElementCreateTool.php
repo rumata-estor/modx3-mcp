@@ -90,7 +90,7 @@ class ElementCreateTool implements ToolInterface
                         $prepared
                     );
                 }
-                if ($id > 0 && ElementMutationSupport::shouldAutoStatic($context, $type)) {
+                if ($id > 0 && ElementMutationSupport::shouldAutoStatic($context, $type, $prepared)) {
                     ElementMutationSupport::makeStatic($context, $type, $id);
                 }
 
