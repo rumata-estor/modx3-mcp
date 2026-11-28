@@ -133,6 +133,8 @@ if (is_array($settings) && !empty($settings)) {
         $vehicle = $builder->createVehicle($setting, $attributes);
         if ($firstSettingVehicle) {
             $vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.permissions.php'));
+            // Reverse uninstall order: reconcile only after the shared files/settings are gone.
+            $vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.package-history.php'));
             $firstSettingVehicle = false;
         }
         $builder->putVehicle($vehicle);

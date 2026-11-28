@@ -136,6 +136,8 @@ if (is_array($settings) && !empty($settings)) {
             // Runs before the file vehicles so upgrades can replace package files even on
             // hosts where an earlier install left them without the owner-write bit.
             $vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.permissions.php'));
+            // Reverse uninstall order: reconcile only after the shared files/settings are gone.
+            $vehicle->resolve('php', array('source' => $sources['resolvers'] . 'resolve.package-history.php'));
             $firstSettingVehicle = false;
         }
         $builder->putVehicle($vehicle);
