@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Проверка идентичности версии в подготовленных пакетах.
+# EN: Verify candidate release identity across staged packages.
 from pathlib import Path
 import subprocess
 import tempfile

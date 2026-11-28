@@ -7,19 +7,19 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-model = (ROOT / "core/components/modxmcp/model/modxmcp.class.php").read_text()
+model = (ROOT / "core/components/modxmcp/src/Registry/CapabilityService.php").read_text()
 client = (ROOT / "client/index.js").read_text()
 
-m = re.search(r"private function actionRegistry\(\)\s*\{(.*?)\n    \}\n\n    /\*\* Flatten", model, re.S)
+m = re.search(r"public static function groups\(\)\s*\{(.*?)\n    \}(?=\n)", model, re.S)
 if not m:
-    print("Could not isolate actionRegistry()", file=sys.stderr)
+    print("Could not isolate CapabilityService::groups()", file=sys.stderr)
     sys.exit(2)
 
 registry = m.group(1)
 server_actions = set()
 for line in registry.splitlines():
     # Group keys are indented 12 spaces; action keys are indented 16 spaces.
-    mm = re.match(r"^ {16}'([a-z][a-z0-9_]+)'\s*=>", line)
+    mm = re.match(r"^ {16}'([a-z][a-z0-9_]+)',", line)
     if mm:
         server_actions.add(mm.group(1))
 

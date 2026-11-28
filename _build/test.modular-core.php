@@ -78,8 +78,8 @@ class FakeModx {
 }
 class FakeLegacy {
     const VERSION = '1.2.0-test';
-    public function getCapabilities() { return array('ok' => true, 'source' => 'legacy'); }
-    public function getSupportedActions() { return array('ops' => array('list_actions')); }
+    public function getCapabilities() { throw new Exception('Legacy capabilities called'); }
+    public function getSupportedActions() { throw new Exception('Legacy actions called'); }
 }
 
 $runtime = new \ModxMcp\Core\Runtime(new FakeModx(), new FakeLegacy());
@@ -88,9 +88,27 @@ if ($runtime->context()->platform()->key() !== 'modx3') { throw new Exception('M
 $caps = $runtime->registry()->get('get_capabilities');
 if (!$caps || $caps->isMutation() || !$caps->supports($runtime->context())) { throw new Exception('Capabilities tool registration failed'); }
 $result = $caps->execute($runtime->context(), array());
-if (empty($result['ok']) || $result['source'] !== 'legacy') { throw new Exception('Bad capabilities result'); }
+if (empty($result['features']['cas_required']) || $result['features']['precondition_version'] !== 2) { throw new Exception('Bad capabilities result'); }
 $actions = $runtime->registry()->get('list_actions')->execute($runtime->context(), array());
-if (empty($actions['ops']) || $actions['ops'][0] !== 'list_actions') { throw new Exception('Bad list_actions result'); }
+if (empty($actions['ops']) || $actions['ops'][0] !== 'list_actions' || count($actions, COUNT_RECURSIVE)-count($actions) !== 199) { throw new Exception('Bad list_actions result'); }
+
+// RU: Полная проверка соответствия публичного каталога и реального реестра.
+// EN: Verify complete public catalog against the instantiated registry.
+$listed = array();
+foreach ($actions as $group => $names) {
+    foreach ($names as $name) {
+        if (isset($listed[$name])) throw new Exception('Duplicate public action: '.$name);
+        $listed[$name] = $group;
+    }
+}
+$actual = $runtime->registry()->all();
+if (count($listed) !== count($actual)) throw new Exception('Action count mismatch');
+foreach ($actual as $name => $tool) {
+    $expected = in_array($name, array('search_code','find_usages','dependency_graph'), true)
+        ? 'code_search' : $tool->group();
+    if (!isset($listed[$name]) || $listed[$name] !== $expected)
+        throw new Exception('Public group mismatch: '.$name);
+}
 
 $info = $runtime->registry()->get('system_info');
 if (!$info || $info->isMutation() || !$info->supports($runtime->context())) { throw new Exception('SystemInfo tool registration failed'); }

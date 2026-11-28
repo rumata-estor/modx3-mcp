@@ -8,8 +8,7 @@ tool = (root/'core/components/modxmcp/src/Tools/ElementPropertyUpdateTool.php').
 client = (root/'client/index.js').read_text()
 runtime = (root/'core/components/modxmcp/src/Core/Runtime.php').read_text()
 bridges = [
-    root/'core/components/modxmcp/model/modxmcp.class.php',
-    root/'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
+    root/'core/components/modxmcp/src/Core/Connector.php',
 ]
 for needle in (
     "function name() { return 'update_element_property'; }",
@@ -31,6 +30,6 @@ for needle in (
 assert 'new ElementPropertyUpdateTool()' in runtime
 for bridge in bridges:
     t=bridge.read_text()
-    assert "'update_element_property' => array('element' => true)" in t
+    assert "'update_element_property'," in (root/'core/components/modxmcp/src/Registry/CapabilityService.php').read_text()
     assert "'update_element_property'" in t[t.index('$elementBridgeActions = array('):t.index('$runtimePreconditions = null;')]
 print('ELEMENT_PROPERTY_CONTRACT_OK')

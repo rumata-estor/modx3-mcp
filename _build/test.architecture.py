@@ -31,8 +31,8 @@ if "'updatefromgrid' => 'UpdateFromGrid'" not in modx3:
 if "return 'modx2'" not in modx2 or "return 'modx3'" not in modx3:
     errors.append('Platform keys are missing')
 
-# Pilot migration must remain fail-open and legacy-compatible.
-legacy = (root / 'core' / 'components' / 'modxmcp' / 'model' / 'modxmcp.class.php').read_text(encoding='utf-8')
+# The modular dispatcher must remain fail-closed.
+legacy = (src / 'Core' / 'Connector.php').read_text(encoding='utf-8')
 for needle in (
     'private $modularRuntime = null;',
     'registry()->get($action)',
@@ -45,21 +45,41 @@ for needle in (
         errors.append(f'Legacy bridge invariant missing: {needle}')
 
 registry_pos = legacy.find('registry()->get($action)')
-legacy_dispatch_pos = legacy.find('$this->resolveActionSpec($action)')
-if registry_pos < 0 or legacy_dispatch_pos < 0 or registry_pos > legacy_dispatch_pos:
-    errors.append('Modular registry must get first refusal before legacy action dispatch')
+if registry_pos < 0 or 'function invokeActionSpec(' in legacy or 'function resolveActionSpec(' in legacy:
+    errors.append('Only the modular registry may dispatch actions')
 
 # Element tools receive `type` as a separate HTTP/processRequest argument.
 # In the source tree both platform fallbacks are present. A staged release removes
 # legacy snapshots and places the selected platform fallback at model/modxmcp.class.php.
-element_bridge_files = [
-    'core/components/modxmcp/model/modxmcp.class.php',
-]
-modx2_legacy_bridge = root / 'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
-if modx2_legacy_bridge.is_file():
-    element_bridge_files.append(
-        'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
-    )
+element_bridge_files = ['core/components/modxmcp/src/Core/Connector.php']
+for wrapper in (root/'core/components/modxmcp/model/modxmcp.class.php',
+                root/'core/components/modxmcp/legacy/modx2/modxmcp.class.php'):
+    if not wrapper.is_file():
+        continue
+    text = wrapper.read_text(encoding='utf-8')
+    if r'use \ModxMcp\Core\Connector;' not in text or 'function processRequest(' in text or 'private function ' in text:
+        errors.append(f'{wrapper}: expected thin connector entry point')
+# Both platforms use the same code, not duplicated resource implementations.
+# The Manager's public graph entry point must use the read-only modular tool
+# without selecting the API service account or falling back to legacy file reads.
+for graph_rel in element_bridge_files:
+    graph_text = (root / graph_rel).read_text(encoding='utf-8')
+    graph_start = graph_text.find('public function buildDependencyGraph(')
+    graph_end = graph_text.find('\n    }', graph_start)
+    graph_body = graph_text[graph_start:graph_end] if graph_start >= 0 and graph_end >= 0 else ''
+    for needle in (
+        'if ($this->modularRuntime === null)',
+        "registry()->get('dependency_graph')",
+        '$tool->isMutation()',
+        '$tool->supports($context)',
+        'return $tool->execute($context, $data);',
+    ):
+        if needle not in graph_body:
+            errors.append(f'{graph_rel}: manager graph modular boundary missing {needle}')
+    for forbidden in ('$this->processRequest(', 'getFileContent(', 'file_get_contents(', 'resolveServiceUser('):
+        if forbidden in graph_body:
+            errors.append(f'{graph_rel}: unsafe manager graph path: {forbidden}')
+
 for rel in element_bridge_files:
     text = (root / rel).read_text(encoding='utf-8')
     bridge_start = text.find('$elementBridgeActions = array(')
@@ -269,17 +289,6 @@ for needle in (
 ):
     if needle not in resource_list:
         errors.append(f'ResourceListTool recycle invariant missing: {needle}')
-for rel in (
-    'core/components/modxmcp/model/modxmcp.class.php',
-    'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
-):
-    text = (root / rel).read_text(encoding='utf-8')
-    for needle in (
-        "array_key_exists('deleted', $data)",
-        "'deleted' => (bool) $r->get('deleted')",
-    ):
-        if needle not in text:
-            errors.append(f'{rel}: recycle/list_resources invariant missing: {needle}')
 
 plugin_mutation = (src / 'Tools' / 'ElementMutationSupport.php').read_text(encoding='utf-8')
 for needle in (

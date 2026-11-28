@@ -11,22 +11,19 @@ from pathlib import Path
 import re
 
 ROOT=Path(__file__).resolve().parents[1]
-source_files=[
- ROOT/'core/components/modxmcp/model/modxmcp.class.php',
- ROOT/'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
-]
-for p in source_files:
- code=p.read_text()
- state=code.split('public function getSiteState()',1)[1].split('public function getCapabilities()',1)[0]
- cap=code.split('public function getCapabilities()',1)[1].split('public function capabilitiesFingerprint()',1)[0]
- assert "'atomic_preconditions' => ($this->modularRuntime !== null)" in state,p
- assert re.search(r"'precondition_version'\s*=>\s*\(\$this->modularRuntime !== null \? 2 : 1\)",state),p
- assert "$siteState = $this->getSiteState();" in cap,p
- assert "'atomic_preconditions' => $siteState['atomic_preconditions']" in cap,p
- assert "'site_revision' => $siteState['atomic_preconditions']" in cap,p
- assert "'precondition_version' => $siteState['precondition_version']" in cap,p
- assert not re.search(r"'precondition_version'\s*=>\s*[12]\s*,",cap),p
- print('CAS_CAPABILITIES_CONTRACT_OK',p.relative_to(ROOT))
+source = (ROOT/'core/components/modxmcp/src/Registry/CapabilityService.php').read_text()
+state=source.split('public static function state(',1)[1].split('public static function report(',1)[0]
+cap=source.split('public static function report(',1)[1].split('public static function fingerprint(',1)[0]
+assert "'atomic_preconditions' => ($ready)" in state
+assert "'precondition_version' => ($ready ? 2 : 1)" in state
+assert "$siteState = self::state($modx, $ready);" in cap
+for key in ('atomic_preconditions','precondition_version','cas_required'):
+    assert "'"+key+"' => $siteState['"+key+"']" in cap
+assert "'site_revision' => $siteState['atomic_preconditions']" in cap
+connector=(ROOT/'core/components/modxmcp/src/Core/Connector.php').read_text()
+assert 'CapabilityService::report($this->modx, $this->modularRuntime !== null)' in connector
+assert 'CapabilityService::state($this->modx, $this->modularRuntime !== null)' in connector
+print('CAS_CAPABILITIES_CONTRACT_OK shared connector')
 modular=(ROOT/'core/components/modxmcp/src/Tools/StateSupport.php').read_text()
 assert "'precondition_version' => 2" in modular
 print('CAS_MODULAR_STATE_V2_OK')

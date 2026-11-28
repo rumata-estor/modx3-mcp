@@ -8,11 +8,7 @@ security = root / "core/components/modxmcp/src/Security"
 protected = (security / "ProtectedAuthorization.php").read_text()
 crypto = (security / "IndependentPermitV1.php").read_text()
 ledger = (security / "PermitNonceLedger.php").read_text()
-model3 = (root / "core/components/modxmcp/model/modxmcp.class.php").read_text()
-model2 = (root / "core/components/modxmcp/legacy/modx2/modxmcp.class.php")
-sources = [model3]
-if model2.is_file():
-    sources.append(model2.read_text())
+sources = [(root / "core/components/modxmcp/src/Core/Connector.php").read_text()]
 for source in sources:
     assert "ProtectedAuthorization::authorizeMutation(" in source, "missing protected authorization"
     assert "ProtectedAuthorization::required(" in source, "missing policy gate"
