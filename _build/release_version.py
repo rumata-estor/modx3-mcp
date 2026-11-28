@@ -1,3 +1,6 @@
+# MODX MCP SOURCE / ИСХОДНИК MODX MCP
+# RU: Единый идентификатор целевого релиза на этапе сборки.
+# EN: Single target release identity for staging and CI.
 """Single target release identity for staging and CI (build-time only)."""
 import json
 import re
