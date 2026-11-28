@@ -105,7 +105,9 @@ jobs:
         run: python3 _build/test.capabilities-cas-metadata.py
 
       - name: PR #46 raw TV CAS regression (AgelxNash)
-        run: php _build/test.resource-tv-cas.php
+        run: |
+          php _build/test.resource-tv-cas.php
+          php _build/test.tv-read-modes.php
       - name: CAS inventory must classify all 116 mutating API actions
         run: python3 _build/test.cas-mutation-inventory.py
       - name: MCP client schemas must advertise mandatory CAS for all 116 actions

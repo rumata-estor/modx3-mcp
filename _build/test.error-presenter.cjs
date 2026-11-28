@@ -5,6 +5,7 @@
 const assert = require("assert");
 const presenter = require("../client/error-presenter");
 const cases = [
+  { code: "TV_RENDERING_DISABLED", outcome: "not_applied", retry_policy: "after_admin_check" },
   { code: "AUTH_DENIED", outcome: "not_applied", retry_policy: "after_authorization" },
   { code: "MANUAL_REVIEW_REQUIRED", outcome: "not_applied", retry_policy: "after_review" },
   { code: "CAS_REQUIRED", outcome: "not_applied", retry_policy: "after_refresh" },

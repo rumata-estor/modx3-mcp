@@ -379,9 +379,13 @@ Reorder resources in the tree by setting menuindex (and optionally parent). `ite
 
 Get a resource's template-variable (TV) values.
 
+The existing value field and the new raw field always contain the unprocessed effective value (stored value, or TV default if no value is stored). Use these for CAS. Request value_mode:both (rendered is an alias) to add rendered and render_status. Native rendering can execute bindings, plugins and custom PHP under the service identity; it is disabled by default and unavailable in protected mode. Only an administrator may enable modxmcp.allow_native_tv_rendering. Native rendering requires a prior CAS snapshot and reserves a site revision before running; render_effects:not_verified means its external effects are not independently confirmed. Native output is not a full frontend page render. Errors return rendered:null and render_status:failed/unavailable without exposing exceptions.
+
 | Parameter | Type | Required | Notes and allowed values |
 | --- | --- | :---: | --- |
 | `resource_id` | number | yes | — |
+| `value_mode` | string: raw / both / rendered | no | Default raw. |
+| `_runtime_preconditions` | object | both/rendered only | Prior runtime CAS snapshot. |
 
 ### `modx_update_resource_tvs`
 

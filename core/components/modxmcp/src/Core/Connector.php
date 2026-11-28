@@ -133,7 +133,17 @@ trait Connector
                     && is_array($runtimePreconditions)) {
                     $toolData['_runtime_preconditions'] = $runtimePreconditions;
                 }
-                if ($tool->isMutation()) {
+                // Native TV rendering can execute arbitrary site PHP. Raw TV
+                // reads stay read-only, but explicit rendering enters the
+                // same lock, CAS reservation and uncertain-outcome guard.
+                $nativeTvRendering = $action === 'get_resource_tvs'
+                    && \ModxMcp\Tools\ResourceTvListTool::requestsNativeRendering($toolData);
+                if ($nativeTvRendering) {
+                    \ModxMcp\Tools\ResourceTvListTool::assertNativeRenderingAllowed(
+                        $this->modularRuntime->context()
+                    );
+                }
+                if ($tool->isMutation() || $nativeTvRendering) {
                     // RU: Отдельный подписанный ID нужен только добровольному журналу.
                     // EN: Opt-in signed ID is never passed to MODX processors.
                     $operationId = array_key_exists('_operation_id', $toolData)
@@ -168,6 +178,10 @@ trait Connector
                             $externalAuthorization,
                             $operationId
                         ) {
+                            // Recheck the trusted policy after acquiring the site lock.
+                            if ($action === 'get_resource_tvs') {
+                                \ModxMcp\Tools\ResourceTvListTool::assertNativeRenderingAllowed($runtimeContext);
+                            }
                             // Independently signed authorization is enforced
                             // INSIDE the common site mutation lock for every
                             // mutating tool on both MODX 2 and 3. It is not

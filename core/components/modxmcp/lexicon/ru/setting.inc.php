@@ -28,6 +28,8 @@ $_lang['setting_modxmcp.trust_proxy_https_desc'] = 'Если включено, X
 $_lang['setting_modxmcp.allowed_ips'] = 'Разрешённые IP MCP';
 $_lang['setting_modxmcp.allowed_ips_desc'] = 'Необязательный список IP/CIDR через запятую. Пустое значение разрешает любой IP при наличии корректного токена; проверяется реальный REMOTE_ADDR, X-Forwarded-For не используется.';
 
+$_lang['setting_modxmcp.allow_native_tv_rendering'] = 'Разрешить штатный рендеринг TV';
+$_lang['setting_modxmcp.allow_native_tv_rendering_desc'] = 'По умолчанию выключено. Рендеринг может выполнять привязки, плагины и сторонний PHP с правами служебного пользователя. Только для доверенных сайтов в обычном режиме; в защищённом режиме недоступно.';
 $_lang['setting_modxmcp.allow_root_filesystem_read'] = 'Разрешить чтение корневого Filesystem';
 $_lang['setting_modxmcp.allow_root_filesystem_read_desc'] = 'Если включено, MCP сможет просматривать и читать файлы через корневой media source Filesystem. Лучше держать выключенной, если нужно только безопасное изучение кода компонентов.';
 

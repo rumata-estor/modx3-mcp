@@ -150,9 +150,10 @@ class ResourceTvUpdateTool implements ToolInterface
                 );
             }
             foreach ($expected as $name => $beforeValue) {
-                $actual = method_exists($tvObjects[$name], 'getValue')
-                    ? (string)$tvObjects[$name]->getValue($resourceId)
-                    : (string)$resource->getTVValue($name);
+                if (!method_exists($tvObjects[$name], 'getValue')) {
+                    throw new \ModxMCPClientException('Raw TV CAS is unavailable.');
+                }
+                $actual = (string)$tvObjects[$name]->getValue($resourceId);
                 if (!is_string($beforeValue) || $actual !== $beforeValue) {
                     throw new \ModxMCPClientException(
                         'STALE_STATE {"status":"STALE_STATE","reason":"tv_values_changed"}'
@@ -175,9 +176,7 @@ class ResourceTvUpdateTool implements ToolInterface
                 // EN: TV raw value immediately before every setTVValue call.
                 // EN: This reduces (but cannot eliminate) the external race.
                 if ($guard !== null) {
-                    $current = method_exists($tvObjects[$name], 'getValue')
-                        ? (string)$tvObjects[$name]->getValue($resourceId)
-                        : (string)$resource->getTVValue($name);
+                    $current = (string)$tvObjects[$name]->getValue($resourceId);
                     if (!hash_equals($expected[$name], $current)) {
                         throw new \ModxMCPClientException(
                             'STALE_STATE: TV changed outside MCP; compare current value in MODX Manager.'
