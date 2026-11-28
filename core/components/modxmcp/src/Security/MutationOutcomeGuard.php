@@ -16,8 +16,19 @@ final class MutationOutcomeGuard
         . 'stop further mutations, inspect the affected objects through MCP, '
         . 'and obtain a fresh user decision and authorization before retrying.';
 
-    public static function uncertain()
+    // Fixed first-party diagnostic; preserve the existing uncertain machine code.
+    const MEDIA_TPL_MESSAGE = 'MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: '
+        . 'Media Source refused the .tpl write; check the target file before retrying. '
+        . 'allowedFileTypes or MODX upload_files may restrict this extension; '
+        . 'the actual cause has not been established. Ask an administrator to review policy.';
+
+    public static function uncertain($error = null)
     {
+        if ($error instanceof \ModxMCPClientException
+            && $error->getMessage() === self::MEDIA_TPL_MESSAGE) {
+            // Reconstruct from a constant; never return or chain the original exception.
+            return new \ModxMCPClientException(self::MEDIA_TPL_MESSAGE);
+        }
         // Never chain a native exception: processor errors may contain secrets.
         return new \ModxMCPClientException(self::UNKNOWN_MESSAGE);
     }
@@ -28,7 +39,7 @@ final class MutationOutcomeGuard
         try {
             return call_user_func($operation);
         } catch (\Throwable $error) {
-            throw self::uncertain();
+            throw self::uncertain($error);
         }
     }
 }

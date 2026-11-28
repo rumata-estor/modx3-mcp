@@ -58,7 +58,7 @@ try {
     mediaCheck(strpos($sandbox,'/home/runner/')===0,
         'media sandbox restricted to disposable runner');
     $create=array('name'=>$name,'description'=>'disposable source',
-        'properties'=>array('basePath'=>$sandbox,'baseUrl'=>'/mcp-disposable-'.$fixture.'/'),
+        'properties'=>array('basePath'=>$sandbox,'baseUrl'=>'/mcp-disposable-'.$fixture.'/','allowedFileTypes'=>'txt'),
         '_runtime_preconditions'=>mediaGuard());
     $created=mediaRpc('create_media_source',$create);
     $id=(int)($created['id']??0);
@@ -79,6 +79,21 @@ try {
         'updated media source readback');
     mediaReplay('update_media_source',$update);
     echo 'CAS_MEDIA_SOURCE_UPDATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
+    // RU: Только временный источник; не изменяем глобальный upload_files.
+    // EN: Disposable source only; no global upload_files mutation.
+    mkdir($sandbox,0700,true);
+    $denied=false;
+    try {
+        mediaRpc('create_media_file',array('source'=>$id,'path'=>'/','name'=>'denied.tpl','content'=>'DISPOSABLE'));
+    } catch (ModxMCPClientException $e) {
+        $denied=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED:')===0
+            && strpos($e->getMessage(),'upload_files')!==false;
+    }
+    mediaCheck($denied,'native restricted .tpl write has safe guidance');
+    mediaCheck(!file_exists($sandbox.'denied.tpl'),'restricted file was not created');
+    rmdir($sandbox);
+    echo 'MEDIA_TPL_NATIVE_REFUSAL_DIAGNOSTIC_OK'.PHP_EOL;
+
 
     $delete=array('id'=>$id,'_runtime_preconditions'=>mediaGuard());
     mediaRpc('delete_media_source',$delete);

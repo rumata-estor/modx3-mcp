@@ -75,6 +75,18 @@ class MediaSourceMutationSupport
         return $raw;
     }
 
+    /**
+     * RU: Отказ драйвера не доказывает причину или отсутствие записи.
+     * EN: Driver failure proves neither the cause nor absence of effects.
+     */
+    public static function fileWriteError($source, $path, $action)
+    {
+        if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'tpl') {
+            return \ModxMcp\Security\MutationOutcomeGuard::MEDIA_TPL_MESSAGE;
+        }
+        return $action . ' failed: ' . self::error($source, 'unknown error');
+    }
+
     public static function error($source, $fallback)
     {
         $errors = method_exists($source, 'getErrors')

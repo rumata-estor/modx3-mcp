@@ -120,7 +120,17 @@ final class ErrorCatalog
         $code = is_string($code) && isset($entries[$code])
             ? $code : self::codeFromLegacy($legacy);
         $entry = $entries[$code];
-        return array(
+        // Only fixed messages survive the mutation guard; never interpolate exception text.
+        $detail = null;
+        if ($code === 'MUTATION_OUTCOME_UNCERTAIN'
+            && strpos((string)$legacy, 'MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED:') === 0) {
+            $detail = 'MEDIA_TPL_WRITE_REFUSED';
+            $entry = array('Источник файлов отклонил запись файла .tpl.',
+                'Возможная причина — allowedFileTypes источника или системная настройка upload_files; причина не установлена.',
+                'Проверьте фактическое состояние файла. Попросите администратора проверить разрешённые расширения в Media Source и upload_files. Не отключайте защиту ради повтора.',
+                'unknown', 'verify_before_retry');
+        }
+        $result = array(
             'code' => $code,
             'error_id' => $errorId === null ? self::newId() : $errorId,
             'message_ru' => $entry[0],
@@ -129,6 +139,8 @@ final class ErrorCatalog
             'outcome' => $entry[3],
             'retry_policy' => $entry[4],
         );
+        if ($detail !== null) $result['detail_code'] = $detail;
+        return $result;
     }
 
     // RU: Ошибка журналирования не должна обрывать ответ об исходной ошибке.

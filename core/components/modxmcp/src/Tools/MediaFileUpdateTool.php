@@ -74,8 +74,7 @@ class MediaFileUpdateTool implements ToolInterface
         $result = $source->updateObject($path, (string)$data['content']);
         if ($result === false) {
             throw new \ModxMCPClientException(
-                'update_media_file failed: '
-                . MediaSourceMutationSupport::error($source, 'unknown error')
+                MediaSourceMutationSupport::fileWriteError($source, $path, 'update_media_file')
             );
         }
         MediaSourceMutationSupport::refresh($context);
