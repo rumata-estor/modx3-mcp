@@ -60,6 +60,26 @@ if modx2_legacy_bridge.is_file():
     element_bridge_files.append(
         'core/components/modxmcp/legacy/modx2/modxmcp.class.php'
     )
+# The Manager's public graph entry point must use the read-only modular tool
+# without selecting the API service account or falling back to legacy file reads.
+for graph_rel in element_bridge_files:
+    graph_text = (root / graph_rel).read_text(encoding='utf-8')
+    graph_start = graph_text.find('public function buildDependencyGraph(')
+    graph_end = graph_text.find('\n    }', graph_start)
+    graph_body = graph_text[graph_start:graph_end] if graph_start >= 0 and graph_end >= 0 else ''
+    for needle in (
+        'if ($this->modularRuntime === null)',
+        "registry()->get('dependency_graph')",
+        '$tool->isMutation()',
+        '$tool->supports($context)',
+        'return $tool->execute($context, $data);',
+    ):
+        if needle not in graph_body:
+            errors.append(f'{graph_rel}: manager graph modular boundary missing {needle}')
+    for forbidden in ('$this->processRequest(', 'getFileContent(', 'file_get_contents(', 'resolveServiceUser('):
+        if forbidden in graph_body:
+            errors.append(f'{graph_rel}: unsafe manager graph path: {forbidden}')
+
 for rel in element_bridge_files:
     text = (root / rel).read_text(encoding='utf-8')
     bridge_start = text.find('$elementBridgeActions = array(')
