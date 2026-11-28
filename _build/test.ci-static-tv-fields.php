@@ -27,6 +27,7 @@ $name='MCP_StaticTV_'.$fixture;
 $id=0;
 $bootstrapChunkId=0;
 $generatedStaticPath=null;
+$renamePaths=array();
 $checks=0;
 function stvRpc($action,array $data=array()){
     global $api;
@@ -189,6 +190,44 @@ try {
     stvCheck($deniedOverwrite,'second TV conversion refused overwriting its file');
     stvCheck(file_get_contents($generatedStaticPath)==='EDITED_'.$fixture,
         'rejected overwrite preserved edited bytes');
+    // Reuse the bootstrap chunk, owned by this disposable fixture.
+    $original=stvRpc('get_element',array('type'=>'chunk','id'=>$bootstrapChunkId));
+    $oldRelative=$original['static_file'];
+    $oldAbsolute=rtrim($modx->getOption('base_path'),'/').'/'.$oldRelative;
+    $renamePaths[]=$oldAbsolute;
+    $bytes=file_get_contents($oldAbsolute);
+    $priorAuto=$modx->getOption('modxmcp.auto_static',null,false);
+    $priorNative=$modx->getOption('static_elements_automate_chunks',null,false);
+    $modx->setOption('modxmcp.auto_static',true);
+    $modx->setOption('static_elements_automate_chunks',true);
+    try {
+        $rename=stvRpc('update_element',array('type'=>'chunk','id'=>$bootstrapChunkId,
+            'name'=>'MCPStaticRenamed_'.$fixture));
+        $readback=stvRpc('get_element',array('type'=>'chunk','id'=>$bootstrapChunkId));
+        stvCheck($readback['name']==='MCPStaticRenamed_'.$fixture && $readback['static_file']===$oldRelative
+            && file_get_contents($oldAbsolute)===$bytes,'rename preserves original static link and bytes');
+        stvCheck(strpos($rename,'retained after rename')!==false,'rename reports retained link');
+        $again=stvRpc('make_static',array('type'=>'chunk','id'=>$bootstrapChunkId));
+        stvCheck($again['status']==='already_static' && $again['static_file']===$oldRelative,
+            'repeat conversion does not move or rewrite existing static file');
+        $newRelative='core/elements/chunks/mcp-rebind-'.$fixture.'.tpl';
+        $newAbsolute=rtrim($modx->getOption('base_path'),'/').'/'.$newRelative;
+        $renamePaths[]=$newAbsolute;
+        $rebind=stvRpc('update_element',array('type'=>'chunk','id'=>$bootstrapChunkId,
+            'static_file'=>$newRelative,'content'=>$bytes));
+        $readback=stvRpc('get_element',array('type'=>'chunk','id'=>$bootstrapChunkId));
+        stvCheck($readback['static_file']===$newRelative && is_file($oldAbsolute)
+            && file_get_contents($oldAbsolute)===$bytes,'native old-file cleanup suppressed on explicit path change');
+        stvCheck(is_file($newAbsolute) && file_get_contents($newAbsolute)===$bytes,'new file verified');
+        stvCheck(strpos($rebind,'may be orphaned')!==false && strpos($rebind,$oldRelative)!==false,
+            'former link reported without claiming no other references');
+        stvCheck((bool)$modx->getOption('static_elements_automate_chunks',null,false),
+            'native automation restored after update');
+        echo 'STATIC_RENAME_NATIVE_PRESERVATION_OK'.PHP_EOL;
+    } finally {
+        $modx->setOption('modxmcp.auto_static',$priorAuto);
+        $modx->setOption('static_elements_automate_chunks',$priorNative);
+    }
     echo 'STATIC_TV_DISPOSABLE_ACCEPTANCE_OK platform='
         .($is2?'modx2':'modx3').' checks='.$checks.PHP_EOL;
 } finally {
@@ -201,4 +240,5 @@ try {
     if($bootstrapChunkId>0)stvRpc('delete_element',array(
         'type'=>'chunk','id'=>$bootstrapChunkId
     ));
+    foreach($renamePaths as $fixturePath)if(is_file($fixturePath))unlink($fixturePath);
 }

@@ -364,6 +364,65 @@ class ElementMutationSupport
         return (bool)$context->modx()->getOption('modxmcp.auto_static', null, false);
     }
 
+    /**
+     * RU: По подходу dampilov94/mcp-component, StaticFiles::withoutNativeCleanup
+     * (task/37-file-boundaries): не позволяем штатному save удалять прежний файл.
+     * EN: Adapted from Nikolai's task 37; suppress native old-file unlink
+     * for the current save only. Never persist the MODX setting.
+     */
+    public static function withoutNativeCleanup($context, $type, callable $save)
+    {
+        $names = array('chunk'=>'chunks', 'snippet'=>'snippets', 'template'=>'templates',
+            'plugin'=>'plugins', 'tv'=>'tvs');
+        if (!isset($names[$type])) return $save();
+        $modx = $context->modx();
+        $key = 'static_elements_automate_' . $names[$type];
+        $previous = $modx->getOption($key, null, false);
+        if (!$previous) return $save();
+        $modx->setOption($key, false);
+        try { return $save(); }
+        finally { $modx->setOption($key, $previous); }
+    }
+
+    // RU: Снимок ссылки на файл, без чтения его содержимого и без запуска парсера.
+    // EN: Snapshot file reference, without reading contents or invoking parser.
+    public static function staticReference($context, $type, $id)
+    {
+        if (!in_array($type, array('chunk','snippet','template','plugin','tv'), true)) return null;
+        $object = $context->modx()->getObject($context->platform()->className($type), (int)$id, false);
+        if (!$object) {
+            throw new \ModxMCPClientException('Cannot verify static element metadata.');
+        }
+        return array('static'=>(bool)$object->get('static'),
+            'static_file'=>(string)$object->get('static_file'),
+            'source'=>(int)$object->get('source'),
+            'name'=>(string)$object->get($type === 'template' ? 'templatename' : 'name'));
+    }
+
+    // RU: Это кандидат в сироты, а не доказательство отсутствия других ссылок.
+    // EN: Report a former reference, never claim the file has no other users.
+    public static function staticReferenceWarning($context, $before, $after)
+    {
+        if (!$before || !$after || !$before['static'] || $before['static_file'] === '') return '';
+        $same = $after['static'] && $before['static_file'] === $after['static_file']
+            && $before['source'] === $after['source'];
+        if ($same && $before['name'] === $after['name']) return '';
+        // Only display a path that passes the existing static root guard.
+        // An untrusted stored path or source is not a filesystem read instruction.
+        $label = '';
+        try {
+            $safe = self::validateStaticFile($context, $before['static_file']);
+            if ($safe !== '' && !preg_match('/[\x00-\x1f\x7f]/', $safe)) $label = ' (' . $safe . ')';
+        } catch (\Throwable $ignored) {}
+        if ($same) {
+            return ' Static file reference' . $label . ' retained after rename; no file rename or removal was requested.';
+        }
+        return ' WARNING: former static file reference' . $label
+            . ' (Media Source ID ' . $before['source'] . ') may be orphaned; '
+            . 'MCP suppressed native old-file cleanup. Verify file existence and other references separately. '
+            . 'No automatic move or deletion was requested.';
+    }
+
     public static function staticMap($context)
     {
         return array(
@@ -402,7 +461,7 @@ class ElementMutationSupport
         $relative = 'core/elements/' . $item['dir'] . '/' . $slug . '.' . $item['ext'];
         $base = rtrim($modx->getOption('base_path'), '/') . '/';
         $absolute = $base . $relative;
-        if (file_exists($absolute) && !(bool)$element->get('static')) {
+        if ((file_exists($absolute) || is_link($absolute)) && !(bool)$element->get('static')) {
             $relative = 'core/elements/' . $item['dir'] . '/' . $slug . '-' . $id . '.' . $item['ext'];
             $absolute = $base . $relative;
         }
@@ -418,11 +477,12 @@ class ElementMutationSupport
     public static function preflightMakeStatic($context, $type, $id)
     {
         $target = self::describeStaticTarget($context, $type, $id);
-        if ($type === 'tv'
+        if ($type === 'tv' && (bool)$target['element']->get('static')) {
+            throw new \ModxMCPClientException('make_static: TV target already exists or is already static; refusing overwrite.');
+        }
+        if (!(bool)$target['element']->get('static')
             && (file_exists($target['absolute']) || is_link($target['absolute']))) {
-            throw new \ModxMCPClientException(
-                'make_static: TV target already exists; refusing overwrite.'
-            );
+            throw new \ModxMCPClientException('make_static: target already exists; refusing overwrite.');
         }
     }
 
@@ -434,6 +494,15 @@ class ElementMutationSupport
         $relative = $target['relative'];
         $absolute = $target['absolute'];
         $modx = $context->modx();
+        $name = (string)$element->get($type === 'template' ? 'templatename' : 'name');
+        if ((bool)$element->get('static')) {
+            if ($type === 'tv') {
+                throw new \ModxMCPClientException('make_static: TV target already exists or is already static; refusing overwrite.');
+            }
+            $stored = self::validateStaticFile($context, (string)$element->get('static_file'));
+            return array('type'=>$type, 'id'=>(int)$id, 'name'=>$name,
+                'static_file'=>$stored, 'status'=>'already_static');
+        }
 
         // RU: Проверка корня и пути обязательна для ВСЕХ static-элементов.
         // RU: Чистая установка MODX может ещё не иметь core/elements.
@@ -455,15 +524,8 @@ class ElementMutationSupport
             }
         }
         ElementContentSupport::assertSafeStaticPath($context, $absolute);
-        if ($type === 'tv') {
-            // RU: При создании TV-файла отказываем при любом занятом пути;
-            // RU: нельзя перезаписывать файл другой TV или симлинк.
-            // EN: A TV conversion must never overwrite another file or symlink.
-            if (file_exists($absolute) || is_link($absolute)) {
-                throw new \ModxMCPClientException(
-                    'make_static: TV target already exists; refusing overwrite.'
-                );
-            }
+        if (file_exists($absolute) || is_link($absolute)) {
+            throw new \ModxMCPClientException('make_static: target already exists; refusing overwrite.');
         }
         // RU: Вложенный каталог создаёт backend; strict — только через dirfd.
         // EN: Backend owns subdirectory creation, strict via anchored dirfd.
@@ -472,7 +534,7 @@ class ElementMutationSupport
         // RU: элементов. TV создаётся эксклюзивно без частичного xb/fwrite.
         // EN: Shared backend with atomic exclusive publish for static TVs.
         $written = StaticFileWriteSupport::replace(
-            $context, $absolute, $fileBody, $type === 'tv'
+            $context, $absolute, $fileBody, true
         );
         if ($written === false || $written !== strlen($fileBody)) {
             // RU: Даже при отказе записи файл мог быть создан или усечён.
@@ -486,7 +548,7 @@ class ElementMutationSupport
         $element->set('static', true);
         $element->set('static_file', $relative);
         $element->set('source', 1);
-        if (!$element->save()) {
+        if (!self::withoutNativeCleanup($context, $type, function () use ($element) { return $element->save(); })) {
             // RU: Файл уже мог быть записан, а DB-транзакция откатиться.
             // RU: Повтор без независимого MCP-readback недопустим.
             // EN: The file may already exist even if DB metadata rolled back.

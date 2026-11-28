@@ -174,6 +174,9 @@ Change **only one existing default property** of a snippet, chunk, plugin or tem
 
 ### `modx_update_element`
 
+A name-only update of an already static element keeps its file reference even with auto-static enabled. When a file reference changes, the response may identify the former reference as a potential orphan, not proof that the file is unused. Native old-file cleanup is suppressed for the save; no automatic file removal or move is attempted. Existing static elements are not automatically reconverted.
+
+
 Update a MODX element by REPLACING its whole content (send the complete new `content`). Best for small elements or full rewrites. For a few changes inside a large chunk/snippet/template/plugin, do NOT use this — use modx_view_element + modx_edit_element_lines instead (sends only the changed lines, far fewer tokens, atomic with a safety anchor).
 
 | Parameter | Type | Required | Notes and allowed values |

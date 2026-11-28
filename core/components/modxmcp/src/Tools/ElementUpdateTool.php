@@ -79,10 +79,14 @@ class ElementUpdateTool implements ToolInterface
                         $runtimePreconditions
                     );
                 }
-                $response = $context->platform()->runProcessor(
-                    $context->modx(),
-                    ElementSupport::processorBase($type) . 'update',
-                    $updateData
+                $id = (int)$prepared['id'];
+                $beforeStatic = ElementMutationSupport::staticReference($context, $type, $id);
+                $response = ElementMutationSupport::withoutNativeCleanup(
+                    $context, $type, function () use ($context, $type, $updateData) {
+                        return $context->platform()->runProcessor(
+                            $context->modx(), ElementSupport::processorBase($type) . 'update', $updateData
+                        );
+                    }
                 );
                 if (!$response) {
                     throw new \ModxMCPClientException('Update failed: no processor response.');
@@ -93,7 +97,6 @@ class ElementUpdateTool implements ToolInterface
                     );
                 }
 
-                $id = (int)$prepared['id'];
                 if ($type === 'tv') {
                     ElementMutationSupport::handleTvRelations(
                         $context,
@@ -108,9 +111,15 @@ class ElementUpdateTool implements ToolInterface
                         $prepared
                     );
                 }
-                if (ElementMutationSupport::shouldAutoStatic($context, $type, $prepared)) {
+                $afterStatic = ElementMutationSupport::staticReference($context, $type, $id);
+                // Never reconvert an already-static element on a content/name update.
+                // A deliberate detach is also not silently undone by auto_static.
+                if ($afterStatic && !$afterStatic['static'] && !$beforeStatic['static']
+                    && ElementMutationSupport::shouldAutoStatic($context, $type, $prepared)) {
                     ElementMutationSupport::makeStatic($context, $type, $id);
+                    $afterStatic = ElementMutationSupport::staticReference($context, $type, $id);
                 }
+                $warning = ElementMutationSupport::staticReferenceWarning($context, $beforeStatic, $afterStatic);
 
                 ElementMutationSupport::refreshCache($context);
                 AuditSupport::log(
@@ -119,7 +128,7 @@ class ElementUpdateTool implements ToolInterface
                     $type,
                     array('id' => $id)
                 );
-                return 'Successfully updated ' . $type . ' (ID: ' . $id . ').';
+                return 'Successfully updated ' . $type . ' (ID: ' . $id . ').' . $warning;
             }
         );
     }
