@@ -28,6 +28,7 @@ namespace ModxMcp\Tools {
     }
     require_once __DIR__.'/../core/components/modxmcp/src/Security/ProtectedSettingsGuard.php';
     require_once __DIR__.'/../core/components/modxmcp/src/Tools/ProcessorMutationTool.php';
+    require_once __DIR__.'/../core/components/modxmcp/src/Tools/MutationPreflight.php';
 }
 namespace {
 class ModxMCPClientException extends \RuntimeException {}
@@ -310,6 +311,46 @@ if($ctx->platform->calls!==1
     || !array_key_exists('enableAnonymous',$ctx->platform->lastProps)
     || $ctx->platform->lastProps['enableAnonymous']!==false)
     throw new \RuntimeException('CONTEXT_CREATE_DEFAULT_ANONYMOUS_GRANT');
+// PR #193 (@AgelxNash): both checks agree and only the canonical false reaches MODX.
+$anonymousCases = array();
+foreach (array('enableAnonymous','enableanonymous','ENABLEANONYMOUS','EnAbLeAnOnYmOuS',' ENABLEANONYMOUS ') as $field) {
+    foreach (array(false,0,'0',true,1,'1','false',null,array(),0.0,'') as $value) {
+        $anonymousCases[] = array(array($field=>$value), in_array($value,array(false,0,'0'),true));
+    }
+}
+$anonymousCases[] = array(array('enableAnonymous'=>false,'ENABLEANONYMOUS'=>1),false);
+$anonymousCases[] = array(array('ENABLEANONYMOUS'=>true,'enableAnonymous'=>false),false);
+$anonymousCases[] = array(array('enableanonymous'=>'0','enableAnonymous'=>0),true);
+$anonymousCases[] = array(array(),true);
+foreach ($anonymousCases as $case) {
+    $ctx = new AclFakeContext();
+    $data = array_merge(array('key'=>'fixture_ctx'),$case[0]);
+    $preflight = true;
+    try { \ModxMcp\Tools\MutationPreflight::assertAllowed($ctx,'create_context',$data); }
+    catch (ModxMCPClientException $e) {
+        if (strpos($e->getMessage(),'AUTH_DENIED:')!==0) throw $e;
+        $preflight = false;
+    }
+    $processor = true;
+    try { $tool->execute($ctx,$data); }
+    catch (ModxMCPClientException $e) {
+        if ($e->getMessage() !== 'injected processor failure') {
+            if (strpos($e->getMessage(),'AUTH_DENIED:')!==0) throw $e;
+            $processor = false;
+        }
+    }
+    if ($preflight !== $case[1] || $processor !== $case[1] || $ctx->platform->calls !== ($case[1]?1:0))
+        throw new \RuntimeException('ANONYMOUS_FIELD_POLICY_MISMATCH');
+    if ($case[1]) {
+        $fields = array();
+        foreach ($ctx->platform->lastProps as $k=>$v) {
+            if (is_string($k) && strtolower(trim($k))==='enableanonymous') $fields[$k]=$v;
+        }
+        if ($fields !== array('enableAnonymous'=>false))
+            throw new \RuntimeException('ANONYMOUS_FIELD_NOT_CANONICAL');
+    }
+}
+echo 'ANONYMOUS_FIELD_MATRIX_OK cases='.count($anonymousCases).PHP_EOL;
 // RU: PR #54, @AgelxNash: create/update/remove контекстной настройки
 // RU: обновляют кэш нужного контекста, только после успешного процессора.
 // EN: PR #54, @AgelxNash: explicit context_settings refresh targets only

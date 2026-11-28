@@ -70,6 +70,24 @@ class ProcessorMutationTool implements ToolInterface
             }
     }
 
+    /** Normalize disabled anonymous access; grants require a dedicated ACL action. */
+    public static function normalizeAnonymousContextAccess(array $props)
+    {
+        foreach (array_keys($props) as $field) {
+            if (!is_string($field) || strtolower(trim($field)) !== 'enableanonymous') {
+                continue;
+            }
+            if (!in_array($props[$field], array(false, 0, '0'), true)) {
+                throw new \ModxMCPClientException(
+                    'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
+                );
+            }
+            unset($props[$field]);
+        }
+        $props['enableAnonymous'] = false;
+        return $props;
+    }
+
     public function execute($context, array $data)
     {
         $route = isset($this->spec['route']) ? $this->spec['route'] : '';
@@ -121,17 +139,7 @@ class ProcessorMutationTool implements ToolInterface
                 // RU: выдавать этот доступ без отдельного grant_context_access.
                 // EN: Core context/create defaults to anonymous Load Only
                 // EN: access. Use explicit independent ACL grant instead.
-                foreach (array_keys($props) as $field) {
-                    if (!is_string($field)
-                        || strtolower(trim($field)) !== 'enableanonymous') { continue; }
-                    if ($field !== 'enableAnonymous'
-                        || !in_array($props[$field], array(false, 0, '0'), true)) {
-                        throw new \ModxMCPClientException(
-                            'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
-                        );
-                    }
-                }
-                $props['enableAnonymous'] = false;
+                $props = self::normalizeAnonymousContextAccess($props);
             }
             $this->prepareContext($props);
             if (in_array($this->toolName, array(

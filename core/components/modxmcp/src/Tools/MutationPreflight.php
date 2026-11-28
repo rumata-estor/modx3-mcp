@@ -63,21 +63,7 @@ final class MutationPreflight
             );
         }
         if ($action === 'create_context') {
-            foreach (array_keys($data) as $field) {
-                if (!is_string($field)
-                    || strtolower(trim($field)) !== 'enableanonymous') {
-                    continue;
-                }
-                if (!in_array($data[$field], array(false, 0, '0'), true)) {
-                    // RU: Явное включение анонимного доступа (true/'1') — только
-                    // RU: через ACL; любое написание поля принимается одинаково.
-                    // EN: Explicitly enabling anonymous access requires an ACL
-                    // EN: grant; the field name is accepted in any casing.
-                    throw new \ModxMCPClientException(
-                        'AUTH_DENIED: anonymous context access requires explicit ACL grant.'
-                    );
-                }
-            }
+            ProcessorMutationTool::normalizeAnonymousContextAccess($data);
         }
         if ($action === 'run_processor') {
             RunProcessorTool::assertDispatchAllowed($context, $data);
