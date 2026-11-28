@@ -312,10 +312,39 @@ try {
     $multi = rpc('create_element', array(
         'type'=>'tv','name'=>$multiName,'field_type'=>'listbox-multiple',
         'elements'=>'Item18==18||Item19==19','templates'=>array($templateId),
+        'description'=>'Описание TV','rank'=>17,'default_text'=>'18',
     ));
     requireTrue(isset($multi['id']) && (int)$multi['id']>0,
         'create disposable listbox-multiple TV');
     $tvs[] = (int)$multi['id'];
+    $multiId=(int)$multi['id'];
+    $tvRead=rpc('get_element',array('type'=>'tv','id'=>$multiId));
+    requireTrue(($tvRead['description']??'')==='Описание TV' && (int)$tvRead['rank']===17
+        && $tvRead['elements']==='Item18==18||Item19==19'
+        && in_array($templateId,array_map('intval',$tvRead['templates']),true),'TV fields and link persisted');
+    foreach (array(array('rank'=>-1),array('templates'=>array(0)),array('elements'=>array('bad'))) as $invalid) {
+        $rev=rpc('get_site_state')['site_revision'];$denied=false;
+        try {rpc('update_element',array_merge(array('type'=>'tv','id'=>$multiId),$invalid));}
+        catch(ModxMCPClientException $e){$denied=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;}
+        requireTrue($denied && rpc('get_site_state')['site_revision']===$rev,'Invalid TV fields rejected before CAS');
+    }
+    rpc('update_element',array('type'=>'tv','id'=>$multiId,'description'=>'Updated TV','rank'=>18));
+    $tvRead=rpc('get_element',array('type'=>'tv','id'=>$multiId));
+    requireTrue($tvRead['description']==='Updated TV' && (int)$tvRead['rank']===18
+        && $tvRead['elements']==='Item18==18||Item19==19'
+        && in_array($templateId,array_map('intval',$tvRead['templates']),true),'Partial TV update preserves options and links');
+    $checkbox=rpc('create_element',array('type'=>'tv','name'=>'checkbox_'.$fixture,
+        'field_type'=>'checkbox','elements'=>'Yes==1||No==0','rank'=>2,'templates'=>array($templateId)));
+    $checkboxId=(int)($checkbox['id']??0);
+    requireTrue($checkboxId>0,'create checkbox TV');$tvs[]=$checkboxId;
+    $checkRead=rpc('get_element',array('type'=>'tv','id'=>$checkboxId));
+    requireTrue($checkRead['field_type']==='checkbox' && $checkRead['elements']==='Yes==1||No==0'
+        && in_array($templateId,array_map('intval',$checkRead['templates']),true),'checkbox definition and link');
+    rpc('update_element',array('type'=>'tv','id'=>$checkboxId,'templates'=>array()));
+    $checkRead=rpc('get_element',array('type'=>'tv','id'=>$checkboxId));
+    requireTrue($checkRead['templates']===array(),'explicit empty links detach TV');
+    echo 'TV_SCHEMA_NATIVE_FIELDS_AND_LINKS_OK'.PHP_EOL;
+
     $beforeMulti = rpc('get_resource_tvs',array('resource_id'=>$rid));
     $oldMulti = findTV($beforeMulti,$multiName);
     $beforeUnrelated = findTV($beforeMulti,$raceName);
