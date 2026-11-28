@@ -31,8 +31,7 @@ checks=(
 )
 for check in checks:
     assert check in client, f'CAS client schema safety contract missing: {check}'
-for rel in ('core/components/modxmcp/model/modxmcp.class.php',
-            'core/components/modxmcp/legacy/modx2/modxmcp.class.php'):
+for rel in ('core/components/modxmcp/src/Core/Connector.php',):
     code=(ROOT/rel).read_text()
     assert 'StateSupport::requireMutationPreconditions' in code
     assert "'CAS_RUNTIME_REQUIRED:" in code

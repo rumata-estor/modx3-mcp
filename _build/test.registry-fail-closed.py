@@ -12,7 +12,9 @@ legacy_source = root / "core/components/modxmcp/legacy/modx2/modxmcp.class.php"
 if legacy_source.is_file():
     paths.append(legacy_source)
 for path in paths:
-    text = path.read_text(encoding="utf-8")
+    wrapper = path.read_text(encoding="utf-8")
+    assert r"use \ModxMcp\Core\Connector;" in wrapper and "function processRequest(" not in wrapper, path
+    text = (root / "core/components/modxmcp/src/Core/Connector.php").read_text(encoding="utf-8")
     start = text.index("public function processRequest(")
     end = text.index("if ($this->modularRuntime !== null)", start)
     prologue = text[start:end]

@@ -217,7 +217,7 @@ for key, expected in expected_defaults.items():
 token_sources = [
     ROOT / "_build/resolvers/resolve.token.php",
     ROOT / "_build/install.headless.php",
-    ROOT / "core/components/modxmcp/model/modxmcp.class.php",
+    ROOT / "core/components/modxmcp/src/Tools/RegenerateTokenTool.php",
 ]
 for path in token_sources:
     text = path.read_text()
@@ -232,26 +232,28 @@ if "if (!$setting)" not in token_resolver:
 if "if (!$setting->save())" not in token_resolver:
     fail("resolve.token.php: missing fail-closed check for api_token save failure")
 
-if "service_user_id', null, 0" not in model_text:
+connector_text = (ROOT / "core/components/modxmcp/src/Core/Connector.php").read_text()
+if "service_user_id', null, 0" not in connector_text:
     fail("model: service_user_id portable default must remain 0")
 if (
-    "['active' => 1, 'sudo' => 1]" not in model_text
-    and "array('active' => 1, 'sudo' => 1)" not in model_text
+    "['active' => 1, 'sudo' => 1]" not in connector_text
+    and "array('active' => 1, 'sudo' => 1)" not in connector_text
 ):
     fail("model: automatic service user selection must require active + sudo")
-if "if (!$user->get('sudo'))" not in model_text:
+if "if (!$user->get('sudo'))" not in connector_text:
     fail("model: explicitly configured service user must already be sudo")
-if "$this->modx->user->set('sudo', 1)" in model_text or "$this->modx->user->set('sudo',1)" in model_text:
+if "$this->modx->user->set('sudo', 1)" in connector_text or "$this->modx->user->set('sudo',1)" in connector_text:
     fail("model: processRequest must not elevate the service user to sudo in memory")
-cap_pos = model_text.find("$this->assertCapabilityEnabled($action)")
-dispatch_pos = model_text.find("$registeredTool = $this->modularRuntime->registry()->get($action)")
+cap_pos = connector_text.find("$this->assertCapabilityEnabled($action)")
+dispatch_pos = connector_text.find("$registeredTool = $this->modularRuntime->registry()->get($action)")
 if cap_pos < 0 or dispatch_pos < 0 or cap_pos > dispatch_pos:
     fail("model: capability enforcement must run before action dispatch")
-if "modxmcp.allow_run_processor', null, false" not in model_text:
+if "modxmcp.allow_run_processor', null, false" not in (ROOT / 'core/components/modxmcp/src/Tools/RunProcessorTool.php').read_text():
     fail("model: run_processor must remain independently gated off by default")
-if "empty($data['template'])" in model_text:
+bulk_text = (ROOT / 'core/components/modxmcp/src/Tools/BulkResourcesTool.php').read_text()
+if "empty($data['template'])" in bulk_text:
     fail("model: bulk set_template must not treat template=0 as missing")
-if "array_key_exists('template', $data)" not in model_text or "(int) $data['template'] >= 0" not in model_text:
+if "array_key_exists('template', $data)" not in bulk_text or "(int)$data['template'] >= 0" not in bulk_text:
     fail("model: bulk set_template must explicitly allow non-negative template ids including 0")
 client_text = (ROOT / "client/index.js").read_text()
 if 'template: { type: "integer", minimum: 0' not in client_text:
@@ -488,7 +490,7 @@ health_get_pos = api.find("REQUEST_METHOD'] === 'GET'")
 if https_pos < 0 or health_get_pos < 0 or https_pos > health_get_pos:
     fail("api.php: HTTPS enforcement must run before the unauthenticated health GET")
 
-tx_match = re.search(r"private function runWithTransaction\(callable \$callback\).*?\n    \}", model_text, re.S)
+tx_match = re.search(r"public static function transaction\(\$context, \$callback\).*?\n    \}", (ROOT / "core/components/modxmcp/src/Tools/ElementMutationSupport.php").read_text(), re.S)
 if not tx_match or (
     "catch (Throwable $e)" not in tx_match.group(0)
     and "catch (\\Throwable $e)" not in tx_match.group(0)

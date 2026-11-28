@@ -10,11 +10,16 @@ class ModxmcpRegenerateToken3Processor extends Processor
 {
     public function checkPermissions()
     {
-        return $this->modx->hasPermission('settings');
+        return $this->modx->user && $this->modx->user->isAuthenticated('mgr')
+            && $this->modx->hasPermission('settings');
     }
 
     public function process()
     {
+        header('Cache-Control: no-store, private');
+        if (!$this->checkPermissions()) {
+            return $this->failure('Manager settings permission is required.');
+        }
         $modelFile = $this->modx->getOption('core_path') . 'components/modxmcp/model/modxmcp.class.php';
         if (!file_exists($modelFile)) {
             return $this->failure('modxMCP model not found.');

@@ -7,8 +7,6 @@ import sys
 root = Path(__file__).resolve().parents[1]
 paths = [
     root / 'core/components/modxmcp/src/Tools/ClientConfigSettingListTool.php',
-    root / 'core/components/modxmcp/model/modxmcp.class.php',
-    root / 'core/components/modxmcp/legacy/modx2/modxmcp.class.php',
 ]
 errors=[]
 for p in paths:

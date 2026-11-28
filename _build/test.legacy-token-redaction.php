@@ -1,7 +1,7 @@
 <?php
 /* MODX MCP SOURCE / ИСХОДНИК MODX MCP
- * RU: Исполняем реальный normalizeSystemSetting обеих монолитных реализаций.
- * EN: Execute actual legacy normalizeSystemSetting for MODX 2 and 3.
+ * RU: Проверяем общий редактирующий модуль на прежних сценариях обоих пакетов.
+ * EN: Exercise shared redaction using the prior MODX 2 and 3 regression cases.
  */
 namespace MODX\Revolution {
     class modSystemSetting {
@@ -23,8 +23,7 @@ namespace {
         .($variant==='modx2'?'legacy/modx2/modxmcp.class.php':'model/modxmcp.class.php');
     $class=new \ReflectionClass('modxMCP');
     $instance=$class->newInstanceWithoutConstructor();
-    $normalizer=$class->getMethod('normalizeSystemSetting');
-    $normalizer->setAccessible(true);
+    if ($class->hasMethod('normalizeSystemSetting')) throw new \RuntimeException('Legacy handler remains');
     $cases=array(
         array('modxmcp.api_token','a','[REDACTED]'),
         array('modxmcp.api_token','1234567890123456','[REDACTED]'),
@@ -38,9 +37,7 @@ namespace {
     $settingClass=$variant==='modx2'
         ? 'modSystemSetting':'MODX\\Revolution\\modSystemSetting';
     foreach($cases as $case){
-        $row=$normalizer->invoke($instance,new $settingClass(array(
-            'key'=>$case[0],'value'=>$case[1]
-        )));
+        $row=\ModxMcp\Tools\SettingSecretSupport::settingRow(array('key'=>$case[0],'value'=>$case[1]));
         if (!is_array($row) || ($row['key']??null)!==$case[0]
             || ($row['value']??null)!==$case[2])
             throw new \RuntimeException(

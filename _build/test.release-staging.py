@@ -86,7 +86,8 @@ with tempfile.TemporaryDirectory() as td:
 
         # RU: Оба распространяемых диспетчера должны содержать CAS-preflight.
         # EN: Staged MODX 2/3 dispatcher must include missing-addon preflight.
-        if 'StateSupport::requireOptionalAddonPath' not in model:
+        connector = (out / 'core/components/modxmcp/src/Core/Connector.php').read_text(encoding='utf-8')
+        if 'StateSupport::requireOptionalAddonPath' not in connector or r'use \ModxMcp\Core\Connector;' not in model:
             errors.append(f'{platform}: staged dispatcher missing addon CAS preflight')
 
         if platform == 'modx2':

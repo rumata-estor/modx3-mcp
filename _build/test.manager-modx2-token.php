@@ -1,7 +1,7 @@
 <?php
 /* MODX MCP SOURCE / ИСХОДНИК MODX MCP
- * RU: Регрессия ротации токена MODX 2 на подготовленном пакете, без БД.
- * EN: MODX 2 Manager token rotation regression on staged package, no DB.
+ * RU: Регрессия ротации токена MODX 2/3 на подготовленном пакете, без БД.
+ * EN: MODX 2/3 Manager token rotation regression on staged package, no DB.
  */
 class ManagerUserFake {
     public $authenticated = true;
@@ -14,12 +14,12 @@ class ManagerTokenSettingFake {
 }
 class modX {
     public $user; public $setting; public $permission = true; public $runtimeAvailable = true;
-    public $reloads = 0; public $core;
-    public function __construct($core) {
-        $this->core = $core; $this->user = new ManagerUserFake();
+    public $reloads = 0; public $core; public $variant;
+    public function __construct($core, $variant) {
+        $this->core = $core; $this->variant = $variant; $this->user = new ManagerUserFake();
         $this->setting = new ManagerTokenSettingFake();
     }
-    public function getVersionData() { return array('version' => '2.8.8-pl'); }
+    public function getVersionData() { return array('version' => $this->variant === 'modx2' ? '2.8.8-pl' : '3.2.4-pl'); }
     public function getOption($key, $options = null, $default = null) {
         if ($key === 'core_path') return dirname(dirname($this->core)) . '/';
         if ($key === 'modxmcp.core_path') return $this->runtimeAvailable ? $this->core . '/' : $this->core . '/missing/';
@@ -28,7 +28,7 @@ class modX {
     }
     public function hasPermission($permission) { return $permission === 'settings' && $this->permission; }
     public function getObject($class, $criteria) {
-        if ($class !== 'modSystemSetting' || $criteria !== array('key'=>'modxmcp.api_token')) {
+        if ($class !== ($this->variant === 'modx2' ? 'modSystemSetting' : 'MODX\\Revolution\\modSystemSetting') || $criteria !== array('key'=>'modxmcp.api_token')) {
             throw new RuntimeException('Unexpected access or service account selection');
         }
         return $this->setting;
@@ -46,10 +46,13 @@ function requireCheck($condition, $message) {
     if (!$condition) throw new RuntimeException('MANAGER_TOKEN_FAIL: '.$message);
 }
 $core = rtrim($argv[1], '/');
+$variant = $argv[2];
+class_alias('modX', 'MODX\\Revolution\\modX');
+class_alias('modProcessor', 'MODX\\Revolution\\Processors\\Processor');
 require $core.'/processors/mgr/regeneratetoken3.class.php';
 $checks = 0;
 foreach (array('unauthenticated','permission','missing_runtime','save_failure','success') as $scenario) {
-    $modx = new modX($core);
+    $modx = new modX($core, $variant);
     if ($scenario === 'unauthenticated') $modx->user->authenticated = false;
     if ($scenario === 'permission') $modx->permission = false;
     if ($scenario === 'missing_runtime') $modx->runtimeAvailable = false;
@@ -70,4 +73,4 @@ foreach (array('unauthenticated','permission','missing_runtime','save_failure','
     }
     $checks++;
 }
-echo 'MODX2_MANAGER_TOKEN_ROTATION_OK checks='.$checks.PHP_EOL;
+echo 'MANAGER_TOKEN_ROTATION_OK platform='.$variant.' checks='.$checks.PHP_EOL;

@@ -18,22 +18,19 @@ if ($processorsRoot === '' || !is_dir($processorsRoot)) {
     exit(2);
 }
 
-$modelFile = dirname(__DIR__) . '/core/components/modxmcp/model/modxmcp.class.php';
+$base = dirname(__DIR__) . '/core/components/modxmcp/src/';
+$modelFile = $base . 'Registry/MutationProcessorCatalog.php';
 $model = file_get_contents($modelFile);
+foreach (glob($base.'Tools/*.php') as $toolFile) $model .= "\n" . file_get_contents($toolFile);
 if ($model === false) {
     fwrite(STDERR, "Could not read {$modelFile}\n");
     exit(2);
 }
 
 $paths = array();
-
-if (preg_match_all("/['\"]proc['\"]\\s*=>\\s*['\"]([^'\"]+)['\"]/", $model, $matches)) {
-    foreach ($matches[1] as $path) {
-        $paths[$path] = true;
-    }
-}
-
-if (preg_match_all("/runCoreProcessor\\(\\s*['\"]([^'\"]+)['\"]/", $model, $matches)) {
+// Every literal native core route in the executable modular implementation.
+// Dynamic element CRUD routes are checked separately below.
+if (preg_match_all("~['\"]((?:context|security|workspace|resource|system|source)/[a-z0-9_-]+(?:/[a-z0-9_-]+)*)['\"]~", $model, $matches)) {
     foreach ($matches[1] as $path) {
         $paths[$path] = true;
     }

@@ -23,8 +23,7 @@ require_once MODX_CORE_PATH . 'components/modxmcp/model/modxmcp.class.php';
 $api = new modxMCP($modx);
 $modx->setOption('modxmcp.allow_run_processor', true); // in-memory only
 $reflection = new ReflectionClass($api);
-$legacy = $reflection->getMethod('runProcessorPassthrough');
-$legacy->setAccessible(true);
+if ($reflection->hasMethod('runProcessorPassthrough')) throw new RuntimeException('Legacy processor handler remains');
 $checks = 0;
 $cases = array(
     array('system/settings/update', array('key'=>'modxmcp.api_token','value'=>'BAD')),
@@ -37,22 +36,22 @@ $cases = array(
 foreach ($cases as $case) {
     $denied = false;
     try {
-        $legacy->invoke($api, array('processor'=>$case[0], 'properties'=>$case[1]));
-    } catch (ModxMCPClientException $e) {
-        $denied = strpos($e->getMessage(), 'modxmcp.*') !== false;
+        \ModxMcp\Security\ProcessorAccessPolicy::authorize(array('processor'=>$case[0], 'properties'=>$case[1]), 'privileged', '', $case[0]);
+    } catch (RuntimeException $e) {
+        $denied = strpos($e->getMessage(), 'AUTH_DENIED:') === 0;
     }
     if (!$denied) { throw new RuntimeException('LEGACY_GUARD_FAIL: '.$case[0]); }
     $checks++;
 }
 $denied = false;
 try {
-    $legacy->invoke($api, array(
+    \ModxMcp\Security\ProcessorAccessPolicy::authorize(array(
         'processor'=>'update.class.php',
         'processors_path'=>'/core/model/modx/processors/system/settings/',
         'properties'=>array('key'=>'modxmcp.enabled','value'=>0),
-    ));
-} catch (ModxMCPClientException $e) {
-    $denied = strpos($e->getMessage(), 'modxmcp.*') !== false;
+    ), 'privileged', '', 'system/settings/update');
+} catch (RuntimeException $e) {
+    $denied = strpos($e->getMessage(), 'AUTH_DENIED:') === 0;
 }
 if (!$denied) { throw new RuntimeException('LEGACY_GUARD_FAIL: processors_path'); }
 $checks++;

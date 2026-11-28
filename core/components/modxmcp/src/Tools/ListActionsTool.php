@@ -12,12 +12,11 @@ class ListActionsTool implements ToolInterface
     public function isMutation() { return false; }
     public function supports($context)
     {
-        return $context && $context->legacy()
-            && method_exists($context->legacy(), 'getSupportedActions');
+        return $context && $context->modx() && $context->platform();
     }
 
     public function execute($context, array $data)
     {
-        return $context->legacy()->getSupportedActions();
+        return \ModxMcp\Registry\CapabilityService::groups();
     }
 }

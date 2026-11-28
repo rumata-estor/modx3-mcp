@@ -36,7 +36,8 @@ for p in shared.rglob('*.php'):
         if re.search(pat,s):
             errors.append(f'{p.relative_to(root)} uses {label}')
 
-s=fallback.read_text(encoding='utf-8')
+assert r'use \ModxMcp\Core\Connector;' in fallback.read_text(encoding='utf-8')
+s=(shared/'Core/Connector.php').read_text(encoding='utf-8')
 constructor=s.split('private function resolveServiceUser',1)[0]
 if 'catch (\\Exception $e)' not in constructor:
     errors.append('MODX2 modular bootstrap does not catch Exception')

@@ -13,11 +13,11 @@ class CapabilitiesTool implements ToolInterface
 
     public function supports($context)
     {
-        return $context && $context->legacy() && method_exists($context->legacy(), 'getCapabilities');
+        return $context && $context->modx() && $context->platform();
     }
 
     public function execute($context, array $arguments)
     {
-        return $context->legacy()->getCapabilities();
+        return \ModxMcp\Registry\CapabilityService::report($context->modx(), true);
     }
 }

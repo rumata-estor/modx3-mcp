@@ -38,13 +38,13 @@ function checkResult($condition, $message) {
 $path = $argv[1];
 require $path;
 $src = dirname(__DIR__).'/core/components/modxmcp/src';
-require $src.'/Autoloader.php';
+require_once $src.'/Autoloader.php';
 \ModxMcp\Autoloader::register($src);
 $class = new ReflectionClass('modxMCP');
 $runtimeProperty = $class->getProperty('modularRuntime');
 $runtimeProperty->setAccessible(true);
 $checks = 0;
-foreach (array('no_runtime','unknown','unsupported','disappeared','support_changed','missing_cas','success') as $case) {
+foreach (array('no_runtime','unknown','unsupported','disappeared','support_changed','missing_cas','disabled_group','success') as $case) {
     $instance = $class->newInstanceWithoutConstructor();
     $instance->modx = new RegistryModxFake();
     $runtime = new RegistryRuntimeFake();
@@ -56,14 +56,16 @@ foreach (array('no_runtime','unknown','unsupported','disappeared','support_chang
     if ($case === 'support_changed') $tool->changes = true;
     if ($case === 'missing_cas') $tool->mutation = true;
     $runtimeProperty->setValue($instance, $case === 'no_runtime' ? null : $runtime);
-    $action = $case === 'missing_cas' ? 'update_element' : 'get_element';
+    if ($case === 'disabled_group') $instance->modx->disabled = 'property_sets';
+    $action = $case === 'disabled_group' ? 'list_property_sets' : ($case === 'missing_cas' ? 'update_element' : 'get_element');
     try {
         $result = $instance->processRequest($action, 'chunk', array('id'=>42));
         checkResult($case === 'success', $case.' accepted');
         checkResult($result === array('id'=>42,'type'=>'chunk') && $tool->calls === 1, 'read did not use module');
     } catch (ModxMCPClientException $e) {
         $prefix = $case === 'missing_cas' ? 'CAS_REQUIRED:' : 'CAS_RUNTIME_REQUIRED:';
-        checkResult($case !== 'success' && strpos($e->getMessage(), $prefix) === 0 && $tool->calls === 0, $case.' wrong refusal');
+        $denied = $case === 'disabled_group' ? strpos($e->getMessage(), 'property_sets') !== false : strpos($e->getMessage(), $prefix) === 0;
+        checkResult($case !== 'success' && $denied && $tool->calls === 0, $case.' wrong refusal');
     }
     $checks++;
 }
