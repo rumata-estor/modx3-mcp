@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.fr.md) · [Référence de l’API](API.fr.md)
 
-**MODX MCP 1.2.7 · 198 outils publics · 19 groupes fonctionnels · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 199 outils publics · 19 groupes fonctionnels · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP fournit à un client MCP doté de capacités d’IA des opérations nommées pour travailler avec les données et les éléments MODX, au lieu d’exiger que chaque tâche soit exprimée sous forme de SQL brut ou de commandes du système de fichiers. Il prend en charge l’inspection du site, la modification du contenu et du code, les valeurs des TV, les paquets, l’administration des accès et certaines extensions tierces. La liste réelle des outils dépend de la version installée et des fonctionnalités activées.
 
@@ -33,7 +33,7 @@ Ce guide répond à la question **« Que puis-je faire avec MODX MCP ? »**. Pou
 | [Espaces de noms](#espaces-de-noms) | 4 |
 | [Lexique et traductions](#lexique-et-traductions) | 4 |
 | [Maintenance et diagnostic](#maintenance-et-diagnostic) | 13 |
-| **Total** | **198** |
+| **Total** | **199** |
 
 ## Éléments et ressources
 
@@ -125,6 +125,7 @@ Découvrez les extensions installées et inspectez leurs fichiers autorisés.
 | `modx_get_component_files` | Liste les fichiers et dossiers d’un composant MODX installé. | Lecture |
 | `modx_read_component_file` | Lit un fichier d’un composant MODX installé. | Lecture |
 | `modx_check_integrations` | Indique quelles extensions MODX populaires (miniShop2, MIGX, pdoTools, Tickets, etc.) sont installées sur ce site et ce que modxMCP peut faire avec chacune. | Lecture |
+| `modx_check_template` | Vérification syntaxique Fenom limitée ; sans rendu, événements du site, lecture des dépendances ni sauvegarde. | Lecture |
 
 ## Recherche de code et dépendances
 

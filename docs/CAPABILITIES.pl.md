@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Instalacja](INSTALL.pl.md) · [Dokumentacja API](API.pl.md)
 
-**MODX MCP 1.2.7 · 198 publiczne narzędzia · 19 grup funkcjonalnych · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 199 publiczne narzędzia · 19 grup funkcjonalnych · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP udostępnia klientowi MCP wyposażonemu w AI nazwane operacje do pracy z danymi i elementami MODX, zamiast wymagać wyrażania każdego zadania za pomocą surowego SQL lub poleceń systemu plików. Obsługuje inspekcję witryny, edycję treści i kodu, wartości TV, pakiety, administrację dostępem oraz wybrane dodatki innych producentów. Rzeczywista lista narzędzi zależy od zainstalowanej kompilacji i włączonych funkcji.
 
@@ -33,7 +33,7 @@ Ten przewodnik odpowiada na pytanie **„Co mogę zrobić za pomocą MODX MCP?�
 | [Przestrzenie nazw](#przestrzenie-nazw) | 4 |
 | [Leksykon i tłumaczenia](#leksykon-i-tłumaczenia) | 4 |
 | [Konserwacja i diagnostyka](#konserwacja-i-diagnostyka) | 13 |
-| **Łącznie** | **198** |
+| **Łącznie** | **199** |
 
 ## Elementy i zasoby
 
@@ -125,6 +125,7 @@ Poznaj zainstalowane dodatki i sprawdzaj pliki, do których dostęp jest dozwolo
 | `modx_get_component_files` | Wyświetla pliki i foldery wewnątrz zainstalowanego komponentu MODX. | Odczyt |
 | `modx_read_component_file` | Odczytuje plik z zainstalowanego komponentu MODX. | Odczyt |
 | `modx_check_integrations` | Informuje, które popularne dodatki MODX (miniShop2, MIGX, pdoTools, Tickets itd.) są zainstalowane w tej witrynie i co modxMCP potrafi zrobić z każdym z nich. | Odczyt |
+| `modx_check_template` | Ograniczona kontrola składni Fenom; bez renderowania, zdarzeń witryny, odczytu zależności i zapisu. | Odczyt |
 
 ## Wyszukiwanie kodu i zależności
 

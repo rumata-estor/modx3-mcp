@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Hinweis: Diese Seite ist eine übersetzte Kurzübersicht. Die vollständigen Parametertabellen der 198 MCP-Werkzeuge sind weiterhin auf Englisch und Russisch verfügbar.
+> Hinweis: Diese Seite ist eine übersetzte Kurzübersicht. Die vollständigen Parametertabellen der 199 MCP-Werkzeuge sind weiterhin auf Englisch und Russisch verfügbar.
 Öffentliche MCP-Werkzeuge tragen das Präfix `modx_`. Die PHP-HTTP-API verwendet dagegen Aktionsnamen ohne Präfix. Die vollständigen Parametertabellen und JSON-Schemata bleiben in der englischen Referenz verfügbar.
 
 ## MCP
@@ -27,7 +27,7 @@ Senden Sie `POST` mit JSON und `X-MCP-Token` über HTTPS. `api.php` ist kein MCP
 **Vollständige technische Referenzen:** [API-Parameter (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [Sicherheit (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [Entwicklerdokumentation (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Die ausführlichen englischen Referenztabellen sind maßgeblich.
 
 
-## Verzeichnis der 198 MCP-Werkzeuge
+## Verzeichnis der 199 MCP-Werkzeuge
 
 > Die Beschreibungen sind übersetzt; verbindliche Felder, Typen, Grenzen und Aufzählungen stehen in der verlinkten englischen oder russischen technischen Referenz.
 
@@ -111,6 +111,7 @@ Senden Sie `POST` mit JSON und `X-MCP-Token` über HTTPS. `api.php` ist kein MCP
 | [modx_get_component_files](API.md#modx_get_component_files) | Dateien und Ordner innerhalb einer installierten MODX-Komponente auflisten. | Lesen |
 | [modx_read_component_file](API.md#modx_read_component_file) | Eine Datei einer installierten MODX-Komponente lesen. | Lesen |
 | [modx_check_integrations](API.md#modx_check_integrations) | Melden, welche verbreiteten MODX-Erweiterungen (miniShop2, MIGX, pdoTools, Tickets usw.) auf dieser Website installiert sind und was modxMCP mit jeder davon tun kann. | Lesen |
+| [modx_check_template](API.md#modx_check_template) | Eingeschränkte Fenom-Syntaxprüfung; ohne Rendering, Site-Ereignisse, Lesen von Abhängigkeiten oder Speichern. | Lesen |
 
 ### Codesuche und Abhängigkeiten
 

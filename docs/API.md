@@ -650,6 +650,11 @@ Report which popular MODX add-ons (miniShop2, MIGX, pdoTools, Tickets, etc.) are
 
 ## 7. Code search and dependencies (5)
 
+
+### `modx_check_template`
+
+Check proposed Fenom source, using only the audited installed Fenom 2.12.0 library from the conventional pdoTools vendor directory. No MODX service, site hooks, providers, template rendering, persistence or cache generation. Input: content (string, max 65536 bytes and 1024 opening delimiters). Output: status = syntax_ok / syntax_error / inconclusive / unavailable; reason is a fixed diagnostic code, line is optional, scope is isolated_fenom_2.12. A successful result checks the restricted parser only: dependencies and site-specific extensions are not checked. Include syntax may pass without confirming the target; inheritance/import/insert requiring source returns inconclusive. Unsupported compiler source or unavailable library returns unavailable. This is an optional explicit check; existing writes are not changed.
+
 ### `modx_search_code`
 
 Full-text search across element and resource CONTENT (and names). Finds the chunk/snippet/template/plugin/TV/resource that contains a string, including where an element is referenced or mentioned. Matches static elements by reading their static file. Use this to navigate the codebase (e.g. query 'header' finds the header chunk and everything that uses or mentions it). Each content hit returns `id`, `line` (1-based line of the match) and `line_text` (the exact line, verbatim) — so for a one-line change you can go straight to modx_edit_element_lines using `line` as start_line/end_line and `line_text` as `expect`, with no separate read. For multi-line context, open a window with modx_view_element around `line`.

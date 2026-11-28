@@ -68,6 +68,7 @@ final class CapabilityService
                 'get_component_files',
                 'read_component_file',
                 'check_integrations',
+                'check_template',
             ),
             'code_search' => array(
                 'search_code',

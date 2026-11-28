@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Instalación](INSTALL.es.md) · [Referencia de la API](API.es.md)
 
-**MODX MCP 1.2.7 · 198 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 199 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP proporciona a un cliente MCP con capacidades de IA operaciones con nombre para trabajar con datos y elementos MODX, en lugar de exigir que cada tarea se exprese como SQL sin procesar o comandos del sistema de archivos. Admite la inspección del sitio, la edición de contenido y código, valores de TV, paquetes, administración de acceso y determinados complementos de terceros. La lista real de herramientas depende de la compilación instalada y de las capacidades habilitadas.
 
@@ -33,7 +33,7 @@ Esta guía responde a **«¿Qué puedo hacer con MODX MCP?»**. Para conocer tod
 | [Espacios de nombres](#espacios-de-nombres) | 4 |
 | [Léxico y traducciones](#léxico-y-traducciones) | 4 |
 | [Mantenimiento y diagnóstico](#mantenimiento-y-diagnóstico) | 13 |
-| **Total** | **198** |
+| **Total** | **199** |
 
 ## Elementos y recursos
 
@@ -125,6 +125,7 @@ Descubra los complementos instalados e inspeccione sus archivos permitidos.
 | `modx_get_component_files` | Enumera archivos y carpetas dentro de un componente MODX instalado. | Lectura |
 | `modx_read_component_file` | Lee un archivo de un componente MODX instalado. | Lectura |
 | `modx_check_integrations` | Informa de qué complementos populares de MODX (miniShop2, MIGX, pdoTools, Tickets, etc.) están instalados en este sitio y qué puede hacer modxMCP con cada uno. | Lectura |
+| `modx_check_template` | Comprobación limitada de sintaxis Fenom; sin renderizar, ejecutar eventos, leer dependencias ni guardar. | Lectura |
 
 ## Búsqueda de código y dependencias
 

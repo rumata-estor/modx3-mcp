@@ -90,7 +90,7 @@ if (!$caps || $caps->isMutation() || !$caps->supports($runtime->context())) { th
 $result = $caps->execute($runtime->context(), array());
 if (empty($result['features']['cas_required']) || $result['features']['precondition_version'] !== 2) { throw new Exception('Bad capabilities result'); }
 $actions = $runtime->registry()->get('list_actions')->execute($runtime->context(), array());
-if (empty($actions['ops']) || $actions['ops'][0] !== 'list_actions' || count($actions, COUNT_RECURSIVE)-count($actions) !== 199) { throw new Exception('Bad list_actions result'); }
+if (empty($actions['ops']) || $actions['ops'][0] !== 'list_actions' || count($actions, COUNT_RECURSIVE)-count($actions) !== 200) { throw new Exception('Bad list_actions result'); }
 
 // RU: Полная проверка соответствия публичного каталога и реального реестра.
 // EN: Verify complete public catalog against the instantiated registry.
@@ -371,5 +371,5 @@ foreach (array('create_category', 'update_category', 'delete_category', 'assign_
         throw new Exception('Bad category mutation tool registration: ' . $name);
     }
 }
-if (count($runtime->registry()->all()) !== 199) { throw new Exception('Unexpected tool count'); }
+if (count($runtime->registry()->all()) !== 200) { throw new Exception('Unexpected tool count'); }
 echo "MODULAR_CORE_OK\n";

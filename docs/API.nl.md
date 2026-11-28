@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Opmerking: dit is een vertaald overzicht. De volledige parametertabellen van alle 198 MCP-tools zijn beschikbaar in het Engels en Russisch.
+> Opmerking: dit is een vertaald overzicht. De volledige parametertabellen van alle 199 MCP-tools zijn beschikbaar in het Engels en Russisch.
 Openbare MCP-tools gebruiken het voorvoegsel `modx_`; PHP-HTTP-acties gebruiken de naam zonder dit voorvoegsel. De volledige parametertabellen en JSON-schema’s staan in de Engelstalige referentie.
 
 ## MCP
@@ -27,7 +27,7 @@ Stuur JSON via `POST` met de header `X-MCP-Token` over HTTPS. `api.php` is geen 
 **Volledige technische naslagwerken:** [API-parameters (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [beveiliging (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [ontwikkeling (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). De gedetailleerde technische tabellen zijn voorlopig in het Engels.
 
 
-## Overzicht van 198 MCP-tools
+## Overzicht van 199 MCP-tools
 
 > De beschrijvingen zijn vertaald; controleer verplichte velden, typen, limieten en enumeraties in de gekoppelde Engelse of Russische technische referentie.
 
@@ -111,6 +111,7 @@ Stuur JSON via `POST` met de header `X-MCP-Token` over HTTPS. `api.php` is geen 
 | [modx_get_component_files](API.md#modx_get_component_files) | Geef bestanden en mappen binnen een geïnstalleerde MODX-component weer. | Lezen |
 | [modx_read_component_file](API.md#modx_read_component_file) | Lees een bestand uit een geïnstalleerde MODX-component. | Lezen |
 | [modx_check_integrations](API.md#modx_check_integrations) | Meld welke populaire MODX-uitbreidingen (miniShop2, MIGX, pdoTools, Tickets, enz.) op deze site zijn geïnstalleerd en wat modxMCP met elk ervan kan doen. | Lezen |
+| [modx_check_template](API.md#modx_check_template) | Beperkte Fenom-syntaxcontrole; zonder rendering, sitegebeurtenissen, lezen van afhankelijkheden of opslaan. | Lezen |
 
 ### Code doorzoeken en afhankelijkheden
 

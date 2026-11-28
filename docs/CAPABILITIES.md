@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.7 (stable) · 198 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 (stable) · 199 public tools · 19 functional groups · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP gives an AI-capable MCP client named operations for working with MODX data and elements, rather than requiring every task to be expressed as raw SQL or filesystem commands. It supports site inspection, content and code editing, TV values, packages, access administration, and selected third-party extras. The actual tool list depends on the installed build and enabled capabilities.
 
@@ -33,7 +33,7 @@ This guide answers **“What can I do with MODX MCP?”**. For the complete fiel
 | [Namespaces](#namespaces) | 4 |
 | [Lexicon and translations](#lexicon-and-translations) | 4 |
 | [Maintenance and diagnostics](#maintenance-and-diagnostics) | 13 |
-| **Total** | **198** |
+| **Total** | **199** |
 
 ## Elements and resources
 
@@ -125,6 +125,7 @@ Discover installed extras and inspect their permitted files.
 | `modx_get_component_files` | List files and folders inside an installed MODX component. | Read |
 | `modx_read_component_file` | Read a file from an installed MODX component. | Read |
 | `modx_check_integrations` | Report which popular MODX add-ons (miniShop2, MIGX, pdoTools, Tickets, etc.) are installed on this site and what modxMCP can do with each. | Read |
+| `modx_check_template` | Restricted Fenom syntax check of proposed source; no rendering, site hooks, file/dependency reads or saves. | Read |
 
 ## Code search and dependencies
 

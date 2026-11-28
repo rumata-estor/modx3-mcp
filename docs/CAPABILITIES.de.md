@@ -2,7 +2,7 @@
 
 [English](CAPABILITIES.md) · [Русский](CAPABILITIES.ru.md) · [Español](CAPABILITIES.es.md) · [Deutsch](CAPABILITIES.de.md) · [Français](CAPABILITIES.fr.md) · [Українська](CAPABILITIES.uk.md) · [Қазақша](CAPABILITIES.kk.md) · [Nederlands](CAPABILITIES.nl.md) · [Polski](CAPABILITIES.pl.md) · [Installation](INSTALL.md) · [API reference](API.md)
 
-**MODX MCP 1.2.7 · 198 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 199 öffentliche MCP-Werkzeuge · 19 Funktionsgruppen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP stellt einem KI-fähigen MCP-Client benannte Aktionen für MODX-Daten und Elemente zur Verfügung, ohne jede Aufgabe als SQL- oder Dateisystembefehl ausdrücken zu müssen. Es unterstützt die Seitenprüfung, Inhalts- und Codeänderungen, TV-Werte, Pakete, Rechteverwaltung und ausgewählte Erweiterungen. Die tatsächlich verfügbaren Werkzeuge hängen von der installierten Version und den aktivierten Funktionen ab.
 
@@ -33,7 +33,7 @@ Dieser Leitfaden beantwortet **„Was kann ich mit MODX MCP tun?“**. Alle Feld
 | [Namespaces](#namespaces) | 4 |
 | [Lexikon und Übersetzungen](#lexikon-und-übersetzungen) | 4 |
 | [Wartung und Diagnose](#wartung-und-diagnose) | 13 |
-| **Gesamt** | **198** |
+| **Gesamt** | **199** |
 
 ## Elemente und Ressourcen
 
@@ -125,6 +125,7 @@ Installierte Erweiterungen finden und ihre zulässigen Dateien prüfen.
 | `modx_get_component_files` | Dateien und Ordner innerhalb einer installierten MODX-Komponente auflisten. | Lesen |
 | `modx_read_component_file` | Eine Datei einer installierten MODX-Komponente lesen. | Lesen |
 | `modx_check_integrations` | Melden, welche verbreiteten MODX-Erweiterungen (miniShop2, MIGX, pdoTools, Tickets usw.) auf dieser Website installiert sind und was modxMCP mit jeder davon tun kann. | Lesen |
+| `modx_check_template` | Eingeschränkte Fenom-Syntaxprüfung; ohne Rendering, Site-Ereignisse, Lesen von Abhängigkeiten oder Speichern. | Lesen |
 
 ## Codesuche und Abhängigkeiten
 

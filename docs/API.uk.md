@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Примітка: це перекладений стислий огляд. Повні таблиці параметрів усіх 198 MCP-інструментів наразі доступні англійською та російською мовами.
+> Примітка: це перекладений стислий огляд. Повні таблиці параметрів усіх 199 MCP-інструментів наразі доступні англійською та російською мовами.
 Публічні MCP-інструменти мають префікс `modx_`, а HTTP-дії PHP використовують назви без цього префікса. Повні таблиці параметрів та JSON-схеми доступні в англомовному довіднику.
 
 ## MCP
@@ -27,7 +27,7 @@ X-MCP-Token: <private token>
 **Повні технічні довідники:** [параметри API (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [безпека (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [розробка (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Детальні технічні таблиці поки доступні англійською.
 
 
-## Каталог 198 інструментів MCP
+## Каталог 199 інструментів MCP
 
 > Опис перекладено; обов’язкові поля, типи, обмеження та перелічення перевіряйте в англомовному або російськомовному технічному довіднику за посиланням.
 
@@ -111,6 +111,7 @@ X-MCP-Token: <private token>
 | [modx_get_component_files](API.md#modx_get_component_files) | Перелічує файли й папки всередині встановленого компонента MODX. | Читання |
 | [modx_read_component_file](API.md#modx_read_component_file) | Читає файл установленого компонента MODX. | Читання |
 | [modx_check_integrations](API.md#modx_check_integrations) | Повідомляє, які популярні доповнення MODX (miniShop2, MIGX, pdoTools, Tickets тощо) встановлено на цьому сайті та що modxMCP може робити з кожним із них. | Читання |
+| [modx_check_template](API.md#modx_check_template) | Обмежена перевірка синтаксису Fenom; без рендерингу, подій сайту, читання залежностей та збереження. | Читання |
 
 ### Пошук коду та залежності
 

@@ -2,7 +2,7 @@
 
 [English](API.md) · [Русский](API.ru.md) · [Español](API.es.md) · [Deutsch](API.de.md) · [Français](API.fr.md) · [Українська](API.uk.md) · [Қазақша](API.kk.md) · [Nederlands](API.nl.md) · [Polski](API.pl.md)
 
-> Ескерту: бұл аударылған қысқаша шолу. 198 MCP құралының барлық параметрлер кестесі әзірге ағылшын және орыс тілдерінде қолжетімді.
+> Ескерту: бұл аударылған қысқаша шолу. 199 MCP құралының барлық параметрлер кестесі әзірге ағылшын және орыс тілдерінде қолжетімді.
 Ашық MCP құралдарының атауы `modx_` префиксінен басталады. PHP HTTP әрекеттерінде бұл префикс қолданылмайды. Параметрлердің толық кестелері мен JSON схемалары ағылшын анықтамалығында берілген.
 
 ## MCP
@@ -27,7 +27,7 @@ JSON POST сұрауларын HTTPS арқылы `X-MCP-Token` тақырыбы
 **Толық техникалық анықтамалар:** [API параметрлері (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/API.md) · [қауіпсіздік (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/docs/SECURITY.md) · [әзірлеуші құжаттамасы (English)](https://github.com/rumata-estor/modx3-mcp/blob/main/DEVELOPMENT.md). Техникалық кестелердің толық нұсқасы әзірге ағылшын тілінде.
 
 
-## 198 MCP құралының тізімі
+## 199 MCP құралының тізімі
 
 > Сипаттамалар аударылған; міндетті өрістер, түрлер, шектер және тізімдер үшін сілтемедегі ағылшын не орыс техникалық анықтамалығын қараңыз.
 
@@ -111,6 +111,7 @@ JSON POST сұрауларын HTTPS арқылы `X-MCP-Token` тақырыбы
 | [modx_get_component_files](API.md#modx_get_component_files) | Орнатылған MODX компонентінің ішіндегі файлдар мен қалталарды тізімдеу. | Оқу |
 | [modx_read_component_file](API.md#modx_read_component_file) | Орнатылған MODX компонентінен файл оқу. | Оқу |
 | [modx_check_integrations](API.md#modx_check_integrations) | Сайтта қай танымал MODX қосымшалары (miniShop2, MIGX, pdoTools, Tickets және т.б.) орнатылғанын және modxMCP әрқайсысымен не істей алатынын хабарлау. | Оқу |
+| [modx_check_template](API.md#modx_check_template) | Fenom синтаксисін шектеулі тексеру; рендерингсіз, сайт оқиғаларынсыз, тәуелділіктерді оқусыз және сақтаусыз. | Оқу |
 
 ### Код іздеу және тәуелділіктер
 

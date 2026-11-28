@@ -227,6 +227,24 @@ jobs:
           set -euo pipefail
           export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
           php _build/test.ci-clientconfig-cache.php
+      - name: Restricted real Fenom compiler preflight on disposable MODX
+        env:
+          MODXMCP_DISPOSABLE_CI: '1'
+        run: |
+          set -euo pipefail
+          readonly FENOM_SHA=f0cb251843de469b453b15c158cf0d1589d4de6d
+          curl --fail --location --retry 3 --silent --show-error "https://codeload.github.com/fenom-template/fenom/tar.gz/$FENOM_SHA" -o "$RUNNER_TEMP/fenom-2.12.tar.gz"
+          mkdir -p "$RUNNER_TEMP/fenom-source"
+          tar -xzf "$RUNNER_TEMP/fenom-2.12.tar.gz" -C "$RUNNER_TEMP/fenom-source" --strip-components=1
+          P="$RUNNER_TEMP/modx-site/core/components/pdotools"
+          test ! -e "$P"
+          mkdir -p "$P/vendor/fenom/fenom" "$P/model/pdotools"
+          cp -a "$RUNNER_TEMP/fenom-source/src" "$P/vendor/fenom/fenom/"
+          printf '%s\n' '<?php file_put_contents(dirname(__DIR__)."/mcp_fenom_bootstrap_executed","bad"); throw new RuntimeException("unexpected bootstrap");' > "$P/vendor/autoload.php"
+          printf '%s\n' '<?php file_put_contents(dirname(__DIR__,2)."/mcp_fenom_bootstrap_executed","bad"); throw new RuntimeException("unexpected pdoTools bootstrap");' > "$P/model/pdotools/pdotools.class.php"
+          export MODX_CONFIG_CORE="$RUNNER_TEMP/modx-site/config.core.php"
+          php _build/test.ci-fenom-preflight.php
+          rm -rf "$P"
       - name: Ordinary HTTP API functional acceptance without Ed25519
         env:
           MODXMCP_DISPOSABLE_CI: '1'

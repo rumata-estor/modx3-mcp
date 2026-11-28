@@ -72,7 +72,7 @@ For the **historical 1.2.0 release**, both MODX 2.8.9-pl and MODX 3.2.4-pl compl
 
 The 1.2.0 registry contains all 81 read-only actions. Compared with the 74 read-only actions in v1.1.0, version 1.2.0 adds `get_site_state`, two ClientConfig reads, and four access-policy/resource-group read helpers.
 
-<!-- READONLY_MIGRATION_COVERAGE: 83/83 -->
+<!-- READONLY_MIGRATION_COVERAGE: 84/84 -->
 
 The 1.2.0 read-only migration is complete: all 81 read-only server actions are registered in the modular runtime. The coverage marker above is checked by `_build/test.migration-coverage.py` so the documented current-source count cannot silently drift from the code.
 

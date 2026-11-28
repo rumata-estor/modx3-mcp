@@ -4,7 +4,7 @@
 
 [Installatie](INSTALL.nl.md) · [API-referentie](API.nl.md)
 
-**MODX MCP 1.2.7 · 198 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
+**MODX MCP 1.2.7 · 199 openbare MCP-tools · 19 functionele groepen · MODX Revolution 2.8.x / 3.x**
 
 MODX MCP biedt een MCP-compatibele AI-client benoemde handelingen voor MODX-objecten zonder dat elke taak als ruwe SQL of een bestandssysteemcommando moet worden beschreven. Het ondersteunt het bekijken van sites, het wijzigen van inhoud en code, TV-velden, pakketten, toegangsbeheer en geselecteerde uitbreidingen.
 
@@ -36,7 +36,7 @@ Dit overzicht beantwoordt **Wat kan ik met MODX MCP doen?** Voor de exacte veldt
 | [Namespaces](#namespaces) | 4 |
 | [Lexicon en vertalingen](#lexicon-en-vertalingen) | 4 |
 | [Onderhoud en diagnostiek](#onderhoud-en-diagnostiek) | 13 |
-| **Totaal** | **198** |
+| **Totaal** | **199** |
 
 ## Elementen en resources
 
@@ -128,6 +128,7 @@ Ontdek geïnstalleerde uitbreidingen en inspecteer toegankelijke bestanden.
 | `modx_get_component_files` | Geef bestanden en mappen binnen een geïnstalleerde MODX-component weer. | Lezen |
 | `modx_read_component_file` | Lees een bestand uit een geïnstalleerde MODX-component. | Lezen |
 | `modx_check_integrations` | Meld welke populaire MODX-uitbreidingen (miniShop2, MIGX, pdoTools, Tickets, enz.) op deze site zijn geïnstalleerd en wat modxMCP met elk ervan kan doen. | Lezen |
+| `modx_check_template` | Beperkte Fenom-syntaxcontrole; zonder rendering, sitegebeurtenissen, lezen van afhankelijkheden of opslaan. | Lezen |
 
 ## Code doorzoeken en afhankelijkheden
 
