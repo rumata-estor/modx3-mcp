@@ -9,7 +9,7 @@ function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
-    array('MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MEDIA_TPL_WRITE_REFUSED', 'unknown', 'verify_before_retry'),
+    array('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MUTATION_OUTCOME_UNCERTAIN', 'unknown', 'verify_before_retry'),
     array('VALIDATION_ERROR: invalid password=SUPER_SECRET', 'VALIDATION_ERROR', 'not_applied', 'after_client_fix'),
     array('MANUAL_REVIEW_REQUIRED: conflict unknown', 'MANUAL_REVIEW_REQUIRED', 'not_applied', 'after_review'),
     array('CAS_REQUIRED: revision required', 'CAS_REQUIRED', 'not_applied', 'after_refresh'),
@@ -32,6 +32,8 @@ foreach ($cases as $row) {
     checkError(strpos(json_encode($fields), 'SUPER_SECRET') === false,
         'raw exception must not leak into catalog');
 }
+$tpl=ErrorCatalog::fields('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown');
+checkError($tpl['detail_code']==='MEDIA_TPL_WRITE_REFUSED' && strpos($tpl['reason_ru'],'upload_files')!==false,'fixed tpl detail survives');
 checkError(ErrorCatalog::codeFromLegacy('CAS_CONFLICT: stale') === 'STALE_STATE',
     'CAS alias');
 checkError(ErrorCatalog::codeFromLegacy('AUTH_DENIED: failed') === 'AUTH_DENIED',

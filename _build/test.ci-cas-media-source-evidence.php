@@ -86,7 +86,7 @@ try {
     try {
         mediaRpc('create_media_file',array('source'=>$id,'path'=>'/','name'=>'denied.tpl','content'=>'DISPOSABLE'));
     } catch (ModxMCPClientException $e) {
-        $denied=strpos($e->getMessage(),'MEDIA_TPL_WRITE_REFUSED:')===0
+        $denied=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED:')===0
             && strpos($e->getMessage(),'upload_files')!==false;
     }
     mediaCheck($denied,'native restricted .tpl write has safe guidance');

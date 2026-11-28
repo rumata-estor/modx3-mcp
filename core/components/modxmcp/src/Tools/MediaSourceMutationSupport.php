@@ -82,10 +82,7 @@ class MediaSourceMutationSupport
     public static function fileWriteError($source, $path, $action)
     {
         if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'tpl') {
-            return 'MEDIA_TPL_WRITE_REFUSED: Media Source refused the .tpl write. '
-                . 'Check the target file before retrying. The source allowedFileTypes '
-                . 'or MODX upload_files may restrict this extension; the actual cause '
-                . 'has not been established. Ask an administrator to review policy.';
+            return \ModxMcp\Security\MutationOutcomeGuard::MEDIA_TPL_MESSAGE;
         }
         return $action . ' failed: ' . self::error($source, 'unknown error');
     }
