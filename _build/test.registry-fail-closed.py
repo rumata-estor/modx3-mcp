@@ -4,7 +4,7 @@
 # EN: «registry-fail-closed» regression test; not executed in production.
 """Guard against reintroducing the unprotected legacy dispatcher on either MODX platform."""
 from pathlib import Path
-import re
+import subprocess
 
 root = Path(__file__).resolve().parents[1]
 paths = [root / "core/components/modxmcp/model/modxmcp.class.php"]
@@ -22,7 +22,14 @@ for path in paths:
     assert "!$registeredTool->supports($this->modularRuntime->context())" in prologue, path
     assert "throw new ModxMCPClientException" in prologue, path
     assert prologue.index("CAS_RUNTIME_REQUIRED: modular") < prologue.index("registry()->get($action)") < prologue.index("CAS_RUNTIME_REQUIRED: action"), path
-    guarded = text[end:text.index("// Dispatch is driven by actionRegistry()", end)]
+    finish = text.index("\n    }\n", end)
+    guarded = text[end:finish]
+    assert "CAS_RUNTIME_REQUIRED: action is not available in the guarded tool registry:" in guarded, path
+    assert "throw new ModxMCPClientException" in guarded, path
+    for forbidden in ("invokeActionSpec(", "resolveActionSpec(", "switch ($action)", "runCoreProcessor(", "->runProcessor("):
+        assert forbidden not in guarded, (path, forbidden)
+    assert "function invokeActionSpec(" not in text and "function resolveActionSpec(" not in text, path
+    subprocess.run(["php", str(root / "_build/test.registry-fail-closed.php"), str(path)], check=True)
     assert "StateSupport::requireMutationPreconditions(" in guarded, path
     assert "StateSupport::withMutationLock(" in guarded, path
     assert "ProtectedAuthorization::authorizeMutation(" in guarded, path

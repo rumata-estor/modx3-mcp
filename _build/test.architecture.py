@@ -31,7 +31,7 @@ if "'updatefromgrid' => 'UpdateFromGrid'" not in modx3:
 if "return 'modx2'" not in modx2 or "return 'modx3'" not in modx3:
     errors.append('Platform keys are missing')
 
-# Pilot migration must remain fail-open and legacy-compatible.
+# The modular dispatcher must remain fail-closed.
 legacy = (root / 'core' / 'components' / 'modxmcp' / 'model' / 'modxmcp.class.php').read_text(encoding='utf-8')
 for needle in (
     'private $modularRuntime = null;',
@@ -45,9 +45,8 @@ for needle in (
         errors.append(f'Legacy bridge invariant missing: {needle}')
 
 registry_pos = legacy.find('registry()->get($action)')
-legacy_dispatch_pos = legacy.find('$this->resolveActionSpec($action)')
-if registry_pos < 0 or legacy_dispatch_pos < 0 or registry_pos > legacy_dispatch_pos:
-    errors.append('Modular registry must get first refusal before legacy action dispatch')
+if registry_pos < 0 or 'function invokeActionSpec(' in legacy or 'function resolveActionSpec(' in legacy:
+    errors.append('Only the modular registry may dispatch actions')
 
 # Element tools receive `type` as a separate HTTP/processRequest argument.
 # In the source tree both platform fallbacks are present. A staged release removes

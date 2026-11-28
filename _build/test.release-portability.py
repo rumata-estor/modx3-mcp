@@ -244,7 +244,7 @@ if "if (!$user->get('sudo'))" not in model_text:
 if "$this->modx->user->set('sudo', 1)" in model_text or "$this->modx->user->set('sudo',1)" in model_text:
     fail("model: processRequest must not elevate the service user to sudo in memory")
 cap_pos = model_text.find("$this->assertCapabilityEnabled($action)")
-dispatch_pos = model_text.find("$this->resolveActionSpec($action)")
+dispatch_pos = model_text.find("$registeredTool = $this->modularRuntime->registry()->get($action)")
 if cap_pos < 0 or dispatch_pos < 0 or cap_pos > dispatch_pos:
     fail("model: capability enforcement must run before action dispatch")
 if "modxmcp.allow_run_processor', null, false" not in model_text:
