@@ -134,6 +134,14 @@ final class ErrorCatalog
                 'Проверьте фактическое состояние файла. Попросите администратора проверить разрешённые расширения в Media Source и upload_files. Не отключайте защиту ради повтора.',
                 'unknown', 'verify_before_retry');
         }
+        if ($code === 'MUTATION_OUTCOME_UNCERTAIN'
+            && (string)$legacy === \ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE) {
+            $detail = 'POST_COMMIT_STEP_FAILED';
+            $entry = array('Операция завершилась не полностью.',
+                'Коммит базы данных подтверждён, но обязательный последующий шаг не завершился.',
+                'Проверьте сохранённые объекты и состояние кэша. Не повторяйте запись автоматически; согласуйте дальнейшее действие.',
+                'partial', 'verify_before_retry');
+        }
         $result = array(
             'code' => $code,
             'error_id' => $errorId === null ? self::newId() : $errorId,

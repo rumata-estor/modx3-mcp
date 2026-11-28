@@ -3,12 +3,15 @@
  * RU: Поля диагностики, безопасные тексты и политика повторов.
  * EN: Error catalog safety, stable codes and conservative retry outcomes.
  */
+require dirname(__DIR__) . '/core/components/modxmcp/src/Security/MutationOutcomeGuard.php';
 require dirname(__DIR__) . '/core/components/modxmcp/src/Diagnostics/ErrorCatalog.php';
 use ModxMcp\Diagnostics\ErrorCatalog;
 function checkError($value, $label) {
     if (!$value) throw new RuntimeException('ERROR_CATALOG_FAIL ' . $label);
 }
 $cases = array(
+    array(\ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE,
+        'MUTATION_OUTCOME_UNCERTAIN', 'partial', 'verify_before_retry'),
     array('TV_RENDERING_DISABLED: raw only', 'TV_RENDERING_DISABLED', 'not_applied', 'after_admin_check'),
     array('MUTATION_OUTCOME_UNCERTAIN: MEDIA_TPL_WRITE_REFUSED: unknown cause', 'MUTATION_OUTCOME_UNCERTAIN', 'unknown', 'verify_before_retry'),
     array('VALIDATION_ERROR: invalid password=SUPER_SECRET', 'VALIDATION_ERROR', 'not_applied', 'after_client_fix'),

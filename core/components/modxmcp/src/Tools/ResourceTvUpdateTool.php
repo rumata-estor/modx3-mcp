@@ -183,6 +183,7 @@ class ResourceTvUpdateTool implements ToolInterface
                         );
                     }
                 }
+                if ($outerTransaction) StateSupport::markRevisionEffectsStarted($context);
                 $written = ($resource->setTVValue($name, $value) !== false);
                 if (!$written) {
                     throw new \ModxMCPClientException('Failed to write TV: ' . $name);

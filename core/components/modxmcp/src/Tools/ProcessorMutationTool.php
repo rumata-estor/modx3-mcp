@@ -214,7 +214,7 @@ class ProcessorMutationTool implements ToolInterface
             // EN: Defer ACL cache invalidation until commit when CAS runtime exists.
             if (class_exists('ModxMcp\\Tools\\StateSupport',false)) {
                 StateSupport::afterRevisionCommit($context, function () use ($context) {
-                    $context->modx()->getCacheManager()->flushPermissions();
+                    return $context->modx()->getCacheManager()->flushPermissions();
                 });
             } else {
                 // RU: Совместимость прямых unit-тестов без bootstrap runtime.
@@ -240,7 +240,7 @@ class ProcessorMutationTool implements ToolInterface
             StateSupport::afterRevisionCommit($context, function () use ($context, $contextKey) {
                 $manager = $context->modx()->getCacheManager();
                 if ($manager) {
-                    $manager->refresh(array(
+                    return $manager->refresh(array(
                         'context_settings' => array('contexts' => array($contextKey))
                     ));
                 }

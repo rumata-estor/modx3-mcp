@@ -12,11 +12,22 @@ class StateSupport
     // PHP-request-local. Never stored in MODX system settings or client input.
     // Callbacks do not fire when the database transaction is rolled back.
     private static $transactionCallbacks = array();
+    private static $transactionEffectsStarted = array();
     private static $lockedGroupSnapshots = array();
 
     public static function inRevisionTransaction($context)
     {
         return isset(self::$transactionCallbacks[spl_object_hash($context->modx())]);
+    }
+
+    // RU: После входа в потенциально изменяющий код текст ошибки не доказывает отказ до записи.
+    // EN: Once effectful code starts, error text cannot establish a pre-write denial.
+    public static function markRevisionEffectsStarted($context)
+    {
+        $key = spl_object_hash($context->modx());
+        if (isset(self::$transactionCallbacks[$key])) {
+            self::$transactionEffectsStarted[$key] = true;
+        }
     }
 
     public static function afterRevisionCommit($context, $callback)
@@ -452,6 +463,7 @@ class StateSupport
         }
         self::$transactionCallbacks[$key] = array();
         $commitAttempted = false;
+        self::$transactionEffectsStarted[$key] = false;
         try {
             $result = call_user_func($callback);
             // RU: COMMIT мог записать данные до потери ответа.
@@ -461,12 +473,13 @@ class StateSupport
                 throw new \RuntimeException('CAS revision transaction commit not confirmed.');
             }
             $callbacks = self::$transactionCallbacks[$key];
-            unset(self::$transactionCallbacks[$key]);
+            unset(self::$transactionCallbacks[$key], self::$transactionEffectsStarted[$key]);
             foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
                 if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
             }
         } catch (\Throwable $e) {
-            unset(self::$transactionCallbacks[$key]);
+            $effectsStarted = !empty(self::$transactionEffectsStarted[$key]);
+            unset(self::$transactionCallbacks[$key], self::$transactionEffectsStarted[$key]);
             foreach (array_keys(self::$lockedGroupSnapshots) as $lockedKey) {
                 if (strpos($lockedKey,$key.':')===0)unset(self::$lockedGroupSnapshots[$lockedKey]);
             }
@@ -487,19 +500,29 @@ class StateSupport
                     '/\A(?:CAS_REQUIRED|STALE_STATE|AUTH_DENIED|NOT_FOUND|VALIDATION_ERROR)(?:[: ]|$)/D',
                     $e->getMessage()
                 ) === 1;
-            if ($commitAttempted || !$rollbackConfirmed || !$guardDenied) {
+            if ($effectsStarted || $commitAttempted || !$rollbackConfirmed || !$guardDenied) {
                 throw \ModxMcp\Security\MutationOutcomeGuard::uncertain();
             }
             throw $e;
         }
-        // The DB commit is complete. Side effects must not falsely turn a
-        // committed write into a reported transaction failure.
+        // RU: Коммит подтверждён, но сбой обязательного post-commit шага
+        // не является ни успехом всей операции, ни доказанным откатом.
+        // EN: Commit is confirmed; a failed required callback is neither
+        // complete success nor rollback. Run remaining cleanup once.
+        $postCommitFailed = false;
         foreach ($callbacks as $afterCommit) {
             try {
-                call_user_func($afterCommit);
+                if (call_user_func($afterCommit) === false) {
+                    throw new \RuntimeException("Required post-commit step returned false.");
+                }
             } catch (\Throwable $e) {
-                $modx->log(3, '[modxmcp] after-commit callback failed: ' . $e->getMessage());
+                $postCommitFailed = true;
+                try { $modx->log(3, '[modxmcp] after-commit callback failed.'); }
+                catch (\Throwable $ignored) {}
             }
+        }
+        if ($postCommitFailed) {
+            throw \ModxMcp\Security\MutationOutcomeGuard::postCommitFailure();
         }
         return $result;
     }

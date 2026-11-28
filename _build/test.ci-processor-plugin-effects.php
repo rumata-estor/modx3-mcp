@@ -29,7 +29,7 @@ if ($is2) {
 }
 $modx->initialize('mgr');
 require_once MODX_CORE_PATH.'components/modxmcp/model/modxmcp.class.php';
-new modxMCP($modx);
+$api=new modxMCP($modx);
 $uid=bin2hex(random_bytes(6));
 $pluginName='mcpfaultplugin'.$uid;
 $file=getenv('RUNNER_TEMP').'/mcp-plugin-event-'.$uid.'.txt';
@@ -99,6 +99,45 @@ try {
     pluginCheck(is_file($file),'event plugin did not create external file');
     pluginCheck(file_get_contents($file)==='side-effect-before-error',
         'unexpected external side effect');
+    // Real database rollback plus a real MODX plugin external effect. A
+    // misleading guard-looking exception must not describe the whole call as unapplied.
+    $runtimeContext=(new \ModxMcp\Core\Runtime($modx,$api))->context();
+    $state=\ModxMcp\Tools\StateSupport::class;
+    unlink($file);
+    $before=$state::revision($runtimeContext);
+    $uncertain=false;
+    try {
+        $state::withMutationLock($runtimeContext,function()use($state,$runtimeContext,$modx){
+            $state::withRevisionTransaction($runtimeContext,function()use($state,$runtimeContext,$modx){
+                $state::markRevisionEffectsStarted($runtimeContext);
+                $state::incrementRevision($runtimeContext);
+                $modx->invokeEvent('OnDocFormSave',array('mode'=>'upd'));
+                throw new \ModxMCPClientException('STALE_STATE: FAKE_SECRET_AFTER_EFFECT');
+            });
+        });
+    } catch (\ModxMCPClientException $e) {
+        $uncertain=strpos($e->getMessage(),'MUTATION_OUTCOME_UNCERTAIN:')===0
+            && strpos($e->getMessage(),'FAKE_SECRET')===false;
+    }
+    pluginCheck($uncertain && is_file($file) && $state::revision($runtimeContext)===$before,
+        'DB rollback with surviving external effect is not a pre-write denial');
+    $partial=false;
+    try {
+        $state::withMutationLock($runtimeContext,function()use($state,$runtimeContext){
+            $state::withRevisionTransaction($runtimeContext,function()use($state,$runtimeContext){
+                $state::markRevisionEffectsStarted($runtimeContext);
+                $state::incrementRevision($runtimeContext);
+                $state::afterRevisionCommit($runtimeContext,function(){
+                    throw new \RuntimeException('FAKE_SECRET_POST_COMMIT');
+                });
+            });
+        });
+    } catch (\ModxMCPClientException $e) {
+        $partial=$e->getMessage()===\ModxMcp\Security\MutationOutcomeGuard::POST_COMMIT_MESSAGE;
+    }
+    pluginCheck($partial && $state::revision($runtimeContext)===$before+1,
+        'confirmed commit with required follow-up failure is not full success');
+    echo 'REAL_DB_AND_EXTERNAL_PARTIAL_OUTCOME_OK'.PHP_EOL;
     echo 'REAL_MODX_PLUGIN_EXTERNAL_EFFECT_MODX'.($is2?'2':'3').'_OK'.PHP_EOL;
 } finally {
     $modx->setOption('modxmcp.allow_run_processor',false);

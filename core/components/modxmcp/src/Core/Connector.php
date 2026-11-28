@@ -255,6 +255,9 @@ trait Connector
                                         $runtimePreconditions
                                     );
                                 }
+                                if ($managed && !$atomicTv) {
+                                    \ModxMcp\Tools\StateSupport::markRevisionEffectsStarted($runtimeContext);
+                                }
                                 $result = ($managed && $atomicTv)
                                     ? $tool->executeWithinRevisionTransaction(
                                         $runtimeContext,
