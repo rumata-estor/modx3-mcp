@@ -14,6 +14,7 @@ class PropertySetUpdateTool implements ToolInterface
 
     public function execute($context, array $data)
     {
+        $data = PropertySetValidation::validateData($data);
         if (empty($data['id'])) {
             throw new \ModxMCPClientException('update_property_set: id is required.');
         }

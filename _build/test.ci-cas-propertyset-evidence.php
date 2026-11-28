@@ -57,7 +57,7 @@ try {
     // RU: Набор не привязан к существующим шаблонам, сниппетам или TV.
     // EN: Keep the temporary set unattached to any real site elements.
     $request=array('name'=>$name,'description'=>'disposable initial',
-        'properties'=>array(),'_runtime_preconditions'=>psGuard());
+        'properties'=>array('tpl'=>array('value'=>'строка'), 'limit'=>array('type'=>'numberfield','value'=>0)), '_runtime_preconditions'=>psGuard());
     $created=psRpc('create_property_set',$request);
     $id=(int)($created['id']??0);
     psCheck($id>0,'create returned property set id');
@@ -67,6 +67,29 @@ try {
         'created property set independent readback');
     psCheck(isset($read['assignments']) && $read['assignments']===array(),
         'no unexpected property set assignment');
+    $stored=$read['properties']??null;
+    psCheck(is_array($stored) && ($stored['tpl']['name']??null)==='tpl'
+        && ($stored['tpl']['type']??null)==='textfield'
+        && ($stored['tpl']['value']??null)==='строка'
+        && ($stored['limit']['value']??null)===0,'native property serialization roundtrip');
+    foreach (array('create_property_set','update_property_set') as $operation) {
+        foreach (array('bad',array('tpl'=>array('type'=>'textfield')),
+            array('tpl'=>array('value'=>array('bad')))) as $bad) {
+            $before=psRpc('get_site_state');
+            $denied=false;
+            try {
+                psRpc($operation,array('id'=>$id,'name'=>$name.'_invalid',
+                    'properties'=>$bad,'_runtime_preconditions'=>psGuard()));
+            } catch (ModxMCPClientException $e) {
+                $denied=strpos($e->getMessage(),'VALIDATION_ERROR:')===0;
+            }
+            psCheck($denied,$operation.' invalid properties denied');
+            $after=psRpc('get_site_state');
+            psCheck($before['site_revision']===$after['site_revision'],'invalid request did not reserve CAS');
+            $unchanged=psRpc('get_property_set',array('id'=>$id));
+            psCheck(($unchanged['properties']??null)===$stored && ($unchanged['name']??null)===$name,'invalid request preserved original row');
+        }
+    }
     psReplay('create_property_set',$request);
     echo 'CAS_PROPERTY_SET_CREATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
 
@@ -78,7 +101,15 @@ try {
         'updated property set independent readback');
     psCheck(($read['assignments']??null)===array(),
         'update did not assign property set');
+    psCheck(($read['properties']??null)===$stored,'metadata update preserves properties');
     psReplay('update_property_set',$update);
+    psRpc('update_property_set',array('id'=>$id,'properties'=>$stored));
+    $read=psRpc('get_property_set',array('id'=>$id));
+    psCheck(($read['properties']??null)===$stored,'native readback can be resubmitted');
+    psRpc('update_property_set',array('id'=>$id,'properties'=>array()));
+    $read=psRpc('get_property_set',array('id'=>$id));
+    psCheck(($read['properties']??null)===array(),'explicit empty map clears properties');
+
     echo 'CAS_PROPERTY_SET_UPDATE_READBACK_STALE_REPLAY_OK'.PHP_EOL;
 
     $delete=array('id'=>$id,'_runtime_preconditions'=>psGuard());
