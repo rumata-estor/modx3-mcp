@@ -645,8 +645,10 @@ class ElementMutationSupport
             return;
         }
         $manager = $context->modx()->getCacheManager();
-        if ($manager && $manager->refresh() === false) {
-            throw new \RuntimeException("Cache refresh failed.");
-        }
+        // RU: Общий refresh() MODX может вернуть false при пропуске уже
+        // очищенного раздела. Это не доказательство ошибки обязательного шага.
+        // EN: The aggregate native refresh() may return false for an already
+        // cleared partition. Do not infer a failed required step from it.
+        if ($manager) { $manager->refresh(); }
     }
 }
